@@ -1,4 +1,4 @@
-import Category from "views/Category.js";
+import UserManagement from "views/UserManagement.js";
 import ScreeningKaryawan from "views/ScreeningKaryawan.js";
 import Angsuran from "views/Angsuran.js";
 import LaporanPiutang from "views/LaporanPiutangKaryawan.js";
@@ -27,10 +27,10 @@ import { layouts } from "chart.js";
 const dashboardRoutes = [
   // ADMIN
   {
-    path: "/category",
-    name: "Documents",
-    icon: "box-open",
-    component: Category,
+    path: "/user-management",
+    name: "User Management",
+    icon: "users",
+    component: UserManagement,
     layout: "/admin"
   },
   // {

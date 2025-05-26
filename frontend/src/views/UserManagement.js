@@ -20,13 +20,13 @@ import { CDBTable, CDBTableHeader, CDBTableBody, CDBContainer, CDBBtn, CDBBtnGrp
 // react-bootstrap components
 import {Button, Container, Row, Col, Card, Table, Spinner, Badge} from "react-bootstrap";
 
-function Category() {
+function UserManagement() {
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [showImportModal, setShowImportModal] = useState(false); 
-  const [user, setUser] = useState([]); 
+  const [employee, setEmployee] = useState([]); 
   const [user_active, setUserActive] = useState();
-  const [selectedUser, setSelectedUser] = useState(null); 
+  const [selectedEmployee, setselectedEmployee] = useState(null); 
   const [searchQuery, setSearchQuery] = useState("");
   const [userData, setUserData] = useState({id_karyawan: "", nama: "", divisi: ""}); 
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,15 +35,17 @@ function Category() {
   const location = useLocation();
   const history = useHistory();
 
-  const [sortBy, setSortBy] = useState("id_user");
+  const [sortBy, setSortBy] = useState("id_karyawan");
   const [sortOrder, setSortOrder] = useState("asc");
   const [sortOrderDibayar, setSortOrderDibayar] = useState("asc");
 
-  const filteredUser = user.filter((user) =>
-    (user.id_user && String(user.id_user).toLowerCase().includes(searchQuery)) ||
-    (user.email && String(user.email).toLowerCase().includes(searchQuery)) ||
-    (user.role && String(user.role).toLowerCase().includes(searchQuery)) ||
-    (user.user_active && String(user.user_active).toLowerCase().includes(searchQuery)) //search berdasarkan boolean
+  const filteredEmployee = employee.filter((employee) =>
+    (employee.id_karyawan && String(employee.id_karyawan).toLowerCase().includes(searchQuery)) ||
+    (employee.nama && String(employee.nama).toLowerCase().includes(searchQuery)) ||
+    (employee.email && String(employee.email).toLowerCase().includes(searchQuery)) ||
+    (employee.job_title && String(employee.job_title).toLowerCase().includes(searchQuery)) ||
+    (employee.role && String(employee.role).toLowerCase().includes(searchQuery)) ||
+    (employee.user_active && String(employee.user_active).toLowerCase().includes(searchQuery)) //search berdasarkan boolean
   );
 
   
@@ -58,7 +60,7 @@ function Category() {
     }
   }
 
-  const sortedUser = filteredUser.sort((a, b) => {
+  const sortedEmployee = filteredEmployee.sort((a, b) => {
     const aValue = a[sortBy];
     const bValue = b[sortBy];
 
@@ -72,7 +74,7 @@ function Category() {
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedUser.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = sortedEmployee.slice(indexOfFirstItem, indexOfLastItem);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber); 
@@ -81,18 +83,18 @@ function Category() {
   const token = localStorage.getItem("token");
 
   useEffect(()=> {
-    getUser();
-    fetchUserData();
+    getEmployee();
+    fetchEmployeeData();
   }, []); 
 
-  const getUser = async () =>{
+  const getEmployee = async () =>{
     try {
-      const response = await axios.get("http://localhost:5000/user", {
+      const response = await axios.get("http://localhost:5000/employee", {
         headers: {
           Authorization: `Bearer ${token}`,
       },
       });
-      setUser(response.data);
+      setEmployee(response.data);
     } catch (error) {
       console.error("Error fetching data:", error.message); 
     } finally {
@@ -113,13 +115,13 @@ function Category() {
         autoClose: 5000,
         hideProgressBar: true,
       });
-      getUser(); 
+      getEmployee(); 
     } catch (error) {
       console.log(error.message); 
     }
   };
 
-  const fetchUserData = async () => {
+  const fetchEmployeeData = async () => {
     const token = localStorage.getItem("token");
     const email = localStorage.getItem("email");
     if (!token || !email) return;
@@ -151,7 +153,7 @@ function Category() {
   };
 
   const handleAddSuccess = () => {
-    getUser();
+    getEmployee();
     toast.success("New user successfully created!", {
         position: "top-right",
         autoClose: 5000,
@@ -160,7 +162,7 @@ function Category() {
   };
 
   const handleEditSuccess = () => {
-    getUser();
+    getEmployee();
     toast.success("User successfully updated!", {
         position: "top-right",
         autoClose: 5000,
@@ -173,7 +175,7 @@ function Category() {
   }
 
   const handleImportSuccess = () => {
-    getUser();
+    getEmployee();
     toast.success("User successfully imported!", {
         position: "top-right",
         autoClose: 5000,
@@ -259,7 +261,7 @@ function Category() {
           autoClose: 5000,
           hideProgressBar: true,
         });
-        getUser();    
+        getEmployee();    
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;
         // console.log(error.message);
@@ -287,7 +289,7 @@ function Category() {
           autoClose: 5000,
           hideProgressBar: true,
         });
-        getUser();
+        getEmployee();
 
     } catch (error) {
         console.log(error.message);
@@ -309,7 +311,7 @@ function Category() {
           <EditUser
               showEditModal={showEditModal}
               setShowEditModal={setShowEditModal}
-              user={selectedUser}
+              user={selectedEmployee}
               onSuccess={handleEditSuccess}
           />
 
@@ -357,21 +359,25 @@ function Category() {
           <CDBTable hover  className="mt-4">
             <CDBTableHeader>
               <tr>
-                <th onClick={() => handleSort("id_user")}>User Id {sortBy==="id_user" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                <th className="border-0" onClick={() => handleSort("username")}>Email {sortBy==="email" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                <th onClick={() => handleSort("id_user")}>Employee Id {sortBy==="id_karyawan" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                <th className="border-0" onClick={() => handleSort("nama")}>Name {sortBy==="nama" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                <th className="border-0" onClick={() => handleSort("email")}>Email {sortBy==="email" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                <th className="border-0" onClick={() => handleSort("job_title")}>Job Title {sortBy==="job_title" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
                 <th className="border-0" onClick={() => handleSort("role")}>Role {sortBy==="role" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
                 <th className="border-0">Status</th>
                 <th className="border-0">Action</th>
               </tr>
             </CDBTableHeader>
             <CDBTableBody>
-              {currentItems.map((user, index) => (
-                <tr key={user.id_user}>
-                  <td className="text-center">{user.id_user}</td>
-                  <td className="text-center">{user.email}</td>
-                  <td className="text-center">{user.role}</td>
+              {currentItems.map((employee, index) => (
+                <tr key={employee.id_karyawan}>
+                  <td className="text-center">{employee.id_karyawan}</td>
+                  <td className="text-center">{employee.nama}</td>
+                  <td className="text-center">{employee.email}</td>
+                  <td className="text-center">{employee.job_title}</td>
+                  <td className="text-center">{employee.role}</td>
                   <td className="text-center">
-                      {user.user_active === true ? (
+                      {employee.user_active === true ? (
                         <Badge pill bg="success p-2" style={{ color: 'white'}} >
                           Active
                         </Badge >
@@ -386,24 +392,17 @@ function Category() {
                       type="button"
                       onClick={() => {
                         setShowEditModal(true);
-                        setSelectedUser(user);
+                        setselectedEmployee(employee);
                       }}
                       className="btn-edit"
                   />
-                  <FaUserLock 
-                    type="button"
-                    onClick={() => {
-                      setPassword(user.id_user)
-                    }}
-                    className="btn-set"
-                  />
                   <button
                     style={{background:"transparent", border:"none"}} 
-                    disabled={user.user_active === true}
+                    disabled={employee.user_active === true}
                     >
                     <FaTrashAlt 
                       type="button"
-                      onClick={() => deleteUser(user.id_user)}
+                      onClick={() => deleteUser(employee.id_employee)}
                       className="btn-del"
                     />
                   </button>
@@ -417,7 +416,7 @@ function Category() {
               <Pagination
                     activePage={currentPage}
                     itemsCountPerPage={itemsPerPage}
-                    totalItemsCount={filteredUser.length}
+                    totalItemsCount={filteredEmployee.length}
                     pageRangeDisplayed={5}
                     onChange={handlePageChange}
                     itemClass="page-item"
@@ -431,5 +430,5 @@ function Category() {
   );
 }
 
-export default Category;
+export default UserManagement;
 

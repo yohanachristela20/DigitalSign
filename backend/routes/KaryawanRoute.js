@@ -34,14 +34,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.get('/karyawan', getKaryawan); 
-router.get('/karyawan/:id_karyawan', getKaryawanById);
-router.post('/karyawan', createKaryawan);  
-router.patch('/karyawan/:id_karyawan', updateKaryawan);
-router.delete('/karyawan/:id_karyawan', deleteKaryawan);
+router.get('/employee', getKaryawan); 
+router.get('/employee/:id_karyawan', getKaryawanById);
+router.post('/employee', createKaryawan);  
+router.patch('/employee/:id_karyawan', updateKaryawan);
+router.delete('/employee/:id_karyawan', deleteKaryawan);
 router.get('/getLastKaryawanId', getLastKaryawanId);
 
-router.post('/karyawan/import-csv', upload.single("csvfile"), (req,res) => {
+router.post('/employee/import-csv', upload.single("csvfile"), (req,res) => {
         if (!req.file) {
                 return res.status(400).json({ success: false, message: 'No file uploaded' });
         }

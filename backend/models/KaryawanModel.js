@@ -9,6 +9,7 @@ const Karyawan = db.define('karyawan', {
         primaryKey: true,
     },
     nama: DataTypes.STRING,
+    job_title: DataTypes.STRING,
     organisasi: DataTypes.STRING,
     sign_base64: DataTypes.STRING,
 }, {
