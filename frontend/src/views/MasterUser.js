@@ -208,7 +208,7 @@ function MasterUser() {
     const doc = new jsPDF({ orientation: 'landscape' });
   
     doc.setFontSize(12); 
-    doc.text("Master User", 12, 20);
+    doc.text("Users Data", 12, 20);
 
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleString('en-EN', {

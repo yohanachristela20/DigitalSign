@@ -38,7 +38,7 @@ const Sidebar = ({ color, routes }) => {
           Authorization: `Bearer ${token}`,
       },
       });
-      console.log("response.data:", response.data);
+      // console.log("response.data:", response.data);
       setCategory(response.data);
     } catch (error) {
       console.error("Error fetching data:", error.message); 
@@ -62,7 +62,7 @@ const folders = [
   },
 ];
 
-  console.log("folders: ", folders);
+  // console.log("folders: ", folders);
 
   const activeRoute = (routeName) => location.pathname.includes(routeName);
 

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import {FaFileCsv, FaFileImport, FaFilePdf, FaPlusCircle, FaRegEdit, FaTrashAlt, FaTrashRestore, FaUserLock, FaSortUp, FaSortDown} from 'react-icons/fa'; 
 import SearchBar from "components/Search/SearchBar.js";
 import axios from "axios";
-import AddUser from "components/ModalForm/AddUser.js";
-import EditUser from "components/ModalForm/EditUser.js";
+import AddKaryawan from "components/ModalForm/AddKaryawan.js";
+import EditKaryawan from "components/ModalForm/EditKaryawan.js";
 import ImportUser from "components/ModalForm/ImportUser.js";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -19,8 +19,7 @@ import { CDBTable, CDBTableHeader, CDBTableBody, CDBContainer, CDBBtn, CDBBtnGrp
 
 // react-bootstrap components
 import {Button, Container, Row, Col, Card, Table, Spinner, Badge} from "react-bootstrap";
-
-function UserManagement() {
+function EmployeeManagement() {
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [showImportModal, setShowImportModal] = useState(false); 
@@ -28,12 +27,13 @@ function UserManagement() {
   const [user_active, setUserActive] = useState();
   const [selectedEmployee, setselectedEmployee] = useState(null); 
   const [searchQuery, setSearchQuery] = useState("");
-  const [userData, setUserData] = useState({id_karyawan: "", nama: "", divisi: ""}); 
+  const [karyawanData, setkaryawanData] = useState({id_user: "", email: "", role: "", user_active: ""}); 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const history = useHistory();
+  const [id_karyawan, setIdKaryawan] = useState("");
 
   const [sortBy, setSortBy] = useState("id_karyawan");
   const [sortOrder, setSortOrder] = useState("asc");
@@ -44,8 +44,7 @@ function UserManagement() {
     (employee.nama && String(employee.nama).toLowerCase().includes(searchQuery)) ||
     (employee.email && String(employee.email).toLowerCase().includes(searchQuery)) ||
     (employee.job_title && String(employee.job_title).toLowerCase().includes(searchQuery)) ||
-    (employee.role && String(employee.role).toLowerCase().includes(searchQuery)) ||
-    (employee.user_active && String(employee.user_active).toLowerCase().includes(searchQuery)) //search berdasarkan boolean
+    (employee.organisasi && String(employee.organisasi).toLowerCase().includes(searchQuery)) 
   );
 
   
@@ -84,12 +83,11 @@ function UserManagement() {
 
   useEffect(()=> {
     getEmployee();
-    fetchEmployeeData();
+    // fetchEmployeeData();
   }, []); 
-
   const getEmployee = async () =>{
     try {
-      const response = await axios.get("http://localhost:5000/employee", {
+      const response = await axios.get("http://localhost:5000/employee-details", {
         headers: {
           Authorization: `Bearer ${token}`,
       },
@@ -101,16 +99,15 @@ function UserManagement() {
       setLoading(false);
     }
   };
-  
 
-  const deleteUser = async(id_user) =>{
+  const deleteEmployee = async(id_karyawan) =>{
     try {
-      await axios.delete(`http://localhost:5000/user/${id_user}` , {
+      await axios.delete(`http://localhost:5000/employee/${id_karyawan}` , {
         headers: {
           Authorization: `Bearer ${token}`,
       },
       }); 
-      toast.success("User successfully deleted!", {
+      toast.success("Employee was deleted successfully!", {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: true,
@@ -121,31 +118,32 @@ function UserManagement() {
     }
   };
 
-  const fetchEmployeeData = async () => {
-    const token = localStorage.getItem("token");
-    const email = localStorage.getItem("email");
-    if (!token || !email) return;
+  // const fetchEmployeeData = async () => {
+  //   const token = localStorage.getItem("token");
+  //   const email = localStorage.getItem("email");
+  //   // if (!token || !email) return;
 
-    try {
-      const response = await axios.get(
-        `http://localhost:5000/user-details/${email}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  //   try {
+  //     const response = await axios.get(
+  //       `http://localhost:5000/karyawan-details/${email}`,
+  //       {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
 
-      if (response.data) {
-        setUserData({
-          id_karyawan: response.data.id_karyawan,
-          nama: response.data.nama,
-          organisasi: response.data.organisasi,
-        });
-        // console.log("User data fetched:", response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
+  //     if (response.data) {
+  //       setkaryawanData({
+  //         id_user: response.data.id_user,
+  //         email: response.data.email,
+  //         role: response.data.role,
+  //         // user_active: response.data.user_active
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching user data:", error);
+  //   }
+  // };
+
 
 
   const handleSearchChange = (event) => {
@@ -154,7 +152,8 @@ function UserManagement() {
 
   const handleAddSuccess = () => {
     getEmployee();
-    toast.success("New user successfully created!", {
+    // fetchEmployeeData();
+    toast.success("New employee has been created!", {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: true,
@@ -163,7 +162,7 @@ function UserManagement() {
 
   const handleEditSuccess = () => {
     getEmployee();
-    toast.success("User successfully updated!", {
+    toast.success("Employee was updated successfully!", {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: true,
@@ -184,11 +183,13 @@ function UserManagement() {
   };
 
   const downloadCSV = (data) => {
-    const header = ["id_user", "email", "role"];
+    const header = ["id_karyawan", "nama", "job_title", "organisasi", "sign_base64"];
     const rows = data.map((item) => [
-      item.id_user,
-      item.email,
-      item.role
+      item.id_karyawan,
+      item.nama,
+      item.job_title,
+      item.organisasi,
+      item.sign_base64
     ]);
   
     const csvContent = [header, ...rows]
@@ -199,7 +200,7 @@ function UserManagement() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", "master_user.csv");
+    link.setAttribute("download", "master_karyawan.csv");
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
@@ -210,7 +211,7 @@ function UserManagement() {
     const doc = new jsPDF({ orientation: 'landscape' });
   
     doc.setFontSize(12); 
-    doc.text("Master User", 12, 20);
+    doc.text("Employees Data", 12, 20);
 
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleString('en-EN', {
@@ -226,12 +227,13 @@ function UserManagement() {
     doc.setFontSize(12); 
     doc.text(`Exported date: ${formattedDate}`, 12, 30);
   
-    const headers = [["ID User", "Email", "Role"]];
+    const headers = [["Employee ID", "Name", "Job Title", "Organization"]];
   
     const rows = data.map((item) => [
-      item.id_user,
-      item.email,
-      item.role,
+      item.id_karyawan,
+      item.nama,
+      item.job_title,
+      item.organisasi
     ]);
 
     const marginTop = 15; 
@@ -244,74 +246,19 @@ function UserManagement() {
       headStyles: { fillColor: [3, 177, 252] }, 
     });
   
-    doc.save("master_user.pdf");
+    doc.save("master_karyawan.pdf");
   };
-
-  const setPassword = async(id_user) => {
-    try {
-
-        await axios.put(`http://localhost:5000/user/${id_user}`, {
-        }, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        toast.success("Password successfully updated!", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: true,
-        });
-        getEmployee();    
-    } catch (error) {
-        const errorMessage = error.response?.data?.message || error.message;
-        // console.log(error.message);
-        toast.error('Failed to update password.', {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: true,
-          });
-    }
-
-  };
-
-  const deleteSession = async (id_user, user_active) => {
-    try {
-        await axios.post(`http://localhost:5000/logout-user/${id_user}`, {
-            id_user,
-            user_active
-        }, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        toast.success("User session was successfully deleted.", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: true,
-        });
-        getEmployee();
-
-    } catch (error) {
-        console.log(error.message);
-        toast.error('Failed to delete user session.', {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: true,
-          });
-    }
-  };
-  
   
   return (
     <>
       <Container fluid>
         <Row>
-          <AddUser showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
+          <AddKaryawan showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
 
-          <EditUser
+          <EditKaryawan
               showEditModal={showEditModal}
               setShowEditModal={setShowEditModal}
-              user={selectedEmployee}
+              employee={selectedEmployee}
               onSuccess={handleEditSuccess}
           />
 
@@ -325,7 +272,7 @@ function UserManagement() {
               className="btn btn-fill btn-success pull-right mb-3 mr-3"
               onClick={() => setShowAddModal(true)}>
               <i class="fa fa-plus-circle" style={{ marginRight: '8px' }}></i>
-              Add User
+               New Employee
             </Button>
 
             {/* <Button
@@ -341,7 +288,7 @@ function UserManagement() {
               className="btn-fill pull-right mb-3 mr-3"
               type="button"
               variant="primary"
-              onClick={() => downloadCSV(user)}>
+              onClick={() => downloadCSV(employee)}>
               <FaFileCsv style={{ marginRight: '8px' }} />
               Export to CSV
             </Button>
@@ -350,7 +297,7 @@ function UserManagement() {
               className="btn-fill pull-right mb-3"
               type="button"
               variant="primary"
-              onClick={() => downloadPDF(user)}>
+              onClick={() => downloadPDF(employee)}>
               <FaFilePdf style={{ marginRight: '8px' }} />
               Export to PDF
             </Button>
@@ -359,12 +306,14 @@ function UserManagement() {
           <CDBTable hover  className="mt-4">
             <CDBTableHeader>
               <tr>
-                <th onClick={() => handleSort("id_user")}>Employee Id {sortBy==="id_karyawan" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                <th onClick={() => handleSort("id_karyawan")}>Employee Id {sortBy==="id_karyawan" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
                 <th className="border-0" onClick={() => handleSort("nama")}>Name {sortBy==="nama" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                <th className="border-0" onClick={() => handleSort("email")}>Email {sortBy==="email" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                {/* <th className="border-0" onClick={() => handleSort("email")}>Email {sortBy==="email" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th> */}
                 <th className="border-0" onClick={() => handleSort("job_title")}>Job Title {sortBy==="job_title" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                <th className="border-0" onClick={() => handleSort("role")}>Role {sortBy==="role" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                <th className="border-0">Status</th>
+                <th className="border-0" onClick={() => handleSort("organisasi")}>Organization {sortBy==="organisasi" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                {/* <th className="border-0" onClick={() => handleSort("role")}>Role {sortBy==="role" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th> */}
+                <th className="border-0">Registered</th>
+                <th className="border-0">Last Updated</th>
                 <th className="border-0">Action</th>
               </tr>
             </CDBTableHeader>
@@ -373,9 +322,12 @@ function UserManagement() {
                 <tr key={employee.id_karyawan}>
                   <td className="text-center">{employee.id_karyawan}</td>
                   <td className="text-center">{employee.nama}</td>
-                  <td className="text-center">{employee.email}</td>
+                  {/* <td className="text-center">{employee.email}</td> */}
                   <td className="text-center">{employee.job_title}</td>
-                  <td className="text-center">{employee.role}</td>
+                  <td className="text-center">{employee.organisasi}</td>
+                  <td className="text-center">{new Date(employee.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
+                  <td className="text-center">{new Date(employee.updatedAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
+                  {/* <td className="text-center">{employee.role}</td>
                   <td className="text-center">
                       {employee.user_active === true ? (
                         <Badge pill bg="success p-2" style={{ color: 'white'}} >
@@ -386,7 +338,7 @@ function UserManagement() {
                           Not Active
                         </Badge >
                       )}
-                    </td>
+                  </td> */}
                   <td className="text-center">
                   <FaRegEdit
                       type="button"
@@ -402,7 +354,7 @@ function UserManagement() {
                     >
                     <FaTrashAlt 
                       type="button"
-                      onClick={() => deleteUser(employee.id_employee)}
+                      onClick={() => deleteEmployee(employee.id_karyawan)}
                       className="btn-del"
                     />
                   </button>
@@ -430,5 +382,5 @@ function UserManagement() {
   );
 }
 
-export default UserManagement;
+export default EmployeeManagement;
 

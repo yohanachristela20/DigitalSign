@@ -1,4 +1,6 @@
+import { response } from "express";
 import Karyawan from "../models/KaryawanModel.js";
+import User from "../models/UserModel.js";
 
 export const getKaryawan = async(req, res) => {
     try {
@@ -24,7 +26,6 @@ export const getKaryawanById = async(req, res) => {
 
 export const createKaryawan = async(req, res) => {
     try {
-        // console.log(req.body);
         await Karyawan.create(req.body);
         res.status(201).json({msg: "New Employee data has been created!"}); 
     } catch (error) {
@@ -69,15 +70,36 @@ export const getLastKaryawanId = async (req, res) => {
         let nextId = 'K00001';
         if (latestIdKaryawan && latestIdKaryawan.id_karyawan) {
             const lastNumeric = parseInt(latestIdKaryawan.id_karyawan.substring(1), 10);
-            const incremented = (lastNumeric + 1).toString().padStart(2, '0');
+            const incremented = (lastNumeric + 1).toString().padStart(5, '0');
             nextId = `K${incremented}`;
         }
-        console.log("getLastIdKaryawan: ", nextId);
+        // console.log("getLastIdKaryawan: ", nextId);
         return res.status(200).json({nextId});
 
 
     } catch (error) {
         console.error(error);
         return res.status(500).json({message: 'error retrieving last id detail barang'});
+    }
+};
+
+export const getKaryawanDetails = async (req, res) => {  
+    try {
+        const response = await Karyawan.findAll({
+        include: [
+            {
+                model: User,
+                as: 'Pengguna',
+                attributes: ['email', 'role', 'user_active'],
+            },
+        ],
+        });
+
+        console.log("Karyawan details:", response);
+        res.status(200).json(response);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error fetching user details" });
     }
 };

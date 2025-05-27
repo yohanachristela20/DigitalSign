@@ -1,4 +1,4 @@
-import UserManagement from "views/UserManagement.js";
+import EmployeeManagement from "views/EmployeeManagement.js";
 import ScreeningKaryawan from "views/ScreeningKaryawan.js";
 import Angsuran from "views/Angsuran.js";
 import LaporanPiutang from "views/LaporanPiutangKaryawan.js";
@@ -28,9 +28,9 @@ const dashboardRoutes = [
   // ADMIN
   {
     path: "/user-management",
-    name: "User Management",
+    name: "Employee Management",
     icon: "users",
-    component: UserManagement,
+    component: EmployeeManagement,
     layout: "/admin"
   },
   // {
