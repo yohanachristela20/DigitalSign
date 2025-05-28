@@ -149,7 +149,7 @@ function Header() {
           </Navbar.Brand>
         </div>
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="ml-auto" navbar>
+          <Nav className="ml-auto" navbar style={{marginRight:'40px'}}>
           <Dropdown as={Nav.Item} show={showNotifDropdown} onToggle={setShowNotifDropdown} hidden={role === "Karyawan" || role === "Super Admin"}>
                 <Dropdown.Toggle as={Nav.Link} className="position-relative">
                   <FaBell style={{ marginTop: '9px' }} size={20} />
@@ -159,7 +159,7 @@ function Header() {
                     </span>
                   )}
                 </Dropdown.Toggle>
-                <Dropdown.Menu style={{ width: '300px' }}>
+                <Dropdown.Menu style={{ width: '200px'}}>
                   {notifications.length > 0 ? (
                     notifications.map((notif, index) => (
                       <Dropdown.Item key={index} className="text-wrap">
@@ -172,7 +172,7 @@ function Header() {
                     <Dropdown.Item>
                       <FaInfoCircle style={{ marginRight: '8px' }} />
                         No notifications
-                      </Dropdown.Item>
+                    </Dropdown.Item>
                   )}
                 </Dropdown.Menu>
               </Dropdown>
@@ -187,7 +187,7 @@ function Header() {
               >
                 <span><FaUser style={{ marginRight: '8px' }} /> {userData.nama || "Loading..."}</span>
               </Dropdown.Toggle>
-              <Dropdown.Menu aria-labelledby="navbarDropdownMenuLink">
+              <Dropdown.Menu aria-labelledby="navbarDropdownMenuLink" style={{ width: '200px' }}>
                 <Dropdown.Item
                   onClick={(e) => e.preventDefault()}
                 >

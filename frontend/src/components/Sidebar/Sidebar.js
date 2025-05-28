@@ -67,7 +67,7 @@ const folders = [
   const activeRoute = (routeName) => location.pathname.includes(routeName);
 
   const filteredRoutes = routes.filter(
-    (route) => !["/screening-karyawan", "/login", "/surat-pernyataan"].includes(route.path)
+    (route) => !["/screening-karyawan", "/login", "/surat-pernyataan", "/document"].includes(route.path)
   );
 
   const roleFilteredRoutes = filteredRoutes.filter((route) => {
@@ -137,7 +137,7 @@ const folders = [
         </ul>
       </CDBSidebarContent>
       <hr />
-      {!isSidebarCollapsed && role === "Admin" && <FolderTree folders={folders}/>}
+      {!isSidebarCollapsed && role === "Admin" && <FolderTree folders={folders} />}
     </div>
   );
 };

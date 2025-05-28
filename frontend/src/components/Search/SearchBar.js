@@ -14,7 +14,7 @@ function SearchBar({ searchQuery, handleSearchChange }) {
           value={searchQuery}
           onChange={handleSearchChange}
         />
-        <Button type="submit" variant="primary">
+        <Button variant="secondary">
           <FaSearch />
         </Button>
       </InputGroup>

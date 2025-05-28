@@ -19,13 +19,13 @@ import { CDBTable, CDBTableHeader, CDBTableBody, CDBContainer, CDBBtn, CDBBtnGrp
 
 // react-bootstrap components
 import {Button, Container, Row, Col, Card, Table, Spinner, Badge} from "react-bootstrap";
-function EmployeeManagement() {
+function Document() {
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [showImportModal, setShowImportModal] = useState(false); 
-  const [employee, setEmployee] = useState([]); 
+  const [document, setDocument] = useState([]); 
   const [user_active, setUserActive] = useState();
-  const [selectedEmployee, setselectedEmployee] = useState(null); 
+  const [selectedDocument, setSelectedDocument] = useState(null); 
   const [searchQuery, setSearchQuery] = useState("");
   const [karyawanData, setkaryawanData] = useState({id_user: "", email: "", role: "", user_active: ""}); 
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,20 +33,56 @@ function EmployeeManagement() {
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const history = useHistory();
-  const [id_karyawan, setIdKaryawan] = useState("");
+  const [id_dokumen, setIdKaryawan] = useState("");
 
-  const [sortBy, setSortBy] = useState("id_karyawan");
+  const [sortBy, setSortBy] = useState("id_dokumen");
   const [sortOrder, setSortOrder] = useState("asc");
   const [sortOrderDibayar, setSortOrderDibayar] = useState("asc");
 
   const [showAddDoc, setShowAddDoc] = React.useState(false);
+  const selectedCategory = location.state?.selectedCategory;
+//   const [documentList, setDocumentList] = useState([]);
 
-  const filteredEmployee = employee.filter((employee) =>
-    (employee.id_karyawan && String(employee.id_karyawan).toLowerCase().includes(searchQuery)) ||
-    (employee.nama && String(employee.nama).toLowerCase().includes(searchQuery)) ||
-    (employee.email && String(employee.email).toLowerCase().includes(searchQuery)) ||
-    (employee.job_title && String(employee.job_title).toLowerCase().includes(searchQuery)) ||
-    (employee.organisasi && String(employee.organisasi).toLowerCase().includes(searchQuery)) 
+  
+
+  const token = localStorage.getItem("token");
+
+  
+   const getDocument = async () =>{
+    try {
+      const response = await axios.get("http://localhost:5000/document", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+      },
+      });
+      setDocument(response.data);
+    } catch (error) {
+      console.error("Error fetching data:", error.message); 
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedCategory) {
+        getDocument(selectedCategory);
+    }
+  }, [selectedCategory]);
+
+  console.log("Selected category: ", selectedCategory);
+
+  const filteredDocuments = selectedCategory
+    ? document.filter(doc => doc.id_kategoridok === selectedCategory)
+    : document;
+
+  console.log("filtered documents: ", filteredDocuments);
+
+const filteredDocument = document.filter((document) =>
+    (document.id_dokumen && String(document.id_dokumen).toLowerCase().includes(searchQuery)) ||
+    (document.nama_dokumen && String(document.nama_dokumen).toLowerCase().includes(searchQuery)) ||
+    (document.email && String(document.email).toLowerCase().includes(searchQuery)) ||
+    (document.id_kategoridok && String(document.id_kategoridok).toLowerCase().includes(searchQuery)) ||
+    (document.organisasi && String(document.organisasi).toLowerCase().includes(searchQuery)) 
   );
 
   
@@ -61,7 +97,7 @@ function EmployeeManagement() {
     }
   }
 
-  const sortedEmployee = filteredEmployee.sort((a, b) => {
+  const sortedDocument = filteredDocument.sort((a, b) => {
     const aValue = a[sortBy];
     const bValue = b[sortBy];
 
@@ -75,36 +111,40 @@ function EmployeeManagement() {
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedEmployee.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = sortedDocument.slice(indexOfFirstItem, indexOfLastItem);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber); 
   }
 
-  const token = localStorage.getItem("token");
 
-  useEffect(()=> {
-    getEmployee();
-    // fetchEmployeeData();
-  }, []); 
-  const getEmployee = async () =>{
-    try {
-      const response = await axios.get("http://localhost:5000/employee-details", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-      },
-      });
-      setEmployee(response.data);
-    } catch (error) {
-      console.error("Error fetching data:", error.message); 
-    } finally {
-      setLoading(false);
-    }
-  };
+//   useEffect(()=> {
+//     getDocument();
+//     // fetchEmployeeData();
+//   }, []); 
 
-  const deleteEmployee = async(id_karyawan) =>{
+//   const getDocument = async () =>{
+//     try {
+//       const response = await axios.get("http://localhost:5000/document", {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//       },
+//       });
+//       setDocument(response.data);
+//     } catch (error) {
+//       console.error("Error fetching data:", error.message); 
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+
+//   console.log("document: ", document);
+
+
+  const deleteDocument = async(id_dokumen) =>{
     try {
-      await axios.delete(`http://localhost:5000/employee/${id_karyawan}` , {
+      await axios.delete(`http://localhost:5000/document/${id_dokumen}` , {
         headers: {
           Authorization: `Bearer ${token}`,
       },
@@ -114,48 +154,20 @@ function EmployeeManagement() {
         autoClose: 5000,
         hideProgressBar: true,
       });
-      getEmployee(); 
+      getDocument(); 
     } catch (error) {
       console.log(error.message); 
     }
   };
-
-  // const fetchEmployeeData = async () => {
-  //   const token = localStorage.getItem("token");
-  //   const email = localStorage.getItem("email");
-  //   // if (!token || !email) return;
-
-  //   try {
-  //     const response = await axios.get(
-  //       `http://localhost:5000/karyawan-details/${email}`,
-  //       {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       }
-  //     );
-
-  //     if (response.data) {
-  //       setkaryawanData({
-  //         id_user: response.data.id_user,
-  //         email: response.data.email,
-  //         role: response.data.role,
-  //         // user_active: response.data.user_active
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching user data:", error);
-  //   }
-  // };
-
-
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value.toLowerCase());
   };
 
   const handleAddSuccess = () => {
-    getEmployee();
+    getDocument();
     // fetchEmployeeData();
-    toast.success("New employee has been created!", {
+    toast.success("New document has been created!", {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: true,
@@ -164,7 +176,7 @@ function EmployeeManagement() {
 
   
   const handleAddDocSuccess = () => {
-    // getEmployee();
+    // getDocument();
     // fetchEmployeeData();
     toast.success("New document has been uploaded!", {
         position: "top-right",
@@ -174,7 +186,7 @@ function EmployeeManagement() {
   };
 
   const handleEditSuccess = () => {
-    getEmployee();
+    getDocument();
     toast.success("Employee was updated successfully!", {
         position: "top-right",
         autoClose: 5000,
@@ -187,7 +199,7 @@ function EmployeeManagement() {
   }
 
   const handleImportSuccess = () => {
-    getEmployee();
+    getDocument();
     toast.success("User successfully imported!", {
         position: "top-right",
         autoClose: 5000,
@@ -196,11 +208,11 @@ function EmployeeManagement() {
   };
 
   const downloadCSV = (data) => {
-    const header = ["id_karyawan", "nama", "job_title", "organisasi", "sign_base64"];
+    const header = ["id_dokumen", "nama_dokumen", "id_kategoridok", "organisasi", "sign_base64"];
     const rows = data.map((item) => [
-      item.id_karyawan,
-      item.nama,
-      item.job_title,
+      item.id_dokumen,
+      item.nama_dokumen,
+      item.id_kategoridok,
       item.organisasi,
       item.sign_base64
     ]);
@@ -243,9 +255,9 @@ function EmployeeManagement() {
     const headers = [["Employee ID", "Name", "Job Title", "Organization"]];
   
     const rows = data.map((item) => [
-      item.id_karyawan,
-      item.nama,
-      item.job_title,
+      item.id_dokumen,
+      item.nama_dokumen,
+      item.id_kategoridok,
       item.organisasi
     ]);
 
@@ -271,30 +283,29 @@ function EmployeeManagement() {
           <EditKaryawan
               showEditModal={showEditModal}
               setShowEditModal={setShowEditModal}
-              employee={selectedEmployee}
+              document={selectedDocument}
               onSuccess={handleEditSuccess}
           />
 
           {/* <ImportUser showImportModal={showImportModal} setShowImportModal={setShowImportModal} onSuccess={handleImportSuccess} /> */}
 
           <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>
-          <Button
+            <Button
               type="button"
               className="btn btn-fill btn-primary mb-3"
               style={{width:"190px"}}
               onClick={() => setShowAddDoc(true)}>
               <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
-                Upload Document
+                Upload
             </Button>
           <Container>
-            
-            <Button
+            {/* <Button
               type="button"
               className="btn btn-fill btn-success pull-right mb-3 mr-3"
               onClick={() => setShowAddModal(true)}>
               <i class="fa fa-plus-circle" style={{ marginRight: '8px' }}></i>
                New Employee
-            </Button>
+            </Button> */}
 
             {/* <Button
               className="btn-fill pull-right mb-3 mr-3"
@@ -309,7 +320,7 @@ function EmployeeManagement() {
               className="btn-fill pull-right mb-3 mr-3"
               type="button"
               variant="info"
-              onClick={() => downloadCSV(employee)}>
+              onClick={() => downloadCSV(document)}>
               <FaFileCsv style={{ marginRight: '8px' }} />
               Export to CSV
             </Button>
@@ -318,7 +329,7 @@ function EmployeeManagement() {
               className="btn-fill pull-right mb-3"
               type="button"
               variant="info"
-              onClick={() => downloadPDF(employee)}>
+              onClick={() => downloadPDF(document)}>
               <FaFilePdf style={{ marginRight: '8px' }} />
               Export to PDF
             </Button>
@@ -327,55 +338,38 @@ function EmployeeManagement() {
           <CDBTable hover  className="mt-4">
             <CDBTableHeader>
               <tr>
-                <th onClick={() => handleSort("id_karyawan")}>Employee Id {sortBy==="id_karyawan" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                <th className="border-0" onClick={() => handleSort("nama")}>Name {sortBy==="nama" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                {/* <th className="border-0" onClick={() => handleSort("email")}>Email {sortBy==="email" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th> */}
-                <th className="border-0" onClick={() => handleSort("job_title")}>Job Title {sortBy==="job_title" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                <th className="border-0" onClick={() => handleSort("organisasi")}>Organization {sortBy==="organisasi" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                {/* <th className="border-0" onClick={() => handleSort("role")}>Role {sortBy==="role" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th> */}
-                <th className="border-0">Registered</th>
-                <th className="border-0">Last Updated</th>
+                <th onClick={() => handleSort("id_dokumen")}>Document ID {sortBy==="id_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                <th className="border-0" onClick={() => handleSort("nama_dokumen")}>Document Name {sortBy==="nama_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                <th className="border-0" onClick={() => handleSort("id_kategoridok")}>Category {sortBy==="id_kategoridok" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                <th className="border-0">Status</th>
+                <th className="border-0">Uploaded</th>
                 <th className="border-0">Action</th>
               </tr>
             </CDBTableHeader>
             <CDBTableBody>
-              {currentItems.map((employee, index) => (
-                <tr key={employee.id_karyawan}>
-                  <td className="text-center">{employee.id_karyawan}</td>
-                  <td className="text-center">{employee.nama}</td>
-                  {/* <td className="text-center">{employee.email}</td> */}
-                  <td className="text-center">{employee.job_title}</td>
-                  <td className="text-center">{employee.organisasi}</td>
-                  <td className="text-center">{new Date(employee.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
-                  <td className="text-center">{new Date(employee.updatedAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
-                  {/* <td className="text-center">{employee.role}</td>
+              {currentItems.map((document, index) => (
+                <tr key={document.id_dokumen}>
+                  <td className="text-center">{document.id_dokumen}</td>
+                  <td className="text-center">{document.nama_dokumen}</td>
+                  <td className="text-center">{document.id_kategoridok}</td>
+                  <td className="text-center"></td>
+                  <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
                   <td className="text-center">
-                      {employee.user_active === true ? (
-                        <Badge pill bg="success p-2" style={{ color: 'white'}} >
-                          Active
-                        </Badge >
-                        ) : (
-                        <Badge pill bg="secondary p-2" style={{ color: 'white'}} >
-                          Not Active
-                        </Badge >
-                      )}
-                  </td> */}
-                  <td className="text-center">
-                  <FaRegEdit
+                  {/* <FaRegEdit
                       type="button"
                       onClick={() => {
                         setShowEditModal(true);
-                        setselectedEmployee(employee);
+                        setSelectedDocument(document);
                       }}
                       className="btn-edit"
-                  />
+                  /> */}
                   <button
                     style={{background:"transparent", border:"none"}} 
-                    disabled={employee.user_active === true}
+                    disabled={document.user_active === true}
                     >
                     <FaTrashAlt 
                       type="button"
-                      onClick={() => deleteEmployee(employee.id_karyawan)}
+                      onClick={() => deleteDocument(document.id_dokumen)}
                       className="btn-del"
                     />
                   </button>
@@ -389,7 +383,7 @@ function EmployeeManagement() {
               <Pagination
                     activePage={currentPage}
                     itemsCountPerPage={itemsPerPage}
-                    totalItemsCount={filteredEmployee.length}
+                    totalItemsCount={filteredDocument.length}
                     pageRangeDisplayed={5}
                     onChange={handlePageChange}
                     itemClass="page-item"
@@ -403,5 +397,5 @@ function EmployeeManagement() {
   );
 }
 
-export default EmployeeManagement;
+export default Document;
 

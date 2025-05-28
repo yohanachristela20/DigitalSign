@@ -18,4 +18,5 @@ router.patch('/category/:id', updateCategory);
 router.delete('/category/:id', deleteCategory);
 router.get('/getLastCategoryId', getLastCategoryId);
 router.get('/category-details/:id_kategoridok', getCategoryDetails);
+
 export default router;

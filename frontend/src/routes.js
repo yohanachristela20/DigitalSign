@@ -1,13 +1,7 @@
 import EmployeeManagement from "views/EmployeeManagement.js";
 import ScreeningKaryawan from "views/ScreeningKaryawan.js";
-import Angsuran from "views/Angsuran.js";
 import LaporanPiutang from "views/LaporanPiutangKaryawan.js";
-import MasterKaryawan from "views/MasterKaryawan.js";
-import ScreeningKaryawanManual from "views/ScreeningKaryawanManual.js";
 import BerandaFinance from "views/BerandaFinance.js";
-import BerandaKaryawan from "views/BerandaKaryawan.js";
-import ScreeningPinjamanKaryawan from "views/ScreeningPinjamanKaryawan.js";
-import ScreeningPinjamanKaryawan2 from "views/ScreeningPinjamanKaryawan2.js";
 import RiwayatPengajuanKaryawan from "views/RiwayatPengajuanKaryawan.js";
 import AngsuranKaryawan from "views/AngsuranKaryawan.js";
 import MasterUser from "views/MasterUser.js";
@@ -15,19 +9,16 @@ import DashboardKaryawan from "views/DashboardKaryawan.js";
 import RiwayatPinjamanKaryawan from "views/RiwayatPinjamanKaryawan";
 import AngsuranFinance from "views/AngsuranFinance";
 import SuratPernyataan from "views/SuratPernyataan";
-import DataBarang from "views/DataBarang.js";
+import Document from "views/Document.js";
 
-import MasterBarang from "views/MasterBarang";
-import MasterVendor from "views/MasterVendor";
 
 import Login from "views/Login.js";
-import { layouts } from "chart.js";
 
 
 const dashboardRoutes = [
   // ADMIN
   {
-    path: "/user-management",
+    path: "/employee-management",
     name: "Employee Management",
     icon: "users",
     component: EmployeeManagement,
@@ -173,10 +164,10 @@ const dashboardRoutes = [
 
 
   {
-    path: "/screening-karyawan",
-    name: "Screening Karyawan",
+    path: "/document",
+    name: "Document",
     icon: "nc-icon nc-circle-09",
-    component: ScreeningKaryawan,
+    component: Document,
     layout: "/admin"
   },
 

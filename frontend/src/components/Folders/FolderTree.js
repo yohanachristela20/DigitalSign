@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useHistory } from 'react-router-dom';
 import { FaPlus, FaEllipsisV, FaRegEdit } from 'react-icons/fa';
 import AddCategory from 'components/ModalForm/AddCategoryDoc.js';
 import EditCategory from 'components/ModalForm/EditCategory.js';
@@ -9,11 +10,12 @@ import "../../assets/scss/lbd/_sidebar-and-main-panel.scss";
 
 const FolderTree = () => {
   const [categoryList, setCategoryList] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [actionVisible, setActionVisible] = useState(null);
   const token = localStorage.getItem("token");
+  const history = useHistory();
 
   useEffect(() => {
     getCategory();
@@ -69,6 +71,15 @@ const FolderTree = () => {
     }
   };
 
+  const handleFolderClick = (selectedCategory) => {
+    history.push({
+      pathname: "/admin/document",
+      state: {selectedCategory: selectedCategory?.id_kategoridok}
+    });
+  };
+
+  // console.log("Selected cat: ", selectedCategory?.id_kategoridok);
+
   return (
     <div className="folder-tree">
       <div className="folder-header d-flex justify-content-between">
@@ -90,10 +101,19 @@ const FolderTree = () => {
         />
       </div>
 
-      <div className="folder-list">
+      <div className="folder-list ">
         {categoryList.map((cat) => (
-          <div className="folder-item " key={cat.id_kategoridok}>
+          <div className="folder-item" key={cat.id_kategoridok}>
             <div className="folder-label p-2">
+              <Button 
+                className='bg-transparent'
+                style={{color: "white", border:"none"}}
+                variant=''
+                onClick={() => {
+                  setSelectedCategory(cat)
+                  handleFolderClick(cat)
+                }}
+              >
               <span>📁</span>
               <span>{cat.kategori}</span>
               <span
@@ -103,8 +123,9 @@ const FolderTree = () => {
                   )
                 }
               >
-                <FaEllipsisV style={{ marginLeft: '10px', cursor: 'pointer' }} />
+              <FaEllipsisV style={{ marginLeft: '10px', cursor: 'pointer' }} />
               </span>
+              </Button>
             </div>
 
             {actionVisible === cat.id_kategoridok && (

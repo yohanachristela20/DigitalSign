@@ -9,6 +9,10 @@ const Item = db.define('item_field', {
         primaryKey: true,
     },
     jenis_item: DataTypes.STRING,
+    x_axis: DataTypes.DECIMAL(15,4),
+    y_axis: DataTypes.DECIMAL(15,4),
+    width: DataTypes.DECIMAL(15,4),
+    height: DataTypes.DECIMAL(15,4),
 }, {
     freezeTableName: true,
     timestamps: true,

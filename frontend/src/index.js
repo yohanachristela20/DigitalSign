@@ -20,6 +20,7 @@ import ScreeningKaryawan from "views/ScreeningKaryawan";
 import { PlafondProvider } from "components/Provider/PlafondContext.js";
 import LaporanPiutang from "views/LaporanPiutangKaryawan.js";
 import PageScreeningKaryawan from "views/ScreeningKaryawan.js"; 
+import Document from "views/Document.js";
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -92,8 +93,7 @@ root.render(
         </>
       )} />
 
-      <Route path="/admin/screening-karyawan" component={ScreeningKaryawan} />
-      <Route path="/laporan-piutang" element={<LaporanPiutang />} />
+      <Route path="/document" element={<Document />} />
       <Route path="/screening-karyawan" element={<PageScreeningKaryawan />} />
       <Redirect from="/" to="/login" />
 

@@ -31,7 +31,7 @@ const Dokumen = db.define('dokumen', {
 
             if (lastRecord && lastRecord.id_dokumen) {
                 const lastIdNumber = parseInt(lastRecord.id_dokumen.substring(1), 10); 
-                const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(2, '0');
+                const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(5, '0');
                 newId = `D${incrementedIdNumber}`;
             }
             dokumen.id_dokumen = newId;

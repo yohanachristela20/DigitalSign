@@ -8,15 +8,17 @@ import http from "http";
 import KaryawanRoute from "./routes/KaryawanRoute.js"
 import UserRoute from "./routes/UserRoutes.js";
 import CategoryRoute from "./routes/CategoryRoute.js";
+import DocumentRoute from "./routes/DocumentRoute.js";
 import verifyToken from "./middlewares/authMiddleware.js";
 import dotenv from 'dotenv';
 
 import './models/KaryawanModel.js';
 import './models/Association.js';
 import './models/UserModel.js';
-import './models/KategoriDokModel.js'
+import './models/KategoriDokModel.js';
+import './models/DokumenModel.js';
 import jwt from 'jsonwebtoken';
-import KategoriDokumen from "./models/KategoriDokModel.js";
+
 
 
 // import io from "socket.io-client";
@@ -54,6 +56,7 @@ app.use(UserRoute); // Rute user untuk login, tanpa middleware otentikasi
 const protectedRoutes = [
     KaryawanRoute,
     CategoryRoute,
+    DocumentRoute
 ];
 
 // Terapkan middleware otentikasi pada routes yang dilindungi
