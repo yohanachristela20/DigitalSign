@@ -114,7 +114,7 @@ const FolderTree = () => {
                   handleFolderClick(cat)
                 }}
               >
-              <span>📁</span>
+              <span><i class="fa fa-folder-open" style={{ marginRight: '8px' }}></i></span>
               <span>{cat.kategori}</span>
               <span
                 onClick={() =>

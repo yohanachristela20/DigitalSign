@@ -39,8 +39,8 @@ const upload = multer({
     }
 });
 
-// router.get('/document', getDocument); 
-router.get('/document', getDocumentByCategory);
+router.get('/document', getDocument); 
+router.get('/document/category/:id_kategoridok', getDocumentByCategory);
 router.get('/document/:id_dokumen', getDocumentById);
 // router.post('/document', createDocument);  
 router.patch('/document/:id_dokumen', updateDocument);

@@ -4,10 +4,19 @@ import User from "../models/UserModel.js";
 
 export const getKaryawan = async(req, res) => {
     try {
-        const response = await Karyawan.findAll();
+        const response = await Karyawan.findAll({
+            attributes: ['id_karyawan', 'nama', 'job_title', 'organisasi'],
+            include: [{
+                model: User,
+                as: 'Pengguna', 
+                attributes: ['email']
+            }],
+            order: [['id_karyawan', 'ASC']]
+        });
         res.status(200).json(response); 
     } catch (error) {
         console.log(error.message); 
+        res.status(500).json({ message: "Failed to fetch employees name" });
     }
 }
 
@@ -103,3 +112,5 @@ export const getKaryawanDetails = async (req, res) => {
         res.status(500).json({ message: "Error fetching user details" });
     }
 };
+
+

@@ -48,9 +48,13 @@ function Document() {
   const token = localStorage.getItem("token");
 
   
-   const getDocument = async () =>{
+   const getDocument = async (selectedCategory) =>{
     try {
-      const response = await axios.get("http://localhost:5000/document", {
+      const url = selectedCategory 
+      ? `http://localhost:5000/document/category/${selectedCategory}`
+      : `http://localhost:5000/document`;
+
+      const response = await axios.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
       },
@@ -64,9 +68,7 @@ function Document() {
   };
 
   useEffect(() => {
-    if (selectedCategory) {
-        getDocument(selectedCategory);
-    }
+    getDocument(selectedCategory);
   }, [selectedCategory]);
 
   console.log("Selected category: ", selectedCategory);
@@ -80,9 +82,9 @@ function Document() {
 const filteredDocument = document.filter((document) =>
     (document.id_dokumen && String(document.id_dokumen).toLowerCase().includes(searchQuery)) ||
     (document.nama_dokumen && String(document.nama_dokumen).toLowerCase().includes(searchQuery)) ||
-    (document.email && String(document.email).toLowerCase().includes(searchQuery)) ||
     (document.id_kategoridok && String(document.id_kategoridok).toLowerCase().includes(searchQuery)) ||
-    (document.organisasi && String(document.organisasi).toLowerCase().includes(searchQuery)) 
+    (document.organisasi && String(document.organisasi).toLowerCase().includes(searchQuery)) ||
+    (document?.Kategori?.kategori && String(document.kategori).toLowerCase().includes(searchQuery))
   );
 
   
@@ -155,6 +157,7 @@ const filteredDocument = document.filter((document) =>
         hideProgressBar: true,
       });
       getDocument(); 
+      window.location.reload();
     } catch (error) {
       console.log(error.message); 
     }
@@ -183,6 +186,8 @@ const filteredDocument = document.filter((document) =>
         autoClose: 5000,
         hideProgressBar: true,
     });
+    getDocument();
+    window.location.reload();
   };
 
   const handleEditSuccess = () => {
@@ -296,7 +301,7 @@ const filteredDocument = document.filter((document) =>
               style={{width:"190px"}}
               onClick={() => setShowAddDoc(true)}>
               <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
-                Upload
+                Upload Document
             </Button>
           <Container>
             {/* <Button
@@ -351,7 +356,7 @@ const filteredDocument = document.filter((document) =>
                 <tr key={document.id_dokumen}>
                   <td className="text-center">{document.id_dokumen}</td>
                   <td className="text-center">{document.nama_dokumen}</td>
-                  <td className="text-center">{document.id_kategoridok}</td>
+                  <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
                   <td className="text-center"></td>
                   <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
                   <td className="text-center">

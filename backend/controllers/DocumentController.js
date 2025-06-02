@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { group } from "console";
 import path from "path";
 import KategoriDokumen from "../models/KategoriDokModel.js";
+import fs from 'fs';
 
 // export const getDocument = async(req, res) => {
 //     try {
@@ -19,7 +20,15 @@ import KategoriDokumen from "../models/KategoriDokModel.js";
 
 export const getDocument = async(req, res) => {
     try {
-        const response = await Dokumen.findAll();
+        const response = await Dokumen.findAll({
+            include: [
+                {
+                    model: KategoriDokumen,
+                    as: "Kategori",
+                    attributes: ["id_kategoridok", "kategori"],
+                },
+            ],
+        });
         res.status(200).json(response);
     } catch (error) {
         console.log(error.message);
@@ -40,18 +49,19 @@ export const getDocumentById = async(req, res) => {
 }
 
 export const getDocumentByCategory = async(req, res) => {
+    const {id_kategoridok} = req.params;
     try {
         const response = await Dokumen.findAll({
+            where: {id_kategoridok: id_kategoridok},
             attributes: ["id_dokumen", "nama_dokumen", "id_kategoridok", "createdAt"],
              include: [
                 {
                     model: KategoriDokumen,
                     as: "Kategori",
-                    attributes: ["id_kategoridok"],
+                    attributes: ["id_kategoridok", "kategori"],
                 },
             ],
-            group: ["Kategori.id_kategoridok"],
-            raw: true,
+            // group: ["Kategori.id_kategoridok"],
         });
         console.log("Document by category: ", response);
         res.status(200).json(response);
@@ -99,16 +109,44 @@ export const updateDocument = async(req, res) => {
 
 export const deleteDocument = async(req, res) => {
     try {
-        await Dokumen.destroy(
-        {
+        const document = await Dokumen.findOne({
             where:{
                 id_dokumen: req.params.id_dokumen
             }
+        });
+
+        if (!document){
+            return res.status(404).json({msg: "Document not found"});
         }
-    );
+
+        if(document.filepath_dokumen) {
+            const filePath = path.resolve(document.filepath_dokumen);
+
+            try {
+                await fs.promises.unlink(filePath);
+                console.log("Document was deleted successfully.", filePath);
+
+                // document.filepath_dokumen = null;
+                // await document.save();
+
+                // return res.status(200).json({msg: "Document was deleted successfully."});
+            } catch (error) {
+                console.error("Failed to delete document", error.message)
+            }
+        }
+
+        await Dokumen.destroy(
+            {
+                where:{
+                    id_dokumen: req.params.id_dokumen
+                }
+            }
+        );
+
         res.status(200).json({msg: "Document was deleted successfully."}); 
     } catch (error) {
-        res.status(500).json({message: error.message}); 
+        console.error("Failed to delete document:", error.message);
+        return res.status(500).json({message: "Failed to delete document."});
     }
 }
 

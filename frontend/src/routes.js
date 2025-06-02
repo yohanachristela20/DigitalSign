@@ -10,7 +10,7 @@ import RiwayatPinjamanKaryawan from "views/RiwayatPinjamanKaryawan";
 import AngsuranFinance from "views/AngsuranFinance";
 import SuratPernyataan from "views/SuratPernyataan";
 import Document from "views/Document.js";
-
+import UploadDocument from "views/UploadDocument.js";
 
 import Login from "views/Login.js";
 
@@ -22,6 +22,20 @@ const dashboardRoutes = [
     name: "Employee Management",
     icon: "users",
     component: EmployeeManagement,
+    layout: "/admin"
+  },
+  {
+    path: "/all-document",
+    name: "All Document",
+    icon: "folder",
+    component: Document,
+    layout: "/admin"
+  },
+  {
+    path: "/upload-document",
+    name: "Upload Document",
+    icon: "folder",
+    component: UploadDocument,
     layout: "/admin"
   },
   // {
