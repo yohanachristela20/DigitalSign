@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
-import {FaRegArrowAltCircleLeft, FaRegArrowAltCircleRight, FaRegSave, FaHistory, FaCheckCircle, FaTimesCircle, FaCoins, FaFileContract, FaCalculator} from 'react-icons/fa'; 
+import React, { useEffect, useState, useMemo, useRef, Component } from "react";
+import {FaRegArrowAltCircleLeft, FaRegArrowAltCircleRight, FaRegSave, FaHistory, FaCheckCircle, FaTimesCircle, FaCoins, FaFileContract, FaCalculator, FaTrashAlt, FaPlusCircle} from 'react-icons/fa'; 
 import axios from "axios";
 import { useHistory, useLocation } from "react-router-dom"; 
 import { toast } from 'react-toastify';
@@ -8,7 +8,14 @@ import "jspdf-autotable";
 import Heartbeat from "./Heartbeat.js";
 import "../assets/scss/lbd/_pagination.scss";
 import "../assets/scss/lbd/_stepper.scss";
-const BASE_URL = 'http://10.70.10.131:5000';
+import { SortableContainer, SortableElement } from "react-sortable-hoc";
+import arrayMove from "array-move-item";
+// import { SortableContainer, SortableElement } from "react-sortable-hoc";
+// import arrayMove from "array-move";
+// import { render } from "react-dom";
+
+import SortableItem from "components/SortableList/SortableList.js";
+
 import {
   Card,
   Table,
@@ -74,18 +81,57 @@ function UploadDocument() {
   const [employeeName, setEmployeeName] = useState([]);
   const [email, setEmail] = useState("");
   const [employeeList, setEmployeeList] = useState([]);
-  const [documentCards, setDocumentCards] = useState([]);
+  // const [documentCards, setDocumentCards] = useState([]);
+
+  const [idCounter, setIdCounter] = useState("");
+
+  // console.log("ID counter: ", idCounter);
+  const nextIdNumber = (idCounter + 1).toString().padStart(5, '0');
+  const newIdSigner = `S${nextIdNumber}`;
+
+  const onSortEnd = ({ oldIndex, newIndex }) => {
+    setDocumentCards((prevCards) => {
+      const newCards = [...prevCards];
+
+      const oldIdSigner = newCards[oldIndex].id_signers;
+      const newIdSigner = newCards[newIndex].id_signers;
+
+      const moved = newCards.splice(oldIndex, 1)[0];
+      newCards.splice(newIndex, 0, moved);
+
+      newCards[newIndex].id_signers = oldIdSigner;
+      newCards[oldIndex].id_signers = newIdSigner;
+
+      return newCards;
+    });
+  };
+
+
+  const [documentCards, setDocumentCards] = useState([
+    {
+      id: Date.now(),
+      id_karyawan: "",
+      email: "",
+      id_signers: newIdSigner,
+    },
+  ]);
 
   const handleAddCard = () => {
-    const newCard = {
+    // const nextIdNumber = (idCounter + 1).toString().padStart(5, '0');
+    // const newIdSigner = `S${nextIdNumber}`;
+
+    const newCards = {
       id: Date.now(),
       // nama_dokumen: "",
       // id_kategoridok: "",
+      id_signers: newIdSigner,
       id_karyawan: "",
       email: "",
     };
-    setDocumentCards([...documentCards, newCard]);
+    setDocumentCards([...documentCards, newCards]);
+    setIdCounter(prev => prev + 1);
   };
+
 
   const handleCardChange = (id, field, value) => {
     setDocumentCards(prevCards =>
@@ -108,6 +154,10 @@ function UploadDocument() {
     );
   };
 
+  const handleDeleteCard = (id) => {
+    setDocumentCards(prevCards => prevCards.filter(card => card.id !== id));
+  }
+
   const elementRef = useRef(null);
   const getNomorAntrean = async() => {
       try {
@@ -116,13 +166,13 @@ function UploadDocument() {
       });
 
       const antreanData = antreanResponse.data;
-      console.log("antreanData: ", antreanData);
+      // console.log("antreanData: ", antreanData);
       if (Array.isArray(antreanData) && antreanData.length > 0) {
         const sortedAntrean = antreanData.sort((a,b) => Number(a.nomor_antrean) - Number(b.nomor_antrean));
-        console.log("sortedAntrean: ", sortedAntrean);
+        // console.log("sortedAntrean: ", sortedAntrean);
         
         const latestAntrean = sortedAntrean[sortedAntrean.length - 1].nomor_antrean;
-        console.log("latestAntrean: ", latestAntrean);
+        // console.log("latestAntrean: ", latestAntrean);
         setNomorAntrean(latestAntrean !== null && latestAntrean !== undefined ? latestAntrean : 1);
       } else {
         setNomorAntrean(1);
@@ -162,8 +212,8 @@ function UploadDocument() {
     formData.append("pdf-file", file);
     formData.append("id_pinjaman", id_pinjaman);
 
-    console.log('Id pinjaman: ', id_pinjaman);
-    console.log('Form data: ', formData);
+    // console.log('Id pinjaman: ', id_pinjaman);
+    // console.log('Form data: ', formData);
 
     fetch("http://10.70.10.131:5000/upload-pernyataan", {
       method: "PUT",
@@ -174,7 +224,7 @@ function UploadDocument() {
     })
     .then(async (response) => {
       const data = await response.json();
-      console.log('File path saved: ', data.filePath);
+      // console.log('File path saved: ', data.filePath);
       if (!response.ok) {
         throw new Error(data.message || "Gagal mengunggah.");
       }
@@ -195,6 +245,27 @@ function UploadDocument() {
     {title: "Place Fields"},
     {title: "Review & Send"},
   ];
+
+  useEffect(() => {
+    const fetchLastId = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/getLastSignerId', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        }); 
+        const lastId = response.data?.id_signers || "S00001";
+        const lastNumber = parseInt(lastId.substring(1), 10);
+        setIdCounter(lastNumber);
+      } catch (err) {
+        console.error('Failed to fetch last id_signers:', err);
+      }
+    };
+
+    if (steps === 2) {
+      fetchLastId();
+    }
+  }, [steps]);
 
   const savePengajuan = async (e) => {
     e.preventDefault();
@@ -237,7 +308,7 @@ function UploadDocument() {
     }
   };
 
-  console.log("Tanggal plafond tersedia: ", tanggal_plafond_tersedia);
+  // console.log("Tanggal plafond tersedia: ", tanggal_plafond_tersedia);
 
   const handlePengajuanSuccess = () => {
     getPinjaman();
@@ -340,7 +411,7 @@ const getName = async() => {
     }
 }
 
-console.log("Employee name: ", employeeName);
+// console.log("Employee name: ", employeeName);
 
 useEffect(() => {
     lastIdDokumen();
@@ -352,16 +423,36 @@ const handleCategoryChange = (event) => {
     setIdKategoriDok(event.target.value);
 }
 
-const handleSignerChange = (e) => {
-  const selectedId = e.target.value;
-  setIdKaryawan(selectedId);
-  const selectedEmp = employeeList.find(emp => emp.id_karyawan === selectedId);
-  if (selectedEmp && selectedEmp.Pengguna.length > 0) {
-    setEmail(selectedEmp?.Pengguna?.[0]?.email || '');
-  } else {
-    setEmail('');
-  }
-};
+// const handleSignerChange = (e) => {
+//   const selectedId = e.target.value;
+//   setIdKaryawan(selectedId);
+//   const selectedEmp = employeeList.find(emp => emp.id_karyawan === selectedId);
+//   if (selectedEmp && selectedEmp.Pengguna.length > 0) {
+//     setEmail(selectedEmp?.Pengguna?.[0]?.email || '');
+//   } else {
+//     setEmail('');
+//   }
+// };
+
+const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handleDeleteCard, employeeName, ...props }) => {
+  return (
+    <div>
+      {items.map((card, index) => (
+        <SortableItem
+          key={`item-${card.id}`}
+          index={index}
+          card={card}
+          handleCardEmployeeChange={handleCardEmployeeChange}
+          handleDeleteCard={handleDeleteCard}
+          employeeName={employeeName}
+          documentCards={items}
+          {...props}
+        />
+      ))}
+    </div>
+  );
+});
+
 
   return (
     <>
@@ -465,11 +556,11 @@ const handleSignerChange = (e) => {
                       )}
                       {steps === 2 && (
                       <>
-                        {documentCards.map((card, index) => (
-                          <Card key={card.id} className="mb-3">
+                        {/* {documentCards.map((card, index) => (
+                          <Card key={card.id} className="mt-3 mb-0">
                             <Card.Body>
                               <Row>
-                                <Col md="6">
+                                <Col md="5">
                                   <Form.Group>
                                     <span className="text-danger">*</span>
                                     <label>Full Name</label>
@@ -482,15 +573,21 @@ const handleSignerChange = (e) => {
                                         <option className="placeholder-form" key="blankChoice" hidden value="">
                                             Choose Signer
                                         </option>
-                                        {employeeName.map((emp) => (
-                                            <option key={emp.value} value={emp.value}>
-                                                {emp.label}
-                                            </option>
-                                        ))}
+                                        {employeeName.map((emp) => {
+                                          const isSelectedName = documentCards.some(
+                                            c => c.id_karyawan === emp.value && c.id !== card.id
+                                          );
+
+                                          return(
+                                              <option key={emp.value} value={emp.value} disabled={isSelectedName}>
+                                                  {emp.label}
+                                              </option>
+                                          );
+                                        })}     
                                     </Form.Select>
                                   </Form.Group>
                                 </Col>
-                                <Col md="6">
+                                <Col md="5">
                                   <Form.Group>
                                     <label>Email</label>
                                     <Form.Control
@@ -501,13 +598,33 @@ const handleSignerChange = (e) => {
                                     ></Form.Control>
                                   </Form.Group>
                                 </Col>
+                                <Col md="2" className="mt-1">
+                                  <Button
+                                    variant="outline-danger"
+                                    onClick={() => handleDeleteCard(card.id)}
+                                    className="mt-4"
+                                  >
+                                    <FaTrashAlt className="mb-1"/>
+                                  </Button>
+                                </Col>
                               </Row>
+                             
                             </Card.Body>
                           </Card>
                         ))}
-                        <br />
-                        <Button variant="primary" onClick={handleAddCard}>
-                          Tambah Dokumen
+                        <br /> */}
+
+                        <SortableList 
+                          items={documentCards}
+                          onSortEnd={onSortEnd}
+                          useDragHandle={false}
+                          handleCardEmployeeChange={handleCardEmployeeChange}
+                          handleDeleteCard={handleDeleteCard}
+                          employeeName={employeeName}
+                        />
+                        
+                        <Button variant="outline-primary" onClick={handleAddCard} className="mt-3">
+                          <FaPlusCircle className="mb-1"/> Add Signer
                         </Button>
                       </> 
                       )}
@@ -612,4 +729,3 @@ const handleSignerChange = (e) => {
 }
 
 export default UploadDocument;
-

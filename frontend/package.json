@@ -4,6 +4,8 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.2",
     "ajv": "^8.16.0",
+    "array-move": "^4.0.0",
+    "array-move-item": "^1.0.0",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
     "bootstrap": "^4.6.0",
@@ -36,6 +38,7 @@
     "react-router": "5.2.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "5.0.1",
+    "react-sortable-hoc": "^2.0.0",
     "react-toastify": "^10.0.6",
     "reactstrap": "8.8.1",
     "sass": "1.53.0",
