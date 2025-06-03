@@ -3,6 +3,7 @@ import db from "../config/database.js";
 import Dokumen from "./DokumenModel.js";
 import Karyawan from "./KaryawanModel.js";
 import Signers from "./SignersModel.js";
+import Item from "./ItemModel.js";
 
 const {DataTypes} = Sequelize;
 
@@ -33,10 +34,18 @@ const LogSign = db.define('log_sign', {
     }, 
     id_signers: {
         type: DataTypes.STRING,
-        allowNull:false,
+        allowNull:true,
         references: {
             model: Signers,
             key: 'id_signers'
+        }
+    }, 
+    id_item: {
+        type: DataTypes.STRING,
+        allowNull:true,
+        references: {
+            model: Item,
+            key: 'id_item'
         }
     }, 
 
@@ -52,7 +61,7 @@ const LogSign = db.define('log_sign', {
 
             if (lastRecord && lastRecord.id_logsign) {
                 const lastIdNumber = parseInt(lastRecord.id_logsign.substring(2), 10); 
-                const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(3, '0');
+                const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(4, '0');
                 newId = `LS${incrementedIdNumber}`;
             }
             log_sign.id_logsign = newId;

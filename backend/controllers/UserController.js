@@ -103,6 +103,7 @@ export const deleteUser = async(req, res) => {
         nama,
         organisasi
       });
+    //   console.log("User data: ", userData);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Error fetching user details" });

@@ -19,7 +19,7 @@ import {
 const SortableItem = SortableElement(({ card, index, handleCardEmployeeChange, handleDeleteCard, employeeName, documentCards }) => (
   <Card className="mt-3 mb-0">
     <Card.Body>
-      <Row>
+      <Row className="mt-2">
         <Col md="4">
           <Form.Group>
             <span className="text-danger">*</span>
@@ -53,7 +53,7 @@ const SortableItem = SortableElement(({ card, index, handleCardEmployeeChange, h
                 <Form.Control type="text" value={card.id_signers} readOnly />
             </Form.Group>
         </Col>
-        <Col md="2" className="d-flex align-items-end">
+        <Col md="2" className="d-flex align-items-end mt-sm-3">
           <Button variant="outline-danger" onClick={() => handleDeleteCard(card.id)}><FaTrashAlt className="mb-1"/> Delete</Button>
         </Col>
       </Row>

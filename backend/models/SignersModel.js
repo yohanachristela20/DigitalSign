@@ -2,6 +2,7 @@ import { Sequelize } from "sequelize";
 import db from "../config/database.js";
 import Karyawan from "./KaryawanModel.js";
 import ItemModel from "./ItemModel.js";
+import LogSign from "./LogSignModel.js";
 
 const {DataTypes} = Sequelize;
 
@@ -18,14 +19,22 @@ const Signers = db.define('signers', {
             key: 'id_karyawan' 
         }
     }, 
-    id_item: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        references: {
-            model: ItemModel, 
-            key: 'id_item' 
-        }
-    }
+    // id_item: {
+    //     type: DataTypes.STRING,
+    //     allowNull: true,
+    //     references: {
+    //         model: ItemModel, 
+    //         key: 'id_item' 
+    //     }
+    // }, 
+    // id_logsign: {
+    //     type: DataTypes.STRING, 
+    //     allowNull: false,
+    //     references: {
+    //         model: LogSign,
+    //         key: 'id_logsign',
+    //     }
+    // }
 }, {
     freezeTableName: true,
     timestamps: true,

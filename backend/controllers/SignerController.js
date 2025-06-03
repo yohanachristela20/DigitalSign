@@ -1,5 +1,7 @@
 import { response } from "express";
 import Signers from "../models/SignersModel.js";
+import LogSign from "../models/LogSignModel.js";
+import db from "../config/database.js";
 
 export const getSigners = async(req, res) => {
     try {
@@ -23,14 +25,52 @@ export const getSignersById = async(req, res) => {
     }
 }
 
+// export const createSigner = async(req, res) => {
+//     try {
+//         await Signers.create(req.body);
+//         res.status(201).json({msg: "New Signers has been created!"}); 
+//     } catch (error) {
+//         res.status(500).json({message: error.message}); 
+//     }
+// }
+
 export const createSigner = async(req, res) => {
+    const transaction = await db.transaction();
     try {
-        await Signers.create(req.body);
-        res.status(201).json({msg: "New Signers has been created!"}); 
+
+        const {
+            id_signers,
+            id_karyawan
+        } = req.body;
+
+        const newSigner = await Signers.create(req.body, {transaction});
+
+        const logSign = await LogSign.update(
+            {id_signers: newSigner.id_signers}, 
+            {
+                where: {id_signers: id_signers},
+                transaction,
+            }
+        );
+
+        await transaction.commit();
+
+        res.status(201).json({
+            msg: "New Signers has been created!", 
+            data: {
+                signer: newSigner,
+                logsign: logSign
+            }
+        }); 
+        console.log("New signers: ", newSigner);
+        console.log("Updated logsign:", logSign);
     } catch (error) {
+        await transaction.rollback();
+        console.error("Error when creating signers:", error); 
         res.status(500).json({message: error.message}); 
     }
 }
+
 
 export const updateSigners = async(req, res) => {
     try {

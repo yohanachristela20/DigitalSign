@@ -30,82 +30,25 @@ import {
 import { error } from "jquery";
 
 function UploadDocument() {
-  const [keperluan, setKeperluan] = useState(''); 
-  const [id_peminjam, setIdPeminjam] = useState("");
-  const [id_karyawan, setIdKaryawan] = useState(""); 
-  const [id_pinjaman, setIdPinjaman] = useState("");
-  const [tanggal_pengajuan, setTanggalPengajuan] = useState("");
-  const [plafond, setPlafond] = useState(0); 
-
   const [filepath_pernyataan, setFilePathPernyataan] = useState('');
-
-  const [plafond_saat_ini, setPlafondBaru] = useState(""); 
-  const [tanggal_plafond_tersedia, setTanggalPlafondTersedia] = useState(""); 
-  const [sudah_dihitung, setSudahDihitung] = useState(0);
-  const [totalDibayar, setTotalDibayar] = useState(0);
-  const [plafondAwal, setPlafondAwal] = useState(""); 
-
-  const [pinjaman, setPinjaman] = useState([]); 
-  const [antrean, setAntrean] = useState([]); 
-  const [selectedPinjaman, setSelectedPinjaman] = useState(null);
-
-  const [statusPinjaman, setStatusPinjaman] = useState(null);
-  const [pinjamanInfo, setPinjamanInfo] = useState(null);
-
-  const [status_pengajuan, setStatusPengajuan] = useState("Ditunda"); 
-  const [status_transfer, setStatusTransfer] = useState("Belum Ditransfer");
-
-  const [loadingPlafond, setLoadingPlafond] = useState(false);
-  const [bulanLagi, setBulanLagi] = useState(0);
-  const [nomorAntrean, setNomorAntrean] = useState("-");
-  const [isButtonClicked, setIsButtonClicked] = useState(false);
-  const [totalAngsuranBulanDepan] = useState(0);
-
-  const token = localStorage.getItem("token");
-  const [showAddModal, setShowAddModal] = React.useState(false);
-
-  const [id_plafond, setIdPlafond] = useState("");
-  const [tanggal_penetapan, setTanggalPenetapan] = useState("");
-  const [jumlah_plafond, setJumlahPlafond] = useState("");
-  const [keterangan, setKeterangan] = useState("");
-
-  const [jumlah_topup, setJumlahTopupAngsuran] = useState("");
-
-  const [hidden, setHidden] = useState(false); 
-  
   const [id_dokumen, setIdDokumen] = useState("");
   const [nama_dokumen, setNamaDokumen] = useState("");
   const [file, setFile] = useState(null);
   const [category, setCategory] = useState([]);
   const [id_kategoridok, setIdKategoriDok] = useState("");
   const [employeeName, setEmployeeName] = useState([]);
-  const [email, setEmail] = useState("");
   const [employeeList, setEmployeeList] = useState([]);
-  // const [documentCards, setDocumentCards] = useState([]);
-
-  const [idCounter, setIdCounter] = useState("");
-
-  // console.log("ID counter: ", idCounter);
-  const nextIdNumber = (idCounter + 1).toString().padStart(5, '0');
+  const [id_signers, setIdSigners] = useState("");
+  const [status, setStatus] = useState("");
+  const [action, setAction] = useState("");
+  const [id_karyawan, setIdKaryawan] = useState("");
+  const [nama, setNama] = useState("");
+  const [organisasi, setOrganisasi] = useState("");
+  const [userData, setUserData] = useState({id_karyawan: "", nama: "", organisasi:""})
+  const token = localStorage.getItem("token");
+  
+  const nextIdNumber = (id_signers + 1).toString().padStart(5, '0');
   const newIdSigner = `S${nextIdNumber}`;
-
-  const onSortEnd = ({ oldIndex, newIndex }) => {
-    setDocumentCards((prevCards) => {
-      const newCards = [...prevCards];
-
-      const oldIdSigner = newCards[oldIndex].id_signers;
-      const newIdSigner = newCards[newIndex].id_signers;
-
-      const moved = newCards.splice(oldIndex, 1)[0];
-      newCards.splice(newIndex, 0, moved);
-
-      newCards[newIndex].id_signers = oldIdSigner;
-      newCards[oldIndex].id_signers = newIdSigner;
-
-      return newCards;
-    });
-  };
-
 
   const [documentCards, setDocumentCards] = useState([
     {
@@ -113,32 +56,119 @@ function UploadDocument() {
       id_karyawan: "",
       email: "",
       id_signers: newIdSigner,
+
+      status: "Pending",
+      action: "Created"
     },
   ]);
 
-  const handleAddCard = () => {
-    // const nextIdNumber = (idCounter + 1).toString().padStart(5, '0');
-    // const newIdSigner = `S${nextIdNumber}`;
+  useEffect(() => {
+    const fetchUserData = async() => {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+      const email = localStorage.getItem("email");
+      const user_active = localStorage.getItem("user_active");
 
-    const newCards = {
-      id: Date.now(),
-      // nama_dokumen: "",
-      // id_kategoridok: "",
-      id_signers: newIdSigner,
-      id_karyawan: "",
-      email: "",
+      console.log("User token: ", token, "User role:", role, "Email: ", email, "User active: ", user_active);
+
+      if(!token || !email) return;
+      console.log("User token:", token, "User role:", role);
+
+      try {
+        const response = await axios.get(`http://localhost:5000/user-details/${email}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if(response.data) {
+          setUserData({
+            id_karyawan: response.data.id_karyawan,
+            nama: response.data.nama,
+            organisasi: response.data.organisasi,
+            role: response.data.role,
+          });
+          setIdKaryawan(response.data.id_karyawan);
+        }
+      } catch (error) {
+        console.error("Error fetching user data: ", error);
+      }
     };
-    setDocumentCards([...documentCards, newCards]);
-    setIdCounter(prev => prev + 1);
+    fetchUserData();
+  }, []);
+
+  // console.log("User data:", userData.id_karyawan);
+  // console.log("User data pengguna: ", userData.Pengguna?.id_karyawan)
+  console.log("Id Karyawan: ", id_karyawan);
+
+  useEffect(() => {
+    const fetchDataKaryawan = async() => {
+      if (!userData.id_karyawan) return;
+
+      try {
+        const responseKaryawan = await axios.get(`http://localhost:5000/employee/${userData.id_karyawan}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const karyawanData = responseKaryawan.data;
+
+        setIdKaryawan(karyawanData.id_karyawan);
+        setNama(karyawanData.nama);
+        setOrganisasi(karyawanData.organisasi);
+      } catch (error) {
+        console.error("Error fetching karyawan data:", error);
+      }
+    };
+
+    if (userData.id_karyawan) {
+      fetchDataKaryawan();
+    }
+  }, [userData.id_karyawan, token]);
+
+
+
+  const onSortEnd = ({ oldIndex, newIndex }) => {
+    setDocumentCards((prevCards) => {
+      const newCards = arrayMove([...prevCards], oldIndex, newIndex);
+
+      const updatedCards = newCards.map((card, idx) => ({
+        ...card,
+        id_signers: `S${(idx + 1).toString().padStart(5, '0')}`
+      }));
+
+      // setIdSigners(id_signers);
+      
+      return updatedCards;
+    });
   };
 
+  const arrayMove = (arr, from, to) => {
+    const newArr = [...arr];
+    const item = newArr.splice(from, 1)[0];
+    newArr.splice(to, 0, item);
+    return newArr;
+  };
 
-  const handleCardChange = (id, field, value) => {
-    setDocumentCards(prevCards =>
-      prevCards.map(card =>
-        card.id === id ? { ...card, [field]: value } : card
-      )
-    );
+  console.log("Document cards:", documentCards);
+
+  const handleAddCard = () => {
+    setDocumentCards(prevCards => {
+      const maxNumber = prevCards.reduce((max, card) => {
+        const num = parseInt(card.id_signers.slice(1));
+        return num > max ? num : max;
+      }, 0);
+
+      const newIdSigners = `S${String(maxNumber + 1).padStart(5, '0')}`;
+
+      const newCard = {
+        id: Date.now(),
+        id_signers: newIdSigners,
+        id_karyawan: "",
+        email: "",
+      };
+
+      return [...prevCards, newCard];
+    });
   };
 
   const handleCardEmployeeChange = (id, selectedId) => {
@@ -154,39 +184,99 @@ function UploadDocument() {
     );
   };
 
+  // const handleDeleteCard = (id) => {
+  //   setDocumentCards(prevCards => prevCards.filter(card => card.id !== id));
+  // }
+
   const handleDeleteCard = (id) => {
-    setDocumentCards(prevCards => prevCards.filter(card => card.id !== id));
-  }
+    setDocumentCards(prevCards => {
+      const deletedCard = prevCards.find(card => card.id === id);
+      if (!deletedCard) return prevCards;
+
+      const deletedIdSigner = deletedCard.id_signers;
+      const deletedNumber = parseInt(deletedIdSigner.slice(1));
+
+      const updatedCards = prevCards
+      .filter(card => card.id !== id)
+      .map(card => {
+        const num = parseInt(card.id_signers.slice(1));
+        if(num > deletedNumber) {
+          const newNumber = num - 1;
+          return {
+            ...card,
+            id_signers: `S${String(newNumber).padStart(5, '0')}`
+          }; 
+        }
+        return card;
+      });
+      return updatedCards;
+    });
+  };
 
   const elementRef = useRef(null);
-  const getNomorAntrean = async() => {
-      try {
-        const antreanResponse = await axios.get(`http://10.70.10.131:5000/antrean/${id_pinjaman}`, {
-          headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const antreanData = antreanResponse.data;
-      // console.log("antreanData: ", antreanData);
-      if (Array.isArray(antreanData) && antreanData.length > 0) {
-        const sortedAntrean = antreanData.sort((a,b) => Number(a.nomor_antrean) - Number(b.nomor_antrean));
-        // console.log("sortedAntrean: ", sortedAntrean);
-        
-        const latestAntrean = sortedAntrean[sortedAntrean.length - 1].nomor_antrean;
-        // console.log("latestAntrean: ", latestAntrean);
-        setNomorAntrean(latestAntrean !== null && latestAntrean !== undefined ? latestAntrean : 1);
-      } else {
-        setNomorAntrean(1);
-        console.warn("Data antrean kosong, nomor antrean diset menjadi 1.");
-      }
-      } catch (error) {
-        console.error("Error fetching antrean:", error.message);
-        setNomorAntrean(1);
-      }
-  };
 
   const [steps, setSteps] = useState(1);
 
+  const saveDocument = async(e) => {
+    // e.preventDefault();
+      if (!file) {
+        toast.error("Please choose PDF file.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("pdf-file", file);
+      formData.append("id_dokumen", id_dokumen);
+      formData.append("nama_dokumen", nama_dokumen);
+      formData.append("id_kategoridok", id_kategoridok);
+      formData.append("status", status);
+      formData.append("action", action);
+      formData.append("id_karyawan", id_karyawan);
+    try {
+      const response = await axios.post('http://localhost:5000/document', formData,
+          {
+          headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+          },
+      });
+      toast.success("New document has uploaded successfully!", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
+    } catch (error) {
+        console.log(error.message);
+    }
+  };
+
+  const saveSigner = async(e) => {
+    try {
+      const response = await axios.post('http://localhost:5000/signer', {
+        signers: documentCards
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Signer saved: ", response.data);
+      toast.success("New signer has created successfully!", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
   const handleNext = () => {
+    saveDocument();
+    if (steps < 4) setSteps(steps + 1);
+  };
+
+  const nexThirdStep = () => {
+    saveSigner();
     if (steps < 4) setSteps(steps + 1);
   };
 
@@ -196,47 +286,6 @@ function UploadDocument() {
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
-  };
-
-  const handleFileUpload = async() => {
-    if (!file) {
-      toast.error("Silakan pilih file PDF terlebih dahulu.");
-      return;
-    }
-    if (file.type !== "application/pdf") {
-      toast.error("File harus berformat PDF.");
-      return;
-    }
-    
-    const formData = new FormData();
-    formData.append("pdf-file", file);
-    formData.append("id_pinjaman", id_pinjaman);
-
-    // console.log('Id pinjaman: ', id_pinjaman);
-    // console.log('Form data: ', formData);
-
-    fetch("http://10.70.10.131:5000/upload-pernyataan", {
-      method: "PUT",
-      body: formData,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    .then(async (response) => {
-      const data = await response.json();
-      // console.log('File path saved: ', data.filePath);
-      if (!response.ok) {
-        throw new Error(data.message || "Gagal mengunggah.");
-      }
-
-      setFilePathPernyataan(data.filePath);
-      toast.success("File berhasil diunggah.");
-      setShowAddModal(false);
-    })
-    .catch((error) => {
-      toast.error(`Gagal: ${error.message}`);
-    });
-  
   };
 
   const stepTitle = [
@@ -256,7 +305,7 @@ function UploadDocument() {
         }); 
         const lastId = response.data?.id_signers || "S00001";
         const lastNumber = parseInt(lastId.substring(1), 10);
-        setIdCounter(lastNumber);
+        setIdSigners(lastNumber);
       } catch (err) {
         console.error('Failed to fetch last id_signers:', err);
       }
@@ -267,46 +316,6 @@ function UploadDocument() {
     }
   }, [steps]);
 
-  const savePengajuan = async (e) => {
-    e.preventDefault();
-
-    setLoading(true);
-    elementRef.current?.scrollIntoView();
-    try {
-      // console.log("Saving pengajuan with id_pinjaman: ", id_pinjaman);
-      setLoadingPlafond(true);
-        await axios.post("http://10.70.10.131:5000/pinjaman", {
-            id_pinjaman,
-            tanggal_pengajuan,
-            jumlah_angsuran,
-            pinjaman_setelah_pembulatan,
-            rasio_angsuran,
-            keperluan,
-            status_pengajuan,
-            status_transfer,
-            status_pelunasan: "Belum Lunas",
-            id_peminjam,
-            tanggal_plafond_tersedia,
-            plafond_saat_ini,
-            sudah_dihitung,
-            filepath_pernyataan: filepath_pernyataan,
-        }, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        getNomorAntrean();
-        handlePengajuanSuccess();
-        setIsButtonClicked(true);
-        // setShowImportModal(true);
-
-    } catch (error) {
-        console.error("Error saat menyimpan pengajuan:", error.response?.data || error.message);
-    } finally {
-      setLoadingPlafond(false);
-    }
-  };
 
   // console.log("Tanggal plafond tersedia: ", tanggal_plafond_tersedia);
 
@@ -319,44 +328,6 @@ function UploadDocument() {
         hideProgressBar: true,
     });
   };
-
-  // console.log("Total pinjaman: ", totalPinjaman); 
-  // console.log("Total sudah dibayar: ", totalDibayar); 
-
-  const handleAddSuccess = () => {
-    // getPlafond();
-    toast.success("Data plafond berhasil ditambahkan!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-    });
-};
-
-const savePlafond = async (e) => {
-  e.preventDefault();
-  try {
-      await axios.post('http://10.70.10.131:5000/plafond', {
-          id_plafond,
-          tanggal_penetapan,
-          jumlah_plafond,
-          keterangan,
-      }, {
-          headers: {
-              Authorization: `Bearer ${token}`,
-          },
-      });
-      setShowAddModal(false); 
-      onSuccess(); 
-      
-  } catch (error) {
-      // console.log(error.message);
-      toast.error('Gagal menyimpan data plafond baru.', {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: true,
-        });
-  }
-};
 
 const lastIdDokumen = async(e) => {
     const response = await axios.get('http://localhost:5000/getLastDocumentId', {
@@ -446,6 +417,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
           handleDeleteCard={handleDeleteCard}
           employeeName={employeeName}
           documentCards={items}
+          id_signers={card.id_signers}
           {...props}
         />
       ))}
@@ -483,12 +455,12 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                 </div>
                 </div>
                 <div>
-                  <Form>
                     <span className="text-danger required-select">(*) Required.</span>
                     <>
                       {steps === 1 && (
                         <>
-                          <Row>
+                          <Form onSubmit={saveDocument}>
+                            <Row>
                               <Col md="12" className="mt-2">
                               <Form.Group>
                               <span className="text-danger">*</span>
@@ -528,7 +500,6 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                               </Col>
                           </Row>
                           
-
                           <Row>
                               <Col md="12" className="mt-2">
                                   <Form.Group>
@@ -552,11 +523,12 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                                   </Form.Group>
                               </Col>
                           </Row>
+                          </Form>
                         </>
                       )}
                       {steps === 2 && (
                       <>
-                        {/* {documentCards.map((card, index) => (
+                         {/* {documentCards.map((card, index) => (
                           <Card key={card.id} className="mt-3 mb-0">
                             <Card.Body>
                               <Row>
@@ -611,21 +583,24 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                              
                             </Card.Body>
                           </Card>
-                        ))}
-                        <br /> */}
+                           ))}
+                        <br />  */}
 
-                        <SortableList 
-                          items={documentCards}
-                          onSortEnd={onSortEnd}
-                          useDragHandle={false}
-                          handleCardEmployeeChange={handleCardEmployeeChange}
-                          handleDeleteCard={handleDeleteCard}
-                          employeeName={employeeName}
-                        />
-                        
-                        <Button variant="outline-primary" onClick={handleAddCard} className="mt-3">
-                          <FaPlusCircle className="mb-1"/> Add Signer
-                        </Button>
+                        <Form onSubmit={saveSigner}>
+                          <SortableList 
+                            items={documentCards}
+                            onSortEnd={onSortEnd}
+                            useDragHandle={false}
+                            handleCardEmployeeChange={handleCardEmployeeChange}
+                            handleDeleteCard={handleDeleteCard}
+                            employeeName={employeeName}
+                            value={employeeName.id_karyawan}
+                            id_signers={id_signers}
+                          />
+                          <Button variant="outline-primary" onClick={handleAddCard} className="mt-3">
+                            <FaPlusCircle className="mb-1"/> Add Signer
+                          </Button>
+                        </Form>
                       </> 
                       )}
                     </>
@@ -633,7 +608,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                     {steps === 1 ? (
                       <>
                         <div className="col-12 col-md-auto my-2">
-                          <Button variant="primary" className="btn-fill w-100" onClick={handleNext} disabled={steps === 1 && nama_dokumen === "" || id_kategoridok === "" || category ==="" || file === null }>
+                          <Button variant="primary" type="submit" className="btn-fill w-100" onClick={handleNext} disabled={steps === 1 && nama_dokumen === "" || id_kategoridok === "" || category ==="" || file === null }>
                             Next
                             <FaRegArrowAltCircleRight style={{ marginLeft: '8px' }}/>
                           </Button>
@@ -649,20 +624,19 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                           disabled={steps === 1}
                         >
                         <FaRegArrowAltCircleLeft style={{ marginRight: '8px' }} />
-                          Sebelumnya
+                          Previous
                         </Button>
                       </div>
                       <div className="col-12 col-md-auto my-2">
-                          <Button id="simpan" variant="success" className="btn-fill w-100" onClick={savePengajuan} >
-                          <FaRegSave style={{ marginRight: '8px' }} />
-                            Simpan
-                          </Button>
+                        <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveSigner} >
+                        <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
+                          Next
+                        </Button>
                       </div>
                       </>
                     )}
                     </div>
                     <div className="clearfix"></div>
-                  </Form>
                 </div>
               </Card.Body>
             </Card>
@@ -671,58 +645,6 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
         </Row>
       </Container>
     </div>
-      <Modal
-            className="modal-primary"
-            show={showAddModal}
-            onHide={() => setShowAddModal(false)}
-        >
-            <Modal.Header className="text-center pb-1">
-                <h3 className="mt-3 mb-0">Form Permohonan Top-up Angsuran</h3>
-            </Modal.Header>
-            <Modal.Body className="text-left pt-0">
-                <hr />
-                <Form onSubmit={savePlafond}>
-                <Card> 
-                    <Card.Header as="h4" className="mt-1"><strong>Top-up Angsuran</strong></Card.Header><hr/>
-                    <Card.Body>
-                        <Card.Text>
-                            <p>Merupakan kondisi dimana keluarga calon peminjam <strong>SETUJU</strong> untuk<strong> meningkatkan jumlah angsuran per-bulan yang dipotong dari Gaji Karyawan Peminjam</strong> untuk mencapai jumlah pinjaman yang diperlukan.</p>
-                            <p>Silakan mengunggah Surat Pernyataan yang telah ditandatangani oleh:
-                            </p>
-                            <ol>
-                                <li>Karyawan Peminjam</li>
-                                <li>Perwakilan Keluarga Karyawan (suami/istri)</li>
-                                <li>Manager/Supervisor/Kabag</li>
-                                <li>Direktur Keuangan</li>
-                                <li>Presiden Direktur</li>
-                              </ol>
-                        </Card.Text>
-                    </Card.Body>
-                </Card>
-                <span className="text-danger required-select">(*) Wajib diisi.</span>
-                    <Row>
-                        <Col md="12">
-                            <Form.Group>
-                            <span className="text-danger">*</span>
-                                <label>Unggah Surat Pernyataan</label>
-                                <input type="file" accept=".pdf" onChange={handleFileChange} />
-                            </Form.Group>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col md="12">
-                            <div className="modal-footer d-flex flex-column">
-                                <a href="#ajukan">
-                                  <Button className="btn-fill w-100 mt-3" variant="primary" onClick={handleFileUpload}>
-                                      Simpan
-                                  </Button>
-                                </a>
-                            </div>
-                        </Col>
-                    </Row>
-                </Form>
-            </Modal.Body>
-      </Modal>
     </>
 
   );

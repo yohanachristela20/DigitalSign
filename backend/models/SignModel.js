@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize";
 import db from "../config/database.js";
 import LogSign from "./LogSignModel.js";
+import Signers from "./SignersModel.js";
 
 const {DataTypes} = Sequelize;
 
@@ -16,7 +17,15 @@ const Sign = db.define('sign', {
             model: LogSign, 
             key: 'id_logsign' 
         }
-    }
+    },
+    // id_signers: {
+    //     type: DataTypes.STRING, 
+    //     allowNull: false,
+    //     references: {
+    //         model: Signers,
+    //         key: 'id_signers'
+    //     }
+    // }
 }, {
     freezeTableName: true,
     timestamps: true,

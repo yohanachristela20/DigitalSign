@@ -3,7 +3,9 @@ import bcrypt from "bcrypt";
 import { group } from "console";
 import path from "path";
 import KategoriDokumen from "../models/KategoriDokModel.js";
+import LogSign from "../models/LogSignModel.js";
 import fs from 'fs';
+import db from "../config/database.js";
 
 // export const getDocument = async(req, res) => {
 //     try {
@@ -72,24 +74,73 @@ export const getDocumentByCategory = async(req, res) => {
 
 
 
+// export const createDocument = async(req, res) => {
+//     try {
+//         if(!req.file) {
+//             return res.status(400).json({message: "PDF file is required"})
+//         }
+//         const {id_dokumen, nama_dokumen, id_kategoridok} = req.body;
+//         const filePath = path.join("uploads/files", req.file.filename);
+
+//         await Dokumen.create({
+//             id_dokumen,
+//             nama_dokumen,
+//             id_kategoridok,
+//             filepath_dokumen: filePath,
+//         });
+//         console.log(req.body);
+//         // await Dokumen.create(req.body);
+//         res.status(201).json({msg: "New Document has been created!", filePath}); 
+//     } catch (error) {
+//         res.status(500).json({message: error.message}); 
+//     }
+// }
+
 export const createDocument = async(req, res) => {
+    const transaction = await db.transaction();
     try {
         if(!req.file) {
             return res.status(400).json({message: "PDF file is required"})
         }
-        const {id_dokumen, nama_dokumen, id_kategoridok} = req.body;
+        const {
+            id_dokumen,
+            nama_dokumen, 
+            id_kategoridok,
+            action, 
+            status, 
+            id_karyawan,
+        } = req.body;
         const filePath = path.join("uploads/files", req.file.filename);
 
-        await Dokumen.create({
+        const newDocument = await Dokumen.create({
             id_dokumen,
             nama_dokumen,
             id_kategoridok,
             filepath_dokumen: filePath,
-        });
+        }, {transaction});
         console.log(req.body);
+
+        const newLogSign = await LogSign.create(
+            {
+                action: "Created", 
+                status: "Pending",
+                id_dokumen: newDocument.id_dokumen, 
+                id_karyawan,
+            }, 
+            { transaction }
+        );
         // await Dokumen.create(req.body);
-        res.status(201).json({msg: "New Document has been created!", filePath}); 
+
+        await transaction.commit();
+        res.status(201).json({msg: "New Document has been created!", filePath, 
+            data: {
+                document: newDocument,
+                logsign: newLogSign,
+            }
+        }); 
     } catch (error) {
+        await transaction.rollback();
+        console.error("Error when upload document:", error);
         res.status(500).json({message: error.message}); 
     }
 }
