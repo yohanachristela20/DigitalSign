@@ -47,14 +47,8 @@ const SortableItem = SortableElement(({ card, index, handleCardEmployeeChange, h
             <Form.Control type="email" value={card.email} readOnly />
           </Form.Group>
         </Col>
-        <Col md="2">
-            <Form.Group>
-                <label>ID Signer</label>
-                <Form.Control type="text" value={card.id_signers} readOnly />
-            </Form.Group>
-        </Col>
         <Col md="2" className="d-flex align-items-end mt-sm-3">
-          <Button variant="outline-danger" onClick={() => handleDeleteCard(card.id)}><FaTrashAlt className="mb-1"/> Delete</Button>
+          <Button variant="outline-danger" disabled={documentCards.length <= 1} onClick={() => handleDeleteCard(card.id)} ><FaTrashAlt className="mb-1"/> Delete</Button>
         </Col>
       </Row>
     </Card.Body>

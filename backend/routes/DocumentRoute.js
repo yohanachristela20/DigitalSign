@@ -9,10 +9,10 @@ import {getDocument,
         updateDocument, 
         deleteDocument,
         getLastDocumentId,
-        getDocumentByCategory
+        getDocumentByCategory,
+        createLogSign
 } from "../controllers/DocumentController.js"; 
 
-import { uploadDocument } from "../middlewares/uploadDocument.js";
 import { create } from "domain";
 
 const router = express.Router(); 
@@ -47,5 +47,6 @@ router.patch('/document/:id_dokumen', updateDocument);
 router.delete('/document/:id_dokumen', deleteDocument);
 router.get('/getLastDocumentId', getLastDocumentId);
 router.post("/document", upload.single("pdf-file"), createDocument);
+router.post('/logsign', createLogSign);
 
 export default router;

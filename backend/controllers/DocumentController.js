@@ -65,7 +65,7 @@ export const getDocumentByCategory = async(req, res) => {
             ],
             // group: ["Kategori.id_kategoridok"],
         });
-        console.log("Document by category: ", response);
+        // console.log("Document by category: ", response);
         res.status(200).json(response);
     } catch (error) {
         console.log(error.message);
@@ -118,30 +118,66 @@ export const createDocument = async(req, res) => {
             id_kategoridok,
             filepath_dokumen: filePath,
         }, {transaction});
-        console.log(req.body);
+        // console.log(req.body);
 
-        const newLogSign = await LogSign.create(
-            {
-                action: "Created", 
-                status: "Pending",
-                id_dokumen: newDocument.id_dokumen, 
-                id_karyawan,
-            }, 
-            { transaction }
-        );
+        // const newLogSign = await LogSign.create(
+        //     {
+        //         action: "Created", 
+        //         status: "Pending",
+        //         id_dokumen: newDocument.id_dokumen, 
+        //         id_karyawan,
+        //     }, 
+        //     { transaction }
+        // );
         // await Dokumen.create(req.body);
 
         await transaction.commit();
         res.status(201).json({msg: "New Document has been created!", filePath, 
             data: {
                 document: newDocument,
-                logsign: newLogSign,
+                // logsign: newLogSign,
             }
         }); 
     } catch (error) {
         await transaction.rollback();
         console.error("Error when upload document:", error);
         res.status(500).json({message: error.message}); 
+    }
+}
+
+export const createLogSign = async(req, res) => {
+    const transaction = await db.transaction();
+
+    try {
+        const {
+            action,
+            status,
+            id_dokumen, 
+            id_karyawan,
+            id_signers,
+        } = req.body;
+
+        const newLogSign = await LogSign.create(
+            {
+                action: "Created",
+                status: "Pending",
+                id_dokumen,
+                id_karyawan,
+                id_signers
+            }, 
+            { transaction }
+        );
+
+        await transaction.commit();
+        res.status(201).json({msg: "New log sign has been created!", 
+            data: {
+                logsign: newLogSign,
+            }
+        })
+    } catch (error) {
+        await transaction.rollback();
+        console.error("Error when update logsign:", error);
+        res.status(500).json({message: error.message});
     }
 }
 

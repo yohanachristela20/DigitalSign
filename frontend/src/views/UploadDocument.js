@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef, Component } from "react";
+import React, { useEffect, useState, useMemo, useRef, Component, act } from "react";
 import {FaRegArrowAltCircleLeft, FaRegArrowAltCircleRight, FaRegSave, FaHistory, FaCheckCircle, FaTimesCircle, FaCoins, FaFileContract, FaCalculator, FaTrashAlt, FaPlusCircle} from 'react-icons/fa'; 
 import axios from "axios";
 import { useHistory, useLocation } from "react-router-dom"; 
@@ -46,21 +46,56 @@ function UploadDocument() {
   const [organisasi, setOrganisasi] = useState("");
   const [userData, setUserData] = useState({id_karyawan: "", nama: "", organisasi:""})
   const token = localStorage.getItem("token");
-  
-  const nextIdNumber = (id_signers + 1).toString().padStart(5, '0');
-  const newIdSigner = `S${nextIdNumber}`;
+  const [newIdSigner, setNewIdSigner] = useState("");
 
-  const [documentCards, setDocumentCards] = useState([
-    {
-      id: Date.now(),
-      id_karyawan: "",
-      email: "",
-      id_signers: newIdSigner,
+  // const nextIdNumber = (id_signers + 1).toString().padStart(5, '0');
+  // const newIdSigner = `S${nextIdNumber}`;
 
-      status: "Pending",
-      action: "Created"
-    },
-  ]);
+  const fetchLastId = async () => {
+  const response = await axios.get('http://localhost:5000/getLastSignerId', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    }); 
+    let newId = "S00001";
+    if (response.data?.lastId) {
+      const lastIdNumber = parseInt(response.data.lastId.substring(2), 10);
+      const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(5, '0');
+      newId = `S${incrementedIdNumber}`;
+    }
+    setIdSigners(newId);
+  };
+
+  console.log("Fetch last id: ", id_signers);
+
+  // const [documentCards, setDocumentCards] = useState([
+  //   {
+  //     id: Date.now(),
+  //     id_karyawan: "",
+  //     email: "",
+  //     id_signers: id_signers,
+
+  //     status: "Pending",
+  //     action: "Created"
+  //   },
+  // ]);
+
+  const [documentCards, setDocumentCards] = useState([]);
+
+  useEffect(() => {
+    if(id_signers) {
+      setDocumentCards([
+        {
+          id: Date.now(),
+          id_karyawan: "",
+          email: "",
+          id_signers: "",
+          status: "Pending",
+          action: "Created"
+        }
+      ]);
+    }
+  }, [id_signers]);
 
   useEffect(() => {
     const fetchUserData = async() => {
@@ -97,7 +132,7 @@ function UploadDocument() {
 
   // console.log("User data:", userData.id_karyawan);
   // console.log("User data pengguna: ", userData.Pengguna?.id_karyawan)
-  console.log("Id Karyawan: ", id_karyawan);
+  // console.log("Id Karyawan: ", id_karyawan);
 
   useEffect(() => {
     const fetchDataKaryawan = async() => {
@@ -127,44 +162,66 @@ function UploadDocument() {
 
 
 
-  const onSortEnd = ({ oldIndex, newIndex }) => {
-    setDocumentCards((prevCards) => {
-      const newCards = arrayMove([...prevCards], oldIndex, newIndex);
+ 
+const onSortEnd = ({ oldIndex, newIndex }) => {
+  setDocumentCards((prevCards) => {
+    const movedCard = prevCards[oldIndex];
+    const newCards = arrayMove([...prevCards], oldIndex, newIndex);
 
-      const updatedCards = newCards.map((card, idx) => ({
+    const parseId = (id) => parseInt(id.replace('S', ''), 10);
+    const formatId = (num) => `S${String(num).padStart(5, '0')}`;
+
+    const startingIdNumber = parseId(id_signers);
+
+    const updatedCards = newCards.map((card, idx) => {
+      return {
         ...card,
-        id_signers: `S${(idx + 1).toString().padStart(5, '0')}`
-      }));
-
-      // setIdSigners(id_signers);
-      
-      return updatedCards;
+        id_signers: formatId(startingIdNumber + idx),
+      };
     });
-  };
 
-  const arrayMove = (arr, from, to) => {
-    const newArr = [...arr];
-    const item = newArr.splice(from, 1)[0];
-    newArr.splice(to, 0, item);
-    return newArr;
-  };
+    return updatedCards;
+  });
+};
+
+
+  // const arrayMove = (arr, from, to) => {
+  //   const newArr = [...arr];
+  //   const item = newArr.splice(from, 1)[0];
+  //   newArr.splice(to, 0, item);
+  //   return newArr;
+  // };
+
+  useEffect(() => {
+    // fetchLastId();
+    lastIdDokumen();
+    categoryDoc();
+    getName();
+  }, []);
 
   console.log("Document cards:", documentCards);
 
   const handleAddCard = () => {
     setDocumentCards(prevCards => {
-      const maxNumber = prevCards.reduce((max, card) => {
-        const num = parseInt(card.id_signers.slice(1));
-        return num > max ? num : max;
-      }, 0);
+      
+      let lastId = 0;
+      if (prevCards.length > 0) {
+        const lastCard = prevCards[prevCards.length - 1];
+        lastId = parseInt(lastCard.id_signers.substring(1), 10);
+      } else {
+        lastId = parseInt(id_signers.substring(1), 10);
+      }
 
-      const newIdSigners = `S${String(maxNumber + 1).padStart(5, '0')}`;
+      const incrementedId = (lastId + 1).toString().padStart(5, '0');
+      const newIdSign = `S${incrementedId}`;
 
       const newCard = {
         id: Date.now(),
-        id_signers: newIdSigners,
+        id_signers: "",
         id_karyawan: "",
         email: "",
+        status: "Pending",
+        action: "Created"
       };
 
       return [...prevCards, newCard];
@@ -174,11 +231,17 @@ function UploadDocument() {
   const handleCardEmployeeChange = (id, selectedId) => {
     const selectedEmp = employeeList.find(emp => emp.id_karyawan === selectedId);
     const email = selectedEmp?.Pengguna?.[0]?.email || '';
+    const id_karyawan = selectedEmp?.Pengguna?.[0]?.id_karyawan || '';
+
+    console.log("Selected employee from card:", selectedEmp);
+    console.log("Selected id karyawan from card:", selectedEmp.id_karyawan);
+
+    setNewIdSigner(selectedEmp.id_karyawan);
 
     setDocumentCards(prevCards => 
       prevCards.map(card => 
         card.id === id 
-        ? {...card, id_karyawan: selectedId, email: email}
+        ? {...card, id_karyawan: selectedEmp.id_karyawan, email: email}
         : card
       )
     );
@@ -270,6 +333,31 @@ function UploadDocument() {
     }
   };
 
+  const saveLogSign = async(e) => {
+    try {
+      const response = await axios.post('http://localhost:5000/logsign', {
+        action,
+        status,
+        id_dokumen,
+        id_karyawan, 
+        id_signers: newIdSigner,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Logsign saved: ", response.data);
+      toast.success("New logsign has created successfully!", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
+      window.location.reload();
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
   const handleNext = () => {
     saveDocument();
     if (steps < 4) setSteps(steps + 1);
@@ -295,26 +383,13 @@ function UploadDocument() {
     {title: "Review & Send"},
   ];
 
-  useEffect(() => {
-    const fetchLastId = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/getLastSignerId', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          }
-        }); 
-        const lastId = response.data?.id_signers || "S00001";
-        const lastNumber = parseInt(lastId.substring(1), 10);
-        setIdSigners(lastNumber);
-      } catch (err) {
-        console.error('Failed to fetch last id_signers:', err);
-      }
-    };
 
-    if (steps === 2) {
-      fetchLastId();
-    }
-  }, [steps]);
+  // useEffect(() => {
+  //   if (steps === 2) {
+  //     fetchLastId();
+  //   }
+  // }, [steps]);
+
 
 
   // console.log("Tanggal plafond tersedia: ", tanggal_plafond_tersedia);
@@ -377,6 +452,7 @@ const getName = async() => {
             label: item.nama
         }));
         setEmployeeName(newEmployeeName);
+        // setNewIdSigner(employeeName.id_karyawan);
     } catch (error) {
         console.error("Error fetching data:", error.message);
     }
@@ -384,11 +460,7 @@ const getName = async() => {
 
 // console.log("Employee name: ", employeeName);
 
-useEffect(() => {
-    lastIdDokumen();
-    categoryDoc();
-    getName();
-}, []);
+
 
 const handleCategoryChange = (event) => {
     setIdKategoriDok(event.target.value);
@@ -417,7 +489,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
           handleDeleteCard={handleDeleteCard}
           employeeName={employeeName}
           documentCards={items}
-          id_signers={card.id_signers}
+          // id_signers={card.id_signers}
           {...props}
         />
       ))}
@@ -528,65 +600,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                       )}
                       {steps === 2 && (
                       <>
-                         {/* {documentCards.map((card, index) => (
-                          <Card key={card.id} className="mt-3 mb-0">
-                            <Card.Body>
-                              <Row>
-                                <Col md="5">
-                                  <Form.Group>
-                                    <span className="text-danger">*</span>
-                                    <label>Full Name</label>
-                                    <Form.Select 
-                                        // className="form-control"
-                                        required
-                                        value={card.id_karyawan}
-                                        onChange={(e) => handleCardEmployeeChange(card.id, e.target.value)}
-                                        >
-                                        <option className="placeholder-form" key="blankChoice" hidden value="">
-                                            Choose Signer
-                                        </option>
-                                        {employeeName.map((emp) => {
-                                          const isSelectedName = documentCards.some(
-                                            c => c.id_karyawan === emp.value && c.id !== card.id
-                                          );
-
-                                          return(
-                                              <option key={emp.value} value={emp.value} disabled={isSelectedName}>
-                                                  {emp.label}
-                                              </option>
-                                          );
-                                        })}     
-                                    </Form.Select>
-                                  </Form.Group>
-                                </Col>
-                                <Col md="5">
-                                  <Form.Group>
-                                    <label>Email</label>
-                                    <Form.Control
-                                      type="email"
-                                      value={card.email}
-                                      readOnly
-                                      disabled
-                                    ></Form.Control>
-                                  </Form.Group>
-                                </Col>
-                                <Col md="2" className="mt-1">
-                                  <Button
-                                    variant="outline-danger"
-                                    onClick={() => handleDeleteCard(card.id)}
-                                    className="mt-4"
-                                  >
-                                    <FaTrashAlt className="mb-1"/>
-                                  </Button>
-                                </Col>
-                              </Row>
-                             
-                            </Card.Body>
-                          </Card>
-                           ))}
-                        <br />  */}
-
-                        <Form onSubmit={saveSigner}>
+                        <Form onSubmit={saveLogSign}>
                           <SortableList 
                             items={documentCards}
                             onSortEnd={onSortEnd}
@@ -595,7 +609,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                             handleDeleteCard={handleDeleteCard}
                             employeeName={employeeName}
                             value={employeeName.id_karyawan}
-                            id_signers={id_signers}
+                            // id_signers={employeeName.id_karyawan}
                           />
                           <Button variant="outline-primary" onClick={handleAddCard} className="mt-3">
                             <FaPlusCircle className="mb-1"/> Add Signer
@@ -628,7 +642,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                         </Button>
                       </div>
                       <div className="col-12 col-md-auto my-2">
-                        <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveSigner} >
+                        <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveLogSign} >
                         <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
                           Next
                         </Button>

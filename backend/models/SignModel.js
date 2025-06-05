@@ -1,7 +1,6 @@
 import { Sequelize } from "sequelize";
 import db from "../config/database.js";
 import LogSign from "./LogSignModel.js";
-import Signers from "./SignersModel.js";
 
 const {DataTypes} = Sequelize;
 
