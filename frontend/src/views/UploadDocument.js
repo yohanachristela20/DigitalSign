@@ -10,9 +10,6 @@ import "../assets/scss/lbd/_pagination.scss";
 import "../assets/scss/lbd/_stepper.scss";
 import { SortableContainer, SortableElement } from "react-sortable-hoc";
 import arrayMove from "array-move-item";
-// import { SortableContainer, SortableElement } from "react-sortable-hoc";
-// import arrayMove from "array-move";
-// import { render } from "react-dom";
 
 import SortableItem from "components/SortableList/SortableList.js";
 
@@ -30,7 +27,6 @@ import {
 import { error } from "jquery";
 
 function UploadDocument() {
-  const [filepath_pernyataan, setFilePathPernyataan] = useState('');
   const [id_dokumen, setIdDokumen] = useState("");
   const [nama_dokumen, setNamaDokumen] = useState("");
   const [file, setFile] = useState(null);
@@ -47,9 +43,6 @@ function UploadDocument() {
   const [userData, setUserData] = useState({id_karyawan: "", nama: "", organisasi:""})
   const token = localStorage.getItem("token");
   const [newIdSigner, setNewIdSigner] = useState("");
-
-  // const nextIdNumber = (id_signers + 1).toString().padStart(5, '0');
-  // const newIdSigner = `S${nextIdNumber}`;
 
   const fetchLastId = async () => {
   const response = await axios.get('http://localhost:5000/getLastSignerId', {
@@ -68,19 +61,19 @@ function UploadDocument() {
 
   console.log("Fetch last id: ", id_signers);
 
-  // const [documentCards, setDocumentCards] = useState([
-  //   {
-  //     id: Date.now(),
-  //     id_karyawan: "",
-  //     email: "",
-  //     id_signers: id_signers,
+  const [documentCards, setDocumentCards] = useState([
+    {
+      id: Date.now(),
+      id_karyawan: "",
+      email: "",
+      id_signers: "",
 
-  //     status: "Pending",
-  //     action: "Created"
-  //   },
-  // ]);
+      status: "Pending",
+      action: "Created"
+    },
+  ]);
 
-  const [documentCards, setDocumentCards] = useState([]);
+  // const [documentCards, setDocumentCards] = useState([]);
 
   useEffect(() => {
     if(id_signers) {
@@ -130,10 +123,6 @@ function UploadDocument() {
     fetchUserData();
   }, []);
 
-  // console.log("User data:", userData.id_karyawan);
-  // console.log("User data pengguna: ", userData.Pengguna?.id_karyawan)
-  // console.log("Id Karyawan: ", id_karyawan);
-
   useEffect(() => {
     const fetchDataKaryawan = async() => {
       if (!userData.id_karyawan) return;
@@ -160,9 +149,6 @@ function UploadDocument() {
     }
   }, [userData.id_karyawan, token]);
 
-
-
- 
 const onSortEnd = ({ oldIndex, newIndex }) => {
   setDocumentCards((prevCards) => {
     const movedCard = prevCards[oldIndex];
@@ -184,16 +170,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   });
 };
 
-
-  // const arrayMove = (arr, from, to) => {
-  //   const newArr = [...arr];
-  //   const item = newArr.splice(from, 1)[0];
-  //   newArr.splice(to, 0, item);
-  //   return newArr;
-  // };
-
   useEffect(() => {
-    // fetchLastId();
     lastIdDokumen();
     categoryDoc();
     getName();
@@ -247,10 +224,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     );
   };
 
-  // const handleDeleteCard = (id) => {
-  //   setDocumentCards(prevCards => prevCards.filter(card => card.id !== id));
-  // }
-
   const handleDeleteCard = (id) => {
     setDocumentCards(prevCards => {
       const deletedCard = prevCards.find(card => card.id === id);
@@ -275,8 +248,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       return updatedCards;
     });
   };
-
-  const elementRef = useRef(null);
 
   const [steps, setSteps] = useState(1);
 
@@ -313,48 +284,60 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
-  const saveSigner = async(e) => {
-    try {
-      const response = await axios.post('http://localhost:5000/signer', {
-        signers: documentCards
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("Signer saved: ", response.data);
-      toast.success("New signer has created successfully!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-      });
-    } catch (error) {
-      console.log(error.message);
-    }
-  };
 
-  const saveLogSign = async(e) => {
+  // const saveLogSign = async(e) => {
+  //   try {
+  //     const response = await axios.post('http://localhost:5000/logsign', {
+  //       action,
+  //       status,
+  //       id_dokumen,
+  //       id_karyawan, 
+  //       id_signers: newIdSigner,
+  //     }, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+  //     console.log("Logsign saved: ", response.data);
+  //     toast.success("New logsign has created successfully!", {
+  //       position: "top-right",
+  //       autoClose: 5000,
+  //       hideProgressBar: true,
+  //     });
+  //     window.location.reload();
+  //   } catch (error) {
+  //     console.log(error.message);
+  //   }
+  // };
+
+
+  const saveLogSign = async() => {
     try {
-      const response = await axios.post('http://localhost:5000/logsign', {
-        action,
-        status,
+      const logsigns = documentCards.map(card => ({
+        action: "Created",
+        status: "Pending", 
         id_dokumen,
-        id_karyawan, 
-        id_signers: newIdSigner,
-      }, {
+        id_karyawan: id_karyawan,
+        id_signers: card.id_karyawan,
+      }));
+
+      const response = await axios.post('http://localhost:5000/logsign', {
+        logsigns
+        }, {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+            Authorization: `Bearer ${token}`,
+        }, 
       });
-      console.log("Logsign saved: ", response.data);
-      toast.success("New logsign has created successfully!", {
+      
+      console.log("Logsigns saved: ", response.data);
+      toast.success("Logsigns have been created successfully!", {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: true,
       });
       window.location.reload();
     } catch (error) {
-      console.log(error.message);
+      console.error("Failed to save logsigns:", error.message);
     }
   };
 
@@ -364,7 +347,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   };
 
   const nexThirdStep = () => {
-    saveSigner();
     if (steps < 4) setSteps(steps + 1);
   };
 
@@ -382,17 +364,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     {title: "Place Fields"},
     {title: "Review & Send"},
   ];
-
-
-  // useEffect(() => {
-  //   if (steps === 2) {
-  //     fetchLastId();
-  //   }
-  // }, [steps]);
-
-
-
-  // console.log("Tanggal plafond tersedia: ", tanggal_plafond_tersedia);
 
   const handlePengajuanSuccess = () => {
     getPinjaman();
@@ -452,30 +423,15 @@ const getName = async() => {
             label: item.nama
         }));
         setEmployeeName(newEmployeeName);
-        // setNewIdSigner(employeeName.id_karyawan);
     } catch (error) {
         console.error("Error fetching data:", error.message);
     }
 }
 
-// console.log("Employee name: ", employeeName);
-
-
-
 const handleCategoryChange = (event) => {
     setIdKategoriDok(event.target.value);
 }
 
-// const handleSignerChange = (e) => {
-//   const selectedId = e.target.value;
-//   setIdKaryawan(selectedId);
-//   const selectedEmp = employeeList.find(emp => emp.id_karyawan === selectedId);
-//   if (selectedEmp && selectedEmp.Pengguna.length > 0) {
-//     setEmail(selectedEmp?.Pengguna?.[0]?.email || '');
-//   } else {
-//     setEmail('');
-//   }
-// };
 
 const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handleDeleteCard, employeeName, ...props }) => {
   return (
@@ -489,14 +445,12 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
           handleDeleteCard={handleDeleteCard}
           employeeName={employeeName}
           documentCards={items}
-          // id_signers={card.id_signers}
           {...props}
         />
       ))}
     </div>
   );
 });
-
 
   return (
     <>
@@ -609,7 +563,6 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                             handleDeleteCard={handleDeleteCard}
                             employeeName={employeeName}
                             value={employeeName.id_karyawan}
-                            // id_signers={employeeName.id_karyawan}
                           />
                           <Button variant="outline-primary" onClick={handleAddCard} className="mt-3">
                             <FaPlusCircle className="mb-1"/> Add Signer

@@ -6,6 +6,7 @@ import KategoriDokumen from "../models/KategoriDokModel.js";
 import LogSign from "../models/LogSignModel.js";
 import fs from 'fs';
 import db from "../config/database.js";
+import { sign } from "crypto";
 
 // export const getDocument = async(req, res) => {
 //     try {
@@ -145,41 +146,88 @@ export const createDocument = async(req, res) => {
     }
 }
 
-export const createLogSign = async(req, res) => {
+// export const createLogSign = async(req, res) => {
+//     const transaction = await db.transaction();
+
+//     try {
+//         const {
+//             action,
+//             status,
+//             id_dokumen, 
+//             id_karyawan,
+//             id_signers,
+//         } = req.body;
+
+//         const newLogSign = [];
+
+//         newLogSign.push(
+//             {
+//                 action: "Created",
+//                 status: "Pending",
+//                 id_dokumen,
+//                 id_karyawan,
+//                 id_signers
+//             }, 
+//         );
+
+//         await LogSign.bulkCreate(newLogSign, {transaction});
+
+//         await transaction.commit();
+//         res.status(201).json({msg: "New log sign has been created!", 
+//             data: {
+//                 logsign: newLogSign,
+//             }
+//         })
+//     } catch (error) {
+//         await transaction.rollback();
+//         console.error("Error when update logsign:", error);
+//         res.status(500).json({message: error.message});
+//     }
+// }
+
+export const createLogSign = async (req,res) => {
     const transaction = await db.transaction();
-
     try {
-        const {
-            action,
-            status,
-            id_dokumen, 
-            id_karyawan,
-            id_signers,
-        } = req.body;
+        const { logsigns } = req.body;
 
-        const newLogSign = await LogSign.create(
-            {
-                action: "Created",
-                status: "Pending",
-                id_dokumen,
-                id_karyawan,
-                id_signers
-            }, 
-            { transaction }
-        );
+        if (!Array.isArray(logsigns) || logsigns.length === 0) {
+            return res.status(400).json({message: "logsign must be a non-empty array."});
+        }
+
+        let newId = "LS00001";
+
+        const lastRecord = await LogSign.findOne({
+            order: [['id_logsign', 'DESC']],
+            transaction,
+        });
+
+        let lastIdNumber = lastRecord ? parseInt(lastRecord.id_logsign.substring(2), 10) : 0;
+
+        const formattedLogSigns = logsigns.map((sign, index) => {
+            const newIdNumber  = (lastIdNumber + index + 1).toString().padStart(5, '0');
+            return {
+                id_logsign: `LS${newIdNumber}`,
+                action: sign.action || "Created", 
+                status: sign.status || "Pending",
+                id_dokumen: sign.id_dokumen,
+                id_karyawan: sign.id_karyawan,
+                id_signers: sign.id_signers,
+            };
+        })
+
+        await LogSign.bulkCreate(formattedLogSigns, {transaction});
 
         await transaction.commit();
-        res.status(201).json({msg: "New log sign has been created!", 
-            data: {
-                logsign: newLogSign,
-            }
-        })
+        res.status(201).json({
+            msg: "New logsigns have been created!",
+            data: {logsigns: formattedLogSigns},
+        });
     } catch (error) {
         await transaction.rollback();
-        console.error("Error when update logsign:", error);
+        console.error("Error when creating logsigns: ", error);
         res.status(500).json({message: error.message});
     }
-}
+};
 
 export const updateDocument = async(req, res) => {
     try {

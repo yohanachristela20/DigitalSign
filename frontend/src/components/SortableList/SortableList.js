@@ -20,7 +20,7 @@ const SortableItem = SortableElement(({ card, index, handleCardEmployeeChange, h
   <Card className="mt-3 mb-0">
     <Card.Body>
       <Row className="mt-2">
-        <Col md="4">
+        <Col md="5">
           <Form.Group>
             <span className="text-danger">*</span>
             <label>Full Name</label>
@@ -41,7 +41,7 @@ const SortableItem = SortableElement(({ card, index, handleCardEmployeeChange, h
             </Form.Select>
           </Form.Group>
         </Col>
-        <Col md="4">
+        <Col md="5">
           <Form.Group>
             <label>Email</label>
             <Form.Control type="email" value={card.email} readOnly />
