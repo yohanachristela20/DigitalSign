@@ -43,6 +43,11 @@ function UploadDocument() {
   const [userData, setUserData] = useState({id_karyawan: "", nama: "", organisasi:""})
   const token = localStorage.getItem("token");
   const [newIdSigner, setNewIdSigner] = useState("");
+  const [document, setDocument] = useState("");
+  const history = useHistory();
+  const [selectedDoc, setSelectedDoc] = useState(
+      location?.state?.selectedDoc || null
+  );
 
   const fetchLastId = async () => {
   const response = await axios.get('http://localhost:5000/getLastSignerId', {
@@ -174,6 +179,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     lastIdDokumen();
     categoryDoc();
     getName();
+    getDocument();
   }, []);
 
   console.log("Document cards:", documentCards);
@@ -335,11 +341,21 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         autoClose: 5000,
         hideProgressBar: true,
       });
-      window.location.reload();
+      history.push({
+        pathname: "/admin/preview-doc",
+        state: {selectedDoc: document}
+      });
+      // window.location.reload();
     } catch (error) {
       console.error("Failed to save logsigns:", error.message);
     }
   };
+
+  useEffect(() => {
+    if (selectedDoc && selectedDoc.id_dokumen) {
+      setIdDokumen(selectedDoc.id_dokumen);
+    }
+  }, [selectedDoc]);
 
   const handleNext = () => {
     saveDocument();
@@ -432,6 +448,18 @@ const handleCategoryChange = (event) => {
     setIdKategoriDok(event.target.value);
 }
 
+const getDocument = async() => {
+  try {
+    const response = await axios.get("http://localhost:5000/document", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    setDocument(response.data);
+  } catch (error) {
+    console.error("Error fetching document: ", error.message);
+  }
+};
 
 const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handleDeleteCard, employeeName, ...props }) => {
   return (

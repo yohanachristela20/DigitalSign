@@ -278,6 +278,10 @@ const filteredDocument = document.filter((document) =>
   
     doc.save("master_karyawan.pdf");
   };
+
+  const handleUpload = () => {
+    history.push("/admin/upload-document");
+  }
   
   return (
     <>
@@ -299,7 +303,7 @@ const filteredDocument = document.filter((document) =>
               type="button"
               className="btn btn-fill btn-primary mb-3"
               style={{width:"190px"}}
-              onClick={() => setShowAddDoc(true)}>
+              onClick={handleUpload}>
               <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
                 Upload Document
             </Button>

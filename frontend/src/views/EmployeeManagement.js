@@ -195,6 +195,10 @@ function EmployeeManagement() {
     });
   };
 
+  const handleUpload = () => {
+    history.push("/admin/upload-document");
+  }
+
   const downloadCSV = (data) => {
     const header = ["id_karyawan", "nama", "job_title", "organisasi", "sign_base64"];
     const rows = data.map((item) => [
@@ -261,6 +265,8 @@ function EmployeeManagement() {
   
     doc.save("master_karyawan.pdf");
   };
+
+
   
   return (
     <>
@@ -282,7 +288,7 @@ function EmployeeManagement() {
               type="button"
               className="btn btn-fill btn-primary mb-3"
               style={{width:"190px"}}
-              onClick={() => setShowAddDoc(true)}>
+              onClick={handleUpload}>
               <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
                 Upload Document
             </Button>

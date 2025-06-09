@@ -2,6 +2,8 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import db from "../config/database.js";
+import Document from "../models/DokumenModel.js";
 
 import {getDocument,
         getDocumentById, 
@@ -48,5 +50,52 @@ router.delete('/document/:id_dokumen', deleteDocument);
 router.get('/getLastDocumentId', getLastDocumentId);
 router.post("/document", upload.single("pdf-file"), createDocument);
 router.post('/logsign', createLogSign);
+
+// router.get('/pdf-document', async(req, res) => {
+//     try {
+//         const lastDoc = await Document.findOne({
+//             attributes: ["id_dokumen", "filepath_dokumen"],
+//             order: [["id_dokumen", "DESC"]], 
+//             raw: true,
+//         });
+
+//         console.log("Last document: ", lastDoc);
+
+//         if (!lastDoc) {
+//             return res.status(404).json({message: "Document not found."});
+//         }
+
+//         // console.log("Last document: ", lastDoc);
+//         res.status(200).json({lastDoc});
+//     } catch (error) {
+//         console.error("Error fetching document:", error.message);
+//         res.status(500).json({message: "Error fetching document."});
+//     }
+// });
+
+router.get('/pdf-document/:id_dokumen', async (req, res) => {
+    try {
+        const {id_dokumen} = req.params;
+
+        const pdfDoc = await Document.findOne({where: { id_dokumen }});
+
+        if (!pdfDoc || !pdfDoc.filepath_dokumen) {
+            return res.status(404).json({ message: "Document not found." });
+        }
+
+        const filePath = path.join(process.cwd(), pdfDoc.filepath_dokumen);
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ message: "File not found on server." });
+        }
+
+        console.log("Filepath: ", filePath);
+
+        res.sendFile(filePath);
+    } catch (error) {
+        console.error("Error fetching document:", error.message);
+        res.status(500).json({ message: "Error fetching document." });
+    }
+});
+
 
 export default router;

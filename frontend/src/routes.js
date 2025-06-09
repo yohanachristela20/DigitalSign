@@ -13,7 +13,8 @@ import Document from "views/Document.js";
 import UploadDocument from "views/UploadDocument.js";
 
 import Login from "views/Login.js";
-
+import PreviewDocument from "views/PreviewDocument";
+import { layouts } from "chart.js";
 
 const dashboardRoutes = [
   // ADMIN
@@ -34,9 +35,16 @@ const dashboardRoutes = [
   {
     path: "/upload-document",
     name: "Upload Document",
-    icon: "folder",
+    icon: "file",
     component: UploadDocument,
     layout: "/admin"
+  },
+  {
+    path: "/preview-doc",
+    name: "Preview Document",
+    icon: "file",
+    component: PreviewDocument,
+    layout: "/admin",
   },
   // {
   //   path: "/beranda",
@@ -173,8 +181,6 @@ const dashboardRoutes = [
     component: MasterUser,
     layout: "/super-admin"
   },
-
-
 
 
   {
