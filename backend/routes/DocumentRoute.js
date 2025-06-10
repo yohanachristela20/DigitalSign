@@ -73,11 +73,18 @@ router.post('/logsign', createLogSign);
 //     }
 // });
 
-router.get('/pdf-document/:id_dokumen', async (req, res) => {
+router.get('/pdf-document/:id_dokumen?', async (req, res) => {
     try {
-        const {id_dokumen} = req.params;
+        let { id_dokumen } = req.params;
+        let pdfDoc;
 
-        const pdfDoc = await Document.findOne({where: { id_dokumen }});
+        if (id_dokumen) {
+            pdfDoc = await Document.findOne({ where: { id_dokumen } });
+        } else {
+            pdfDoc = await Document.findOne({ order: [["id_dokumen", "DESC"]] });
+        }
+
+        console.log("Fetched document:", pdfDoc);
 
         if (!pdfDoc || !pdfDoc.filepath_dokumen) {
             return res.status(404).json({ message: "Document not found." });
@@ -87,8 +94,6 @@ router.get('/pdf-document/:id_dokumen', async (req, res) => {
         if (!fs.existsSync(filePath)) {
             return res.status(404).json({ message: "File not found on server." });
         }
-
-        console.log("Filepath: ", filePath);
 
         res.sendFile(filePath);
     } catch (error) {

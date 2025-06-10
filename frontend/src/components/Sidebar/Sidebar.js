@@ -67,7 +67,7 @@ const folders = [
   const activeRoute = (routeName) => location.pathname.includes(routeName);
 
   const filteredRoutes = routes.filter(
-    (route) => !["/screening-karyawan", "/login", "/surat-pernyataan", "/document"].includes(route.path)
+    (route) => !["/screening-karyawan", "/login", "/surat-pernyataan", "/document", "/preview-doc"].includes(route.path)
   );
 
   const roleFilteredRoutes = filteredRoutes.filter((route) => {
