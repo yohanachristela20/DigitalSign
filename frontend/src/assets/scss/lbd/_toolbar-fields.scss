@@ -100,11 +100,55 @@ body{
   justify-content: center;
 }
 
-// ul.items .has-submenu > .submenu {
-//   padding-left: 1.5rem;
-//   list-style-type: none;
-// }
+.custom-select-wrapper {
+  position: relative;
+  width: 190px;
+}
 
-// ul.items .submenu li {
-//   padding: 5px 0;
-// }
+.custom-select {
+  border: 1px solid #eed4dd;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #ffa7a5;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.selected-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+}
+
+.identity-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.custom-options {
+  position: absolute;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-top: none;
+  background-color: #ffa7a5;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.custom-option {
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.custom-option:hover {
+  background-color: #7b93f3;
+}

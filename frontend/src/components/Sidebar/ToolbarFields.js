@@ -10,7 +10,7 @@ import {
   CDBSidebarContent,
 } from 'cdbreact';
 
-const ToolbarFields = ({ color, routes }) => {
+function ToolbarFields ({ color, routes}) {
   const role = localStorage.getItem("role");
   const location = useLocation();
 
@@ -21,8 +21,15 @@ const ToolbarFields = ({ color, routes }) => {
   const [detailCategory, setDetailCategory] = useState("");
   const [kategori, setKategori] = useState("");
   const [id_kategoridok, setIdKategoriDok] = useState("");
+  const [id_signers, setIdSigners] = useState("");
+  const [signersDoc, setSignersDoc] = React.useState([]);
   
   const token = localStorage.getItem("token");
+  const [dokumenUploaded, setDokumenUploaded] = React.useState(localStorage.getItem("id_dokumen") || "No document"); 
+  const identitycolor = ['#f06292', '#f44336', '#f48fb1']; 
+
+  console.log("TOKEN from Toolbar: ", token);
+  console.log("Document Uploaded in Toolbar:", dokumenUploaded);
 
   const toggleMenu = (key) => {
     setOpenMenus((prev) => ({
@@ -30,6 +37,30 @@ const ToolbarFields = ({ color, routes }) => {
       [key]: !prev[key]
     }));
   };
+
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  const selectedOption = signersDoc.find(opt => opt.value === id_signers);
+
+  const handleSelect = (value) => {
+    handleSignersChange({ target: { value } });
+    setIsOpen(false);
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentDoc = localStorage.getItem("id_dokumen") || "Document doesn't exist.";
+      setDokumenUploaded(currentDoc);
+    }, 500);
+    return() => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (dokumenUploaded && dokumenUploaded !== "No document") {
+      getSignersDoc(dokumenUploaded);
+    }
+  }, [dokumenUploaded]);
 
   // const getCategory = async () =>{
   //   try {
@@ -56,32 +87,60 @@ const ToolbarFields = ({ color, routes }) => {
           });
           const newCategory = response.data.map(item => ({
               value: item.id_kategoridok,
-              label: item.kategori
+              label: item.kategori,
           }));
           setCategory(newCategory);
       } catch (error) {
           console.error("Error fetching data:", error.message); 
       }
   }
-  
 
+  const getSignersDoc = async(id_dokumen) => {
+    try {
+      const response = await axios.get('http://localhost:5000/logsign', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          id_dokumen: id_dokumen,
+        }
+      });
+
+      const newSignersDoc = response.data.map((item, index) => ({
+        value: item.id_signers,
+        label: item.Signer?.nama || "Unknown",
+        color: identitycolor[index % identitycolor.length],
+      }));
+      
+      setSignersDoc(newSignersDoc);
+      console.log("Item identity color:", color);
+    } catch (error) {
+      console.error("Error fetching signers doc:", error.message);
+    }
+  } 
+  
   useEffect(() => {
     categoryDoc();
     // getCategory();
+    getSignersDoc();
   }, []);
+
+  console.log("Signer Doc:", signersDoc);
 
   const handleCategoryChange = (event) => {
       setIdKategoriDok(event.target.value);
   }
 
-
+  const handleSignersChange = (event) => {
+      setIdSigners(event.target.value);
+  }
 
 const folders = [
   {
     name: 'My Documents',
-    children: Array.isArray(category)? 
-      category.map((item) => ({
-      name: item.kategori})) : [],
+    children: Array.isArray(signersDoc)? 
+      signersDoc.map((item) => ({
+      name: item.id_signers})) : [],
   },
 ];
 
@@ -158,28 +217,58 @@ const folders = [
 
         <a style={{fontSize:'15px'}}><strong>Signers</strong></a>
         <ul className="items">
-          <Form>
+          {/* <Form>
             <Row>
               <Col md="12">
                 <Form.Group>
                   <Form.Select 
                     className="form-control"
-                    value={id_kategoridok}
-                    onChange={handleCategoryChange}
+                    value={id_signers}
+                    onChange={handleSignersChange}
                   >
-                  {/* <option className="placeholder-form" key="blankChoice" hidden value="">
-                      Choose Signer
-                  </option> */}
-                  {category.map(option => (
-                      <option key={option.value} value={option.value}>
-                          {option.label}
-                      </option>
+                  {signersDoc.map(option => (
+                    <option key={option.value} value={option.value}>
+                        {option.label}
+                    </option>
                   ))}
                   </Form.Select>
                 </Form.Group>
               </Col>
             </Row>
-          </Form>
+          </Form> */}
+
+          <div className="custom-select-wrapper">
+          <div
+            className="custom-select"
+            onClick={() => setIsOpen(prev => !prev)}
+          >
+            <div className="selected-option">
+              <div
+                className="identity-color"
+                style={{ backgroundColor: selectedOption?.color || '#f06292' }}
+              />
+              {selectedOption?.label || "Choose Signer" }
+            </div>
+            {/* <span>&#9662;</span> */}
+          </div>
+
+          {isOpen && (
+            <div className="custom-options">
+              {signersDoc.map((option, index) => (
+                  <div
+                    key={option.value}
+                    className="custom-option"
+                    onClick={() => handleSelect(option.value)}
+                  >
+                  <div className="identity-color" style={{ backgroundColor: identitycolor[index % identitycolor.length] || '#f06292' }} 
+                  />
+                  {option.label}
+                </div>
+              ))}
+            </div>
+          )}
+
+          </div>
         </ul>
 
         <a style={{fontSize:'15px'}}><strong>Signature Fields</strong></a>
@@ -187,7 +276,7 @@ const folders = [
           <Button
             type="button"
             className="btn mb-3 bg-transparent mt-2"
-            style={{width:"190px"}}
+            style={{width:"190px", border:"1px solid #eed4dd"}}
             onClick={""}>
             <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
               Upload Document

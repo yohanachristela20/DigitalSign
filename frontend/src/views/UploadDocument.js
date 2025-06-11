@@ -139,10 +139,6 @@ function UploadDocument() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("steps", steps.toString());
-  }, [steps]);
-
-  useEffect(() => {
     const fetchDataKaryawan = async() => {
       if (!userData.id_karyawan) return;
 
@@ -392,9 +388,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
    const nextLastStep = () => {
     if (steps < 4) setSteps(4);
-    // localStorage.setItem(steps + 1);
-      // localStorage.setItem('steps', 4);
-
       setSteps(steps + 1);
       console.log("Steps from nextLastStep:", steps + 1);
 
@@ -402,8 +395,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   const handlePrevious = () => {
     if (steps > 1) setSteps(steps - 1);
-    // localStorage.setItem(steps - 1);
-      // localStorage.setItem('steps', steps - 1);
     setSteps(steps - 1);
     console.log("Steps from handle previous:", steps - 1);
 
@@ -500,6 +491,11 @@ const getDocument = async() => {
     console.error("Error fetching document: ", error.message);
   }
 };
+
+  useEffect(() => {
+    localStorage.setItem("steps", steps.toString());
+    localStorage.setItem("id_dokumen", id_dokumen.toString());
+  }, [steps, id_dokumen]);
 
 const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handleDeleteCard, employeeName, ...props }) => {
   return (

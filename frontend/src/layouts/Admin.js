@@ -15,11 +15,12 @@ function Admin() {
   const [hasImage, setHasImage] = React.useState(true);
   const location = useLocation();
   const mainPanel = React.useRef(null);
+
   const token = localStorage.getItem("token");
   const [stepStepper, setStepStepper] = React.useState(parseInt(localStorage.getItem("steps")) || 1);
   const isUploadDocumentPage = location.pathname === "/admin/upload-document";
 
-  console.log("TOKEN:", token);
+  // console.log("TOKEN:", token);
   console.log("stepStepper from upload doc:", stepStepper);  
 
   const getRoutes = (routes) => {
