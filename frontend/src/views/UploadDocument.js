@@ -10,6 +10,8 @@ import "../assets/scss/lbd/_pagination.scss";
 import "../assets/scss/lbd/_stepper.scss";
 import { SortableContainer, SortableElement } from "react-sortable-hoc";
 import arrayMove from "array-move-item";
+import PreviewDocument from "./PreviewDocument.js";
+import ToolbarFields from "components/Sidebar/ToolbarFields.js";
 
 import SortableItem from "components/SortableList/SortableList.js";
 
@@ -25,6 +27,7 @@ import {
   Modal
 } from "react-bootstrap";
 import { error } from "jquery";
+import { Prev } from "react-bootstrap/esm/PageItem.js";
 
 function UploadDocument() {
   const [id_dokumen, setIdDokumen] = useState("");
@@ -48,6 +51,7 @@ function UploadDocument() {
   const [selectedDoc, setSelectedDoc] = useState(
       location?.state?.selectedDoc || null
   );
+  const [steps, setSteps] = useState(1);
 
   const fetchLastId = async () => {
   const response = await axios.get('http://localhost:5000/getLastSignerId', {
@@ -121,12 +125,22 @@ function UploadDocument() {
           });
           setIdKaryawan(response.data.id_karyawan);
         }
+
+        // if (response.data.token) {
+        //   localStorage.setItem('steps', steps);
+        // }
+
+        // console.log("Steps by user data:", steps);
       } catch (error) {
         console.error("Error fetching user data: ", error);
       }
     };
     fetchUserData();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("steps", steps.toString());
+  }, [steps]);
 
   useEffect(() => {
     const fetchDataKaryawan = async() => {
@@ -255,7 +269,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     });
   };
 
-  const [steps, setSteps] = useState(1);
 
   const saveDocument = async(e) => {
     // e.preventDefault();
@@ -341,10 +354,11 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         autoClose: 5000,
         hideProgressBar: true,
       });
-      history.push({
-        pathname: "/admin/preview-doc",
-        state: {selectedDoc: document}
-      });
+      nexThirdStep();
+      // history.push({
+      //   pathname: "/admin/preview-doc",
+      //   state: {selectedDoc: document}
+      // });
       // window.location.reload();
     } catch (error) {
       console.error("Failed to save logsigns:", error.message);
@@ -359,15 +373,41 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   const handleNext = () => {
     saveDocument();
-    if (steps < 4) setSteps(steps + 1);
+      if (steps < 4){
+      const nextStep = steps + 1;
+      setSteps(nextStep);
+      localStorage.setItem("steps", nextStep.toString());
+      console.log("Steps from handleNext:", nextStep);
+    }
   };
 
   const nexThirdStep = () => {
-    if (steps < 4) setSteps(steps + 1);
+   if (steps < 4){
+      const nextStep = 3;
+      setSteps(nextStep);
+      localStorage.setItem("steps", nextStep.toString());
+      console.log("Steps from nexThirdStep:", nextStep);
+    }
+  };
+
+   const nextLastStep = () => {
+    if (steps < 4) setSteps(4);
+    // localStorage.setItem(steps + 1);
+      // localStorage.setItem('steps', 4);
+
+      setSteps(steps + 1);
+      console.log("Steps from nextLastStep:", steps + 1);
+
   };
 
   const handlePrevious = () => {
     if (steps > 1) setSteps(steps - 1);
+    // localStorage.setItem(steps - 1);
+      // localStorage.setItem('steps', steps - 1);
+    setSteps(steps - 1);
+    console.log("Steps from handle previous:", steps - 1);
+
+
   };
 
   const handleFileChange = (event) => {
@@ -598,47 +638,97 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                         </Form>
                       </> 
                       )}
+                      {steps === 4 && (
+                        <p></p>
+                      )}
                     </>
-                    <div className="row gy-2 mt-3 mb-3 d-flex justify-content-center">
-                    {steps === 1 ? (
-                      <>
-                        <div className="col-12 col-md-auto my-2">
-                          <Button variant="primary" type="submit" className="btn-fill w-100" onClick={handleNext} disabled={steps === 1 && nama_dokumen === "" || id_kategoridok === "" || category ==="" || file === null }>
-                            Next
-                            <FaRegArrowAltCircleRight style={{ marginLeft: '8px' }}/>
-                          </Button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                      <div className="col-12 col-md-auto my-2" id="ajukan">
-                        <Button
-                          className="btn-fill w-100"
-                          variant="primary"
-                          onClick={handlePrevious}
-                          disabled={steps === 1}
-                        >
-                        <FaRegArrowAltCircleLeft style={{ marginRight: '8px' }} />
-                          Previous
-                        </Button>
-                      </div>
-                      <div className="col-12 col-md-auto my-2">
-                        <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveLogSign} >
-                        <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
-                          Next
-                        </Button>
-                      </div>
-                      </>
-                    )}
-                    </div>
                     <div className="clearfix"></div>
                 </div>
               </Card.Body>
             </Card>
 
+            {steps === 3 && (
+              <PreviewDocument />
+            )}
           </Col>
         </Row>
       </Container>
+
+        <footer>
+        <div className="row gy-2 mt-3 mb-3 d-flex justify-content-center">
+          {steps === 1 && (
+              <div className="col-12 col-md-auto my-2">
+                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={handleNext} disabled={steps === 1 && nama_dokumen === "" || id_kategoridok === "" || category ==="" || file === null }>
+                  Next
+                  <FaRegArrowAltCircleRight style={{ marginLeft: '8px' }}/>
+                </Button>
+              </div>
+          )}
+          { steps === 2 && (
+            <>
+            <div className="col-12 col-md-auto my-2" id="ajukan">
+              <Button
+                className="btn-fill w-100"
+                variant="primary"
+                onClick={handlePrevious}
+                disabled={steps === 1 && employeeName === "" || id_karyawan === "" && email === ""}
+              >
+              <FaRegArrowAltCircleLeft style={{ marginRight: '8px' }} />
+                Previous
+              </Button>
+            </div>
+            <div className="col-12 col-md-auto my-2">
+              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveLogSign} >
+              <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
+                Next
+              </Button>
+            </div>
+            </>
+          )} 
+          { steps === 3 && (
+          <>
+            <div className="col-12 col-md-auto my-2" id="ajukan">
+              <Button
+                className="btn-fill w-100"
+                variant="primary"
+                onClick={handlePrevious}
+                disabled={steps === 2}
+              >
+              <FaRegArrowAltCircleLeft style={{ marginRight: '8px' }} />
+                Previous
+              </Button>
+            </div>
+            <div className="col-12 col-md-auto my-2">
+              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={nextLastStep} >
+              <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
+                Next
+              </Button>
+            </div>
+          </>
+          )}
+          { steps === 4 && (
+            <>
+              <div className="col-12 col-md-auto my-2" id="ajukan">
+                <Button
+                  className="btn-fill w-100"
+                  variant="primary"
+                  onClick={handlePrevious}
+                  disabled={steps === 2}
+                >
+                <FaRegArrowAltCircleLeft style={{ marginRight: '8px' }} />
+                  Previous
+                </Button>
+              </div>
+              <div className="col-12 col-md-auto my-2">
+                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={nextLastStep} >
+                <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
+                  Next
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+        </footer>
     </div>
     </>
 

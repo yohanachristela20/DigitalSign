@@ -34,21 +34,16 @@ function Document() {
   const location = useLocation();
   const history = useHistory();
   const [id_dokumen, setIdKaryawan] = useState("");
-
   const [sortBy, setSortBy] = useState("id_dokumen");
   const [sortOrder, setSortOrder] = useState("asc");
   const [sortOrderDibayar, setSortOrderDibayar] = useState("asc");
-
   const [showAddDoc, setShowAddDoc] = React.useState(false);
   const selectedCategory = location.state?.selectedCategory;
 //   const [documentList, setDocumentList] = useState([]);
 
-  
-
   const token = localStorage.getItem("token");
 
-  
-   const getDocument = async (selectedCategory) =>{
+  const getDocument = async (selectedCategory) =>{
     try {
       const url = selectedCategory 
       ? `http://localhost:5000/document/category/${selectedCategory}`
@@ -79,7 +74,7 @@ function Document() {
 
   console.log("filtered documents: ", filteredDocuments);
 
-const filteredDocument = document.filter((document) =>
+  const filteredDocument = document.filter((document) =>
     (document.id_dokumen && String(document.id_dokumen).toLowerCase().includes(searchQuery)) ||
     (document.nama_dokumen && String(document.nama_dokumen).toLowerCase().includes(searchQuery)) ||
     (document.id_kategoridok && String(document.id_kategoridok).toLowerCase().includes(searchQuery)) ||
@@ -87,7 +82,6 @@ const filteredDocument = document.filter((document) =>
     (document?.Kategori?.kategori && String(document.kategori).toLowerCase().includes(searchQuery))
   );
 
-  
   const handleSort = (key) => {
     if (sortBy === key) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
