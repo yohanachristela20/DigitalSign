@@ -1,6 +1,8 @@
 import React, {useRef, useEffect, useState} from "react";
 import * as pdfjsLib from 'pdfjs-dist/webpack';
 import { pdfjs } from "react-pdf";
+import ResizableDragable from "components/ResizeDraggable/rnd.js";
+import { useSignature } from "components/Provider/SignatureContext.js";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
@@ -8,6 +10,24 @@ const PDFCanvas = ({pdfUrl}) => {
     const canvasRef = useRef(null);
     const [pdfLoaded, setPdfLoaded] = useState(false);
     const [canvases, setCanvases] = useState([]);
+    const canvasContainerRef = useRef(null);
+    const {showSignature} = useSignature();
+    const [pageScale, setPageScale] = useState(1);
+
+    const [x_axis, setXAxis] = useState(0);
+    const [y_axis, setYAxis] = useState(0);
+    const [width, setWidth] = useState(150);
+    const [height, setHeight] = useState(200);
+
+    const handleAxisChange = ({x_axis, y_axis, width, height}) => {
+        setXAxis(x_axis);
+        setYAxis(y_axis);
+        setWidth(width);
+        setHeight(height);
+    };
+    
+    console.log("x_axis:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
+
     
     useEffect(() => {
         const loadPdf = async() => {
@@ -47,9 +67,19 @@ const PDFCanvas = ({pdfUrl}) => {
         }
     }, [pdfUrl]);
 
+    useEffect(() => {
+        localStorage.setItem("x_axis", x_axis.toString());
+        localStorage.setItem("y_axis", y_axis.toString());
+        localStorage.setItem("width", width.toString());
+        localStorage.setItem("height", height.toString());
+    }, [x_axis, y_axis, width, height]);
+
+    console.log("x_axis from setItem:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
+
+
     return(
-        <>
-            {canvases.length === 0 && <p>Loading PDF...</p>}
+       <div ref={canvasContainerRef} style={{position: 'relative'}}>
+        {canvases.length === 0 && <p>Loading PDF...</p>}
             {canvases.map((imgSrc, index) => (
                 <img
                     key={index}
@@ -58,7 +88,18 @@ const PDFCanvas = ({pdfUrl}) => {
                     style={{width: '100%', marginBottom: '1rem', border: '1px solid #ccc'}}
                 />
             ))}
-        </>
+
+            {showSignature && (
+                <ResizableDragable 
+                    x_axis={x_axis}
+                    y_axis={y_axis}
+                    width={width}
+                    height={height}
+                    scale={pageScale}
+                    onChange={handleAxisChange}
+                /> 
+            )}
+       </div>
     );
 };
 

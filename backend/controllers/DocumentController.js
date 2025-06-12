@@ -7,6 +7,7 @@ import LogSign from "../models/LogSignModel.js";
 import fs from 'fs';
 import db from "../config/database.js";
 import { sign } from "crypto";
+import Item from "../models/ItemModel.js";
 
 // export const getDocument = async(req, res) => {
 //     try {
@@ -228,6 +229,44 @@ export const createLogSign = async (req,res) => {
         res.status(500).json({message: error.message});
     }
 };
+
+export const createItem = async(req, res) => {
+    const transaction = await db.transaction();
+
+    try {
+        const {
+            id_item,
+            jenis_item,
+            x_axis,
+            y_axis,
+            width,
+            height
+        } = req.body;
+
+        const newItem = await Item.create({
+            jenis_item,
+            x_axis,
+            y_axis,
+            width,
+            height
+        },
+        {transaction});
+
+        // await LogSign.update(
+        //     {id_item: newItem.id_item}
+        // )
+
+        await transaction.commit();
+        res.status(201).json({
+            msg: "New item has been created!",
+            data: {item: newItem},
+        });
+    } catch (error) {
+        await transaction.rollback();
+        console.error("Error when creating item: ", error);
+        res.status(500).json({message: error.message});
+    }
+}
 
 export const updateDocument = async(req, res) => {
     try {

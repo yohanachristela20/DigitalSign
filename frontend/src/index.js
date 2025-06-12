@@ -18,6 +18,8 @@ import PrivateRoute from "components/PrivateRoute/PrivateRoute.js";
 
 import ScreeningKaryawan from "views/ScreeningKaryawan";
 import { PlafondProvider } from "components/Provider/PlafondContext.js";
+import { SignatureProvider } from "components/Provider/SignatureContext.js";
+
 import LaporanPiutang from "views/LaporanPiutangKaryawan.js";
 import PageScreeningKaryawan from "views/ScreeningKaryawan.js"; 
 import Document from "views/Document.js";
@@ -46,58 +48,60 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
   <PlafondProvider>
-  <DisableBackButton />
-  <BrowserRouter>
-  <DisableBackButton />
-  <ToastContainer />
-    <Switch>
-      <Route path="/login"  
-      exact
-          render={(props) => (
-            <Login
-              {...props}
-              onLoginSuccess={() => {
-                const lastRoute = localStorage.getItem("lastRoute"); 
-                localStorage.removeItem("lastRoute");
-                console.log("Last route: ", lastRoute);
-                props.history.push(lastRoute);
-              }}
-            />
-          )} /> 
+    <SignatureProvider>
+      <DisableBackButton />
+        <BrowserRouter>
+        <DisableBackButton />
+        <ToastContainer />
+          <Switch>
+            <Route path="/login"  
+            exact
+                render={(props) => (
+                  <Login
+                    {...props}
+                    onLoginSuccess={() => {
+                      const lastRoute = localStorage.getItem("lastRoute"); 
+                      localStorage.removeItem("lastRoute");
+                      console.log("Last route: ", lastRoute);
+                      props.history.push(lastRoute);
+                    }}
+                  />
+                )} /> 
 
-      <PrivateRoute path="/karyawan" roles={["Karyawan"]} render={(props) =>
-        (
-          <>
-           <KaryawanLayout {...props} />
-           <Heartbeat />
-          </>
-        )} />
-        
-      <PrivateRoute path="/finance" roles={["Finance"]} render={(props) => (
-        <>
-          <FinanceLayout {...props} />
-          <Heartbeat />
-        </>
-        )
-        } />
-      <PrivateRoute path="/admin" roles={["Admin"]} render={(props) => (
-        <>
-          <AdminLayout {...props} />
-          <Heartbeat />
-        </>
-      ) } />
-      <PrivateRoute path="/super-admin" roles={["Super Admin"]} render={(props) => (
-        <>
-          <SuperAdminLayout {...props} />
-          <Heartbeat />
-        </>
-      )} />
+            <PrivateRoute path="/karyawan" roles={["Karyawan"]} render={(props) =>
+              (
+                <>
+                <KaryawanLayout {...props} />
+                <Heartbeat />
+                </>
+              )} />
+              
+            <PrivateRoute path="/finance" roles={["Finance"]} render={(props) => (
+              <>
+                <FinanceLayout {...props} />
+                <Heartbeat />
+              </>
+              )
+              } />
+            <PrivateRoute path="/admin" roles={["Admin"]} render={(props) => (
+              <>
+                <AdminLayout {...props} />
+                <Heartbeat />
+              </>
+            ) } />
+            <PrivateRoute path="/super-admin" roles={["Super Admin"]} render={(props) => (
+              <>
+                <SuperAdminLayout {...props} />
+                <Heartbeat />
+              </>
+            )} />
 
-      <Route path="/document" element={<Document />} />
-      <Route path="/screening-karyawan" element={<PageScreeningKaryawan />} />
-      <Redirect from="/" to="/login" />
+            <Route path="/document" element={<Document />} />
+            <Route path="/screening-karyawan" element={<PageScreeningKaryawan />} />
+            <Redirect from="/" to="/login" />
 
-    </Switch>
-  </BrowserRouter>
+          </Switch>
+        </BrowserRouter>
+    </SignatureProvider>
   </PlafondProvider>
 );

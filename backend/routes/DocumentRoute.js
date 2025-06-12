@@ -12,7 +12,8 @@ import {getDocument,
         deleteDocument,
         getLastDocumentId,
         getDocumentByCategory,
-        createLogSign
+        createLogSign,
+        createItem
 } from "../controllers/DocumentController.js"; 
 
 import { create } from "domain";
@@ -50,6 +51,7 @@ router.delete('/document/:id_dokumen', deleteDocument);
 router.get('/getLastDocumentId', getLastDocumentId);
 router.post("/document", upload.single("pdf-file"), createDocument);
 router.post('/logsign', createLogSign);
+router.post('/item', createItem);
 
 // router.get('/pdf-document', async(req, res) => {
 //     try {

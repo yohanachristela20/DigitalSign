@@ -25,7 +25,7 @@ const Item = db.define('item_field', {
 
             if (lastRecord && lastRecord.id_item) {
                 const lastIdNumber = parseInt(lastRecord.id_item.substring(1), 10); 
-                const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(2, '0');
+                const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(5, '0');
                 newId = `F${incrementedIdNumber}`;
             }
             item_field.id_item = newId;

@@ -9,8 +9,10 @@ import {
   CDBSidebar,
   CDBSidebarContent,
 } from 'cdbreact';
+import ResizableDragable from "components/ResizeDraggable/rnd";
+import { useSignature } from "components/Provider/SignatureContext.js";
 
-function ToolbarFields ({ color, routes}) {
+function ToolbarFields ({ color, routes, x_axis, y_axis, width, height}) {
   const role = localStorage.getItem("role");
   const location = useLocation();
 
@@ -26,7 +28,14 @@ function ToolbarFields ({ color, routes}) {
   
   const token = localStorage.getItem("token");
   const [dokumenUploaded, setDokumenUploaded] = React.useState(localStorage.getItem("id_dokumen") || "No document"); 
-  const identitycolor = ['#f06292', '#f44336', '#f48fb1']; 
+  const identitycolor = ['#f06292', '#f44336', '#f48fb1','#ec407a', '#e91e63', '#ce93d8', '#ba68c8', '#ab47bc', '#9c27b0', '#b39ddb', '#9575cd', '#7e57c2', '#673AB7']; 
+
+  // const [x_axis, setXAxis] = useState(0);
+  // const [y_axis, setYAxis] = useState(0);
+  // const [width, setWidth] = useState(50);
+  // const [height, setHeight] = useState(50);
+  // const [pageScale, setPageScale] = useState(1);
+  const {setShowSignature} = useSignature();
 
   console.log("TOKEN from Toolbar: ", token);
   console.log("Document Uploaded in Toolbar:", dokumenUploaded);
@@ -194,6 +203,23 @@ const folders = [
     });
   };
 
+  // useEffect(() => {
+  //   setXAxis(x_axis);
+  //   setYAxis(y_axis);
+  //   setWidth(width);
+  //   setHeight(height);
+  // });
+
+  // const handleAxisChange = ({x_axis, y_axis, width, height}) => {
+  //   setXAxis(x_axis);
+  //   setYAxis(y_axis);
+  //   setWidth(width);
+  //   setHeight(height);
+  // };
+
+  // console.log("x_axis:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
+
+
   return (
     <div className="sidebar" style={{backgroundColor:"#ffa7a5"}}>
       <CDBSidebarContent>
@@ -245,7 +271,7 @@ const folders = [
             <div className="selected-option">
               <div
                 className="identity-color"
-                style={{ backgroundColor: selectedOption?.color || '#f06292' }}
+                style={{ backgroundColor: selectedOption?.color || '' }}
               />
               {selectedOption?.label || "Choose Signer" }
             </div>
@@ -281,6 +307,28 @@ const folders = [
             <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
               Upload Document
           </Button>
+
+          <Button
+            type="button"
+            className="btn mb-3 bg-transparent mt-2"
+            style={{width:"190px", border:"1px solid #eed4dd"}}
+            onClick={() => setShowSignature(true)}>
+            <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
+              Signature
+          </Button>
+
+          {/* {showSignature && (
+            <ResizableDragable 
+              x_axis={x_axis}
+              y_axis={y_axis}
+              width={width}
+              height={height}
+              scale={pageScale}
+              onChange={handleAxisChange}
+            /> 
+          )} */}
+
+         
         </ul>
       </CDBSidebarContent>
       {/* <hr /> */}

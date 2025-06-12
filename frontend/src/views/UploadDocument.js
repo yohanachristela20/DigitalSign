@@ -48,10 +48,20 @@ function UploadDocument() {
   const [newIdSigner, setNewIdSigner] = useState("");
   const [document, setDocument] = useState("");
   const history = useHistory();
+  const [x_axis, setXAxis] = useState(0);
+  const [y_axis, setYAxis] = useState(0);
+  const [width, setWidth] = useState(150);
+  const [height, setHeight] = useState(200);
+  const [jenis_item, setJenisItem] = useState("");
+  const [id_item, setIdItem] = useState("");
+
   const [selectedDoc, setSelectedDoc] = useState(
       location?.state?.selectedDoc || null
   );
   const [steps, setSteps] = useState(1);
+
+  // console.log("x_axis from upload doc:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
+
 
   const fetchLastId = async () => {
   const response = await axios.get('http://localhost:5000/getLastSignerId', {
@@ -139,6 +149,28 @@ function UploadDocument() {
   }, []);
 
   useEffect(() => {
+    const x = localStorage.getItem("x_axis");
+    const y = localStorage.getItem("y_axis");
+    const w = localStorage.getItem("width");
+    const h = localStorage.getItem("height");
+
+    if (x !== null)setXAxis(parseFloat(x));
+    if (y !== null)setYAxis(parseFloat(y));
+    if (w !== null)setWidth(parseFloat(w));
+    if (h !== null)setHeight(parseFloat(h));
+    setJenisItem("Signpad");
+  }, []);
+
+  console.log("Stepssss: ", steps);
+
+  useEffect(() => {
+    if(steps === 3) {
+      console.log("x_axis from step 3:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
+    }
+  }, [steps, x_axis, y_axis, width, height]);
+
+
+  useEffect(() => {
     const fetchDataKaryawan = async() => {
       if (!userData.id_karyawan) return;
 
@@ -187,9 +219,11 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   useEffect(() => {
     lastIdDokumen();
+    lastIdItem();
     categoryDoc();
     getName();
     getDocument();
+
   }, []);
 
   console.log("Document cards:", documentCards);
@@ -361,6 +395,32 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
+  const saveItem = async() => {
+    try {
+      const response = await axios.post('http://localhost:5000/item', {
+        // id_item,
+        jenis_item, 
+        x_axis,
+        y_axis, 
+        width, 
+        height
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Item saved: ", response.data);
+      toast.success("Item has been created successfully!", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
+      nextLastStep();
+    } catch (error) {
+      console.error("Failed to save item:", error.message);
+    }
+  }
+
   useEffect(() => {
     if (selectedDoc && selectedDoc.id_dokumen) {
       setIdDokumen(selectedDoc.id_dokumen);
@@ -390,7 +450,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     if (steps < 4) setSteps(4);
       setSteps(steps + 1);
       console.log("Steps from nextLastStep:", steps + 1);
-
   };
 
   const handlePrevious = () => {
@@ -436,6 +495,23 @@ const lastIdDokumen = async(e) => {
         newId = `D${incrementedIdNumber}`;
     }
     setIdDokumen(newId);
+};
+
+
+const lastIdItem = async(e) => {
+    const response = await axios.get('http://localhost:5000/getLastItemId', {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    });
+
+    let newId = "I00001";
+    if (response.data?.lastId) {
+        const lastIdNumber = parseInt(response.data.lastId.substring(2), 10);
+        const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(5, '0');
+        newId = `I${incrementedIdNumber}`;
+    }
+    setIdItem(newId);
 };
 
 const categoryDoc = async() => {
@@ -644,7 +720,9 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
             </Card>
 
             {steps === 3 && (
-              <PreviewDocument />
+              <>
+                <PreviewDocument />
+              </>
             )}
           </Col>
         </Row>
@@ -695,7 +773,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
               </Button>
             </div>
             <div className="col-12 col-md-auto my-2">
-              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={nextLastStep} >
+              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveItem} >
               <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
                 Next
               </Button>
