@@ -252,6 +252,16 @@ export const createItem = async(req, res) => {
         },
         {transaction});
 
+        const lastLogsign = await LogSign.findOne({
+            attributes: ["id_logsign", "id_item"],
+            order: [["id_logsign", "DESC"]],
+        });
+
+        const itemLogSign = await LogSign.update(
+            { id_item: newItem.id_item}, 
+            { where: {id_logsign: lastLogsign.id_logsign} ,transaction}
+        );
+
         // await LogSign.update(
         //     {id_item: newItem.id_item}
         // )
@@ -259,7 +269,7 @@ export const createItem = async(req, res) => {
         await transaction.commit();
         res.status(201).json({
             msg: "New item has been created!",
-            data: {item: newItem},
+            data: {newItem, itemLogSign},
         });
     } catch (error) {
         await transaction.rollback();
