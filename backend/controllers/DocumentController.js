@@ -4,7 +4,7 @@ import { group } from "console";
 import path from "path";
 import KategoriDokumen from "../models/KategoriDokModel.js";
 import LogSign from "../models/LogSignModel.js";
-import fs from 'fs';
+import fs, { stat } from 'fs';
 import db from "../config/database.js";
 import { sign } from "crypto";
 import Item from "../models/ItemModel.js";
@@ -186,42 +186,117 @@ export const createDocument = async(req, res) => {
 //     }
 // }
 
+
+//LAST
+// export const createLogSign = async (req,res) => {
+//     const transaction = await db.transaction();
+//     try {
+//     const {logsigns} = req.body;
+
+//     // const {
+//     //     action,
+//     //     status,
+//     //     id_dokumen,
+//     //     id_karyawan,
+//     //     id_signers, 
+//     //     id_item
+//     // } = req.body;
+
+//     // const newLogSign = [];
+
+//     if (!Array.isArray(logsigns) || logsigns.length === 0) {
+//         return res.status(400).json({message: "logsign must be a non-empty array."});
+//     }
+
+//     const lastRecord = await LogSign.findOne({
+//         order: [['id_logsign', 'DESC']],
+//         transaction,
+//         lock: transaction.LOCK.UPDATE,
+//     });
+
+//     let lastIdNumber = lastRecord ? parseInt(lastRecord.id_logsign.substring(2), 10) : 0;
+//     const newLogSign = logsigns.map((log, index) => {
+//         const newIdNumber = (lastIdNumber + index + 1).toString().padStart(5, '0');
+//         return {
+//             id_logsign: `LS${newIdNumber}`,
+//             action: log.action,
+//             status: log.status,
+//             id_dokumen: log.id_dokumen,
+//             id_karyawan: log.id_karyawan,
+//             id_signers: log.id_signers,
+//             id_item: log.id_item,
+//         };
+//     });
+
+
+//     await LogSign.bulkCreate(newLogSign, {transaction});
+
+//     await transaction.commit();
+//     res.status(201).json({
+//         msg: "New logsigns have been created!",
+//         data: {logsigns: newLogSign},
+//     });
+//     } catch (error) {
+//         await transaction.rollback();
+//         console.error("Error when creating logsigns: ", error);
+//         res.status(500).json({message: error.message});
+//     }
+// };
+
 export const createLogSign = async (req,res) => {
     const transaction = await db.transaction();
     try {
-        const { logsigns } = req.body;
+    const {logsigns} = req.body;
 
-        if (!Array.isArray(logsigns) || logsigns.length === 0) {
-            return res.status(400).json({message: "logsign must be a non-empty array."});
-        }
+    // const {
+    //     action,
+    //     status,
+    //     id_dokumen,
+    //     id_karyawan,
+    //     id_signers, 
+    //     id_item
+    // } = req.body;
 
-        const lastRecord = await LogSign.findOne({
-            order: [['id_logsign', 'DESC']],
-            transaction,
-        });
+    // const newLogSign = [];
 
-        let lastIdNumber = lastRecord ? parseInt(lastRecord.id_logsign.substring(2), 10) : 0;
+    if (!Array.isArray(logsigns) || logsigns.length === 0) {
+        return res.status(400).json({message: "logsign must be a non-empty array."});
+    }
 
-        const formattedLogSigns = logsigns.map((log, index) => {
-            const newIdNumber  = (lastIdNumber + index + 1).toString().padStart(5, '0');
-            return {
-                id_logsign: `LS${newIdNumber}`,
-                action: log.action || "Created", 
-                status: log.status || "Pending",
+    const lastRecord = await LogSign.findOne({
+        order: [['id_logsign', 'DESC']],
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+    });
+
+    let lastIdNumber = lastRecord ? parseInt(lastRecord.id_logsign.substring(2), 10) : 0;
+    const newLogSign = [];
+
+    for (const log of logsigns) {
+        const items = Array.isArray(log.id_item) ? log.id_item : [log.id_item];
+
+        for (const item of items) {
+            lastIdNumber += 1;
+            const newIdNumber = lastIdNumber.toString().padStart(5, '0');
+            newLogSign.push({
+                id_logsign: `LS${newIdNumber}`, 
+                action: log.action, 
+                status: log.status,
                 id_dokumen: log.id_dokumen,
-                id_karyawan: log.id_karyawan,
-                id_signers: log.id_signers,
-                id_item: log.id_item,
-            };
-        })
+                id_karyawan: log.id_karyawan, 
+                id_signers: log.id_signers, 
+                id_item: item, 
+            }); 
+        }
+    }
 
-        await LogSign.bulkCreate(formattedLogSigns, {transaction});
+    await LogSign.bulkCreate(newLogSign, {transaction});
 
-        await transaction.commit();
-        res.status(201).json({
-            msg: "New logsigns have been created!",
-            data: formattedLogSigns,
-        });
+    await transaction.commit();
+    res.status(201).json({
+        msg: "New logsigns have been created!",
+        data: {logsigns: newLogSign},
+    });
     } catch (error) {
         await transaction.rollback();
         console.error("Error when creating logsigns: ", error);

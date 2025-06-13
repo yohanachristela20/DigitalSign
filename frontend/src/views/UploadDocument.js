@@ -449,14 +449,22 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
       const createdItems = itemResponse.data.data.items;
 
-      const logsigns = documentCards.map((card, index) => ({
-        action: "Created", 
-        status: "Pending", 
-        id_dokumen,
-        id_karyawan,
-        id_signers: card.id_karyawan,
-        id_item: createdItems[index].id_item,
-      }))
+      const logsigns = createdItems.map((item, index) => {
+        const signer = documentCards[0];
+
+        return {
+          action: "Created", 
+          status: "Pending", 
+          id_dokumen,
+          id_karyawan,
+          id_signers: signer.id_karyawan,
+          id_item: item.id_item,
+          };
+      });
+
+      // const signers = documentCards.map(card => ({
+      //   id_signers: card.id_karyawan,
+      // }))
 
      await axios.post('http://localhost:5000/logsign', {
         logsigns
