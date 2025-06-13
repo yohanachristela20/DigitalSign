@@ -4,9 +4,11 @@ const SignatureContext = createContext();
 
 export const SignatureProvider = ({children}) => {
     const [showSignature, setShowSignature] = useState(false);
+    const [signatures, setSignatures] = useState([]);
+    
 
     return(
-        <SignatureContext.Provider value={{showSignature, setShowSignature}}>
+        <SignatureContext.Provider value={{signatures, setSignatures}}>
             {children}
         </SignatureContext.Provider>
     );

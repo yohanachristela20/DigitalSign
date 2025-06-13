@@ -12,7 +12,7 @@ import { SortableContainer, SortableElement } from "react-sortable-hoc";
 import arrayMove from "array-move-item";
 import PreviewDocument from "./PreviewDocument.js";
 import ToolbarFields from "components/Sidebar/ToolbarFields.js";
-
+import { useSignature } from "components/Provider/SignatureContext.js";
 import SortableItem from "components/SortableList/SortableList.js";
 
 import {
@@ -54,6 +54,7 @@ function UploadDocument() {
   const [height, setHeight] = useState(200);
   const [jenis_item, setJenisItem] = useState("");
   const [id_item, setIdItem] = useState("");
+  const {signatures, setSignatures} = useSignature();
 
   const [selectedDoc, setSelectedDoc] = useState(
       location?.state?.selectedDoc || null
@@ -149,6 +150,7 @@ function UploadDocument() {
   }, []);
 
   useEffect(() => {
+   const handleLocalStorageUpdate = () => {
     const x = localStorage.getItem("x_axis");
     const y = localStorage.getItem("y_axis");
     const w = localStorage.getItem("width");
@@ -159,6 +161,15 @@ function UploadDocument() {
     if (w !== null)setWidth(parseFloat(w));
     if (h !== null)setHeight(parseFloat(h));
     setJenisItem("Signpad");
+   };
+
+   window.addEventListener("localStorageUpdated", handleLocalStorageUpdate);
+
+   handleLocalStorageUpdate();
+
+   return() => {
+    window.removeEventListener("localStorageUpdated", handleLocalStorageUpdate);
+   };
   }, []);
 
   console.log("Stepssss: ", steps);
@@ -360,66 +371,113 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   // };
 
 
-  const saveLogSign = async() => {
+  //masing-masing
+  // const saveLogSign = async() => {
+  //   try {
+  //     const logsigns = documentCards.map(card => ({
+  //       action: "Created",
+  //       status: "Pending", 
+  //       id_dokumen,
+  //       id_karyawan: id_karyawan,
+  //       id_signers: card.id_karyawan,
+  //     }));
+
+  //     const response = await axios.post('http://localhost:5000/logsign', {
+  //       logsigns
+  //       }, {
+  //       headers: {
+  //           Authorization: `Bearer ${token}`,
+  //       }, 
+  //     });
+      
+  //     console.log("Logsigns saved: ", response.data);
+  //     toast.success("Logsigns have been created successfully!", {
+  //       position: "top-right",
+  //       autoClose: 5000,
+  //       hideProgressBar: true,
+  //     });
+  //     nexThirdStep();
+  //     // history.push({
+  //     //   pathname: "/admin/preview-doc",
+  //     //   state: {selectedDoc: document}
+  //     // });
+  //     // window.location.reload();
+  //   } catch (error) {
+  //     console.error("Failed to save logsigns:", error.message);
+  //   }
+  // };
+
+  // const saveItem = async() => {
+  //   try {
+  //     const response = await axios.post('http://localhost:5000/item', {
+  //       // id_item,
+  //       jenis_item, 
+  //       x_axis,
+  //       y_axis, 
+  //       width, 
+  //       height
+  //     }, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+  //     console.log("Item saved: ", response.data);
+  //     toast.success("Item has been created successfully!", {
+  //       position: "top-right",
+  //       autoClose: 5000,
+  //       hideProgressBar: true,
+  //     });
+  //     nextLastStep();
+  //   } catch (error) {
+  //     console.error("Failed to save item:", error.message);
+  //   }
+  // };
+
+  const saveLogSignandItems = async() => {
     try {
-      const logsigns = documentCards.map(card => ({
-        action: "Created",
-        status: "Pending", 
-        id_dokumen,
-        id_karyawan: id_karyawan,
-        id_signers: card.id_karyawan,
+      const items = signatures.map(sig => ({
+        jenis_item: "Signpad", 
+        x_axis: sig.x_axis,
+        y_axis: sig.y_axis,
+        width: sig.width, 
+        height: sig.height,
       }));
 
-      const response = await axios.post('http://localhost:5000/logsign', {
+      const itemResponse = await axios.post('http://localhost:5000/item', items, {
+        headers: {Authorization: `Bearer ${token}`}
+      }); 
+
+      const createdItems = itemResponse.data.data.items;
+
+      const logsigns = documentCards.map((card, index) => ({
+        action: "Created", 
+        status: "Pending", 
+        id_dokumen,
+        id_karyawan,
+        id_signers: card.id_karyawan,
+        id_item: createdItems[index].id_item,
+      }))
+
+     await axios.post('http://localhost:5000/logsign', {
         logsigns
         }, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        }, 
-      });
-      
-      console.log("Logsigns saved: ", response.data);
-      toast.success("Logsigns have been created successfully!", {
-        position: "top-right",
-        autoClose: 5000,
+          headers: {Authorization: `Bearer ${token}`}
+        }); 
+
+      toast.success("Logsigns and items created successfully!", {
+        position: "top-right", 
+        autoClose: "5000", 
         hideProgressBar: true,
       });
-      nexThirdStep();
-      // history.push({
-      //   pathname: "/admin/preview-doc",
-      //   state: {selectedDoc: document}
-      // });
-      // window.location.reload();
+
+      nextLastStep();
     } catch (error) {
-      console.error("Failed to save logsigns:", error.message);
+      console.error("Failed to save logsigns and items:", error.message);
     }
   };
 
-  const saveItem = async() => {
-    try {
-      const response = await axios.post('http://localhost:5000/item', {
-        // id_item,
-        jenis_item, 
-        x_axis,
-        y_axis, 
-        width, 
-        height
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("Item saved: ", response.data);
-      toast.success("Item has been created successfully!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-      });
-      nextLastStep();
-    } catch (error) {
-      console.error("Failed to save item:", error.message);
-    }
-  }
+  // console.log("x_axis after savelogsign:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
+
 
   useEffect(() => {
     if (selectedDoc && selectedDoc.id_dokumen) {
@@ -694,7 +752,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                       )}
                       {steps === 2 && (
                       <>
-                        <Form onSubmit={saveLogSign}>
+                        <Form onSubmit={nexThirdStep}>
                           <SortableList 
                             items={documentCards}
                             onSortEnd={onSortEnd}
@@ -752,7 +810,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
               </Button>
             </div>
             <div className="col-12 col-md-auto my-2">
-              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveLogSign} >
+              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={nexThirdStep} >
               <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
                 Next
               </Button>
@@ -773,7 +831,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
               </Button>
             </div>
             <div className="col-12 col-md-auto my-2">
-              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveItem} >
+              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveLogSignandItems} >
               <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
                 Next
               </Button>

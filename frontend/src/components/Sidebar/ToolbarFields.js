@@ -35,10 +35,23 @@ function ToolbarFields ({ color, routes, x_axis, y_axis, width, height}) {
   // const [width, setWidth] = useState(50);
   // const [height, setHeight] = useState(50);
   // const [pageScale, setPageScale] = useState(1);
-  const {setShowSignature} = useSignature();
+  const {setSignatures} = useSignature();
 
   console.log("TOKEN from Toolbar: ", token);
   console.log("Document Uploaded in Toolbar:", dokumenUploaded);
+
+  const handleAddSignature = () => {
+    setSignatures(prev => [
+      ...prev, 
+      {
+        id: Date.now(),
+        x_axis: 0,
+        y_axis: 0,
+        width: 150,
+        height: 200,
+      }
+    ]);
+  };
 
   const toggleMenu = (key) => {
     setOpenMenus((prev) => ({
@@ -144,14 +157,14 @@ function ToolbarFields ({ color, routes, x_axis, y_axis, width, height}) {
       setIdSigners(event.target.value);
   }
 
-const folders = [
-  {
-    name: 'My Documents',
-    children: Array.isArray(signersDoc)? 
-      signersDoc.map((item) => ({
-      name: item.id_signers})) : [],
-  },
-];
+  const folders = [
+    {
+      name: 'My Documents',
+      children: Array.isArray(signersDoc)? 
+        signersDoc.map((item) => ({
+        name: item.id_signers})) : [],
+    },
+  ];
 
   // console.log("folders: ", folders);
 
@@ -312,7 +325,7 @@ const folders = [
             type="button"
             className="btn mb-3 bg-transparent mt-2"
             style={{width:"190px", border:"1px solid #eed4dd"}}
-            onClick={() => setShowSignature(true)}>
+            onClick={handleAddSignature}>
             <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
               Signature
           </Button>
@@ -338,4 +351,3 @@ const folders = [
 };
 
 export default ToolbarFields;
-

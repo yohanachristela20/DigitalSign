@@ -18,12 +18,20 @@ const PDFCanvas = ({pdfUrl}) => {
     const [y_axis, setYAxis] = useState(0);
     const [width, setWidth] = useState(150);
     const [height, setHeight] = useState(200);
+    const {signatures, setSignatures} = useSignature();
 
-    const handleAxisChange = ({x_axis, y_axis, width, height}) => {
-        setXAxis(x_axis);
-        setYAxis(y_axis);
-        setWidth(width);
-        setHeight(height);
+    // const handleAxisChange = ({x_axis, y_axis, width, height}) => {
+    //     setXAxis(x_axis);
+    //     setYAxis(y_axis);
+    //     setWidth(width);
+    //     setHeight(height);
+    // };
+    const handleAxisChange = (id, updatedValues) => {
+    setSignatures(prev =>
+        prev.map(sig =>
+        sig.id === id ? { ...sig, ...updatedValues } : sig
+        )
+    );
     };
     
     console.log("x_axis:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
@@ -72,9 +80,11 @@ const PDFCanvas = ({pdfUrl}) => {
         localStorage.setItem("y_axis", y_axis.toString());
         localStorage.setItem("width", width.toString());
         localStorage.setItem("height", height.toString());
+
+        window.dispatchEvent(new Event("localStorageUpdated"));
     }, [x_axis, y_axis, width, height]);
 
-    console.log("x_axis from setItem:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
+    // console.log("x_axis from setItem:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
 
 
     return(
@@ -89,16 +99,17 @@ const PDFCanvas = ({pdfUrl}) => {
                 />
             ))}
 
-            {showSignature && (
+            {signatures.map(sig => (
                 <ResizableDragable 
-                    x_axis={x_axis}
-                    y_axis={y_axis}
-                    width={width}
-                    height={height}
-                    scale={pageScale}
-                    onChange={handleAxisChange}
+                    key={sig.id}
+                    x_axis={sig.x_axis}
+                    y_axis={sig.y_axis}
+                    width={sig.width}
+                    height={sig.height}
+                    scale={sig.pageScale}
+                    onChange={(updated) => handleAxisChange(sig.id, updated)}
                 /> 
-            )}
+            ))}
        </div>
     );
 };

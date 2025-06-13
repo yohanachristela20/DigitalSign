@@ -195,8 +195,6 @@ export const createLogSign = async (req,res) => {
             return res.status(400).json({message: "logsign must be a non-empty array."});
         }
 
-        let newId = "LS00001";
-
         const lastRecord = await LogSign.findOne({
             order: [['id_logsign', 'DESC']],
             transaction,
@@ -204,15 +202,16 @@ export const createLogSign = async (req,res) => {
 
         let lastIdNumber = lastRecord ? parseInt(lastRecord.id_logsign.substring(2), 10) : 0;
 
-        const formattedLogSigns = logsigns.map((sign, index) => {
+        const formattedLogSigns = logsigns.map((log, index) => {
             const newIdNumber  = (lastIdNumber + index + 1).toString().padStart(5, '0');
             return {
                 id_logsign: `LS${newIdNumber}`,
-                action: sign.action || "Created", 
-                status: sign.status || "Pending",
-                id_dokumen: sign.id_dokumen,
-                id_karyawan: sign.id_karyawan,
-                id_signers: sign.id_signers,
+                action: log.action || "Created", 
+                status: log.status || "Pending",
+                id_dokumen: log.id_dokumen,
+                id_karyawan: log.id_karyawan,
+                id_signers: log.id_signers,
+                id_item: log.id_item,
             };
         })
 
@@ -221,7 +220,7 @@ export const createLogSign = async (req,res) => {
         await transaction.commit();
         res.status(201).json({
             msg: "New logsigns have been created!",
-            data: {logsigns: formattedLogSigns},
+            data: formattedLogSigns,
         });
     } catch (error) {
         await transaction.rollback();
@@ -230,37 +229,104 @@ export const createLogSign = async (req,res) => {
     }
 };
 
+// export const createLogSign = async (req,res) => {
+//     const transaction = await db.transaction();
+//     try {
+//         const { logsigns } = req.body;
+
+//         // if (!logsign || !logsign.id_signers || !logsign.id_dokumen) {
+//         //     return res.status(400).json({ message: "Invalid logsign payload" });
+//         // }
+
+//         const lastRecord = await LogSign.findOne({
+//             order: [['id_logsign', 'DESC']],
+//             transaction,
+//         });
+
+//         let lastIdNumber = lastRecord ? parseInt(lastRecord.id_logsign.substring(2), 10) : 0;
+//         const newIdNumber  = (lastIdNumber + 1).toString().padStart(5, '0');
+
+//         const newLogSign = await LogSign.create({
+//             id_logsign: `LS${newIdNumber}`,
+//             action: logsign.action || "Created",
+//             status: logsign.status || "Pending",
+//             id_dokumen: logsign.id_dokumen,
+//             id_karyawan: logsign.id_karyawan,
+//             id_signers: logsign.id_signers,
+//             id_item: logsign.id_item,
+//         }, { transaction });
+
+//         await transaction.commit();
+//         res.status(201).json({
+//             msg: "New logsign has been created!",
+//             data: newLogSign,
+//         });
+//     } catch (error) {
+//         await transaction.rollback();
+//         console.error("Error when creating logsign: ", error);
+//         res.status(500).json({ message: error.message });
+//     }
+// };
+
 export const createItem = async(req, res) => {
     const transaction = await db.transaction();
 
     try {
-        const {
-            id_item,
-            jenis_item,
-            x_axis,
-            y_axis,
-            width,
-            height
-        } = req.body;
+        const items = req.body;
 
-        const newItem = await Item.create({
-            jenis_item,
-            x_axis,
-            y_axis,
-            width,
-            height
-        },
-        {transaction});
+        // const newItem = await Item.create({
+        //     jenis_item,
+        //     x_axis,
+        //     y_axis,
+        //     width,
+        //     height
+        // },
+        // {transaction});
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ message: "No item data provided." });
+        }
 
-        const lastLogsign = await LogSign.findOne({
-            attributes: ["id_logsign", "id_item"],
-            order: [["id_logsign", "DESC"]],
+        const lastRecord = await Item.findOne({
+            order: [['id_item', 'DESC']],
+            transaction,
         });
 
-        const itemLogSign = await LogSign.update(
-            { id_item: newItem.id_item}, 
-            { where: {id_logsign: lastLogsign.id_logsign} ,transaction}
-        );
+        let lastIdNumber = lastRecord ? parseInt(lastRecord.id_item.substring(2), 10) : 0;
+
+        const formattedItems = items.map((item, index) => {
+            const newIdNumber  = (lastIdNumber + index + 1).toString().padStart(5, '0');
+            return {
+                id_item: `F${newIdNumber}`,
+                jenis_item: item.jenis_item,
+                x_axis: item.x_axis,
+                y_axis: item.y_axis, 
+                width: item.width,
+                height: item.height,
+
+            };
+        })
+
+        await Item.bulkCreate(formattedItems, {transaction});
+
+        // newItem.push({
+        //     jenis_item, 
+        //     x_axis,
+        //     y_axis,
+        //     width,
+        //     height
+        // });
+
+        // await Item.bulkCreate(newItem, {transaction});
+
+        // const lastLogsign = await LogSign.findOne({
+        //     attributes: ["id_logsign", "id_item"],
+        //     order: [["id_logsign", "DESC"]],
+        // });
+
+        // const itemLogSign = await LogSign.update(
+        //     { id_item: newItem.id_item}, 
+        //     { where: {id_logsign: lastLogsign.id_logsign} ,transaction}
+        // );
 
         // await LogSign.update(
         //     {id_item: newItem.id_item}
@@ -269,14 +335,14 @@ export const createItem = async(req, res) => {
         await transaction.commit();
         res.status(201).json({
             msg: "New item has been created!",
-            data: {newItem, itemLogSign},
+            data: {items: formattedItems},
         });
     } catch (error) {
         await transaction.rollback();
         console.error("Error when creating item: ", error);
         res.status(500).json({message: error.message});
     }
-}
+};
 
 export const updateDocument = async(req, res) => {
     try {
