@@ -31,7 +31,7 @@ function PreviewDocument() {
                 });
 
                 if (!response.ok) {
-                    throw new Error("File tidak ditemukan atau gagal diambil");
+                    throw new Error("File not found.");
                 }
 
                 const blob = await response.blob();

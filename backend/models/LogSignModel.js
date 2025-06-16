@@ -3,6 +3,7 @@ import db from "../config/database.js";
 import Dokumen from "./DokumenModel.js";
 import Karyawan from "./KaryawanModel.js";
 import Item from "./ItemModel.js";
+import Signers from "./SignersModel.js";
 
 const {DataTypes} = Sequelize;
 

@@ -12,7 +12,7 @@ import {
 import ResizableDragable from "components/ResizeDraggable/rnd";
 import { useSignature } from "components/Provider/SignatureContext.js";
 
-function ToolbarFields ({ color, routes, x_axis, y_axis, width, height}) {
+function ToolbarFields ({ color, routes}) {
   const role = localStorage.getItem("role");
   const location = useLocation();
 
@@ -24,7 +24,8 @@ function ToolbarFields ({ color, routes, x_axis, y_axis, width, height}) {
   const [kategori, setKategori] = useState("");
   const [id_kategoridok, setIdKategoriDok] = useState("");
   const [id_signers, setIdSigners] = useState("");
-  const [signersDoc, setSignersDoc] = React.useState([]);
+  const [signersDoc, setSignersDoc] = useState([]);
+  const selectedSigner = location?.state?.selectedSigner || null;
   
   const token = localStorage.getItem("token");
   const [dokumenUploaded, setDokumenUploaded] = React.useState(localStorage.getItem("id_dokumen") || "No document"); 
@@ -78,11 +79,11 @@ function ToolbarFields ({ color, routes, x_axis, y_axis, width, height}) {
     return() => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (dokumenUploaded && dokumenUploaded !== "No document") {
-      getSignersDoc(dokumenUploaded);
-    }
-  }, [dokumenUploaded]);
+  // useEffect(() => {
+  //   if (dokumenUploaded && dokumenUploaded !== "No document") {
+  //     getSignersDoc(dokumenUploaded);
+  //   }
+  // }, [dokumenUploaded]);
 
   // const getCategory = async () =>{
   //   try {
@@ -117,30 +118,32 @@ function ToolbarFields ({ color, routes, x_axis, y_axis, width, height}) {
       }
   }
 
-  const getSignersDoc = async(id_dokumen) => {
+  const getSignersDoc = async() => {
     try {
-      const response = await axios.get('http://localhost:5000/logsign', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params: {
-          id_dokumen: id_dokumen,
-        }
-      });
+        const response = await axios.get('http://localhost:5000/signer', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        });
 
-      const newSignersDoc = response.data.map((item, index) => ({
-        value: item.id_signers,
-        label: item.Signer?.nama || "Unknown",
-        color: identitycolor[index % identitycolor.length],
-      }));
-      
-      setSignersDoc(newSignersDoc);
-      console.log("Item identity color:", color);
+        // if (!response.ok) {
+        //     throw new Error("Signer not found.");
+        // }
+
+        const data = response.data;
+
+        const mapped = Array.isArray(data) ? data.map((item, index) => ({
+          value: item.id_signers,
+          label: item.Penandatangan?.nama || `Signer ${index + 1}`,
+          color: identitycolor[index % identitycolor.length]
+        })) : [];
+
+        setSignersDoc(mapped);
     } catch (error) {
-      console.error("Error fetching signers doc:", error.message);
+        console.error("Error fetching PDF:", error);
     }
   } 
-  
+
   useEffect(() => {
     categoryDoc();
     // getCategory();

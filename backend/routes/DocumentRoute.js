@@ -86,7 +86,7 @@ router.get('/pdf-document/:id_dokumen?', async (req, res) => {
             pdfDoc = await Document.findOne({ order: [["id_dokumen", "DESC"]] });
         }
 
-        console.log("Fetched document:", pdfDoc);
+        // console.log("Fetched document:", pdfDoc);
 
         if (!pdfDoc || !pdfDoc.filepath_dokumen) {
             return res.status(404).json({ message: "Document not found." });

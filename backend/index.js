@@ -10,6 +10,7 @@ import UserRoute from "./routes/UserRoutes.js";
 import CategoryRoute from "./routes/CategoryRoute.js";
 import DocumentRoute from "./routes/DocumentRoute.js";
 import LogSignRoute from "./routes/LogSignRoute.js";
+import SignerRoute from "./routes/SignerRoute.js";
 import ItemRoute from "./routes/ItemRoute.js";
 import verifyToken from "./middlewares/authMiddleware.js";
 import dotenv from 'dotenv';
@@ -21,6 +22,7 @@ import './models/KategoriDokModel.js';
 import './models/DokumenModel.js';
 import './models/LogSignModel.js';
 import './models/ItemModel.js';
+import './models/SignersModel.js';
 import jwt from 'jsonwebtoken';
 
 
@@ -62,7 +64,8 @@ const protectedRoutes = [
     CategoryRoute,
     DocumentRoute, 
     LogSignRoute, 
-    ItemRoute
+    ItemRoute, 
+    SignerRoute
 ];
 
 // Terapkan middleware otentikasi pada routes yang dilindungi

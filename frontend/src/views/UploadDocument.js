@@ -345,30 +345,30 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   };
 
 
-  // const saveLogSign = async(e) => {
-  //   try {
-  //     const response = await axios.post('http://localhost:5000/logsign', {
-  //       action,
-  //       status,
-  //       id_dokumen,
-  //       id_karyawan, 
-  //       id_signers: newIdSigner,
-  //     }, {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-  //     console.log("Logsign saved: ", response.data);
-  //     toast.success("New logsign has created successfully!", {
-  //       position: "top-right",
-  //       autoClose: 5000,
-  //       hideProgressBar: true,
-  //     });
-  //     window.location.reload();
-  //   } catch (error) {
-  //     console.log(error.message);
-  //   }
-  // };
+  const saveSigner = async(e) => {
+    try {
+      const karyawanIds = documentCards.map(card => card.id_karyawan);
+
+      const response = await axios.post('http://localhost:5000/signer', {
+        id_signers,
+        id_karyawan: karyawanIds,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Signer saved: ", response.data);
+      toast.success("New signer has been created successfully!", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
+      nexThirdStep();
+      // window.location.reload();
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
 
 
   //masing-masing
@@ -458,6 +458,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
           id_dokumen,
           id_karyawan,
           id_signers: signer.id_karyawan,
+          // id_signers,
           id_item: item.id_item,
           };
       });
@@ -818,7 +819,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
               </Button>
             </div>
             <div className="col-12 col-md-auto my-2">
-              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={nexThirdStep} >
+              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveSigner} >
               <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
                 Next
               </Button>
