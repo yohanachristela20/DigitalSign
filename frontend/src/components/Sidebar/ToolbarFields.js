@@ -24,6 +24,7 @@ function ToolbarFields ({ color, routes}) {
   const [kategori, setKategori] = useState("");
   const [id_kategoridok, setIdKategoriDok] = useState("");
   const [id_signers, setIdSigners] = useState("");
+  const [id_karyawan, setIdKaryawan] = useState("");
   const [signersDoc, setSignersDoc] = useState([]);
   const selectedSigner = location?.state?.selectedSigner || null;
   
@@ -64,7 +65,8 @@ function ToolbarFields ({ color, routes}) {
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const selectedOption = signersDoc.find(opt => opt.value === id_signers);
+  const selectedOption = signersDoc.find(opt => opt.value === id_karyawan);
+  console.log("Selected option:", selectedOption);
 
   const handleSelect = (value) => {
     handleSignersChange({ target: { value } });
@@ -79,27 +81,6 @@ function ToolbarFields ({ color, routes}) {
     return() => clearInterval(interval);
   }, []);
 
-  // useEffect(() => {
-  //   if (dokumenUploaded && dokumenUploaded !== "No document") {
-  //     getSignersDoc(dokumenUploaded);
-  //   }
-  // }, [dokumenUploaded]);
-
-  // const getCategory = async () =>{
-  //   try {
-  //     const response = await axios.get("http://localhost:5000/category", {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //     },
-  //     });
-  //     // console.log("response.data:", response.data);
-  //     setCategory(response.data);
-  //   } catch (error) {
-  //     console.error("Error fetching data:", error.message); 
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const categoryDoc = async() => {
       try {
@@ -133,7 +114,7 @@ function ToolbarFields ({ color, routes}) {
         const data = response.data;
 
         const mapped = Array.isArray(data) ? data.map((item, index) => ({
-          value: item.id_signers,
+          value: item.id_karyawan,
           label: item.Penandatangan?.nama || `Signer ${index + 1}`,
           color: identitycolor[index % identitycolor.length]
         })) : [];
@@ -157,7 +138,8 @@ function ToolbarFields ({ color, routes}) {
   }
 
   const handleSignersChange = (event) => {
-      setIdSigners(event.target.value);
+      setIdKaryawan(event.target.value);
+      console.log("setIdKaryawan:", event.target.value);
   }
 
   const folders = [
