@@ -11,6 +11,7 @@ import {
 } from 'cdbreact';
 import ResizableDragable from "components/ResizeDraggable/rnd";
 import { useSignature } from "components/Provider/SignatureContext.js";
+import { toast } from "react-toastify";
 
 function ToolbarFields ({ color, routes}) {
   const role = localStorage.getItem("role");
@@ -26,23 +27,22 @@ function ToolbarFields ({ color, routes}) {
   const [id_signers, setIdSigners] = useState("");
   const [id_karyawan, setIdKaryawan] = useState("");
   const [signersDoc, setSignersDoc] = useState([]);
-  const selectedSigner = location?.state?.selectedSigner || null;
-  
+  // const selectedSigner = location?.state?.selectedSigner || null;
+  const {signatures, setSignatures} = useSignature();
   const token = localStorage.getItem("token");
   const [dokumenUploaded, setDokumenUploaded] = React.useState(localStorage.getItem("id_dokumen") || "No document"); 
   const identitycolor = ['#f06292', '#f44336', '#f48fb1','#ec407a', '#e91e63', '#ce93d8', '#ba68c8', '#ab47bc', '#9c27b0', '#b39ddb', '#9575cd', '#7e57c2', '#673AB7']; 
-
-  // const [x_axis, setXAxis] = useState(0);
-  // const [y_axis, setYAxis] = useState(0);
-  // const [width, setWidth] = useState(50);
-  // const [height, setHeight] = useState(50);
-  // const [pageScale, setPageScale] = useState(1);
-  const {setSignatures} = useSignature();
+  const signersCount = signersDoc.length;
+  const [selectedSigner, setSelectedSigner] = useState([]);
 
   console.log("TOKEN from Toolbar: ", token);
   console.log("Document Uploaded in Toolbar:", dokumenUploaded);
 
   const handleAddSignature = () => {
+    if (!id_karyawan) {
+      toast.error("Please choose signer first.");
+      return;
+    }
     setSignatures(prev => [
       ...prev, 
       {
@@ -51,9 +51,13 @@ function ToolbarFields ({ color, routes}) {
         y_axis: 0,
         width: 150,
         height: 200,
+        id_karyawan: id_karyawan
       }
     ]);
   };
+
+
+  console.log("Signatures:", signatures);
 
   const toggleMenu = (key) => {
     setOpenMenus((prev) => ({
@@ -66,7 +70,7 @@ function ToolbarFields ({ color, routes}) {
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedOption = signersDoc.find(opt => opt.value === id_karyawan);
-  console.log("Selected option:", selectedOption);
+  // console.log("Selected option:", selectedOption);
 
   const handleSelect = (value) => {
     handleSignersChange({ target: { value } });
@@ -107,10 +111,6 @@ function ToolbarFields ({ color, routes}) {
           }
         });
 
-        // if (!response.ok) {
-        //     throw new Error("Signer not found.");
-        // }
-
         const data = response.data;
 
         const mapped = Array.isArray(data) ? data.map((item, index) => ({
@@ -123,15 +123,23 @@ function ToolbarFields ({ color, routes}) {
     } catch (error) {
         console.error("Error fetching PDF:", error);
     }
-  } 
+  }; 
 
   useEffect(() => {
     categoryDoc();
-    // getCategory();
     getSignersDoc();
   }, []);
 
-  console.log("Signer Doc:", signersDoc);
+  // console.log("Signers Doc:", signersDoc);
+  // console.log("Signers count:", signersDoc.length);
+
+  useEffect(() => {
+    localStorage.setItem("signers", JSON.stringify(signersDoc));
+    localStorage.setItem("signersCount", signersCount.toString());
+    localStorage.setItem("selectedOption", JSON.stringify(selectedOption));
+
+    window.dispatchEvent(new Event("localStorageUpdated"));
+  }, [signersDoc, signersCount, selectedOption]);
 
   const handleCategoryChange = (event) => {
       setIdKategoriDok(event.target.value);
@@ -151,7 +159,6 @@ function ToolbarFields ({ color, routes}) {
     },
   ];
 
-  // console.log("folders: ", folders);
 
   const activeRoute = (routeName) => location.pathname.includes(routeName);
 
@@ -201,23 +208,6 @@ function ToolbarFields ({ color, routes}) {
     });
   };
 
-  // useEffect(() => {
-  //   setXAxis(x_axis);
-  //   setYAxis(y_axis);
-  //   setWidth(width);
-  //   setHeight(height);
-  // });
-
-  // const handleAxisChange = ({x_axis, y_axis, width, height}) => {
-  //   setXAxis(x_axis);
-  //   setYAxis(y_axis);
-  //   setWidth(width);
-  //   setHeight(height);
-  // };
-
-  // console.log("x_axis:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
-
-
   return (
     <div className="sidebar" style={{backgroundColor:"#ffa7a5"}}>
       <CDBSidebarContent>
@@ -241,26 +231,6 @@ function ToolbarFields ({ color, routes}) {
 
         <a style={{fontSize:'15px'}}><strong>Signers</strong></a>
         <ul className="items">
-          {/* <Form>
-            <Row>
-              <Col md="12">
-                <Form.Group>
-                  <Form.Select 
-                    className="form-control"
-                    value={id_signers}
-                    onChange={handleSignersChange}
-                  >
-                  {signersDoc.map(option => (
-                    <option key={option.value} value={option.value}>
-                        {option.label}
-                    </option>
-                  ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            </Row>
-          </Form> */}
-
           <div className="custom-select-wrapper">
           <div
             className="custom-select"
@@ -273,7 +243,6 @@ function ToolbarFields ({ color, routes}) {
               />
               {selectedOption?.label || "Choose Signer" }
             </div>
-            {/* <span>&#9662;</span> */}
           </div>
 
           {isOpen && (
@@ -315,22 +284,8 @@ function ToolbarFields ({ color, routes}) {
               Signature
           </Button>
 
-          {/* {showSignature && (
-            <ResizableDragable 
-              x_axis={x_axis}
-              y_axis={y_axis}
-              width={width}
-              height={height}
-              scale={pageScale}
-              onChange={handleAxisChange}
-            /> 
-          )} */}
-
-         
         </ul>
       </CDBSidebarContent>
-      {/* <hr /> */}
-      {/* {!isSidebarCollapsed && role === "Admin" && <FolderTree folders={folders} />} */}
     </div>
   );
 };
