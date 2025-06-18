@@ -59,6 +59,9 @@ function UploadDocument() {
   const [signersCount, setSignersCount] = useState("");
   const [selectedOption, setSelectedOption] = useState([]);
   const [error, setError] = useState("");
+  let [nextStep2, setNextStep2] = useState(false);
+  let [nextStep3, setNextStep3] = useState(false);
+  let [nextStep4, setNextStep4] = useState(false);
 
   const [selectedDoc, setSelectedDoc] = useState(
       location?.state?.selectedDoc || null
@@ -191,6 +194,20 @@ function UploadDocument() {
   }, []);
 
   console.log("Stepssss: ", steps);
+
+  useEffect(() => {
+    const handleNextButton = () => {
+      nextStep2 = localStorage.getItem("nextStep2");
+      // nextStep3 = localStorage.getItem("nextStep3");
+      // nextStep4 = localStorage.getItem("nextStep4");
+      setNextStep2(nextStep2);
+      // setNextStep3(nextStep3);
+      // setNextStep4(nextStep4);
+    }
+
+    handleNextButton();
+  });
+
 
   useEffect(() => {
     if(steps === 3) {
@@ -330,31 +347,32 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
 
   const saveDocument = async() => {
-      if (!file) {
-        toast.error("Please choose PDF file.");
-        return;
-      }
-      const formData = new FormData();
-      formData.append("pdf-file", file);
-      formData.append("id_dokumen", id_dokumen);
-      formData.append("nama_dokumen", nama_dokumen);
-      formData.append("id_kategoridok", id_kategoridok);
-      formData.append("status", status);
-      formData.append("action", action);
-      formData.append("id_karyawan", id_karyawan);
-    try {
-      const response = await axios.post('http://localhost:5000/document', formData,
-          {
-          headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-          },
-      });
-      toast.success("New document has uploaded successfully!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-      });
+    // console.log("Nextstep2 from getItem:", nextStep2);
+    if (!file) {
+      toast.error("Please choose PDF file.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("pdf-file", file);
+    formData.append("id_dokumen", id_dokumen);
+    formData.append("nama_dokumen", nama_dokumen);
+    formData.append("id_kategoridok", id_kategoridok);
+    formData.append("status", status);
+    formData.append("action", action);
+    formData.append("id_karyawan", id_karyawan);
+  try {
+    const response = await axios.post('http://localhost:5000/document', formData,
+        {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+        },
+    });
+    toast.success("New document has uploaded successfully!", {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: true,
+    });
     } catch (error) {
         console.log(error.message);
     }
@@ -364,23 +382,25 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   const saveSigner = async(e) => {
     e.preventDefault();
     try {
-      const karyawanIds = documentCards.map(card => card.id_karyawan);
-
-      const response = await axios.post('http://localhost:5000/signer', {
-        id_signers,
-        id_karyawan: karyawanIds,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("Signer saved: ", response.data);
-      // localStorage.setItem("S: ", signatures.length);
-      toast.success("New signer has been created successfully!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-      });
+      console.log("nextStep3:", nextStep3);
+      if (nextStep3 !== true) {
+        const karyawanIds = documentCards.map(card => card.id_karyawan);
+        const response = await axios.post('http://localhost:5000/signer', {
+          id_signers,
+          id_karyawan: karyawanIds,
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log("Signer saved: ", response.data);
+        // localStorage.setItem("S: ", signatures.length);
+        toast.success("New signer has been created successfully!", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: true,
+        });
+      }
       nexThirdStep();
     } catch (error) {
       console.log(error.message);
@@ -454,101 +474,19 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   const saveLogSignandItems = async(e) => {
     e.preventDefault();
     try {
-      const items = signatures.map(sig => ({
-        jenis_item: "Signpad", 
-        x_axis: sig.x_axis,
-        y_axis: sig.y_axis,
-        width: sig.width, 
-        height: sig.height,
-        id_karyawan: sig.id_karyawan
-      }));
+      if (nextStep4 !== true) {
+        const items = signatures.map(sig => ({
+          jenis_item: "Signpad", 
+          x_axis: sig.x_axis,
+          y_axis: sig.y_axis,
+          width: sig.width, 
+          height: sig.height,
+          id_karyawan: sig.id_karyawan
+        }));
 
-      console.log("ITEMS:", items);
-      // console.log("Id karyawan item:", items.map(item => item.id_karyawan));
-
-      console.log("item count:", items.length);
-      console.log("Signer count:", signersCount);
-      console.log("Selected signer before save logsign:", selectedOption);
-
-      // console.log("Id karyawan item:", items.map(item => item.id_karyawan).length);
-
-
-      const itemResponse = await axios.post('http://localhost:5000/item', items, {
-        headers: {Authorization: `Bearer ${token}`}
-      }); 
-
-      const createdItems = itemResponse.data.data.items;
-
-      const itemLength = items.length;
-      // if (signersCount > itemLength) {
-      //     const itemKaryawan = items.map(item => item.id_karyawan);
-      //     console.log("item karyawan:", itemKaryawan);
-      //     // const missingItemSigners = selectedOption.filter(signer => !itemKaryawan.includes(signer.value));
-      //     // console.log("missing item signers:", missingItemSigners);
-
-      //     const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
-      //     console.log("allSigners: ", allSigners);
-
-      //     const missingItemSigners = allSigners.filter(signer => !itemKaryawan.includes(signer.value));
-      //     console.log("missing item signers:", missingItemSigners);
-
-      //   if (missingItemSigners.length > 0) {
-      //     setError('Signer should have an item.');
-      //     toast.error('Signer should have an item.', {
-      //       position: "top-right",
-      //       autoClose: 5000,
-      //       hideProgressBar: true,
-      //     });
-      //     return;
-      //   }
-
-      //   setError('Signer should have an item.');
-      //   toast.error('Signer should have an item.', {
-      //     position: "top-right",
-      //     autoClose: 5000,
-      //     hideProgressBar: true,
-      //   });
-      //   return;
-      // } else {
-      //   const logsigns = createdItems.map((item, index) => {
-      //   // const signer = documentCards[0]; //hanya untuk 1 output 
-      //   const signer = signatures[index];
-      //   // console.log("SIGNER:", signer);
-
-      //     return {
-      //       action: "Created", 
-      //       status: "Pending", 
-      //       id_dokumen,
-      //       id_karyawan,
-      //       id_signers: signer.id_karyawan,
-      //       id_item: item.id_item,
-      //       };
-      //   });
-
-      // await axios.post('http://localhost:5000/logsign', {
-      //     logsigns
-      //     }, {
-      //       headers: {Authorization: `Bearer ${token}`}
-      //     }); 
-
-      //   toast.success("Logsigns and items created successfully!", {
-      //     position: "top-right", 
-      //     autoClose: "5000", 
-      //     hideProgressBar: true,
-      //   });
-      // }
-
-          const itemKaryawan = items.map(item => item.id_karyawan);
-          console.log("item karyawan:", itemKaryawan);
-          // const missingItemSigners = selectedOption.filter(signer => !itemKaryawan.includes(signer.value));
-          // console.log("missing item signers:", missingItemSigners);
-
-          const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
-          console.log("allSigners: ", allSigners);
-
-          const missingItemSigners = allSigners.filter(signer => !itemKaryawan.includes(signer.value));
-          console.log("missing item signers:", missingItemSigners);
-
+        const itemKaryawan = items.map(item => item.id_karyawan);
+        const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
+        const missingItemSigners = allSigners.filter(signer => !itemKaryawan.includes(signer.value));
         if (missingItemSigners.length > 0) {
           setError('Signer should have an item.');
           toast.error('Signer should have an item.', {
@@ -558,34 +496,38 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
           });
           return;
         }
+        
+        const itemResponse = await axios.post('http://localhost:5000/item', items, {
+          headers: {Authorization: `Bearer ${token}`}
+        }); 
 
+        const createdItems = itemResponse.data.data.items;
         const logsigns = createdItems.map((item, index) => {
         // const signer = documentCards[0]; //hanya untuk 1 output 
         const signer = signatures[index];
-        // console.log("SIGNER:", signer);
 
-          return {
-            action: "Created", 
-            status: "Pending", 
-            id_dokumen,
-            id_karyawan,
-            id_signers: signer.id_karyawan,
-            id_item: item.id_item,
-            };
+        return {
+          action: "Created", 
+          status: "Pending", 
+          id_dokumen,
+          id_karyawan,
+          id_signers: signer.id_karyawan,
+          id_item: item.id_item,
+          };
         });
 
-      await axios.post('http://localhost:5000/logsign', {
+        await axios.post('http://localhost:5000/logsign', {
           logsigns
           }, {
             headers: {Authorization: `Bearer ${token}`}
-          }); 
+        }); 
 
         toast.success("Logsigns and items created successfully!", {
           position: "top-right", 
           autoClose: "5000", 
           hideProgressBar: true,
         });
-      
+      }
       nextLastStep();
     } catch (error) {
       console.error("Failed to save logsigns and items:", error.message);
@@ -600,12 +542,17 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   }, [selectedDoc]);
 
   const handleNext = () => {
-    saveDocument();
+    if (nextStep2 !== true) {
+      saveDocument();
       if (steps < 4){
-      const nextStep = steps + 1;
-      setSteps(nextStep);
-      localStorage.setItem("steps", nextStep.toString());
-      console.log("Steps from handleNext:", nextStep);
+        const nextStep = steps + 1;
+        setSteps(nextStep);
+        localStorage.setItem("steps", nextStep.toString());
+
+        const handleNextStep2 = true;
+        setNextStep2(handleNextStep2);
+        localStorage.setItem("nextStep2", handleNextStep2);
+      }
     }
   };
 
@@ -614,14 +561,27 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       const nextStep = 3;
       setSteps(nextStep);
       localStorage.setItem("steps", nextStep.toString());
-      console.log("Steps from nexThirdStep:", nextStep);
+      // console.log("Steps from nexThirdStep:", nextStep);
+
+      const handleNextStep3 = true;
+      setNextStep3(handleNextStep3);
+      localStorage.setItem("nextStep3", handleNextStep3);
     }
   };
 
    const nextLastStep = () => {
-    if (steps < 4) setSteps(4);
-      setSteps(steps + 1);
-      console.log("Steps from nextLastStep:", steps + 1);
+    // if (steps < 4) setSteps(4);
+    // setSteps(steps + 1);
+    // console.log("Steps from nextLastStep:", steps + 1);
+    if (steps < 4){
+      const nextStep = 4;
+      setSteps(nextStep);
+
+      const handleNextStep4 = true;
+      setNextStep4(handleNextStep4);
+      localStorage.setItem("nextStep4", handleNextStep4);
+    } 
+
   };
 
   const handlePrevious = () => {
@@ -915,14 +875,14 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                 className="btn-fill w-100"
                 variant="primary"
                 onClick={handlePrevious}
-                disabled={steps === 1 && employeeName === "" || id_karyawan === "" && email === ""}
+                disabled={steps === 2 && employeeName === "" || id_karyawan === ""}
               >
               <FaRegArrowAltCircleLeft style={{ marginRight: '8px' }} />
                 Previous
               </Button>
             </div>
             <div className="col-12 col-md-auto my-2">
-              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveSigner} >
+              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveSigner} disabled={steps === 2 && employeeName.id_karyawan === "" || id_karyawan === "" || employeeName === ""}>
               <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
                 Next
               </Button>
