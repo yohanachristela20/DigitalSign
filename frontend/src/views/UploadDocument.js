@@ -15,6 +15,8 @@ import ToolbarFields from "components/Sidebar/ToolbarFields.js";
 import { useSignature } from "components/Provider/SignatureContext.js";
 import SortableItem from "components/SortableList/SortableList.js";
 
+import { useInitial } from "components/Provider/InitialContext.js";
+
 import {
   Card,
   Table,
@@ -54,7 +56,6 @@ function UploadDocument() {
   const [height, setHeight] = useState(200);
   const [jenis_item, setJenisItem] = useState("");
   const [id_item, setIdItem] = useState("");
-  const {signatures, setSignatures} = useSignature();
   const [signersToolbar, setSignersToolbar] = useState([]);
   const [signersCount, setSignersCount] = useState("");
   const [selectedOption, setSelectedOption] = useState([]);
@@ -62,6 +63,11 @@ function UploadDocument() {
   let [nextStep2, setNextStep2] = useState(false);
   let [nextStep3, setNextStep3] = useState(false);
   let [nextStep4, setNextStep4] = useState(false);
+
+  const {signatures, setSignatures} = useSignature([]);
+  const {initials, setInitials} = useInitial([]);
+  const [signClicked, setSignClicked] = useState(false);
+  const [initClicked, setInitClicked] = useState(false);
 
   const [selectedDoc, setSelectedDoc] = useState(
       location?.state?.selectedDoc || null
@@ -93,6 +99,7 @@ function UploadDocument() {
 
   console.log("signers toolbar:", signersToolbar);
   console.log("signers count:", signersCount);
+  console.log("selected signer:", selectedOption);
 
   const fetchLastId = async () => {
   const response = await axios.get('http://localhost:5000/getLastSignerId', {
@@ -118,7 +125,8 @@ function UploadDocument() {
       email: "",
       id_signers: "",
       status: "Pending",
-      action: "Created"
+      action: "Created", 
+      jenis_item: ""
     },
   ]);
 
@@ -131,7 +139,8 @@ function UploadDocument() {
           email: "",
           id_signers: "",
           status: "Pending",
-          action: "Created"
+          action: "Created",
+          jenis_item,
         }
       ]);
     }
@@ -176,12 +185,15 @@ function UploadDocument() {
     const y = localStorage.getItem("y_axis");
     const w = localStorage.getItem("width");
     const h = localStorage.getItem("height");
+    const jenis = localStorage.getItem("jenis_item");
 
     if (x !== null)setXAxis(parseFloat(x));
     if (y !== null)setYAxis(parseFloat(y));
     if (w !== null)setWidth(parseFloat(w));
     if (h !== null)setHeight(parseFloat(h));
-    setJenisItem("Signpad");
+    if (jenis !== null)setJenisItem(jenis);
+
+    // setJenisItem("Signpad");
    };
 
    window.addEventListener("localStorageUpdated", handleLocalStorageUpdate);
@@ -194,6 +206,27 @@ function UploadDocument() {
   }, []);
 
   console.log("Stepssss: ", steps);
+
+  useEffect(() => {
+  const handleButtonClicked = () => {
+      const signButton = localStorage.getItem("signatureClicked"); 
+      const initButton = localStorage.getItem("initialClicked");
+
+      console.log("SignButton clicked from Upload:", signButton);
+      console.log("InitialButton clicked from Upload:", initButton);
+
+      setSignClicked(signButton === "true");
+      setInitClicked(initButton === "true");
+  };
+
+  window.addEventListener("localStorageUpdated", handleButtonClicked);
+
+  handleButtonClicked();
+
+  return() => {
+      window.removeEventListener("localStorageUpdated", handleButtonClicked);
+  };
+  }, []);
 
   useEffect(() => {
     const handleNextButton = () => {
@@ -211,9 +244,9 @@ function UploadDocument() {
 
   useEffect(() => {
     if(steps === 3) {
-      console.log("x_axis from step 3:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
+      console.log("x_axis from step 3:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height, "jenis_item:", jenis_item);
     }
-  }, [steps, x_axis, y_axis, width, height]);
+  }, [steps, x_axis, y_axis, width, height, jenis_item]);
 
 
   useEffect(() => {
@@ -269,7 +302,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     categoryDoc();
     getName();
     getDocument();
-
   }, []);
 
   console.log("Document cards:", documentCards);
@@ -471,22 +503,203 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   //   }
   // };
 
+
+
+  // const saveLogSignandItems = async(e) => {
+  //   e.preventDefault();
+  //   try {
+  //     if (nextStep4 !== true) {
+  //       const items = signatures.map(sig => ({
+  //         jenis_item: sig.jenis_item, 
+  //         x_axis: sig.x_axis,
+  //         y_axis: sig.y_axis,
+  //         width: sig.width, 
+  //         height: sig.height,
+  //         id_karyawan: sig.id_karyawan
+  //       }));
+
+  //       const itemKaryawan = items.map(item => item.id_karyawan);
+  //       const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
+  //       const missingItemSigners = allSigners.filter(signer => !itemKaryawan.includes(signer.value));
+  //       if (missingItemSigners.length > 0) {
+  //         setError('Signer should have an item.');
+  //         toast.error('Signer should have an item.', {
+  //           position: "top-right",
+  //           autoClose: 5000,
+  //           hideProgressBar: true,
+  //         });
+  //         return;
+  //       }
+        
+  //       const itemResponse = await axios.post('http://localhost:5000/item', items, {
+  //         headers: {Authorization: `Bearer ${token}`}
+  //       }); 
+
+  //       const createdItems = itemResponse.data.data.items;
+  //       const logsigns = createdItems.map((item, index) => {
+  //       // const signer = documentCards[0]; //hanya untuk 1 output 
+  //       const signer = signatures[index];
+
+  //       return {
+  //         action: "Created", 
+  //         status: "Pending", 
+  //         id_dokumen,
+  //         id_karyawan,
+  //         id_signers: signer.id_karyawan,
+  //         id_item: item.id_item,
+  //         };
+  //       });
+
+  //       await axios.post('http://localhost:5000/logsign', {
+  //         logsigns
+  //         }, {
+  //           headers: {Authorization: `Bearer ${token}`}
+  //       }); 
+
+  //       toast.success("Logsigns and items created successfully!", {
+  //         position: "top-right", 
+  //         autoClose: "5000", 
+  //         hideProgressBar: true,
+  //       });
+  //     }
+  //     nextLastStep();
+  //   } catch (error) {
+  //     console.error("Failed to save logsigns and items:", error.message);
+  //   }
+    
+  // };
+
+
+  // LAST 
+  // const saveLogSignandItems = async(e) => {
+  //   e.preventDefault();
+  //   try {
+  //     if (nextStep4 !== true) {
+  //       let items = [];
+
+  //       if (signClicked && Array.isArray(signatures)) {
+  //         items = signatures.map(sig => ({
+  //         jenis_item: "Signpad", 
+  //         x_axis: sig.x_axis,
+  //         y_axis: sig.y_axis,
+  //         width: sig.width, 
+  //         height: sig.height,
+  //         id_karyawan: sig.id_karyawan
+  //       }));
+  //       } 
+  //       if (initClicked && Array.isArray(initials)) {
+  //         items = initials.map(sig => ({
+  //         jenis_item: "Initialpad", 
+  //         x_axis: sig.x_axis,
+  //         y_axis: sig.y_axis,
+  //         width: sig.width, 
+  //         height: sig.height,
+  //         id_karyawan: sig.id_karyawan
+  //       }));
+  //       }
+
+  //       // if (!Array.isArray(items) || items.length === 0) {
+  //       //   setError("No items to save.");
+  //       //   toast.error('No items to save.', {
+  //       //     position: "top-right",
+  //       //     autoClose: 5000,
+  //       //     hideProgressBar: true,
+  //       //   });
+  //       //   return;
+  //       // };
+      
+  //       const itemKaryawan = items.map(item => item.id_karyawan);
+  //       const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
+        
+  //       const missingItemSigners = allSigners.filter(signer => !itemKaryawan.includes(signer.value));
+  //       if (missingItemSigners.length > 0) {
+  //         setError('Signer should have an item.');
+  //         toast.error('Signer should have an item.', {
+  //           position: "top-right",
+  //           autoClose: 5000,
+  //           hideProgressBar: true,
+  //         });
+  //         return;
+  //       }
+        
+  //       const itemResponse = await axios.post('http://localhost:5000/item', items, {
+  //         headers: {Authorization: `Bearer ${token}`}
+  //       }); 
+
+  //       const createdItems = itemResponse.data.data.items;
+  //       const logsigns = createdItems.map((item, index) => {
+  //       // const signer = documentCards[0]; //hanya untuk 1 output 
+  //       // const signer = signatures[index];
+  //       const signer = signClicked? signatures[index] : initials[index];
+
+  //       return {
+  //         action: "Created", 
+  //         status: "Pending", 
+  //         id_dokumen,
+  //         id_karyawan,
+  //         id_signers: signer.id_karyawan,
+  //         id_item: item.id_item,
+  //         };
+  //       });
+
+  //       await axios.post('http://localhost:5000/logsign', {
+  //         logsigns
+  //         }, {
+  //           headers: {Authorization: `Bearer ${token}`}
+  //       }); 
+
+  //       toast.success("Logsigns and items created successfully!", {
+  //         position: "top-right", 
+  //         autoClose: "5000", 
+  //         hideProgressBar: true,
+  //       });
+  //     }
+  //     nextLastStep();
+  //   } catch (error) {
+  //     console.error("Failed to save logsigns and items:", error.message);
+  //   }
+    
+  // };
+
   const saveLogSignandItems = async(e) => {
     e.preventDefault();
     try {
       if (nextStep4 !== true) {
-        const items = signatures.map(sig => ({
-          jenis_item: "Signpad", 
-          x_axis: sig.x_axis,
-          y_axis: sig.y_axis,
-          width: sig.width, 
-          height: sig.height,
-          id_karyawan: sig.id_karyawan
-        }));
+        let items = [];
 
+        if (signClicked && Array.isArray(signatures)) {
+          items = [
+            ...items,
+            ...signatures.map(sig => ({
+              jenis_item: "Signpad",
+              x_axis: sig.x_axis,
+              y_axis: sig.y_axis,
+              width: sig.width,
+              height: sig.height,
+              id_karyawan: sig.id_karyawan,
+            }))
+          ];  
+        } 
+
+        if (initClicked && Array.isArray(initials)) {
+          items = [
+            ...items,
+            ...initials.map(sig => ({
+              jenis_item: "Initialpad",
+              x_axis: sig.x_axis,
+              y_axis: sig.y_axis,
+              width: sig.width,
+              height: sig.height,
+              id_karyawan: sig.id_karyawan,
+            }))
+          ];
+        }
+      
         const itemKaryawan = items.map(item => item.id_karyawan);
         const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
+        
         const missingItemSigners = allSigners.filter(signer => !itemKaryawan.includes(signer.value));
+        
         if (missingItemSigners.length > 0) {
           setError('Signer should have an item.');
           toast.error('Signer should have an item.', {
@@ -504,14 +717,27 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         const createdItems = itemResponse.data.data.items;
         const logsigns = createdItems.map((item, index) => {
         // const signer = documentCards[0]; //hanya untuk 1 output 
-        const signer = signatures[index];
+        // const signer = signatures[index];
+        const signer = initClicked? initials[index] : signatures[index];
+
+        // let signer; 
+        // if (signClicked === true) {
+        //   signer = signatures[index];
+        //   // signer = signatures.find(sig => sig.id_karyawan === item.id_karyawan);
+        // } else if (initClicked === true) {
+        //   signer = initials[index];
+        //   // signer = initials.find(sig => sig.id_karyawan === item.id_karyawan);
+        // }
+
+        // const signer = (signatures || []).find(sig => sig.id_karyawan === item.id_karyawan) ||
+        // (initials || []).find(init => init.id_karyawan === item.id_karyawan);
 
         return {
           action: "Created", 
           status: "Pending", 
           id_dokumen,
           id_karyawan,
-          id_signers: signer.id_karyawan,
+          id_signers: items[index].id_karyawan,
           id_item: item.id_item,
           };
         });
@@ -528,6 +754,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
           hideProgressBar: true,
         });
       }
+  
       nextLastStep();
     } catch (error) {
       console.error("Failed to save logsigns and items:", error.message);

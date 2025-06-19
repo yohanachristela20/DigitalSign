@@ -12,6 +12,7 @@ import {
 import ResizableDragable from "components/ResizeDraggable/rnd";
 import { useSignature } from "components/Provider/SignatureContext.js";
 import { toast } from "react-toastify";
+import { useInitial } from "components/Provider/InitialContext.js";
 
 function ToolbarFields ({ color, routes}) {
   const role = localStorage.getItem("role");
@@ -29,11 +30,14 @@ function ToolbarFields ({ color, routes}) {
   const [signersDoc, setSignersDoc] = useState([]);
   // const selectedSigner = location?.state?.selectedSigner || null;
   const {signatures, setSignatures} = useSignature();
+  const {initials, setInitials} = useInitial();
   const token = localStorage.getItem("token");
   const [dokumenUploaded, setDokumenUploaded] = React.useState(localStorage.getItem("id_dokumen") || "No document"); 
   const identitycolor = ['#f06292', '#f44336', '#f48fb1','#ec407a', '#e91e63', '#ce93d8', '#ba68c8', '#ab47bc', '#9c27b0', '#b39ddb', '#9575cd', '#7e57c2', '#673AB7']; 
   const signersCount = signersDoc.length;
   const [selectedSigner, setSelectedSigner] = useState([]);
+  let [signatureClicked, setSignatureClicked] = useState(false);
+  let [initialClicked, setInitialClicked] = useState(false);
 
   console.log("TOKEN from Toolbar: ", token);
   console.log("Document Uploaded in Toolbar:", dokumenUploaded);
@@ -54,10 +58,46 @@ function ToolbarFields ({ color, routes}) {
         id_karyawan: id_karyawan
       }
     ]);
+
+    const signClicked = true;
+    setSignatureClicked(signClicked);
+    localStorage.setItem("signatureClicked", signClicked);
+
+    window.dispatchEvent(new Event("localStorageUpdated"));
+
+    console.log("Signature clicked from toolbar: ", signatureClicked);
+  };
+
+  
+  const handleAddInitials = () => {
+    if (!id_karyawan) {
+      toast.error("Please choose signer first.");
+      return;
+    }
+    setInitials(prev => [
+      ...prev, 
+      {
+        id: Date.now(),
+        x_axis: 0,
+        y_axis: 0,
+        width: 150,
+        height: 200,
+        id_karyawan: id_karyawan
+      }
+    ]);
+
+    const initClicked = true;
+    setInitialClicked(initClicked);
+    localStorage.setItem("initialClicked", initClicked);
+
+    window.dispatchEvent(new Event("localStorageUpdated"));
+
+    console.log("Initial clicked from toolbar: ", initialClicked);
   };
 
 
   console.log("Signatures:", signatures);
+  console.log("Initials: ", initials);
 
   const toggleMenu = (key) => {
     setOpenMenus((prev) => ({
@@ -270,18 +310,17 @@ function ToolbarFields ({ color, routes}) {
             type="button"
             className="btn mb-3 bg-transparent mt-2"
             style={{width:"190px", border:"1px solid #eed4dd"}}
-            onClick={""}>
-            <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
-              Upload Document
+            onClick={handleAddSignature}>
+            <i class="fa fa-signature" style={{ marginRight: '8px' }}></i>
+              Signature
           </Button>
-
           <Button
             type="button"
             className="btn mb-3 bg-transparent mt-2"
             style={{width:"190px", border:"1px solid #eed4dd"}}
-            onClick={handleAddSignature}>
-            <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
-              Signature
+            onClick={handleAddInitials}>
+            <i class="fa fa-font" style={{ marginRight: '8px' }}></i>
+              Initial
           </Button>
 
         </ul>

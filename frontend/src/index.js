@@ -19,7 +19,7 @@ import PrivateRoute from "components/PrivateRoute/PrivateRoute.js";
 import ScreeningKaryawan from "views/ScreeningKaryawan";
 import { PlafondProvider } from "components/Provider/PlafondContext.js";
 import { SignatureProvider } from "components/Provider/SignatureContext.js";
-
+import { InitialProvider } from "components/Provider/InitialContext.js";
 import LaporanPiutang from "views/LaporanPiutangKaryawan.js";
 import PageScreeningKaryawan from "views/ScreeningKaryawan.js"; 
 import Document from "views/Document.js";
@@ -49,7 +49,8 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <PlafondProvider>
     <SignatureProvider>
-      <DisableBackButton />
+    <InitialProvider>
+       <DisableBackButton />
         <BrowserRouter>
         <DisableBackButton />
         <ToastContainer />
@@ -102,6 +103,7 @@ root.render(
 
           </Switch>
         </BrowserRouter>
+    </InitialProvider>
     </SignatureProvider>
   </PlafondProvider>
 );

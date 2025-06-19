@@ -4,6 +4,9 @@ import { pdfjs } from "react-pdf";
 import ResizableDragable from "components/ResizeDraggable/rnd.js";
 import { useSignature } from "components/Provider/SignatureContext.js";
 
+import ResizableDragableInitial from "components/ResizeDraggable/rndInitial.js";
+import { useInitial } from "components/Provider/InitialContext.js";
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const PDFCanvas = ({pdfUrl}) => {
@@ -18,7 +21,14 @@ const PDFCanvas = ({pdfUrl}) => {
     const [y_axis, setYAxis] = useState(0);
     const [width, setWidth] = useState(150);
     const [height, setHeight] = useState(200);
+    const [jenis_item, setJenisItem] = useState("");
+
     const {signatures, setSignatures} = useSignature();
+    const [selectedSigId, setSelectedSigId] = useState("");
+
+    const {initials, setInitials} = useInitial();
+    const [signClicked, setSignClicked] = useState(false);
+    const [initClicked, setInitClicked] = useState(false);
 
     // const handleAxisChange = ({x_axis, y_axis, width, height}) => {
     //     setXAxis(x_axis);
@@ -33,8 +43,37 @@ const PDFCanvas = ({pdfUrl}) => {
         )
     );
     };
+
+    const handleAxisInitial = (id, updatedValues) => {
+    setInitials(prev =>
+        prev.map(sig =>
+        sig.id === id ? { ...sig, ...updatedValues } : sig
+        )
+    );
+    };
     
     console.log("x_axis:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
+
+    useEffect(() => {
+    const handleButtonClicked = () => {
+        const signButton = localStorage.getItem("signatureClicked"); 
+        const initButton = localStorage.getItem("initialClicked");
+
+        console.log("signButton clicked from canvas:", signButton);
+        console.log("initialButton clicked from canvas:", initButton);
+
+        setSignClicked(signButton === "true");
+        setInitClicked(initButton === "true");
+    };
+
+    window.addEventListener("localStorageUpdated", handleButtonClicked);
+
+    handleButtonClicked();
+
+    return() => {
+        window.removeEventListener("localStorageUpdated", handleButtonClicked);
+    };
+    }, []);
 
     
     useEffect(() => {
@@ -76,16 +115,26 @@ const PDFCanvas = ({pdfUrl}) => {
     }, [pdfUrl]);
 
     useEffect(() => {
-        localStorage.setItem("x_axis", x_axis.toString());
-        localStorage.setItem("y_axis", y_axis.toString());
-        localStorage.setItem("width", width.toString());
-        localStorage.setItem("height", height.toString());
+        localStorage.setItem("x_axis", {x_axis});
+        localStorage.setItem("y_axis", {y_axis});
+        localStorage.setItem("width", {width});
+        localStorage.setItem("height", {height});
+        localStorage.setItem("jenis_item", {jenis_item});
 
         window.dispatchEvent(new Event("localStorageUpdated"));
-    }, [x_axis, y_axis, width, height]);
+    }, [x_axis, y_axis, width, height, jenis_item]);
 
     // console.log("x_axis from setItem:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
 
+    const deleteObject = (id) => {
+        setSignatures(prev => prev.filter(sig => sig.id !== id));
+        console.log(`Deleted object with id: ${id}`);
+    };
+
+    const deleteInitials = (id) => {
+        setInitials(prev => prev.filter(sig => sig.id !== id));
+        console.log(`Deleted initials with id: ${id}`);
+    };
 
     return(
        <div ref={canvasContainerRef} style={{position: 'relative'}}>
@@ -102,12 +151,34 @@ const PDFCanvas = ({pdfUrl}) => {
             {signatures.map(sig => (
                 <ResizableDragable 
                     key={sig.id}
+                    id={sig.id}
                     x_axis={sig.x_axis}
                     y_axis={sig.y_axis}
                     width={sig.width}
                     height={sig.height}
+                    jenis_item={"Signpad"}
                     scale={sig.pageScale}
+                    isSelected={selectedSigId === sig.id}
+                    onClick={() => setSelectedSigId(sig.id)}
                     onChange={(updated) => handleAxisChange(sig.id, updated)}
+                    onDelete={() => deleteObject(sig.id)}
+                /> 
+            ))}
+
+            {initials.map(sig => (
+                <ResizableDragableInitial 
+                    key={sig.id}
+                    id={sig.id}
+                    x_axis={sig.x_axis}
+                    y_axis={sig.y_axis}
+                    width={sig.width}
+                    height={sig.height}
+                    jenis_item={"Initialpad"}
+                    scale={sig.pageScale}
+                    isSelected={selectedSigId === sig.id}
+                    onClick={() => setSelectedSigId(sig.id)}
+                    onChange={(updated) => handleAxisInitial(sig.id, updated)}
+                    onDelete={() => deleteInitials(sig.id)}
                 /> 
             ))}
        </div>

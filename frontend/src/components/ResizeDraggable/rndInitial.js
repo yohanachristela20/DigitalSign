@@ -1,19 +1,25 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
-import { FaSignature } from 'react-icons/fa';
+import { FaSignature, FaFont } from 'react-icons/fa';
 import "../../assets/scss/lbd/_rnd.scss";
-import SignatureModal from 'components/ModalForm/SignatureModal.js';
 
-function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=50, width=50, scale=1, onDelete}) {
-    const [showSignatureModal, setShowSignatureModal] = React.useState(false);
+import { useSignature } from "components/Provider/SignatureContext.js";
+import { useInitial } from "components/Provider/InitialContext.js";
+// import SignatureModal from 'components/ModalForm/SignatureModal.js';
+
+function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, width=50, scale=1, onDelete}) {
+    // const [showSignatureModal, setShowSignatureModal] = React.useState(false);
 
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [size, setSize] = useState({ width: 50, height: 50 });
     const [clickCount, setClickCount] = useState(0);
     const timeRef = useRef(null);
 
+    const {signatures, setSignatures} = useSignature();
+    const {initials, setInitials} = useInitial();
     const [signClicked, setSignClicked] = useState(false);
     const [initClicked, setInitClicked] = useState(false);
+
     const [jenis_item, setJenisItem] = useState("");
 
     const styleRnd = {
@@ -46,9 +52,9 @@ function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=50, width=50, 
         } else if (clickCount === 2){
             clearTimeout(timeRef.current);
             setClickCount(0);
-            setShowSignatureModal(true);
+            // setShowSignatureModal(true);
         }
-    };
+    }
 
     useEffect(() => {
     const handleButtonClicked = () => {
@@ -86,7 +92,6 @@ function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=50, width=50, 
         } else if (initClicked === true) {
             setJenisItem("Initialpad");
         }
-
     }, [x_axis, y_axis, height, width, scale, jenis_item]);
 
     return(
@@ -143,11 +148,11 @@ function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=50, width=50, 
           >
             ×
           </button>
-        <FaSignature style={styleIcon}/>
+        <FaFont style={styleIcon}/>
         </Rnd>
-        <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} />
+        {/* <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} /> */}
        </>
     )
 }
 
-export default ResizableDragable; 
+export default ResizableDragableInitial; 
