@@ -20,6 +20,7 @@ import ScreeningKaryawan from "views/ScreeningKaryawan";
 import { PlafondProvider } from "components/Provider/PlafondContext.js";
 import { SignatureProvider } from "components/Provider/SignatureContext.js";
 import { InitialProvider } from "components/Provider/InitialContext.js";
+import { DateProvider } from "components/Provider/DateContext.js";
 import LaporanPiutang from "views/LaporanPiutangKaryawan.js";
 import PageScreeningKaryawan from "views/ScreeningKaryawan.js"; 
 import Document from "views/Document.js";
@@ -50,7 +51,8 @@ root.render(
   <PlafondProvider>
     <SignatureProvider>
     <InitialProvider>
-       <DisableBackButton />
+    <DateProvider>
+      <DisableBackButton />
         <BrowserRouter>
         <DisableBackButton />
         <ToastContainer />
@@ -103,6 +105,7 @@ root.render(
 
           </Switch>
         </BrowserRouter>
+    </DateProvider>
     </InitialProvider>
     </SignatureProvider>
   </PlafondProvider>

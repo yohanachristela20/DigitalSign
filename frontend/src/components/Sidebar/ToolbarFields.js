@@ -13,6 +13,7 @@ import ResizableDragable from "components/ResizeDraggable/rnd";
 import { useSignature } from "components/Provider/SignatureContext.js";
 import { toast } from "react-toastify";
 import { useInitial } from "components/Provider/InitialContext.js";
+import { useDateField } from "components/Provider/DateContext";
 
 function ToolbarFields ({ color, routes}) {
   const role = localStorage.getItem("role");
@@ -29,15 +30,19 @@ function ToolbarFields ({ color, routes}) {
   const [id_karyawan, setIdKaryawan] = useState("");
   const [signersDoc, setSignersDoc] = useState([]);
   // const selectedSigner = location?.state?.selectedSigner || null;
-  const {signatures, setSignatures} = useSignature();
-  const {initials, setInitials} = useInitial();
   const token = localStorage.getItem("token");
   const [dokumenUploaded, setDokumenUploaded] = React.useState(localStorage.getItem("id_dokumen") || "No document"); 
   const identitycolor = ['#f06292', '#f44336', '#f48fb1','#ec407a', '#e91e63', '#ce93d8', '#ba68c8', '#ab47bc', '#9c27b0', '#b39ddb', '#9575cd', '#7e57c2', '#673AB7']; 
   const signersCount = signersDoc.length;
   const [selectedSigner, setSelectedSigner] = useState([]);
+
+  const {signatures, setSignatures} = useSignature();
+  const {initials, setInitials} = useInitial();
+  const {dateField, setDateField} = useDateField();
+
   let [signatureClicked, setSignatureClicked] = useState(false);
   let [initialClicked, setInitialClicked] = useState(false);
+  let [dateFieldClicked, setDateFieldClicked] = useState(false);
 
   console.log("TOKEN from Toolbar: ", token);
   console.log("Document Uploaded in Toolbar:", dokumenUploaded);
@@ -95,9 +100,36 @@ function ToolbarFields ({ color, routes}) {
     console.log("Initial clicked from toolbar: ", initialClicked);
   };
 
+  const handleAddDate = () => {
+  if (!id_karyawan) {
+    toast.error("Please choose signer first.");
+    return;
+  }
+  setDateField(prev => [
+    ...prev, 
+    {
+      id: Date.now(),
+      x_axis: 0,
+      y_axis: 0,
+      width: 30,
+      height: 170,
+      id_karyawan: id_karyawan
+    }
+  ]);
+
+  const dateClicked = true;
+  setDateFieldClicked(dateClicked);
+  localStorage.setItem("dateFieldClicked", dateClicked);
+
+  window.dispatchEvent(new Event("localStorageUpdated"));
+
+  console.log("DateField clicked from toolbar: ", dateFieldClicked);
+  };
+
 
   console.log("Signatures:", signatures);
   console.log("Initials: ", initials);
+  console.log("Date field:", dateField);
 
   const toggleMenu = (key) => {
     setOpenMenus((prev) => ({
@@ -321,6 +353,14 @@ function ToolbarFields ({ color, routes}) {
             onClick={handleAddInitials}>
             <i class="fa fa-font" style={{ marginRight: '8px' }}></i>
               Initial
+          </Button>
+          <Button
+            type="button"
+            className="btn mb-3 bg-transparent mt-2"
+            style={{width:"190px", border:"1px solid #eed4dd"}}
+            onClick={handleAddDate}>
+            <i class="fa fa-calendar" style={{ marginRight: '8px' }}></i>
+              Date Signed
           </Button>
 
         </ul>

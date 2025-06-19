@@ -76,6 +76,23 @@ const AddUser = ({showAddModal, setShowAddModal, onSuccess}) => {
             <Modal.Body className="text-left pt-0 mt-2 my-3">
                 <Form onSubmit={saveUser}>
                 <span className="text-danger required-select">(*) Required.</span>
+                <Row>
+                    <Col md="12">
+                    <Form.Group>
+                    <span className="text-danger">*</span>
+                        <label>Employee ID</label>
+                        <Form.Control
+                            type="text"
+                            required
+                            value={id_karyawan}
+                            onChange={(e) => {
+                                setIdKaryawan(e.target.value);
+                            }}
+                        ></Form.Control>
+                        </Form.Group>
+                    </Col>
+                </Row>
+
                 <Row className="mt-3 mb-2">
                     <Col md="12">
                     <Form.Group>
@@ -111,24 +128,8 @@ const AddUser = ({showAddModal, setShowAddModal, onSuccess}) => {
                                     <option className="placeholder-form" key='blankChoice' hidden value>Choose Role</option>
                                     <option value="Admin">Admin</option>
                                     <option value="Super Admin">Super Admin</option>
+                                    <option value="User">User</option>
                             </Form.Select>
-                        </Form.Group>
-                    </Col>
-                </Row>
-
-                <Row>
-                    <Col md="12">
-                    <Form.Group>
-                    <span className="text-danger">*</span>
-                        <label>Employee ID</label>
-                        <Form.Control
-                            type="text"
-                            required
-                            value={id_karyawan}
-                            onChange={(e) => {
-                                setIdKaryawan(e.target.value);
-                            }}
-                        ></Form.Control>
                         </Form.Group>
                     </Col>
                 </Row>

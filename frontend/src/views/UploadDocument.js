@@ -12,10 +12,11 @@ import { SortableContainer, SortableElement } from "react-sortable-hoc";
 import arrayMove from "array-move-item";
 import PreviewDocument from "./PreviewDocument.js";
 import ToolbarFields from "components/Sidebar/ToolbarFields.js";
-import { useSignature } from "components/Provider/SignatureContext.js";
 import SortableItem from "components/SortableList/SortableList.js";
 
 import { useInitial } from "components/Provider/InitialContext.js";
+import { useSignature } from "components/Provider/SignatureContext.js";
+import { useDateField } from "components/Provider/DateContext.js";
 
 import {
   Card,
@@ -52,8 +53,8 @@ function UploadDocument() {
   const history = useHistory();
   const [x_axis, setXAxis] = useState(0);
   const [y_axis, setYAxis] = useState(0);
-  const [width, setWidth] = useState(150);
-  const [height, setHeight] = useState(200);
+  const [width, setWidth] = useState(100);
+  const [height, setHeight] = useState(150);
   const [jenis_item, setJenisItem] = useState("");
   const [id_item, setIdItem] = useState("");
   const [signersToolbar, setSignersToolbar] = useState([]);
@@ -66,8 +67,11 @@ function UploadDocument() {
 
   const {signatures, setSignatures} = useSignature([]);
   const {initials, setInitials} = useInitial([]);
+  const {dateField, setDateField} = useDateField([]);
+
   const [signClicked, setSignClicked] = useState(false);
   const [initClicked, setInitClicked] = useState(false);
+  const [dateClicked, setDateClicked] = useState(false);
 
   const [selectedDoc, setSelectedDoc] = useState(
       location?.state?.selectedDoc || null
@@ -211,12 +215,15 @@ function UploadDocument() {
   const handleButtonClicked = () => {
       const signButton = localStorage.getItem("signatureClicked"); 
       const initButton = localStorage.getItem("initialClicked");
+      const dateButton = localStorage.getItem("dateFieldClicked");
 
       console.log("SignButton clicked from Upload:", signButton);
       console.log("InitialButton clicked from Upload:", initButton);
+      console.log("DateButton clicked from Upload", dateButton);
 
       setSignClicked(signButton === "true");
       setInitClicked(initButton === "true");
+      setDateClicked(dateButton === "true");
   };
 
   window.addEventListener("localStorageUpdated", handleButtonClicked);
@@ -308,7 +315,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   const handleAddCard = () => {
     setDocumentCards(prevCards => {
-      
       let lastId = 0;
       if (prevCards.length > 0) {
         const lastCard = prevCards[prevCards.length - 1];
@@ -570,97 +576,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   // };
 
 
-  // LAST 
-  // const saveLogSignandItems = async(e) => {
-  //   e.preventDefault();
-  //   try {
-  //     if (nextStep4 !== true) {
-  //       let items = [];
-
-  //       if (signClicked && Array.isArray(signatures)) {
-  //         items = signatures.map(sig => ({
-  //         jenis_item: "Signpad", 
-  //         x_axis: sig.x_axis,
-  //         y_axis: sig.y_axis,
-  //         width: sig.width, 
-  //         height: sig.height,
-  //         id_karyawan: sig.id_karyawan
-  //       }));
-  //       } 
-  //       if (initClicked && Array.isArray(initials)) {
-  //         items = initials.map(sig => ({
-  //         jenis_item: "Initialpad", 
-  //         x_axis: sig.x_axis,
-  //         y_axis: sig.y_axis,
-  //         width: sig.width, 
-  //         height: sig.height,
-  //         id_karyawan: sig.id_karyawan
-  //       }));
-  //       }
-
-  //       // if (!Array.isArray(items) || items.length === 0) {
-  //       //   setError("No items to save.");
-  //       //   toast.error('No items to save.', {
-  //       //     position: "top-right",
-  //       //     autoClose: 5000,
-  //       //     hideProgressBar: true,
-  //       //   });
-  //       //   return;
-  //       // };
-      
-  //       const itemKaryawan = items.map(item => item.id_karyawan);
-  //       const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
-        
-  //       const missingItemSigners = allSigners.filter(signer => !itemKaryawan.includes(signer.value));
-  //       if (missingItemSigners.length > 0) {
-  //         setError('Signer should have an item.');
-  //         toast.error('Signer should have an item.', {
-  //           position: "top-right",
-  //           autoClose: 5000,
-  //           hideProgressBar: true,
-  //         });
-  //         return;
-  //       }
-        
-  //       const itemResponse = await axios.post('http://localhost:5000/item', items, {
-  //         headers: {Authorization: `Bearer ${token}`}
-  //       }); 
-
-  //       const createdItems = itemResponse.data.data.items;
-  //       const logsigns = createdItems.map((item, index) => {
-  //       // const signer = documentCards[0]; //hanya untuk 1 output 
-  //       // const signer = signatures[index];
-  //       const signer = signClicked? signatures[index] : initials[index];
-
-  //       return {
-  //         action: "Created", 
-  //         status: "Pending", 
-  //         id_dokumen,
-  //         id_karyawan,
-  //         id_signers: signer.id_karyawan,
-  //         id_item: item.id_item,
-  //         };
-  //       });
-
-  //       await axios.post('http://localhost:5000/logsign', {
-  //         logsigns
-  //         }, {
-  //           headers: {Authorization: `Bearer ${token}`}
-  //       }); 
-
-  //       toast.success("Logsigns and items created successfully!", {
-  //         position: "top-right", 
-  //         autoClose: "5000", 
-  //         hideProgressBar: true,
-  //       });
-  //     }
-  //     nextLastStep();
-  //   } catch (error) {
-  //     console.error("Failed to save logsigns and items:", error.message);
-  //   }
-    
-  // };
-
   const saveLogSignandItems = async(e) => {
     e.preventDefault();
     try {
@@ -694,6 +609,20 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             }))
           ];
         }
+
+        if (dateClicked && Array.isArray(dateField)) {
+          items = [
+            ...items,
+            ...dateField.map(sig => ({
+              jenis_item: "Date",
+              x_axis: sig.x_axis,
+              y_axis: sig.y_axis,
+              width: sig.width,
+              height: sig.height,
+              id_karyawan: sig.id_karyawan,
+            }))
+          ];
+        }
       
         const itemKaryawan = items.map(item => item.id_karyawan);
         const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
@@ -718,19 +647,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         const logsigns = createdItems.map((item, index) => {
         // const signer = documentCards[0]; //hanya untuk 1 output 
         // const signer = signatures[index];
-        const signer = initClicked? initials[index] : signatures[index];
-
-        // let signer; 
-        // if (signClicked === true) {
-        //   signer = signatures[index];
-        //   // signer = signatures.find(sig => sig.id_karyawan === item.id_karyawan);
-        // } else if (initClicked === true) {
-        //   signer = initials[index];
-        //   // signer = initials.find(sig => sig.id_karyawan === item.id_karyawan);
-        // }
-
-        // const signer = (signatures || []).find(sig => sig.id_karyawan === item.id_karyawan) ||
-        // (initials || []).find(init => init.id_karyawan === item.id_karyawan);
+        // const signer = initClicked? initials[index] : signatures[index]; // hanya mengambil salah 1: signatures atau initials
 
         return {
           action: "Created", 
@@ -1067,9 +984,6 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                         </Form>
                       </> 
                       )}
-                      {steps === 4 && (
-                        <p></p>
-                      )}
                     </>
                     <div className="clearfix"></div>
                 </div>
@@ -1079,6 +993,36 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
             {steps === 3 && (
               <>
                 <PreviewDocument />
+              </>
+            )}
+            {steps === 4 && (
+              <>
+                <Card className="p-4">
+                 <Card.Body>
+                   <Card.Header>
+                    <Card.Title>
+                      Review and Send
+                    </Card.Title>
+                  </Card.Header>
+                  <hr/>
+                  <Container fluid>
+                    <Form>
+                      <div>
+                        <p className="fs-5"><strong>Recipients</strong></p>
+                        <SortableList 
+                          items={documentCards}
+                          onSortEnd={onSortEnd}
+                          useDragHandle={false}
+                          handleCardEmployeeChange={handleCardEmployeeChange}
+                          handleDeleteCard={handleDeleteCard}
+                          employeeName={employeeName}
+                          value={employeeName.id_karyawan}
+                        />
+                      </div>
+                    </Form>
+                  </Container>
+                 </Card.Body>
+                </Card>
               </>
             )}
           </Col>

@@ -90,6 +90,7 @@ const EditUser = ({showEditModal, setShowEditModal, user, onSuccess}) => {
                             <option className="placeholder-form" key='blankChoice' hidden value>Choose Role</option>
                             <option value="Admin">Admin</option>
                             <option value="Super Admin">Super Admin</option>
+                            <option value="User">User</option>
                     </Form.Select>
                     {roleError && <span className="text-danger required-select">Role hasn't been selected.</span>}
                     </Form.Group>

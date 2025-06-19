@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
-import { FaSignature, FaFont } from 'react-icons/fa';
+import { FaSignature, FaFont, FaCalendar } from 'react-icons/fa';
 import "../../assets/scss/lbd/_rnd.scss";
 
 import { useSignature } from "components/Provider/SignatureContext.js";
@@ -8,7 +8,7 @@ import { useInitial } from "components/Provider/InitialContext.js";
 
 import InitialModal from "components/ModalForm/InitialModal.js";
 
-function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, width=50, scale=1, onDelete}) {
+function ResizableDragableDate ({onChange, x_axis=0, y_axis=0, height=50, width=50, scale=1, onDelete}) {
     const [showAddModal, setshowAddModal] = React.useState(false);
 
     const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -20,6 +20,7 @@ function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, wid
     const {initials, setInitials} = useInitial();
     const [signClicked, setSignClicked] = useState(false);
     const [initClicked, setInitClicked] = useState(false);
+    const [dateClicked, setDateClicked] = useState(false);
 
     const [jenis_item, setJenisItem] = useState("");
 
@@ -61,12 +62,15 @@ function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, wid
     const handleButtonClicked = () => {
         const signButton = localStorage.getItem("signatureClicked"); 
         const initButton = localStorage.getItem("initialClicked");
+        const dateButton = localStorage.getItem("dateFieldClicked");
 
-        console.log("SignButton clicked from Upload:", signButton);
-        console.log("InitialButton clicked from Upload:", initButton);
+        console.log("SignButton clicked from rndDate:", signButton);
+        console.log("InitialButton clicked from rndDate:", initButton);
+        console.log("DateButton clicked from rndDate", dateButton);
 
         setSignClicked(signButton === "true");
         setInitClicked(initButton === "true");
+        setDateClicked(dateButton === "true");
     };
 
     window.addEventListener("localStorageUpdated", handleButtonClicked);
@@ -92,12 +96,14 @@ function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, wid
             setJenisItem("Signpad");
         } else if (initClicked === true) {
             setJenisItem("Initialpad");
+        } else if (dateClicked === true) {
+            setJenisItem("Date");
         }
     }, [x_axis, y_axis, height, width, scale, jenis_item]);
 
     return(
        <>
-        <InitialModal showAddModal={showAddModal} setshowAddModal={setshowAddModal} onSuccess={handleInitialSuccess} />
+        {/* <InitialModal showAddModal={showAddModal} setshowAddModal={setshowAddModal} onSuccess={handleInitialSuccess} /> */}
         <Rnd
             style={styleRnd}
             size={{ width: size.width, height: size.height }}
@@ -127,7 +133,7 @@ function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, wid
             }}
             onClick={handleClickSign}
             minWidth={120}
-            minHeight={80}
+            minHeight={30}
             // bounds="parent"
         >
              <button
@@ -150,10 +156,10 @@ function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, wid
           >
             ×
           </button>
-        <FaFont style={styleIcon}/>
+        <FaCalendar style={styleIcon}/>
         </Rnd>
        </>
     )
 }
 
-export default ResizableDragableInitial; 
+export default ResizableDragableDate; 

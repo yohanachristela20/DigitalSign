@@ -2,10 +2,11 @@ import React, {useRef, useEffect, useState} from "react";
 import * as pdfjsLib from 'pdfjs-dist/webpack';
 import { pdfjs } from "react-pdf";
 import ResizableDragable from "components/ResizeDraggable/rnd.js";
-import { useSignature } from "components/Provider/SignatureContext.js";
-
 import ResizableDragableInitial from "components/ResizeDraggable/rndInitial.js";
+import ResizableDragableDate from "components/ResizeDraggable/rndDate.js";
 import { useInitial } from "components/Provider/InitialContext.js";
+import { useSignature } from "components/Provider/SignatureContext.js";
+import { useDateField } from "components/Provider/DateContext.js";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
@@ -22,13 +23,15 @@ const PDFCanvas = ({pdfUrl}) => {
     const [width, setWidth] = useState(150);
     const [height, setHeight] = useState(200);
     const [jenis_item, setJenisItem] = useState("");
-
-    const {signatures, setSignatures} = useSignature();
     const [selectedSigId, setSelectedSigId] = useState("");
 
-    const {initials, setInitials} = useInitial();
     const [signClicked, setSignClicked] = useState(false);
     const [initClicked, setInitClicked] = useState(false);
+    const [dateClicked, setDateClicked] = useState(false);
+
+    const {initials, setInitials} = useInitial();
+    const {signatures, setSignatures} = useSignature();
+    const {dateField, setDateField} = useDateField();
 
     // const handleAxisChange = ({x_axis, y_axis, width, height}) => {
     //     setXAxis(x_axis);
@@ -51,6 +54,15 @@ const PDFCanvas = ({pdfUrl}) => {
         )
     );
     };
+
+    const handleAxisDate = (id, updatedValues) => {
+    setDateField(prev =>
+        prev.map(sig =>
+        sig.id === id ? { ...sig, ...updatedValues } : sig
+        )
+    );
+    };
+    
     
     console.log("x_axis:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
 
@@ -58,12 +70,15 @@ const PDFCanvas = ({pdfUrl}) => {
     const handleButtonClicked = () => {
         const signButton = localStorage.getItem("signatureClicked"); 
         const initButton = localStorage.getItem("initialClicked");
+        const dateButton = localStorage.getItem("dateFieldClicked");
 
         console.log("signButton clicked from canvas:", signButton);
         console.log("initialButton clicked from canvas:", initButton);
+        console.log("dateButton clicked from canvas", dateButton);
 
         setSignClicked(signButton === "true");
         setInitClicked(initButton === "true");
+        setDateClicked(dateButton === "true");
     };
 
     window.addEventListener("localStorageUpdated", handleButtonClicked);
@@ -136,6 +151,12 @@ const PDFCanvas = ({pdfUrl}) => {
         console.log(`Deleted initials with id: ${id}`);
     };
 
+    const deleteDateField = (id) => {
+        setDateField(prev => prev.filter(sig => sig.id !== id));
+        console.log(`Deleted date field with id: ${id}`);
+    };
+
+
     return(
        <div ref={canvasContainerRef} style={{position: 'relative'}}>
         {canvases.length === 0 && <p>Loading PDF...</p>}
@@ -179,6 +200,23 @@ const PDFCanvas = ({pdfUrl}) => {
                     onClick={() => setSelectedSigId(sig.id)}
                     onChange={(updated) => handleAxisInitial(sig.id, updated)}
                     onDelete={() => deleteInitials(sig.id)}
+                /> 
+            ))}
+
+            {dateField.map(sig => (
+                <ResizableDragableDate
+                    key={sig.id}
+                    id={sig.id}
+                    x_axis={sig.x_axis}
+                    y_axis={sig.y_axis}
+                    width={sig.width}
+                    height={sig.height}
+                    jenis_item={"Date"}
+                    scale={sig.pageScale}
+                    isSelected={selectedSigId === sig.id}
+                    onClick={() => setSelectedSigId(sig.id)}
+                    onChange={(updated) => handleAxisDate(sig.id, updated)}
+                    onDelete={() => deleteDateField(sig.id)}
                 /> 
             ))}
        </div>
