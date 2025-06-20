@@ -72,6 +72,7 @@ function UploadDocument() {
   const [signClicked, setSignClicked] = useState(false);
   const [initClicked, setInitClicked] = useState(false);
   const [dateClicked, setDateClicked] = useState(false);
+  const [deletedSigner, setDeletedSigner] = useState("");
 
   const [selectedDoc, setSelectedDoc] = useState(
       location?.state?.selectedDoc || null
@@ -105,22 +106,22 @@ function UploadDocument() {
   console.log("signers count:", signersCount);
   console.log("selected signer:", selectedOption);
 
-  const fetchLastId = async () => {
-  const response = await axios.get('http://localhost:5000/getLastSignerId', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      }
-    }); 
-    let newId = "S00001";
-    if (response.data?.lastId) {
-      const lastIdNumber = parseInt(response.data.lastId.substring(2), 10);
-      const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(5, '0');
-      newId = `S${incrementedIdNumber}`;
-    }
-    setIdSigners(newId);
-  };
+  // const fetchLastId = async () => {
+  // const response = await axios.get('http://localhost:5000/getLastSignerId', {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     }
+  //   }); 
+  //   let newId = "S00001";
+  //   if (response.data?.lastId) {
+  //     const lastIdNumber = parseInt(response.data.lastId.substring(2), 10);
+  //     const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(5, '0');
+  //     newId = `S${incrementedIdNumber}`;
+  //   }
+  //   setIdSigners(newId);
+  // };
 
-  console.log("Fetch last id: ", id_signers);
+  // console.log("Fetch last id: ", id_signers);
 
   const [documentCards, setDocumentCards] = useState([
     {
@@ -135,7 +136,6 @@ function UploadDocument() {
   ]);
 
   useEffect(() => {
-    if(id_signers) {
       setDocumentCards([
         {
           id: Date.now(),
@@ -147,8 +147,7 @@ function UploadDocument() {
           jenis_item,
         }
       ]);
-    }
-  }, [id_signers]);
+  }, []);
 
   useEffect(() => {
     const fetchUserData = async() => {
@@ -284,22 +283,22 @@ function UploadDocument() {
 
 const onSortEnd = ({ oldIndex, newIndex }) => {
   setDocumentCards((prevCards) => {
-    const movedCard = prevCards[oldIndex];
+    // const movedCard = prevCards[oldIndex];
     const newCards = arrayMove([...prevCards], oldIndex, newIndex);
 
-    const parseId = (id) => parseInt(id.replace('S', ''), 10);
-    const formatId = (num) => `S${String(num).padStart(5, '0')}`;
+    // const parseId = (id) => parseInt(id.replace('K', ''), 10);
+    // const formatId = (num) => `K${String(num).padStart(5, '0')}`;
 
-    const startingIdNumber = parseId(id_signers);
+    // const startingIdNumber = parseId(id_signers);
 
-    const updatedCards = newCards.map((card, idx) => {
-      return {
-        ...card,
-        id_signers: formatId(startingIdNumber + idx),
-      };
-    });
+    // const updatedCards = newCards.map((card, idx) => {
+    //   return {
+    //     ...card,
+    //     id_signers: formatId(startingIdNumber + idx),
+    //   };
+    // });
 
-    return updatedCards;
+    return newCards;
   });
 };
 
@@ -324,7 +323,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       }
 
       const incrementedId = (lastId + 1).toString().padStart(5, '0');
-      const newIdSign = `S${incrementedId}`;
+      const newIdSign = `K${incrementedId}`;
 
       const newCard = {
         id: Date.now(),
@@ -358,31 +357,42 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     );
   };
 
-  const handleDeleteCard = (id) => {
-    setDocumentCards(prevCards => {
-      const deletedCard = prevCards.find(card => card.id === id);
-      if (!deletedCard) return prevCards;
-
-      const deletedIdSigner = deletedCard.id_signers;
-      const deletedNumber = parseInt(deletedIdSigner.slice(1));
-
-      const updatedCards = prevCards
-      .filter(card => card.id !== id)
-      .map(card => {
-        const num = parseInt(card.id_signers.slice(1));
-        if(num > deletedNumber) {
-          const newNumber = num - 1;
-          return {
-            ...card,
-            id_signers: `S${String(newNumber).padStart(5, '0')}`
-          }; 
-        }
-        return card;
+  const deleteSigner = async(deletedSigner) => {
+    console.log("Deleting signer with id_signers:", deletedSigner); 
+    try {
+      await axios.delete(`http://localhost:5000/logsign/${deletedSigner}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      return updatedCards;
-    });
+
+      toast.success("Signer deleted successfully.", {
+        position: "top-right", 
+        autoClose: 5000, 
+        hideProgressBar: true,
+      });
+    } catch (error) {
+      console.log(error.message);
+    }
   };
 
+  const handleDeleteCard = async (id) => {
+  const updatedCards = [...documentCards];
+  const index = updatedCards.findIndex(card => card.id === id);
+
+  if (index !== -1) {
+    const deletedCard = updatedCards[index];
+    console.log("Deleted card: ", deletedCard);
+
+    const deletedIdSigner = deletedCard.id_karyawan;
+    console.log("deletedIdSigner:", deletedIdSigner);
+    setDeletedSigner(deletedIdSigner);
+
+    await deleteSigner(deletedIdSigner);
+    updatedCards.splice(index, 1); 
+    setDocumentCards(updatedCards);
+  }
+};
 
   const saveDocument = async() => {
     // console.log("Nextstep2 from getItem:", nextStep2);
@@ -658,6 +668,9 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
           id_item: item.id_item,
           };
         });
+
+        // setIdSigners(id_signers);
+        // console.log("ID SIGNERS FROM SAVE LOGSIGN:", id_signers);
 
         await axios.post('http://localhost:5000/logsign', {
           logsigns

@@ -42,15 +42,17 @@ export const getLogSign = async(req, res) => {
     }
 };
 
-// export const updateLogSign = async(req, res) => {
-//     try {
-//         await LogSign.update(req.body, {
-//             where: {
-//                 id_logsign: req.params.id_logsign
-//             }
-//         });
-//         res.status(200).json({msg: "Signer was updated successfully."});
-//     } catch (error) {
-//         res.status(500).json({message: error.message});
-//     }
-// }
+export const deleteLogsign = async(req, res) => {
+    const {id_signers} = req.params;
+
+    try {
+        await LogSign.destroy({
+            where: {id_signers},
+        });
+
+        res.status(200).json({message: "Logsign deleted successfully."});
+    } catch (error) {
+        console.error("Failed to delete logsign by id_signers", error)
+        res.status(500).json({message: error.message});
+    }
+}

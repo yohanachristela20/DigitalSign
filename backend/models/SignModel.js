@@ -17,6 +17,13 @@ const Sign = db.define('sign', {
             key: 'id_logsign' 
         }
     },
+    is_deadline: DataTypes.BOOLEAN, 
+    deadline: DataTypes.DATEONLY, 
+    day_after_reminder: DataTypes.INTEGER, 
+    is_repeat_reminder: DataTypes.BOOLEAN, 
+    repeat_freq: DataTypes.INTEGER, 
+    is_download: DataTypes.BOOLEAN
+
     // id_signers: {
     //     type: DataTypes.STRING, 
     //     allowNull: false,
