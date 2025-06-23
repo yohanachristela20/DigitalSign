@@ -125,7 +125,7 @@ export const getSigner = async(req, res) => {
                     attributes: ['nama'],
                 },
             ],
-            order: [['id_parent_signers', 'DESC']],
+            order: [['id_parent_signers', 'ASC']],
         });
 
         console.log("Signer details: ", response);

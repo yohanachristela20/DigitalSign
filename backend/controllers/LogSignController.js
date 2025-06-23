@@ -44,15 +44,99 @@ export const getLogSign = async(req, res) => {
 
 export const deleteLogsign = async(req, res) => {
     const {id_signers} = req.params;
-
     try {
-        await LogSign.destroy({
-            where: {id_signers},
+        const lastRecord = await LogSign.findOne({
+            order: [['id_dokumen', 'DESC']],
         });
 
-        res.status(200).json({message: "Logsign deleted successfully."});
+        if (id_signers) {
+            await LogSign.destroy({
+                where: {id_dokumen: lastRecord.id_dokumen, id_signers},
+            });
+            res.status(200).json({message: "Logsign deleted successfully."});
+        }
+
     } catch (error) {
         console.error("Failed to delete logsign by id_signers", error)
         res.status(500).json({message: error.message});
     }
 }
+
+// export const updateLogsign = async(req, res) => {
+//     const {id_signers} = req.params;
+//     try {
+//         const lastRecord = await LogSign.findOne({
+//             order: [['id_dokumen', 'DESC']],
+//         });
+
+//         if (lastRecord.id_signers === id_signers) {
+//             await LogSign.update(req.body, {
+//                 where: 
+//                 {id_signers: req.params.id_signers}
+//             });
+//             res.status(200).json({msg: "Logsign was updated successfully."});
+//         }
+//     } catch (error) {
+//         res.status(500).json({message: error.message});
+//     }
+// }
+
+
+// LAST BENAR
+// export const updateLogsign = async(req, res) => {
+//     try {
+//         await LogSign.update(req.body, {
+//             where:{
+//                 id_signers: req.params.id_signers
+//             }
+//         });
+//         res.status(200).json({msg: "Logsign was updated successfully."}); 
+//     } catch (error) {
+//         console.log("Failed to update logsign:", error.message);
+//         res.status(500).json({message: error.message}); 
+//     }
+// }
+
+
+export const updateLogsign = async(req, res) => {
+    try {
+        const {id_signers} = req.params;
+        const {id_signers: new_id_signers} = req.body;
+
+        const logsign = await LogSign.findOne({where: {id_signers}});
+
+        if (!logsign) {
+            return res.status(404).json({message: "Logsign not found."});
+        }   
+
+        await LogSign.update(
+            { id_signers: new_id_signers}, 
+            {where: {id_signers}}
+        );
+        res.status(200).json({msg: "Logsign was updated successfully."}); 
+    } catch (error) {
+        console.log("Failed to update logsign:", error.message);
+        res.status(500).json({message: error.message}); 
+    }
+}
+
+
+
+// export const updateLogsign = async(req, res) => {
+//     // const transaction = await db.transaction();
+//     try {
+//         const response = await LogSign.update(req.body, {
+//             where:{
+//                 id_signers: req.params.id_signers
+//             }
+//         });
+
+//         // await transaction.commit();
+//         console.log("Updated logsign: ", response);
+//         res.status(200).json({msg: "Logsign was updated successfully."}); 
+//     } catch (error) {
+//         // await transaction.rollback();
+//         console.log("Failed to update logsign:", error.message);
+//         res.status(500).json({message: error.message}); 
+//     }
+// }

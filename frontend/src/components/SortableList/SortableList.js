@@ -1,6 +1,6 @@
 import { SortableContainer, SortableElement } from "react-sortable-hoc";
 import arrayMove from "array-move-item";
-import { FaTrashAlt } from "react-icons/fa";
+import { FaPen, FaTrashAlt } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -16,11 +16,11 @@ import {
   Modal
 } from "react-bootstrap";
 
-const SortableItem = SortableElement(({ card, index, handleCardEmployeeChange, handleDeleteCard, employeeName, documentCards }) => (
+const SortableItem = SortableElement(({ handleEditCard, card, index, handleCardEmployeeChange, handleDeleteCard, employeeName, documentCards }) => (
   <Card className="mt-3 mb-0">
     <Card.Body>
       <Row className="mt-2">
-        <Col md="5">
+        <Col md="4">
           <Form.Group>
             <span className="text-danger">*</span>
             <label>Full Name</label>
@@ -41,7 +41,7 @@ const SortableItem = SortableElement(({ card, index, handleCardEmployeeChange, h
             </Form.Select>
           </Form.Group>
         </Col>
-        <Col md="5">
+        <Col md="4">
           <Form.Group>
             <label>Email</label>
             <Form.Control type="email" value={card.email} readOnly />
@@ -49,6 +49,9 @@ const SortableItem = SortableElement(({ card, index, handleCardEmployeeChange, h
         </Col>
         <Col md="2" className="d-flex align-items-end mt-sm-3">
           <Button variant="outline-danger" disabled={documentCards.length <= 1} onClick={() => handleDeleteCard(card.id)} ><FaTrashAlt className="mb-1"/> Delete</Button>
+        </Col>
+        <Col md="2" className="d-flex align-items-end mt-sm-3">
+          <Button variant="outline-warning" onClick={() => handleEditCard(card.id)} ><FaPen className="mb-1"/> Update</Button>
         </Col>
       </Row>
     </Card.Body>

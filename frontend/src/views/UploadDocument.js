@@ -73,6 +73,9 @@ function UploadDocument() {
   const [initClicked, setInitClicked] = useState(false);
   const [dateClicked, setDateClicked] = useState(false);
   const [deletedSigner, setDeletedSigner] = useState("");
+  const [editedSigner, setEditedSigner] = useState("");
+
+  const [selectedSigner, setSelectedSigner] = useState(null);
 
   const [selectedDoc, setSelectedDoc] = useState(
       location?.state?.selectedDoc || null
@@ -376,6 +379,28 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
+  const updateSigner = async(oldIdSigner) => {
+    // e.preventDefault();
+    console.log("Update signer with id_signers:", oldIdSigner); 
+    try {
+      const response = await axios.patch(`http://localhost:5000/logsign/${oldIdSigner}`, {
+       id_signers: editedSigner,
+      }, {
+         headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Signer logsign updated: ", response.data);
+      toast.success("Signer updated successfully.", {
+        position: "top-right", 
+        autoClose: 5000, 
+        hideProgressBar: true,
+      });
+    } catch (error) {
+      console.log(error.message);
+    }
+  }; 
+
   const handleDeleteCard = async (id) => {
   const updatedCards = [...documentCards];
   const index = updatedCards.findIndex(card => card.id === id);
@@ -393,6 +418,27 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     setDocumentCards(updatedCards);
   }
 };
+
+  const handleEditCard = async(id) => {
+    const updatedCards = [...documentCards];
+    const index = updatedCards.findIndex(card => card.id === id);
+
+    const updatedCard = updatedCards[index];
+    console.log("Updated card: ", updatedCard);
+
+    const updatedIdSigner = updatedCard.id_karyawan;
+    console.log("updatedIdSigner:", updatedIdSigner);
+
+    const oldIdSigner = newIdSigner;
+    console.log("old Id Signer: ", oldIdSigner);
+
+    setSelectedSigner(updatedIdSigner);
+    setEditedSigner(updatedIdSigner);
+    // setIdKaryawan(updatedIdSigner);
+
+    await updateSigner(updatedIdSigner);
+    setDocumentCards(updatedCards);
+  }
 
   const saveDocument = async() => {
     // console.log("Nextstep2 from getItem:", nextStep2);
@@ -1028,6 +1074,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                           useDragHandle={false}
                           handleCardEmployeeChange={handleCardEmployeeChange}
                           handleDeleteCard={handleDeleteCard}
+                          handleEditCard={handleEditCard}
                           employeeName={employeeName}
                           value={employeeName.id_karyawan}
                         />
