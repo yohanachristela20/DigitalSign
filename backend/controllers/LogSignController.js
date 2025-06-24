@@ -74,7 +74,7 @@ export const updateLogsign = async(req, res) => {
         if (id_signers) {
             await LogSign.update(req.body, {
                 where: 
-                {id_dokumen: lastRecord.id_dokumen, id_signers}
+                {id_dokumen: lastRecord.id_dokumen, id_signers: lastRecord.id_signers}
             });
             res.status(200).json({msg: "Logsign was updated successfully."});
         }

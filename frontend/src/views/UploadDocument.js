@@ -426,6 +426,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   const handleEditCard = async(id) => {
     const updatedCards = [...documentCards];
     const index = updatedCards.findIndex(card => card.id === id);
+    console.log("Index handleEdit:", index);
 
       const updatedCard = updatedCards[index];
       console.log("Updated card: ", updatedCard);
@@ -452,7 +453,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       // setSelectedSigner(newIdSigner);
       
       await updateSigner(oldIdSigner, newIdSigner);
-      // updatedCards[index].id_signers = newIdSigner;
+      updatedCards[index].id_signers = newIdSigner;
       setDocumentCards(updatedCards);
   };
 
