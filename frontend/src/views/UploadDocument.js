@@ -48,7 +48,6 @@ function UploadDocument() {
   const [organisasi, setOrganisasi] = useState("");
   const [userData, setUserData] = useState({id_karyawan: "", nama: "", organisasi:""})
   const token = localStorage.getItem("token");
-  const [newIdSigner, setNewIdSigner] = useState("");
   const [document, setDocument] = useState("");
   const history = useHistory();
   const [x_axis, setXAxis] = useState(0);
@@ -76,6 +75,11 @@ function UploadDocument() {
   const [editedSigner, setEditedSigner] = useState("");
 
   const [selectedSigner, setSelectedSigner] = useState(null);
+  let [oldIdSigner, setOldIdSigner] = useState("");
+  let [newIdSigner, setNewIdSigner] = useState("");
+  let [idSigner, setIdSigner] = useState("");
+
+  let [id_logsign, setIdLogsign] = useState("");
 
   const [selectedDoc, setSelectedDoc] = useState(
       location?.state?.selectedDoc || null
@@ -147,7 +151,7 @@ function UploadDocument() {
           id_signers: "",
           status: "Pending",
           action: "Created",
-          jenis_item,
+          jenis_item: "",
         }
       ]);
   }, []);
@@ -379,12 +383,12 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
-  const updateSigner = async(oldIdSigner) => {
+  const updateSigner = async(oldIdSigner, newIdSigner) => {
     // e.preventDefault();
-    console.log("Update signer with id_signers:", oldIdSigner); 
+    console.log(`Updating (${oldIdSigner}) to newIdSigner (${newIdSigner})`);
     try {
       const response = await axios.patch(`http://localhost:5000/logsign/${oldIdSigner}`, {
-       id_signers: editedSigner,
+       id_signers: newIdSigner,
       }, {
          headers: {
           Authorization: `Bearer ${token}`,
@@ -423,22 +427,34 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     const updatedCards = [...documentCards];
     const index = updatedCards.findIndex(card => card.id === id);
 
-    const updatedCard = updatedCards[index];
-    console.log("Updated card: ", updatedCard);
+      const updatedCard = updatedCards[index];
+      console.log("Updated card: ", updatedCard);
 
-    const updatedIdSigner = updatedCard.id_karyawan;
-    console.log("updatedIdSigner:", updatedIdSigner);
+      oldIdSigner = idSigner;
+      setOldIdSigner(oldIdSigner);
+      newIdSigner = updatedCard.id_karyawan;
+      setNewIdSigner(newIdSigner);
+      id_logsign = updatedCard.id_logsign;
+      setIdLogsign(id_logsign);
 
-    const oldIdSigner = newIdSigner;
-    console.log("old Id Signer: ", oldIdSigner);
+      console.log("Old ID:", oldIdSigner);
+      console.log("New ID:", newIdSigner);
 
-    setSelectedSigner(updatedIdSigner);
-    setEditedSigner(updatedIdSigner);
-    // setIdKaryawan(updatedIdSigner);
+      if (!oldIdSigner || !newIdSigner) {
+        console.error("Old ID signer/ID Logsign is not valid.");
+        toast.error("ID signer/ID Logsign not found.");
+        return;
+      }
 
-    await updateSigner(updatedIdSigner);
-    setDocumentCards(updatedCards);
-  }
+      // const updatedIdSigner = updatedCard.id_karyawan;
+      // console.log("updatedIdSigner:", updatedIdSigner);
+
+      // setSelectedSigner(newIdSigner);
+      
+      await updateSigner(oldIdSigner, newIdSigner);
+      // updatedCards[index].id_signers = newIdSigner;
+      setDocumentCards(updatedCards);
+  };
 
   const saveDocument = async() => {
     // console.log("Nextstep2 from getItem:", nextStep2);
@@ -701,18 +717,22 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
         const createdItems = itemResponse.data.data.items;
         const logsigns = createdItems.map((item, index) => {
-        // const signer = documentCards[0]; //hanya untuk 1 output 
-        // const signer = signatures[index];
-        // const signer = initClicked? initials[index] : signatures[index]; // hanya mengambil salah 1: signatures atau initials
+          const signerId = items[index].id_karyawan;
+          setIdSigner(signerId);
+          console.log("signerId from savelogsign:", signerId);
+          
+          // const signer = documentCards[0]; //hanya untuk 1 output 
+          // const signer = signatures[index];
+          // const signer = initClicked? initials[index] : signatures[index]; // hanya mengambil salah 1: signatures atau initials
 
-        return {
-          action: "Created", 
-          status: "Pending", 
-          id_dokumen,
-          id_karyawan,
-          id_signers: items[index].id_karyawan,
-          id_item: item.id_item,
-          };
+          return {
+            action: "Created", 
+            status: "Pending", 
+            id_dokumen,
+            id_karyawan,
+            id_signers: signerId,
+            id_item: item.id_item,
+            };
         });
 
         // setIdSigners(id_signers);
@@ -723,6 +743,10 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
           }, {
             headers: {Authorization: `Bearer ${token}`}
         }); 
+
+        // const savedLogsigns = response.data.data;
+
+        // console.log("saved logsign:", savedLogsigns);
 
         toast.success("Logsigns and items created successfully!", {
           position: "top-right", 
@@ -737,6 +761,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
     
   };
+  
 
   useEffect(() => {
     if (selectedDoc && selectedDoc.id_dokumen) {
