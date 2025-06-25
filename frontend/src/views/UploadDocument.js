@@ -345,21 +345,35 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     });
   };
 
+  // const handleCardEmployeeChange = (id, selectedId) => {
+  //   const selectedEmp = employeeList.find(emp => emp.id_karyawan === selectedId);
+  //   const email = selectedEmp?.Pengguna?.[0]?.email || '';
+  //   const id_karyawan = selectedEmp?.Pengguna?.[0]?.id_karyawan || '';
+
+  //   console.log("Selected employee from card:", selectedEmp);
+  //   console.log("Selected id karyawan from card:", selectedEmp.id_karyawan);
+
+  //   setNewIdSigner(selectedEmp.id_karyawan);
+
+  //   setDocumentCards(prevCards => 
+  //     prevCards.map(card => 
+  //       card.id === id 
+  //       ? {...card, id_karyawan: selectedEmp.id_karyawan, email: email}
+  //       : card
+  //     )
+  //   );
+  // };
+
   const handleCardEmployeeChange = (id, selectedId) => {
     const selectedEmp = employeeList.find(emp => emp.id_karyawan === selectedId);
     const email = selectedEmp?.Pengguna?.[0]?.email || '';
     const id_karyawan = selectedEmp?.Pengguna?.[0]?.id_karyawan || '';
 
-    console.log("Selected employee from card:", selectedEmp);
-    console.log("Selected id karyawan from card:", selectedEmp.id_karyawan);
-
-    setNewIdSigner(selectedEmp.id_karyawan);
-
     setDocumentCards(prevCards => 
       prevCards.map(card => 
         card.id === id 
-        ? {...card, id_karyawan: selectedEmp.id_karyawan, email: email}
-        : card
+          ? { ...card, id_karyawan: selectedEmp.id_karyawan, email: email }
+          : card
       )
     );
   };
@@ -431,12 +445,13 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       const updatedCard = updatedCards[index];
       console.log("Updated card: ", updatedCard);
 
-      oldIdSigner = idSigner;
+      // oldIdSigner = idSigner;
+      oldIdSigner = updatedCard.id_signers;
       setOldIdSigner(oldIdSigner);
       newIdSigner = updatedCard.id_karyawan;
       setNewIdSigner(newIdSigner);
-      id_logsign = updatedCard.id_logsign;
-      setIdLogsign(id_logsign);
+      // id_logsign = updatedCard.id_logsign;
+      // setIdLogsign(id_logsign);
 
       console.log("Old ID:", oldIdSigner);
       console.log("New ID:", newIdSigner);
@@ -719,8 +734,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         const createdItems = itemResponse.data.data.items;
         const logsigns = createdItems.map((item, index) => {
           const signerId = items[index].id_karyawan;
-          setIdSigner(signerId);
-          console.log("signerId from savelogsign:", signerId);
+          // setIdSigner(signerId);
+          // console.log("signerId from savelogsign:", signerId);
           
           // const signer = documentCards[0]; //hanya untuk 1 output 
           // const signer = signatures[index];
@@ -745,9 +760,12 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             headers: {Authorization: `Bearer ${token}`}
         }); 
 
-        // const savedLogsigns = response.data.data;
-
-        // console.log("saved logsign:", savedLogsigns);
+        setDocumentCards(prevCards =>
+          prevCards.map((card, index) => ({
+            ...card,
+            id_signers: items[index]?.id_karyawan || card.id_signers, // tambahkan id_signers ke setiap card
+          }))
+        );
 
         toast.success("Logsigns and items created successfully!", {
           position: "top-right", 

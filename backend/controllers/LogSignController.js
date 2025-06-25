@@ -63,26 +63,54 @@ export const deleteLogsign = async(req, res) => {
 }
 
 
-// LAST USED
-export const updateLogsign = async(req, res) => {
-    const {id_signers} = req.params;
-    try {
-        const lastRecord = await LogSign.findOne({
-            order: [['id_dokumen', 'DESC']],
-        });
+// LAST USED yyy
+// export const updateLogsign = async(req, res) => {
+//     const {id_signers} = req.params;
+//     try {
+//         const lastRecord = await LogSign.findOne({
+//             order: [['id_dokumen', 'DESC']],
+//         });
 
-        if (id_signers) {
-            await LogSign.update(req.body, {
-                where: 
-                {id_dokumen: lastRecord.id_dokumen, id_signers: lastRecord.id_signers}
-            });
-            res.status(200).json({msg: "Logsign was updated successfully."});
-        }
-    } catch (error) {
-        console.error("Failed to update logsign", error)
-        res.status(500).json({message: error.message});
+//         if (id_signers) {
+//             await LogSign.update(req.body, {
+//                 where: 
+//                 {id_dokumen: lastRecord.id_dokumen, id_signers: lastRecord.id_signers}
+//             });
+//             res.status(200).json({msg: "Logsign was updated successfully."});
+//         }
+//     } catch (error) {
+//         console.error("Failed to update logsign", error)
+//         res.status(500).json({message: error.message});
+//     }
+// }
+
+export const updateLogsign = async (req, res) => {
+  const { id_signers } = req.params;
+
+  try {
+    if (!id_signers) {
+      return res.status(400).json({ message: "id_signers is required" });
     }
-}
+
+    const logsign = await LogSign.findOne({
+      where: { id_signers }
+    });
+
+    if (!logsign) {
+      return res.status(404).json({ message: "Logsign not found" });
+    }
+
+    await LogSign.update(req.body, {
+      where: { id_signers }
+    });
+
+    res.status(200).json({ msg: "Logsign was updated successfully." });
+  } catch (error) {
+    console.error("Failed to update logsign:", error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 
 // export const updateLogsign = async(req, res) => {
