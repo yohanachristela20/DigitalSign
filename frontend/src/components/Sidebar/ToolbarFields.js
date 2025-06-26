@@ -47,6 +47,14 @@ function ToolbarFields ({ color, routes}) {
   console.log("TOKEN from Toolbar: ", token);
   console.log("Document Uploaded in Toolbar:", dokumenUploaded);
 
+  const updateClickedFields = (field) => {
+    const existing = JSON.parse(localStorage.getItem("clickedFields")) || [];
+    if (!existing.includes(field)) {
+      existing.push(field);
+      localStorage.setItem("clickedFields", JSON.stringify(existing));
+    }
+  };
+
   const handleAddSignature = () => {
     if (!id_karyawan) {
       toast.error("Please choose signer first.");
@@ -64,9 +72,10 @@ function ToolbarFields ({ color, routes}) {
       }
     ]);
 
-    const signClicked = true;
-    setSignatureClicked(signClicked);
-    localStorage.setItem("signatureClicked", signClicked);
+    // const signClicked = true;
+    setSignatureClicked(true);
+    localStorage.setItem("signatureClicked", true);
+    updateClickedFields("Signpad");
 
     window.dispatchEvent(new Event("localStorageUpdated"));
 
@@ -91,10 +100,10 @@ function ToolbarFields ({ color, routes}) {
       }
     ]);
 
-    const initClicked = true;
-    setInitialClicked(initClicked);
-    localStorage.setItem("initialClicked", initClicked);
-
+    // const initClicked = true;
+    setInitialClicked(true);
+    localStorage.setItem("initialClicked", true);
+    updateClickedFields("Initialpad");
     window.dispatchEvent(new Event("localStorageUpdated"));
 
     console.log("Initial clicked from toolbar: ", initialClicked);
@@ -117,9 +126,10 @@ function ToolbarFields ({ color, routes}) {
     }
   ]);
 
-  const dateClicked = true;
-  setDateFieldClicked(dateClicked);
-  localStorage.setItem("dateFieldClicked", dateClicked);
+  // const dateClicked = true;
+  setDateFieldClicked(true);
+  localStorage.setItem("dateFieldClicked", true);
+  updateClickedFields("Date");
 
   window.dispatchEvent(new Event("localStorageUpdated"));
 

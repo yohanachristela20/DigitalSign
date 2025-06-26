@@ -285,7 +285,7 @@ export const createLogSign = async (req,res) => {
                 id_dokumen: log.id_dokumen,
                 id_karyawan: log.id_karyawan, 
                 id_signers: log.id_signers, 
-                id_item: item, 
+                id_item: log.id_item, 
             }); 
         }
     }

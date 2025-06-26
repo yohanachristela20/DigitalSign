@@ -84,32 +84,191 @@ export const deleteLogsign = async(req, res) => {
 //     }
 // }
 
+
+// BARU POLL
+// export const updateLogsign = async (req, res) => {
+//   const { id_signers } = req.params;
+
+//   try {
+//     if (!id_signers) {
+//       return res.status(400).json({ message: "id_signers is required" });
+//     }
+
+//     let logsign = await LogSign.findOne({
+//       where: { id_signers },
+//       order: [['id_dokumen', 'DESC']],
+//     });
+
+//     if (!logsign) {
+//       return res.status(404).json({ message: "Logsign not found" });
+//     }
+
+//       await LogSign.update(req.body, {
+//       where: {id_dokumen: logsign.id_dokumen, id_signers}
+//     });
+
+//     res.status(200).json({ msg: "Logsign was updated successfully." });
+//   } catch (error) {
+//     console.error("Failed to update logsign:", error.message);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
+// BWARRUUUU
+// export const updateLogsign = async (req, res) => {
+//   const { id_dokumen, id_signers } = req.params;
+
+//   try {
+//     if (!id_dokumen || !id_signers) {
+//       return res.status(400).json({ message: "id_dokumen and id_signers are required" });
+//     }
+
+//     const logsign = await LogSign.findOne({
+//       where: { id_dokumen, id_signers }
+//     });
+
+//     if (!logsign) {
+//       return res.status(404).json({ message: "Logsign not found" });
+//     }
+
+//     await LogSign.update(req.body, {
+//       where: { id_dokumen, id_signers }
+//     });
+
+//     res.status(200).json({ msg: "Logsign updated successfully." });
+//   } catch (error) {
+//     console.error("Failed to update logsign:", error.message);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
+// export const updateLogsign = async (req, res) => {
+//   const { id_dokumen, id_signers: oldIdSigner } = req.params;
+//   const { id_signers: newIdSigner } = req.body;
+
+//   try {
+//     if (!id_dokumen || !oldIdSigner || !newIdSigner) {
+//       return res.status(400).json({ message: "Required parameters missing" });
+//     }
+
+//     // Pastikan data yang akan diupdate ada
+//     const logsign = await LogSign.findOne({
+//       where: { id_dokumen, id_signers: oldIdSigner }
+//     });
+
+//     if (!logsign) {
+//       return res.status(404).json({ message: "Logsign not found" });
+//     }
+
+//     // Update id_signers dari oldIdSigner ke newIdSigner
+//     await LogSign.update(
+//       { id_signers: newIdSigner },
+//       { where: { id_dokumen, id_signers: oldIdSigner } }
+//     );
+
+//     res.status(200).json({ msg: "Logsign updated successfully." });
+//   } catch (error) {
+//     console.error("Failed to update logsign:", error.message);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
+
+//LASSSST
+// export const updateLogsign = async (req, res) => {
+//   const { id_dokumen, id_item } = req.params;
+//   const { id_signers: newIdSigner } = req.body;
+
+//   try {
+//     if (!id_dokumen || !id_item || !newIdSigner) {
+//       return res.status(400).json({ message: "Required parameters missing" });
+//     }
+
+//     const logsign = await LogSign.findOne({
+//       where: { id_dokumen, id_item }
+//     });
+
+//     if (!logsign) {
+//       return res.status(404).json({ message: "Logsign not found" });
+//     }
+//     await LogSign.update(
+//       { id_signers: newIdSigner },
+//       { where: { id_dokumen, id_item } }
+//     );
+
+//     res.status(200).json({ msg: "Logsign updated successfully." });
+//   } catch (error) {
+//     console.error("Failed to update logsign:", error.message);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 export const updateLogsign = async (req, res) => {
-  const { id_signers } = req.params;
+  const { id_dokumen, id_item, id_signers: oldIdSigner } = req.params;
+  const { id_signers: newIdSigner } = req.body;
 
   try {
-    if (!id_signers) {
-      return res.status(400).json({ message: "id_signers is required" });
-    }
+    console.log("Incoming PATCH:", { id_dokumen, id_item, newIdSigner, oldIdSigner });
+
+    // if (!id_dokumen || !id_item || !newIdSigner || !id_signers) {
+    //   return res.status(400).json({ message: "Required parameters missing" });
+    // }
 
     const logsign = await LogSign.findOne({
-      where: { id_signers }
+      where: { id_dokumen, id_item, id_signers: oldIdSigner }
     });
+
+    // console.log("Logsign found?", logsign);
 
     if (!logsign) {
       return res.status(404).json({ message: "Logsign not found" });
     }
+    await LogSign.update(
+      { id_signers: newIdSigner },
+      {where: {id_dokumen, id_item, id_signers: oldIdSigner}});
+    res.status(200).json({ msg: "Logsign updated successfully." });
 
-    await LogSign.update(req.body, {
-      where: { id_signers }
-    });
-
-    res.status(200).json({ msg: "Logsign was updated successfully." });
   } catch (error) {
     console.error("Failed to update logsign:", error.message);
     res.status(500).json({ message: error.message });
   }
 };
+
+
+
+// export const updateLogsign = async (req, res) => {
+//   const { logsigns, id_signers } = req.body;
+
+//   if (!Array.isArray(logsigns) || logsigns.length === 0) {
+//     return res.status(400).json({ message: "logsigns must be a non-empty array." });
+//   }
+
+//   const transaction = await db.transaction();
+//   try {
+//     for (const log of logsigns) {
+//       const { id_logsign, id_signers } = log;
+
+//       if (!id_logsign || !id_signers) {
+//         continue; 
+//       }
+
+//       await LogSign.update(
+//         { id_signers },
+//         {
+//           where: { id_logsign },
+//           transaction
+//         }
+//       );
+//     }
+
+//     await transaction.commit();
+//     res.status(200).json({ msg: "Logsigns were updated successfully." });
+//   } catch (error) {
+//     await transaction.rollback();
+//     console.error("Failed to update logsigns:", error.message);
+//     res.status(500).json({ message: "Failed to update logsigns." });
+//   }
+// };
 
 
 
