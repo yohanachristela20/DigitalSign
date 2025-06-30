@@ -2,6 +2,7 @@ import LogSign from "../models/LogSignModel.js";
 import db from "../config/database.js";
 import Karyawan from "../models/KaryawanModel.js";
 import Signers from "../models/SignersModel.js";
+import Sign from "../models/SignModel.js";
 
 export const getLogSign = async(req, res) => {
     try {
@@ -30,25 +31,26 @@ export const getLogSign = async(req, res) => {
     }
 };
 
-export const deleteLogsign = async(req, res) => {
-    const {id_signers} = req.params;
-    try {
-        const lastRecord = await LogSign.findOne({
-            order: [['id_dokumen', 'DESC']],
-        });
+// export const deleteLogsign = async(req, res) => {
+//     const {id_signers} = req.params;
+//     try {
+//         const lastRecord = await LogSign.findOne({
+//             order: [['id_dokumen', 'DESC']],
+//         });
 
-        if (id_signers) {
-            await LogSign.destroy({
-                where: {id_dokumen: lastRecord.id_dokumen, id_signers},
-            });
-            res.status(200).json({message: "Logsign deleted successfully."});
-        }
+//         if (id_signers) {
+//             await LogSign.destroy({
+//                 where: {id_dokumen: lastRecord.id_dokumen, id_signers},
+//             });
+//             res.status(200).json({message: "Logsign deleted successfully."});
+//         }
 
-    } catch (error) {
-        console.error("Failed to delete logsign by id_signers", error)
-        res.status(500).json({message: error.message});
-    }
-};
+//     } catch (error) {
+//         console.error("Failed to delete logsign by id_signers", error)
+//         res.status(500).json({message: error.message});
+//     }
+// };
+
 
 export const updateLogsign = async (req, res) => {
   const { id_dokumen, id_item, id_signers: oldIdSigner } = req.params;
@@ -102,3 +104,19 @@ export const updateReminder = async(req,res) => {
         res.status(500).json({message: error.message});
     }
 };
+
+export const getLastLogsignId = async (req, res) => {
+    try {
+        const lastRecord = await LogSign.findOne({
+            order: [['id_logsign', 'DESC']],
+        });
+
+        if (lastRecord) {
+            return res.status(200).json({ lastId: lastRecord.id_logsign });
+        }
+        return res.status(200).json({ lastId: null });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Error retrieving last Item ID.' });
+    }
+}; 

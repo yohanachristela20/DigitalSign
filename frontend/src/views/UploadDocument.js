@@ -425,22 +425,23 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     );
   };
 
-  const deleteSigner = async(deletedSigner) => {
-    console.log("Deleting signer with id_signers:", deletedSigner); 
+  const deleteLogsign = async(deletedSigner, id_dokumen, id_item) => {
+    console.log("Deleting signer with:", deletedSigner, id_dokumen, id_item); 
     try {
-      await axios.delete(`http://localhost:5000/logsign/${deletedSigner}`, {
+      await axios.delete(`http://localhost:5000/logsign/${id_dokumen}/${id_item}/${deletedSigner}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      toast.success("Signer deleted successfully.", {
-        position: "top-right", 
-        autoClose: 5000, 
-        hideProgressBar: true,
-      });
+      // toast.success("Signer deleted successfully.", {
+      //   position: "top-right", 
+      //   autoClose: 5000, 
+      //   hideProgressBar: true,
+      // });
     } catch (error) {
-      console.log(error.message);
+      console.log("Error deleting signer:", error);
+      throw error;
     }
   };
 
@@ -501,79 +502,82 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   const updatedCards = [...documentCards];
   const index = updatedCards.findIndex(card => card.id === id);
 
+  const card = documentCards.find(c => c.id === id);
+  if (!card) {
+    console.error("Card not found");
+    return;
+  }
+
   if (index !== -1) {
     const deletedCard = updatedCards[index];
     console.log("Deleted card: ", deletedCard);
 
     const deletedIdSigner = deletedCard.id_karyawan;
-    console.log("deletedIdSigner:", deletedIdSigner);
+    const dokId = deletedCard.id_dokumen;
+    // const itemId = deletedCard.id_item;
+
+    const storedIdItems = JSON.parse(localStorage.getItem("id_items")) || [];
+
+    const cardIndex = documentCards.findIndex(c => c.id === id);
+    const itemId = storedIdItems[cardIndex]; 
+
+    console.log("deleting id signers with:", deletedIdSigner, dokId, itemId);
     setDeletedSigner(deletedIdSigner);
 
-    await deleteSigner(deletedIdSigner);
-    updatedCards.splice(index, 1); 
-    setDocumentCards(updatedCards);
+    try {
+      await deleteLogsign(deletedIdSigner, dokId, itemId);
+      updatedCards.splice(index, 1); 
+      setDocumentCards(updatedCards);
+
+      toast.success("Card deleted successfully.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
+
+    } catch (error) {
+      console.error("Failed to delete signer:", error.message);
+    }
   }
-};
+  };
 
 
-  // const handleEditCard = async(id) => {
-  // const updatedCards = [...documentCards];
-  // const index = updatedCards.findIndex(card => card.id === id);
-  // // if (index === -1) {
-  // //   console.error("Card index not found for id:", id);
-  // //   return;
-  // // }
+//   const handleDeleteCard = async (id) => {
+//   const updatedCards = [...documentCards];
+//   const index = updatedCards.findIndex(card => card.id === id);
 
-  // const updatedCard = updatedCards[index];
-  
-  // const oldIdSigner = updatedCard.ori_id_signers;
-  // const newIdSigner = updatedCard.id_karyawan;
-  // const idItem = id_item;
-  // const dokId = id_dokumen;
+//   const card = documentCards.find(c => c.id === id);
+//   if (!card) {
+//     console.error("Card not found");
+//     return;
+//   }
 
-  // // if (!newIdSigner || !idItem || !dokId) {
-  // //   console.error("Missing parameters:", { dokId, idItem, newIdSigner });
-  // //   toast.error("Data signer tidak lengkap.");
-  // //   return;
-  // // }
+//   if (index !== -1) {
+//     const deletedCard = updatedCards[index];
+//     console.log("Deleted card: ", deletedCard);
 
-  // await updateSigner(dokId, idItem, newIdSigner, oldIdSigner);
+//     const id_logsign = deletedCard.id_logsign; // Gunakan langsung dari card
+//     if (!id_logsign) {
+//       console.error("id_logsign not found in deleted card");
+//       return;
+//     }
 
-  // updatedCards[index].id_signers = newIdSigner;
-  // // updatedCards[index].ori_id_signers = 
-  // setDocumentCards(updatedCards);
-  // };
+//     try {
+//       await deleteLogsign(id_logsign); // Kirim DELETE request berdasarkan id_logsign
+//       updatedCards.splice(index, 1); 
+//       setDocumentCards(updatedCards);
 
-  // const handleEditCard = async (id) => {
-  // const card = documentCards.find(c => c.id === id);
-  // if (!card) {
-  //   console.error("Card not found");
-  //   return;
-  // }
+//       toast.success("Card deleted successfully.", {
+//         position: "top-right",
+//         autoClose: 5000,
+//         hideProgressBar: true,
+//       });
 
-  // const oldIdSigner = card.ori_id_signers;
-  // const newIdSigner = card.id_karyawan;
-  // const dokId = card.id_dokumen;
-  // const idItem = id_item;
-
-  // if (!idItem || !dokId) {
-  //   console.error("Missing idItem or dokId", { idItem, dokId });
-  //   return;
-  // }
-
-  // console.log("PATCH call for:", { dokId, idItem, oldIdSigner, newIdSigner });
-
-  // await updateSigner(dokId, idItem, newIdSigner, oldIdSigner);
-
-  // // update signer di UI
-  // const updatedCards = documentCards.map(c =>
-  //   c.id === id
-  //     ? { ...c, id_signers: newIdSigner, ori_id_signers: newIdSigner }
-  //     : c
-  // );
-
-  // setDocumentCards(updatedCards);
-  // };
+//     } catch (error) {
+//       console.error("Failed to delete signer:", error.message);
+//     }
+//   }
+// };
 
   const handleEditCard = async (id) => {
   const card = documentCards.find(c => c.id === id);

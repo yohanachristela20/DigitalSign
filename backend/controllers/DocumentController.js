@@ -233,6 +233,63 @@ export const createLogSign = async (req, res) => {
   }
 };
 
+export const deleteLogsign = async(req, res) => {
+    const transaction = await db.transaction();
+    const {id_dokumen, id_item, id_signers} = req.params;
+    try {
+
+        const logsign = await LogSign.findOne({
+          where: {id_dokumen, id_item, id_signers}
+        });
+
+        if (!logsign) {
+          return res.status(404).json({ message: "Logsign not found" });
+        }
+
+        await Sign.destroy({
+            where: {id_logsign: logsign.id_logsign}
+        });
+            
+        await LogSign.destroy({
+            where: {id_dokumen, id_item, id_signers},
+        });
+
+        await transaction.commit();
+        res.status(200).json({message: "Logsign deleted successfully."});
+    } catch (error) {
+        console.error("Failed to delete logsign by id_signers", error)
+        res.status(500).json({message: error.message});
+    }
+};
+
+
+export const deleteSign = async(req, res) => {
+  const {id_logsign} = req.params;
+
+  try {
+    const sign = await Sign.findOne({
+      where: {id_logsign}
+    });
+
+    if (!sign) {
+        return res.status(404).json({ message: "Sign data not found" });
+    }
+
+    await Sign.destroy({
+        where: {id_logsign},
+    });
+
+     await LogSign.destroy({
+      where: { id_logsign },
+    });
+    res.status(200).json({message: "Sign deleted successfullly."});
+  } catch (error) {
+        console.error("Failed to delete sign by id_logsign", error)
+        res.status(500).json({message: error.message});
+  }
+}
+
+
 
 export const createItem = async(req, res) => {
     const transaction = await db.transaction();
