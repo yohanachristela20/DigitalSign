@@ -14,59 +14,6 @@ const InitialModal = ({showAddModal, setshowAddModal, onSuccess}) => {
         setSelectedValue(e.target.value);
     }
 
-    // const idKaryawan = async(e) => {
-    //     const response = await axios.get('http://localhost:5000/getLastKaryawanId', {
-    //         headers: {
-    //             Authorization: `Bearer ${token}`,
-    //         }
-    //     });
-
-    //     const newId = response.data?.nextId || "K00001";
-    //     setIdKaryawan(newId);
-    //     // setRole('');
-    //     // setUserActive('');
-
-    //     // console.log("newId: ", newId);
-    // };
-
-    // useEffect(() => {
-    //     idKaryawan();
-    // });
-
-    // const saveKaryawan = async(e) => {
-    //     e.preventDefault();
-    //     try {
-    //         await axios.post('http://localhost:5000/employee', {
-    //             id_karyawan,
-    //             nama, 
-    //             job_title,
-    //             organisasi, 
-    //             // email,
-    //             // role: '',
-    //             // user_active:'',
-    //         }, {
-    //             headers: {
-    //                 Authorization: `Bearer ${token}`,
-    //             },
-    //         });
-
-    //         // await axios.post('http://localhost:5000/user', {
-    //         //     email,
-    //         //     role: '',
-    //         //     user_active:'',
-    //         // }, {
-    //         //     headers: {
-    //         //         Authorization: `Bearer ${token}`,
-    //         //     },
-    //         // });
-    //         setshowAddModal(false);
-    //         onSuccess();
-    //     } catch (error) {
-    //         console.log(error.message);
-    //     }
-    
-    // };
-
     const handleInitialChange = (value) => {
         const alphabetValue = value.replace(/[^a-zA-Z\s]/g, "");
         setInitialName(alphabetValue);

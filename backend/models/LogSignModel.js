@@ -16,6 +16,11 @@ const LogSign = db.define('log_sign', {
     tgl_lihat:DataTypes.DATE,
     action:DataTypes.STRING,
     status: DataTypes.STRING,
+    is_deadline: DataTypes.BOOLEAN, 
+    deadline: DataTypes.DATEONLY, 
+    day_after_reminder: DataTypes.INTEGER, 
+    repeat_freq: DataTypes.STRING, 
+    is_download: DataTypes.BOOLEAN,
     id_dokumen: {
         type: DataTypes.STRING,
         allowNull:false,

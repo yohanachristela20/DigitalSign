@@ -17,39 +17,24 @@ const Sign = db.define('sign', {
             key: 'id_logsign' 
         }
     },
-    is_deadline: DataTypes.BOOLEAN, 
-    deadline: DataTypes.DATEONLY, 
-    day_after_reminder: DataTypes.INTEGER, 
-    is_repeat_reminder: DataTypes.BOOLEAN, 
-    repeat_freq: DataTypes.INTEGER, 
-    is_download: DataTypes.BOOLEAN
-
-    // id_signers: {
-    //     type: DataTypes.STRING, 
-    //     allowNull: false,
-    //     references: {
-    //         model: Signers,
-    //         key: 'id_signers'
-    //     }
-    // }
 }, {
     freezeTableName: true,
     timestamps: true,
-    hooks: {
-        beforeCreate: async (sign, options) => {
-            const lastRecord = await Sign.findOne({
-                order: [['id_sign', 'DESC']]
-            }); 
-            let newId = "SN00001"; //default id
+    // hooks: {
+    //     beforeCreate: async (sign, options) => {
+    //         const lastRecord = await Sign.findOne({
+    //             order: [['id_sign', 'DESC']]
+    //         }); 
+    //         let newId = "SN00001"; //default id
 
-            if (lastRecord && lastRecord.id_sign) {
-                const lastIdNumber = parseInt(lastRecord.id_sign.substring(2), 10); 
-                const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(3, '0');
-                newId = `SN${incrementedIdNumber}`;
-            }
-            sign.id_sign = newId;
-        },
-    },  
+    //         if (lastRecord && lastRecord.id_sign) {
+    //             const lastIdNumber = parseInt(lastRecord.id_sign.substring(5), 10); 
+    //             const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(3, '0');
+    //             newId = `SN${incrementedIdNumber}`;
+    //         }
+    //         sign.id_sign = newId;
+    //     },
+    // },  
 }); 
 
 export default Sign; 

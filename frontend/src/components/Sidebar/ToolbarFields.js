@@ -44,6 +44,8 @@ function ToolbarFields ({ color, routes}) {
   let [initialClicked, setInitialClicked] = useState(false);
   let [dateFieldClicked, setDateFieldClicked] = useState(false);
 
+  const [signersWithSignature, setSignersWithSignature] = useState([]);
+
   console.log("TOKEN from Toolbar: ", token);
   console.log("Document Uploaded in Toolbar:", dokumenUploaded);
 
@@ -56,6 +58,9 @@ function ToolbarFields ({ color, routes}) {
   };
 
   const handleAddSignature = () => {
+    if (!signersWithSignature.includes(id_karyawan)) {
+      setSignersWithSignature(prev => [...prev, id_karyawan]);
+    }
     if (!id_karyawan) {
       toast.error("Please choose signer first.");
       return;
@@ -84,6 +89,10 @@ function ToolbarFields ({ color, routes}) {
 
   
   const handleAddInitials = () => {
+    if (!signersWithSignature.includes(id_karyawan)) {
+      setSignersWithSignature(prev => [...prev, id_karyawan]);
+    }
+
     if (!id_karyawan) {
       toast.error("Please choose signer first.");
       return;
@@ -110,6 +119,9 @@ function ToolbarFields ({ color, routes}) {
   };
 
   const handleAddDate = () => {
+  if (!signersWithSignature.includes(id_karyawan)) {
+      setSignersWithSignature(prev => [...prev, id_karyawan]);
+  }
   if (!id_karyawan) {
     toast.error("Please choose signer first.");
     return;
@@ -154,10 +166,26 @@ function ToolbarFields ({ color, routes}) {
   const selectedOption = signersDoc.find(opt => opt.value === id_karyawan);
   // console.log("Selected option:", selectedOption);
 
+  // const handleSelect = (value) => {
+  //   handleSignersChange({ target: { value } });
+  //   setIsOpen(false);
+  // };
+
   const handleSelect = (value) => {
-    handleSignersChange({ target: { value } });
-    setIsOpen(false);
-  };
+  const selectedIndex = signersDoc.findIndex(opt => opt.value === value);
+
+  if (selectedIndex > 0) {
+    const previousSigner = signersDoc[selectedIndex - 1].value;
+    if (!signersWithSignature.includes(previousSigner)) {
+      alert("Signer sebelumnya harus mengisi Signature Field terlebih dahulu.");
+      return; 
+    }
+  }
+
+  handleSignersChange({ target: { value } });
+  setIsOpen(false);
+};
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -329,7 +357,7 @@ function ToolbarFields ({ color, routes}) {
 
           {isOpen && (
             <div className="custom-options">
-              {signersDoc.map((option, index) => (
+              {/* {signersDoc.map((option, index) => (
                   <div
                     key={option.value}
                     className="custom-option"
@@ -339,7 +367,31 @@ function ToolbarFields ({ color, routes}) {
                   />
                   {option.label}
                 </div>
-              ))}
+              ))} */}
+
+              {signersDoc.map((option, index) => {
+                const isDisabled = index > 0 && !signersWithSignature.includes(signersDoc[index - 1].value);
+
+                return (
+                  <div
+                    key={option.value}
+                    className={`custom-option ${isDisabled ? 'disabled' : ''}`}
+                    onClick={() => {
+                      if (!isDisabled) handleSelect(option.value);
+                    }}
+                    style={{ opacity: isDisabled ? 0.5 : 1, pointerEvents: isDisabled ? 'none' : 'auto' }}
+                  >
+                    <div
+                      className="identity-color"
+                      style={{
+                        backgroundColor: identitycolor[index % identitycolor.length] || '#f06292',
+                      }}
+                    />
+                    {option.label}
+                  </div>
+                );
+              })}
+
             </div>
           )}
 

@@ -17,6 +17,7 @@ import SortableItem from "components/SortableList/SortableList.js";
 import { useInitial } from "components/Provider/InitialContext.js";
 import { useSignature } from "components/Provider/SignatureContext.js";
 import { useDateField } from "components/Provider/DateContext.js";
+import moment from 'moment';
 
 import {
   Card,
@@ -85,11 +86,38 @@ function UploadDocument() {
   // const [documentCards, setDocumentCards] = useState([]);
 
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [is_deadline, setIsDeadline] = useState(false);
+  const [is_download, setIsDownload] = useState(false);
+  const [day_after_reminder, setDayAfterReminder] = useState(1);
+  const [repeat_freq, setRepeatFreq] = useState("none");
+  const [deadline, setDeadline] = useState("");
+  
+  const minDate = useMemo(() => {
+    const tomorrow = new Date(); 
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  }, []);
+
+  const handleRadioChange = (e) => {
+    const value = e.target.value;
+    setIsDeadline(value === "With Deadline");
+  };
+
+  const handleDownload = (e) => {
+    const value = e.target.value;
+    setIsDownload(value === "Allowed");
+  };
+
+  const handleDayChange = (e) => {
+    setDayAfterReminder(Number(e.target.value));
+  };
 
   const [selectedDoc, setSelectedDoc] = useState(
       location?.state?.selectedDoc || null
   );
   const [steps, setSteps] = useState(1);
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const handleSignersUpdate = () => {
@@ -118,23 +146,6 @@ function UploadDocument() {
   console.log("signers count:", signersCount);
   console.log("selected signer:", selectedOption);
 
-  // const fetchLastId = async () => {
-  // const response = await axios.get('http://localhost:5000/getLastSignerId', {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     }
-  //   }); 
-  //   let newId = "S00001";
-  //   if (response.data?.lastId) {
-  //     const lastIdNumber = parseInt(response.data.lastId.substring(2), 10);
-  //     const incrementedIdNumber = (lastIdNumber + 1).toString().padStart(5, '0');
-  //     newId = `S${incrementedIdNumber}`;
-  //   }
-  //   setIdSigners(newId);
-  // };
-
-  // console.log("Fetch last id: ", id_signers);
-
   const [documentCards, setDocumentCards] = useState([
     {
       id: Date.now(),
@@ -146,7 +157,12 @@ function UploadDocument() {
       jenis_item: "", 
       id_dokumen: "",
       id_item: "",
-      ori_id_items: ""
+      ori_id_items: "",
+      is_deadline: "",
+      day_after_reminder: "",
+      repeat_freq: "",
+      is_download: "",
+      deadline: "",
     },
   ]);
 
@@ -162,7 +178,12 @@ function UploadDocument() {
           jenis_item: "",
           id_dokumen: "",
           id_item: "",
-          ori_id_items: ""
+          ori_id_items: "", 
+          is_deadline: "",
+          day_after_reminder: "",
+          repeat_freq: "",
+          is_download: "",
+          deadline: "",
         }
       ]);
   }, []);
@@ -299,6 +320,18 @@ function UploadDocument() {
     }
   }, [userData.id_karyawan, token]);
 
+const handleChange = (e) => {
+  setDayAfterReminder(Number(e.target.value));
+}
+
+const handleDeadline = (e) => {
+  setDeadline(Number(e.target.value));
+}
+
+const handleRepeatReminder = (e) => {
+  setRepeatFreq(e.target.value);
+}
+
 const onSortEnd = ({ oldIndex, newIndex }) => {
   setDocumentCards((prevCards) => {
     // const movedCard = prevCards[oldIndex];
@@ -412,8 +445,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   };
 
   const updateSigner = async(id_dokumen, id_item, newIdSigner, oldIdSigner) => {
-    // e.preventDefault();
-    console.log(`Updating signer in dokumen ${id_dokumen}, item ${id_item} from ${oldIdSigner} to ${newIdSigner}`);    try {
+    // console.log(`Updating signer in dokumen ${id_dokumen}, item ${id_item} from ${oldIdSigner} to ${newIdSigner}`);    
+    try {
     const response = await axios.patch(`http://localhost:5000/logsign/${id_dokumen}/${id_item}/${oldIdSigner}`, {
       id_signers: newIdSigner,
     }, {
@@ -431,6 +464,38 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       console.log(error.message);
     }
   }; 
+
+  const updateReminder = async(id_dokumen) => {
+    console.log(`Updating reminder in dokumen ${id_dokumen}`);
+    try {
+      
+      const response = await axios.patch(`http://localhost:5000/update-reminder/${id_dokumen}`, {
+      is_deadline,
+      is_download,
+      day_after_reminder,
+      repeat_freq, 
+      deadline
+
+    }, {
+        headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    // console.log("Reminder updated: ", response.data);
+    toast.success("Reminder updated successfully.", {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: true,
+    });
+    } catch (error) {
+      // console.log("Reminder updated:", response.data);
+      toast.success("Reminder updated successfully.", {
+      position: "top-right", 
+      autoClose: 5000, 
+      hideProgressBar: true,
+    });
+    }
+  }
 
   const handleDeleteCard = async (id) => {
   const updatedCards = [...documentCards];
@@ -542,7 +607,41 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   );
 
   setDocumentCards(updatedCards);
-};
+  };
+
+  const handleReminder = async (id) => {
+  const card = documentCards.find(c => c.id === id);
+  // if (!card) {
+  //   console.error("Card not found");
+  //   return;
+  // }
+
+  // const oldIdSigner = card.ori_id_signers;
+  const newIdSigner = card.id_karyawan;
+  const dokId = card.id_dokumen;
+
+  const storedIdItems = JSON.parse(localStorage.getItem("id_items")) || [];
+
+  const cardIndex = documentCards.findIndex(c => c.id === id);
+  const idItem = storedIdItems[cardIndex]; 
+
+  if (!idItem || !dokId) {
+    console.error("Missing idItem or dokId", { idItem, dokId });
+    return;
+  }
+
+  console.log("PATCH call for:", { dokId, idItem, newIdSigner });
+
+  await updateReminder(dokId, idItem, newIdSigner);
+
+  const updatedCards = documentCards.map(c =>
+    c.id === id
+      ? { ...c, id_signers: newIdSigner }
+      : c
+  );
+
+  setDocumentCards(updatedCards);
+  };
 
 
 
@@ -720,7 +819,12 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             ori_id_signers: matchItem?.id_karyawan || card.ori_id_signers,
             id_item: matchItem?.id_item || "",
             ori_id_items: matchItem?.id_item || "",
-            id_dokumen: id_dokumen
+            id_dokumen: id_dokumen, 
+            is_deadline: is_deadline,
+            day_after_reminder: day_after_reminder,
+            repeat_freq: repeat_freq,
+            is_download: is_download,
+            deadline: deadline
           };
         })
       );
@@ -795,6 +899,11 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       id_dokumen: dokId,
       ori_id_items: "",
       ori_id_signers: signer.value,
+      is_deadline: "",
+      day_after_reminder: "",
+      repeat_freq: "",
+      is_download: "",
+      deadline: ""
     }));
 
     setDocumentCards(initialCards);
@@ -1146,7 +1255,8 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                   <Container fluid>
                     <Form>
                       <div>
-                        <p className="fs-5"><strong>Recipients</strong></p>
+                        <span className="text-danger required-select">(*) Required.</span>
+                        <p className="fs-5 mt-3"><strong>Recipients</strong></p>
                         <SortableList 
                           items={documentCards}
                           onSortEnd={onSortEnd}
@@ -1158,6 +1268,142 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                           value={employeeName.id_karyawan}
                         />
                       </div>
+                    </Form>
+    
+                    <Form>
+                      <p className="fs-5 mt-3 mb-0"><strong>Message to Recipients</strong></p>
+                      <Row>
+                          <Col md="12">
+                              <Form.Group>
+                                  <label>Email Subject</label>
+                                  <Form.Control
+                                      type="text"
+                                      value={subject}
+                                      onChange={(e) => setSubject(e.target.value)}
+                                  ></Form.Control>
+                              </Form.Group>
+                          </Col>
+                      </Row>
+                      <Row>
+                          <Col md="12">
+                              <Form.Group>
+                                  <label>Message</label>
+                                  <Form.Control
+                                      as="textarea"
+                                      value={message}
+                                      onChange={(e) => setMessage(e.target.value)}
+                                      rows={4}
+                                  ></Form.Control>
+                              </Form.Group>
+                          </Col>
+                      </Row>
+                      <Row className="mt-3 mb-2">
+                        <Col md="12">
+                          <Form.Group>
+                            <span className="text-danger">*</span>
+                            <label className="mt-2">Using deadline</label>
+                            {["Without deadline", "With Deadline"].map((option, idx) => (
+                              <Form.Check
+                                key={idx}
+                                type="radio"
+                                id={`deadline-${idx}`}
+                                label={option}
+                                className="mt-2 radio-doc-settings"
+                                value={option}
+                                checked={is_deadline === (option === "With Deadline")}
+                                onChange={handleRadioChange}
+                              />
+                            ))}
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                      <Row className="mt-3 mb-2">
+                        <Col md="12">
+                          <label className="mt-2">Set a deadline</label>
+                          <Form.Control
+                              type="date"
+                              value={deadline}
+                              onChange={(e) => setDeadline(e.target.value)}
+                              min={minDate}
+                          />
+                        </Col>
+                      </Row>
+
+                      <Row className="mt-3 mb-2">
+                        <Col md="12">
+                            <span className="text-danger">*</span>
+                            <label className="mt-2">Choose day reminder recipient</label>
+
+                          <Form.Group as={Row} className="align-items-center">
+                          <Col xs="auto">
+                            <Form.Select value={day_after_reminder} onChange={handleChange} style={{ width: '80px' }}>
+                              {[...Array(30)].map((_, i) => (
+                                <option key={i + 1} value={i + 1}>
+                                  {i + 1}
+                                </option>
+                              ))}
+                            </Form.Select>
+                          </Col>
+                          <Col xs="auto">
+                            <span style={{ fontSize: '16px' }}>
+                              day(s) after recipient receives documents
+                            </span>
+                          </Col>
+                          </Form.Group>
+                        </Col>
+                      </Row>
+
+                      <Row className="mt-3 mb-2">
+                        <Col md="12">
+                            <label className="mt-2">Choose repeat reminder</label>
+
+                          <Form.Group as={Row} className="align-items-center">
+                          <Col md="12">
+                            <Form.Select
+                              value={repeat_freq}
+                              onChange={handleRepeatReminder}
+                              style={{maxWidth: "250px"}}
+                            >
+                            {[ 
+                              {label: "No repeat reminder", value:"none"},
+                              {label: "Every day", value: "daily"}, 
+                              {label: "Every 3 days", value: "3days"},
+                              {label: "Weekly", value: "weekly"}, 
+                              {label: "Monthly", value: "monthly"}
+                             ].map((option, idx) => (
+                              <option key={idx} value={option.value}>
+                                {option.label}
+                              </option>
+                             ))}
+
+                            </Form.Select>
+                          </Col>
+                        </Form.Group>
+                        </Col>
+                      </Row>
+
+                      <Row className="mt-3 mb-2">
+                        <Col md="12">
+                          <Form.Group>
+                            <span className="text-danger">*</span>
+                            <label className="mt-2">
+                              Allow recipients to download document
+                            </label>
+                            {["Allowed", "Not Allowed"].map((option, idx) => (
+                              <Form.Check
+                                key={idx}
+                                type="radio"
+                                id={`download-${idx}`}
+                                label={option}
+                                className="mt-2 radio-doc-settings"
+                                value={option}
+                                checked={is_download === (option === "Allowed")}
+                                onChange={handleDownload}
+                              />
+                            ))}
+                          </Form.Group>
+                        </Col>
+                      </Row>
                     </Form>
                   </Container>
                  </Card.Body>
@@ -1234,7 +1480,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                 </Button>
               </div>
               <div className="col-12 col-md-auto my-2">
-                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={nextLastStep} >
+                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={() => updateReminder(id_dokumen)} >
                 <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
                   Next
                 </Button>
