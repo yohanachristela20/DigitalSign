@@ -1112,8 +1112,8 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                         <p className="fs-5 mt-3"><strong>Recipients</strong></p>
                         <SortableList 
                           items={documentCards}
-                          onSortEnd={onSortEnd}
-                          useDragHandle={false}
+                          // onSortEnd={onSortEnd}
+                          useDragHandle={true}
                           handleCardEmployeeChange={handleCardEmployeeChange}
                           handleDeleteCard={handleDeleteCard}
                           handleEditCard={handleEditCard}

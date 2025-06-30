@@ -6,6 +6,13 @@ import Sign from "../models/SignModel.js";
 import fs, { stat } from 'fs';
 import db from "../config/database.js";
 import Item from "../models/ItemModel.js";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+import Karyawan from "../models/KaryawanModel.js";
+import User from "../models/UserModel.js";
+import jwt from 'jsonwebtoken';
+
+dotenv.config();
 
 export const getDocument = async(req, res) => {
     try {
@@ -131,6 +138,16 @@ export const createLogSign = async (req, res) => {
 
     await LogSign.bulkCreate(newLogSign, { transaction });
 
+    //Send email
+    // await sendEmailNotification(newLogSign);
+
+    // const io = req.app.get("io");
+    // io.emit("newLogSign", {
+    //     message: `New Logsign(s) created.`,
+    //     logsigns: newLogSign,
+    // })
+
+
     const lastSign = await Sign.findOne({
         order: [['id_sign', 'DESC']],
         transaction,
@@ -149,18 +166,99 @@ export const createLogSign = async (req, res) => {
     });
 
     await Sign.bulkCreate(newSigns, { transaction});
-
     await transaction.commit();
+
+    //Generate link
+    const jwtSecret = process.env.JWT_SECRET_KEY;
+    const token = jwt.sign({newLogSign}, jwtSecret);
+    const signLink = `http://localhost:3000/user/envelope?token=${token}`;
+
+    await sendEmailNotification(newLogSign, signLink);
+
+    const io = req.app.get("io");
+    io.emit("signLink", {
+        message: `New logsign(s) need to be signed.`,
+        logsigns: signLink,
+    });
+    
+    console.log("Signlink:", signLink);
+   
     res.status(201).json({
       msg: "New logsigns and signs have been created!",
-      data: { logsigns: newLogSign },
+      data: { logsigns: newLogSign, signLink },
     });
   } catch (error) {
-    await transaction.rollback();
+    // await transaction.rollback();
     console.error("Error when creating logsigns: ", error);
     res.status(500).json({ message: error.message });
   }
 };
+
+const sendEmailNotification = async(logsigns, signLink) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_ADMIN,
+        pass: process.env.EMAIL_PASS_ADMIN, 
+      }
+    }); 
+    for (const log of logsigns) {
+
+        const receiver = await Karyawan.findOne({
+            where: {id_karyawan: log.id_signers},
+            include: [
+                {
+                    model: User, 
+                    as: "Penerima",
+                    attributes: ["email"],
+                    // where: {id_karyawan: log.id_signers}
+                },
+            ], 
+            attributes: ["id_karyawan"]
+        });
+
+        if(!receiver || !receiver.Penerima || !receiver.Penerima.email) {
+            console.warn(`Email not found for signers with id ${log.id_signers}`);
+            continue;
+        }
+
+        const receiverEmail = receiver.Penerima.email;
+        console.log("Email Penerima:", receiverEmail);
+        
+
+        const senderName = await Karyawan.findOne({
+            where: {id_karyawan: log.id_karyawan}
+        });
+        console.log("Nama Pengirim:", senderName.nama);
+
+        const receiverName = await Karyawan.findOne({
+            where: {id_karyawan: log.id_signers}
+        });
+        console.log("Nama Penerima:", receiverName.nama);
+
+        const mailOptions = {
+        from: process.env.EMAIL_ADMIN,
+        to: receiverEmail, 
+        subject: "You need to sign", 
+        text: `
+        ${receiverName?.nama || "receiver"}, You are requested to sign a document with ID ${log.id_dokumen} from ${senderName?.nama || "sender"},\n\n
+        Please review and check the document before signing it. \n
+        Click link to sign the document ${signLink}\n\n 
+
+        Please do not share this email and the link attached with others.\n
+
+        Regards,\n
+        Campina Sign.
+        `, 
+        };
+        await transporter.sendMail(mailOptions); 
+        console.log(`Email sent for logsign ID: ${log.id_logsign}.`); 
+    }
+  } catch (error) {
+    console.error("Failed to send email: ", error.message);
+  }
+}; 
 
 export const deleteLogsign = async(req, res) => {
     const transaction = await db.transaction();

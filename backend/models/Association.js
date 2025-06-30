@@ -8,6 +8,8 @@ import Sign from "./SignModel.js";
 import Signers from "./SignersModel.js";
 
 User.belongsTo(Karyawan, { foreignKey: 'id_karyawan', as: 'Pengguna' });
+User.belongsTo(Karyawan, {foreignKey: 'id_karyawan', as: 'Penerima'});
+
 // LogSign.belongsTo(Signers, {foreignKey: 'id_parent_signers', as:'Signer'});
 Dokumen.belongsTo(KategoriDokumen, {foreignKey: 'id_kategoridok', as: 'Kategori'});
 LogSign.belongsTo(Dokumen, {foreignKey: 'id_dokumen', as: 'Dokumen'});
@@ -26,4 +28,6 @@ Item.hasOne(LogSign, {foreignKey: 'id_item', as:'ItemField'});
 Karyawan.hasMany(Signers, {foreignKey:'id_karyawan', as:'Penandatangan'});
 
 Karyawan.hasMany(User, { foreignKey: 'id_karyawan', as:'Pengguna'});
+
+Karyawan.hasOne(User, {foreignKey: 'id_karyawan', as: 'Penerima'});
 // Signers.hasMany(LogSign, {foreignKey: 'id_parent_signers', as: 'Signer'});
