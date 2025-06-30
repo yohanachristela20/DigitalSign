@@ -1,12 +1,10 @@
 import express from "express";
 
 import {
-    // deleteLogsign,
     getLastLogsignId,
     getLogSign,
     updateLogsign,
     updateReminder, 
-    // updateLogSign
 } from "../controllers/LogSignController.js";
 
 const router = express.Router();

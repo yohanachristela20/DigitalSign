@@ -2,7 +2,6 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import db from "../config/database.js";
 import Document from "../models/DokumenModel.js";
 
 import {getDocument,
@@ -17,8 +16,6 @@ import {getDocument,
         deleteSign, 
         deleteLogsign
 } from "../controllers/DocumentController.js"; 
-
-import { create } from "domain";
 
 const router = express.Router(); 
 
@@ -56,28 +53,6 @@ router.post('/logsign', createLogSign);
 router.post('/item', createItem);
 router.delete('/delete-sign/:id_logsign', deleteSign);
 router.delete('/logsign/:id_dokumen/:id_item/:id_signers', deleteLogsign);
-
-// router.get('/pdf-document', async(req, res) => {
-//     try {
-//         const lastDoc = await Document.findOne({
-//             attributes: ["id_dokumen", "filepath_dokumen"],
-//             order: [["id_dokumen", "DESC"]], 
-//             raw: true,
-//         });
-
-//         console.log("Last document: ", lastDoc);
-
-//         if (!lastDoc) {
-//             return res.status(404).json({message: "Document not found."});
-//         }
-
-//         // console.log("Last document: ", lastDoc);
-//         res.status(200).json({lastDoc});
-//     } catch (error) {
-//         console.error("Error fetching document:", error.message);
-//         res.status(500).json({message: "Error fetching document."});
-//     }
-// });
 
 router.get('/pdf-document/:id_dokumen?', async (req, res) => {
     try {

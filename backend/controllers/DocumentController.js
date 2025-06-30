@@ -1,13 +1,10 @@
 import Dokumen from "../models/DokumenModel.js";
-import bcrypt from "bcrypt";
-import { group } from "console";
 import path from "path";
 import KategoriDokumen from "../models/KategoriDokModel.js";
 import LogSign from "../models/LogSignModel.js";
 import Sign from "../models/SignModel.js";
 import fs, { stat } from 'fs';
 import db from "../config/database.js";
-import { sign } from "crypto";
 import Item from "../models/ItemModel.js";
 
 export const getDocument = async(req, res) => {
@@ -95,74 +92,6 @@ export const createDocument = async(req, res) => {
         res.status(500).json({message: error.message}); 
     }
 }
-
-// export const createLogSign = async (req,res) => {
-//     const transaction = await db.transaction();
-//     try {
-//     const {logsigns} = req.body;
-
-//     if (!Array.isArray(logsigns) || logsigns.length === 0) {
-//         return res.status(400).json({message: "logsign must be a non-empty array."});
-//     }
-
-//     const lastRecord = await LogSign.findOne({
-//         order: [['id_logsign', 'DESC']],
-//         transaction,
-//         lock: transaction.LOCK.UPDATE,
-//     });
-
-//     let lastIdNumber = lastRecord ? parseInt(lastRecord.id_logsign.substring(2), 10) : 0;
-//     const newLogSign = [];
-
-//     for (const log of logsigns) {
-//         const items = Array.isArray(log.id_item) ? log.id_item : [log.id_item];
-
-//         for (const item of items) {
-//             lastIdNumber += 1;
-//             const newIdNumber = lastIdNumber.toString().padStart(5, '0');
-//             newLogSign.push({
-//                 id_logsign: `LS${newIdNumber}`, 
-//                 action: log.action, 
-//                 status: log.status,
-//                 id_dokumen: log.id_dokumen,
-//                 id_karyawan: log.id_karyawan, 
-//                 id_signers: log.id_signers, 
-//                 id_item: log.id_item, 
-//             }); 
-//         }
-//     }
-
-//     await LogSign.bulkCreate(newLogSign, {transaction});
-
-//     const lastSign = await Sign.findOne({
-//         order: [['id_sign', 'DESC']],
-//         transaction,
-//         lock: transaction.LOCK.UPDATE,
-//     });
-
-//     let lastSignNumber = lastSign ? parseInt(lastSign.id_sign.substring(2), 10) : 0;
-
-//     const newSigns = newLogSign.map(log => ({
-
-//         id_logsign: log.id_logsign,
-//     }));
-
-//     lastSignNumber += 1;
-//     const newSignNumber = lastSignNumber.toString().padStart(5, '0');
-
-//     await Sign.bulkCreate(newSigns, {transaction});
-
-//     await transaction.commit();
-//     res.status(201).json({
-//         msg: "New logsigns have been created!",
-//         data: {logsigns: newLogSign},
-//     });
-//     } catch (error) {
-//         await transaction.rollback();
-//         console.error("Error when creating logsigns: ", error);
-//         res.status(500).json({message: error.message});
-//     }
-// };
 
 export const createLogSign = async (req, res) => {
   const transaction = await db.transaction();

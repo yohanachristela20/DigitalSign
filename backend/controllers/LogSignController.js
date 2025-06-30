@@ -8,8 +8,8 @@ export const getLogSign = async(req, res) => {
     try {
         const {id_dokumen, id_signers} = req.query;
 
-        console.log("Received id dok:", id_dokumen);
-        console.log("Id signers nya adl:", id_signers);
+        // console.log("Received id dok:", id_dokumen);
+        // console.log("Id signers nya adl:", id_signers);
         const response = await LogSign.findAll({
             include: [
                 {
@@ -31,33 +31,12 @@ export const getLogSign = async(req, res) => {
     }
 };
 
-// export const deleteLogsign = async(req, res) => {
-//     const {id_signers} = req.params;
-//     try {
-//         const lastRecord = await LogSign.findOne({
-//             order: [['id_dokumen', 'DESC']],
-//         });
-
-//         if (id_signers) {
-//             await LogSign.destroy({
-//                 where: {id_dokumen: lastRecord.id_dokumen, id_signers},
-//             });
-//             res.status(200).json({message: "Logsign deleted successfully."});
-//         }
-
-//     } catch (error) {
-//         console.error("Failed to delete logsign by id_signers", error)
-//         res.status(500).json({message: error.message});
-//     }
-// };
-
-
 export const updateLogsign = async (req, res) => {
   const { id_dokumen, id_item, id_signers: oldIdSigner } = req.params;
   const { id_signers: newIdSigner } = req.body;
 
   try {
-    console.log("Incoming PATCH:", { id_dokumen, id_item, newIdSigner, oldIdSigner });
+    // console.log("Incoming PATCH:", { id_dokumen, id_item, newIdSigner, oldIdSigner });
 
     const logsign = await LogSign.findOne({
       where: { id_dokumen, id_item, id_signers: oldIdSigner }

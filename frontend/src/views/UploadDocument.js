@@ -83,7 +83,6 @@ function UploadDocument() {
   let [id_logsign, setIdLogsign] = useState("");
   const [ori_id_signers, setOriIdSigners] = useState("");
   const [ori_id_items, setOriIdItems] = useState("");
-  // const [documentCards, setDocumentCards] = useState([]);
 
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [is_deadline, setIsDeadline] = useState(false);
@@ -125,8 +124,8 @@ function UploadDocument() {
       const sgnCount = localStorage.getItem("signersCount");
       const selectedSigner = localStorage.getItem("selectedOption");
 
-      console.log("signerToolbar:", sgnData);
-      console.log("selected signer from toolbar:", selectedSigner);
+      // console.log("signerToolbar:", sgnData);
+      // console.log("selected signer from toolbar:", selectedSigner);
 
       if (sgnData !== null) setSignersToolbar(sgnData);
       if (sgnCount !== null) setSignersCount(parseFloat(sgnCount));
@@ -142,9 +141,9 @@ function UploadDocument() {
     };
   }, []);
 
-  console.log("signers toolbar:", signersToolbar);
-  console.log("signers count:", signersCount);
-  console.log("selected signer:", selectedOption);
+  // console.log("signers toolbar:", signersToolbar);
+  // console.log("signers count:", signersCount);
+  // console.log("selected signer:", selectedOption);
 
   const [documentCards, setDocumentCards] = useState([
     {
@@ -195,10 +194,10 @@ function UploadDocument() {
       const email = localStorage.getItem("email");
       const user_active = localStorage.getItem("user_active");
 
-      console.log("User token: ", token, "User role:", role, "Email: ", email, "User active: ", user_active);
+      // console.log("User token: ", token, "User role:", role, "Email: ", email, "User active: ", user_active);
 
       if(!token || !email) return;
-      console.log("User token:", token, "User role:", role);
+      // console.log("User token:", token, "User role:", role);
 
       try {
         const response = await axios.get(`http://localhost:5000/user-details/${email}`, {
@@ -247,7 +246,7 @@ function UploadDocument() {
    };
   }, []);
 
-  console.log("Stepssss: ", steps);
+  // console.log("Stepssss: ", steps);
 
   useEffect(() => {
   const handleButtonClicked = () => {
@@ -255,9 +254,9 @@ function UploadDocument() {
       const initButton = localStorage.getItem("initialClicked");
       const dateButton = localStorage.getItem("dateFieldClicked");
 
-      console.log("SignButton clicked from Upload:", signButton);
-      console.log("InitialButton clicked from Upload:", initButton);
-      console.log("DateButton clicked from Upload", dateButton);
+      // console.log("SignButton clicked from Upload:", signButton);
+      // console.log("InitialButton clicked from Upload:", initButton);
+      // console.log("DateButton clicked from Upload", dateButton);
 
       setSignClicked(signButton === "true");
       setInitClicked(initButton === "true");
@@ -276,22 +275,18 @@ function UploadDocument() {
   useEffect(() => {
     const handleNextButton = () => {
       nextStep2 = localStorage.getItem("nextStep2");
-      // nextStep3 = localStorage.getItem("nextStep3");
-      // nextStep4 = localStorage.getItem("nextStep4");
       setNextStep2(nextStep2);
-      // setNextStep3(nextStep3);
-      // setNextStep4(nextStep4);
     }
 
     handleNextButton();
   });
 
 
-  useEffect(() => {
-    if(steps === 3) {
-      console.log("x_axis from step 3:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height, "jenis_item:", jenis_item);
-    }
-  }, [steps, x_axis, y_axis, width, height, jenis_item]);
+  // useEffect(() => {
+  //   if(steps === 3) {
+  //     console.log("x_axis from step 3:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height, "jenis_item:", jenis_item);
+  //   }
+  // }, [steps, x_axis, y_axis, width, height, jenis_item]);
 
 
   useEffect(() => {
@@ -334,21 +329,7 @@ const handleRepeatReminder = (e) => {
 
 const onSortEnd = ({ oldIndex, newIndex }) => {
   setDocumentCards((prevCards) => {
-    // const movedCard = prevCards[oldIndex];
     const newCards = arrayMove([...prevCards], oldIndex, newIndex);
-
-    // const parseId = (id) => parseInt(id.replace('K', ''), 10);
-    // const formatId = (num) => `K${String(num).padStart(5, '0')}`;
-
-    // const startingIdNumber = parseId(id_signers);
-
-    // const updatedCards = newCards.map((card, idx) => {
-    //   return {
-    //     ...card,
-    //     id_signers: formatId(startingIdNumber + idx),
-    //   };
-    // });
-
     return newCards;
   });
 };
@@ -361,7 +342,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     getDocument();
   }, []);
 
-  console.log("Document cards:", documentCards);
+  // console.log("Document cards:", documentCards);
 
   const handleAddCard = () => {
     setDocumentCards(prevCards => {
@@ -392,24 +373,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     });
   };
 
-  // const handleCardEmployeeChange = (id, selectedId) => {
-  //   const selectedEmp = employeeList.find(emp => emp.id_karyawan === selectedId);
-  //   const email = selectedEmp?.Pengguna?.[0]?.email || '';
-  //   const id_karyawan = selectedEmp?.Pengguna?.[0]?.id_karyawan || '';
-
-  //   console.log("Selected employee from card:", selectedEmp);
-  //   console.log("Selected id karyawan from card:", selectedEmp.id_karyawan);
-
-  //   setNewIdSigner(selectedEmp.id_karyawan);
-
-  //   setDocumentCards(prevCards => 
-  //     prevCards.map(card => 
-  //       card.id === id 
-  //       ? {...card, id_karyawan: selectedEmp.id_karyawan, email: email}
-  //       : card
-  //     )
-  //   );
-  // };
 
   const handleCardEmployeeChange = (id, selectedId) => {
     const selectedEmp = employeeList.find(emp => emp.id_karyawan === selectedId);
@@ -426,7 +389,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   };
 
   const deleteLogsign = async(deletedSigner, id_dokumen, id_item) => {
-    console.log("Deleting signer with:", deletedSigner, id_dokumen, id_item); 
+    // console.log("Deleting signer with:", deletedSigner, id_dokumen, id_item); 
     try {
       await axios.delete(`http://localhost:5000/logsign/${id_dokumen}/${id_item}/${deletedSigner}`, {
         headers: {
@@ -445,8 +408,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
-  const updateSigner = async(id_dokumen, id_item, newIdSigner, oldIdSigner) => {
-    // console.log(`Updating signer in dokumen ${id_dokumen}, item ${id_item} from ${oldIdSigner} to ${newIdSigner}`);    
+  const updateSigner = async(id_dokumen, id_item, newIdSigner, oldIdSigner) => { 
     try {
     const response = await axios.patch(`http://localhost:5000/logsign/${id_dokumen}/${id_item}/${oldIdSigner}`, {
       id_signers: newIdSigner,
@@ -467,7 +429,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   }; 
 
   const updateReminder = async(id_dokumen) => {
-    console.log(`Updating reminder in dokumen ${id_dokumen}`);
+    // console.log(`Updating reminder in dokumen ${id_dokumen}`);
     try {
       
       const response = await axios.patch(`http://localhost:5000/update-reminder/${id_dokumen}`, {
@@ -482,14 +444,12 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    // console.log("Reminder updated: ", response.data);
     toast.success("Reminder updated successfully.", {
       position: "top-right",
       autoClose: 5000,
       hideProgressBar: true,
     });
     } catch (error) {
-      // console.log("Reminder updated:", response.data);
       toast.success("Reminder updated successfully.", {
       position: "top-right", 
       autoClose: 5000, 
@@ -510,18 +470,17 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   if (index !== -1) {
     const deletedCard = updatedCards[index];
-    console.log("Deleted card: ", deletedCard);
+    // console.log("Deleted card: ", deletedCard);
 
     const deletedIdSigner = deletedCard.id_karyawan;
     const dokId = deletedCard.id_dokumen;
-    // const itemId = deletedCard.id_item;
 
     const storedIdItems = JSON.parse(localStorage.getItem("id_items")) || [];
 
     const cardIndex = documentCards.findIndex(c => c.id === id);
     const itemId = storedIdItems[cardIndex]; 
 
-    console.log("deleting id signers with:", deletedIdSigner, dokId, itemId);
+    // console.log("deleting id signers with:", deletedIdSigner, dokId, itemId);
     setDeletedSigner(deletedIdSigner);
 
     try {
@@ -541,43 +500,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   }
   };
 
-
-//   const handleDeleteCard = async (id) => {
-//   const updatedCards = [...documentCards];
-//   const index = updatedCards.findIndex(card => card.id === id);
-
-//   const card = documentCards.find(c => c.id === id);
-//   if (!card) {
-//     console.error("Card not found");
-//     return;
-//   }
-
-//   if (index !== -1) {
-//     const deletedCard = updatedCards[index];
-//     console.log("Deleted card: ", deletedCard);
-
-//     const id_logsign = deletedCard.id_logsign; // Gunakan langsung dari card
-//     if (!id_logsign) {
-//       console.error("id_logsign not found in deleted card");
-//       return;
-//     }
-
-//     try {
-//       await deleteLogsign(id_logsign); // Kirim DELETE request berdasarkan id_logsign
-//       updatedCards.splice(index, 1); 
-//       setDocumentCards(updatedCards);
-
-//       toast.success("Card deleted successfully.", {
-//         position: "top-right",
-//         autoClose: 5000,
-//         hideProgressBar: true,
-//       });
-
-//     } catch (error) {
-//       console.error("Failed to delete signer:", error.message);
-//     }
-//   }
-// };
 
   const handleEditCard = async (id) => {
   const card = documentCards.find(c => c.id === id);
@@ -600,7 +522,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     return;
   }
 
-  console.log("PATCH call for:", { dokId, idItem, oldIdSigner, newIdSigner });
+  // console.log("PATCH call for:", { dokId, idItem, oldIdSigner, newIdSigner });
 
   await updateSigner(dokId, idItem, newIdSigner, oldIdSigner);
 
@@ -613,44 +535,37 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   setDocumentCards(updatedCards);
   };
 
-  const handleReminder = async (id) => {
-  const card = documentCards.find(c => c.id === id);
-  // if (!card) {
-  //   console.error("Card not found");
+  // const handleReminder = async (id) => {
+  // const card = documentCards.find(c => c.id === id);
+  // const newIdSigner = card.id_karyawan;
+  // const dokId = card.id_dokumen;
+
+  // const storedIdItems = JSON.parse(localStorage.getItem("id_items")) || [];
+
+  // const cardIndex = documentCards.findIndex(c => c.id === id);
+  // const idItem = storedIdItems[cardIndex]; 
+
+  // if (!idItem || !dokId) {
+  //   console.error("Missing idItem or dokId", { idItem, dokId });
   //   return;
   // }
 
-  // const oldIdSigner = card.ori_id_signers;
-  const newIdSigner = card.id_karyawan;
-  const dokId = card.id_dokumen;
+  // console.log("PATCH call for:", { dokId, idItem, newIdSigner });
 
-  const storedIdItems = JSON.parse(localStorage.getItem("id_items")) || [];
+  // await updateReminder(dokId, idItem, newIdSigner);
 
-  const cardIndex = documentCards.findIndex(c => c.id === id);
-  const idItem = storedIdItems[cardIndex]; 
+  // const updatedCards = documentCards.map(c =>
+  //   c.id === id
+  //     ? { ...c, id_signers: newIdSigner }
+  //     : c
+  // );
 
-  if (!idItem || !dokId) {
-    console.error("Missing idItem or dokId", { idItem, dokId });
-    return;
-  }
-
-  console.log("PATCH call for:", { dokId, idItem, newIdSigner });
-
-  await updateReminder(dokId, idItem, newIdSigner);
-
-  const updatedCards = documentCards.map(c =>
-    c.id === id
-      ? { ...c, id_signers: newIdSigner }
-      : c
-  );
-
-  setDocumentCards(updatedCards);
-  };
+  // setDocumentCards(updatedCards);
+  // };
 
 
 
   const saveDocument = async() => {
-    // console.log("Nextstep2 from getItem:", nextStep2);
     if (!file) {
       toast.error("Please choose PDF file.");
       return;
@@ -685,7 +600,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   const saveSigner = async(e) => {
     e.preventDefault();
     try {
-      console.log("nextStep3:", nextStep3);
+      // console.log("nextStep3:", nextStep3);
       if (nextStep3 !== true) {
         const karyawanIds = documentCards.map(card => card.id_karyawan);
         const response = await axios.post('http://localhost:5000/signer', {
@@ -697,7 +612,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
           },
         });
         console.log("Signer saved: ", response.data);
-        // localStorage.setItem("S: ", signatures.length);
         toast.success("New signer has been created successfully!", {
           position: "top-right",
           autoClose: 5000,
@@ -803,17 +717,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // setDocumentCards(prevCards =>
-      //   prevCards.map((card, index) => ({
-      //     ...card,
-      //     id_signers: items[index]?.id_karyawan || card.id_signers,
-      //     ori_id_signers: items[index]?.id_karyawan || card.id_signers,
-      //     id_item: items[index]?.id_item || card.id_item,
-      //     id_dokumen: items[index]?.id_dokumen || card.id_dokumen,
-      //     ori_id_items: items[index]?.id_item || card.id_item,
-      //   }))
-      // );
-
       setDocumentCards(prevCards =>
         prevCards.map((card) => {
           const matchItem = items.find(item => item.id_karyawan === card.id_karyawan);
@@ -834,9 +737,9 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       );
 
 
-      console.log("Id items:", id_item);
-      console.log("Ori id items:", ori_id_items);
-      console.log("DocumentCards:", documentCards);
+      // console.log("Id items:", id_item);
+      // console.log("Ori id items:", ori_id_items);
+      // console.log("DocumentCards:", documentCards);
 
       toast.success("Logsigns and items created successfully!", {
         position: "top-right",
@@ -854,35 +757,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   }
   };
 
-  // useEffect(() => {
-  //   if (selectedDoc?.id_dokumen && selectedDoc?.id_item) {
-  //     const dokId = selectedDoc.id_dokumen;
-  //     setIdDokumen(dokId);
-  //     localStorage.setItem("id_dokumen", dokId);
-  //     console.log("dokId:", dokId);
-  //     console.log("ID dok:", id_dokumen);
-
-  //     // const itemId = selectedDoc.id_item;
-  //     // setIdItem(itemId);
-  //     // localStorage.setItem("id_item", itemId);
-
-  //     // console.log("itemId: ", itemId);
-  //     // console.log("ID Item:", id_item);
-
-  //     setDocumentCards([{
-  //       id: Date.now(),
-  //       id_karyawan: "",
-  //       email: "",
-  //       id_signers: "",
-  //       status: "Pending",
-  //       action: "Created",
-  //       id_item: id_item,
-  //       jenis_item: "",
-  //       id_dokumen: dokId,
-  //     }]);
-  //   }
-  // }, [selectedDoc]);
-
   useEffect(() => {
   if (selectedDoc?.id_dokumen) {
     const dokId = selectedDoc.id_dokumen;
@@ -892,7 +766,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     const signers = JSON.parse(localStorage.getItem("signers")) || [];
 
     const initialCards = signers.map((signer) => ({
-      id: Date.now() + Math.random(), // agar unik
+      id: Date.now() + Math.random(), 
       id_karyawan: signer.value,
       email: signer.label,
       id_signers: signer.value,
@@ -935,7 +809,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       const nextStep = 3;
       setSteps(nextStep);
       localStorage.setItem("steps", nextStep.toString());
-      // console.log("Steps from nexThirdStep:", nextStep);
 
       const handleNextStep3 = true;
       setNextStep3(handleNextStep3);
@@ -944,9 +817,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   };
 
    const nextLastStep = () => {
-    // if (steps < 4) setSteps(4);
-    // setSteps(steps + 1);
-    // console.log("Steps from nextLastStep:", steps + 1);
     if (steps < 4){
       const nextStep = 4;
       setSteps(nextStep);
@@ -975,15 +845,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     {title: "Review & Send"},
   ];
 
-  const handlePengajuanSuccess = () => {
-    getPinjaman();
-    getAntrean();
-    toast.success("Pinjaman berhasil diajukan!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-    });
-  };
 
 const lastIdDokumen = async(e) => {
     const response = await axios.get('http://localhost:5000/getLastDocumentId', {
@@ -999,17 +860,6 @@ const lastIdDokumen = async(e) => {
         newId = `D${incrementedIdNumber}`;
     }
     setIdDokumen(newId);
-    // setDocumentCards([{
-    //   id: Date.now(),
-    //   id_karyawan: "",
-    //   email: "",
-    //   id_signers: "",
-    //   status: "Pending",
-    //   action: "Created",
-    //   jenis_item: "",
-    //   id_dokumen: newId,
-    // }]);
-
 };
 
 
@@ -1088,7 +938,6 @@ const getDocument = async() => {
     if (id_dokumen) {
       localStorage.setItem("id_dokumen", id_dokumen);
     }
-    // localStorage.setItem("id_items", JSON.stringify(createdItems.map(item => item.id_item)));
   }, [steps, id_dokumen]);
 
   
