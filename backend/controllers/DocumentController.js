@@ -105,6 +105,8 @@ export const createLogSign = async (req, res) => {
   try {
     const { logsigns } = req.body;
 
+    // const subjectt = logsigns.subject;
+
     if (!Array.isArray(logsigns) || logsigns.length === 0) {
       return res.status(400).json({ message: "logsign must be a non-empty array." });
     }
@@ -119,7 +121,12 @@ export const createLogSign = async (req, res) => {
     const newLogSign = [];
 
     for (const log of logsigns) {
-      const items = Array.isArray(log.id_item) ? log.id_item : [log.id_item];
+        const items = Array.isArray(log.id_item) ? log.id_item : [log.id_item];
+        // const subjectt = Array.isArray(log.subject) ? log.subject : [log.subject];  
+
+        // console.log("SUBJECTT:", subjectt);
+
+
       for (const item of items) {
         lastIdNumber += 1;
         const newIdNumber = lastIdNumber.toString().padStart(5, "0");
@@ -137,6 +144,8 @@ export const createLogSign = async (req, res) => {
     }
 
     await LogSign.bulkCreate(newLogSign, { transaction });
+
+
 
     //Send email
     // await sendEmailNotification(newLogSign);
@@ -169,11 +178,26 @@ export const createLogSign = async (req, res) => {
     await transaction.commit();
 
     //Generate link
+    const dokumenLogsign = [...new Set(newLogSign.map(log => log.id_dokumen))];
+    console.log("Dokumen logsign from logsign:", dokumenLogsign);
     const jwtSecret = process.env.JWT_SECRET_KEY;
-    const token = jwt.sign({newLogSign}, jwtSecret);
+    const token = jwt.sign({dokumenLogsign}, jwtSecret);
+    console.log("Token from logsign:", token);
     const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
-    await sendEmailNotification(newLogSign, signLink);
+    // const subject = logsigns.subject;
+    const subjectt = [...new Set(logsigns.map(log => log.subject).filter(Boolean))];
+    const messagee = [...new Set(logsigns.map(log => log.message).filter(Boolean))];
+
+    // console.log("Subject:", subject);
+
+    // const message = logsigns.message;
+    // console.log("Message:", message);
+
+    // await sendEmailNotification(subject, message);
+
+
+    await sendEmailNotification(newLogSign, signLink, subjectt, messagee);
 
     const io = req.app.get("io");
     io.emit("signLink", {
@@ -194,7 +218,7 @@ export const createLogSign = async (req, res) => {
   }
 };
 
-const sendEmailNotification = async(logsigns, signLink) => {
+const sendEmailNotification = async(logsigns, signLink, subjectt, messagee) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -237,13 +261,16 @@ const sendEmailNotification = async(logsigns, signLink) => {
         });
         console.log("Nama Penerima:", receiverName.nama);
 
+        console.log("Subject from create:", subjectt);
+        console.log("Message from create: ", messagee);
+
         const mailOptions = {
         from: process.env.EMAIL_ADMIN,
         to: receiverEmail, 
-        subject: "You need to sign", 
-        text: `
-        ${receiverName?.nama || "receiver"}, You are requested to sign a document with ID ${log.id_dokumen} from ${senderName?.nama || "sender"},\n\n
-        Please review and check the document before signing it. \n
+        subject: subjectt.join(', ') || "You need to sign", 
+        text: 
+        `${receiverName?.nama || "receiver"}, You are requested to sign a document with ID ${log.id_dokumen} from ${senderName?.nama || "sender"},\n\n
+        ${messagee.join(', ') || "Please review and check the document before signing it. "}\n
         Click link to sign the document ${signLink}\n\n 
 
         Please do not share this email and the link attached with others.\n
@@ -259,6 +286,43 @@ const sendEmailNotification = async(logsigns, signLink) => {
     console.error("Failed to send email: ", error.message);
   }
 }; 
+
+export const updateReminder = async(req,res) => {
+    const {id_dokumen} = req.params;
+    const {is_deadline, is_download, day_after_reminder, repeat_freq, deadline} = req.body;
+
+    try {
+        const result = await LogSign.update(
+      {
+        is_deadline,
+        is_download,
+        day_after_reminder,
+        repeat_freq,
+        deadline
+      },
+      {
+        where: { id_dokumen },
+      }
+    );
+
+    // // const subject = subject;
+    // console.log("Subject:", subject);
+
+    // // const message = message;
+    // console.log("Message:", message);
+
+    // await sendEmailNotification(subject, message);
+
+
+    if (result[0] === 0) {
+      return res.status(404).json({ message: "No log_sign records found to update." });
+    }
+    res.status(200).json({msg: "Reminder updated successfully."})
+    } catch (error) {
+        console.error("Failed to update reminder:", error.message);
+        res.status(500).json({message: error.message});
+    }
+};
 
 export const deleteLogsign = async(req, res) => {
     const transaction = await db.transaction();

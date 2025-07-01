@@ -56,33 +56,40 @@ export const updateLogsign = async (req, res) => {
   }
 };
 
-export const updateReminder = async(req,res) => {
-    const {id_dokumen} = req.params;
-    const {is_deadline, is_download, day_after_reminder, repeat_freq, deadline} = req.body;
+// export const updateReminder = async(req,res) => {
+//     const {id_dokumen} = req.params;
+//     const {is_deadline, is_download, day_after_reminder, repeat_freq, deadline, subject, message} = req.body;
 
-    try {
-        const result = await LogSign.update(
-      {
-        is_deadline,
-        is_download,
-        day_after_reminder,
-        repeat_freq,
-        deadline
-      },
-      {
-        where: { id_dokumen },
-      }
-    );
+//     try {
+//         const result = await LogSign.update(
+//       {
+//         is_deadline,
+//         is_download,
+//         day_after_reminder,
+//         repeat_freq,
+//         deadline
+//       },
+//       {
+//         where: { id_dokumen },
+//       }
+//     );
 
-    if (result[0] === 0) {
-      return res.status(404).json({ message: "No log_sign records found to update." });
-    }
-    res.status(200).json({msg: "Reminder updated successfully."})
-    } catch (error) {
-        console.error("Failed to update reminder:", error.message);
-        res.status(500).json({message: error.message});
-    }
-};
+//     // const subject = subject;
+//     console.log("Subject:", subject);
+
+//     // const message = message;
+//     console.log("Message:", message);
+
+
+//     if (result[0] === 0) {
+//       return res.status(404).json({ message: "No log_sign records found to update." });
+//     }
+//     res.status(200).json({msg: "Reminder updated successfully."})
+//     } catch (error) {
+//         console.error("Failed to update reminder:", error.message);
+//         res.status(500).json({message: error.message});
+//     }
+// };
 
 export const getLastLogsignId = async (req, res) => {
     try {

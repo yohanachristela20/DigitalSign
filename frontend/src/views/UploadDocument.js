@@ -437,7 +437,9 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       is_download,
       day_after_reminder,
       repeat_freq, 
-      deadline
+      deadline, 
+      subject, 
+      message
 
     }, {
         headers: {
@@ -710,6 +712,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             id_karyawan,
             id_signers: signerId,
             id_item: item.id_item,
+            subject,
+            message,
             };
         });
 
@@ -1068,6 +1072,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                       )}
                       {steps === 2 && (
                       <>
+                        <p className="fs-5 mt-3"><strong>Add Signers or Recipients</strong></p>
                         <Form onSubmit={nexThirdStep}>
                           <SortableList 
                             items={documentCards}
@@ -1081,6 +1086,35 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                           <Button variant="outline-primary" onClick={handleAddCard} className="mt-3">
                             <FaPlusCircle className="mb-1"/> Add Signer
                           </Button>
+                        </Form>
+
+                        <Form>
+                          <p className="fs-5 mt-3 mb-0"><strong>Message to Recipients</strong></p>
+                          <Row>
+                              <Col md="12">
+                                  <Form.Group>
+                                      <label>Email Subject</label>
+                                      <Form.Control
+                                          type="text"
+                                          value={subject}
+                                          onChange={(e) => setSubject(e.target.value)}
+                                      ></Form.Control>
+                                  </Form.Group>
+                              </Col>
+                          </Row>
+                          <Row>
+                              <Col md="12">
+                                  <Form.Group>
+                                      <label>Message</label>
+                                      <Form.Control
+                                          as="textarea"
+                                          value={message}
+                                          onChange={(e) => setMessage(e.target.value)}
+                                          rows={4}
+                                      ></Form.Control>
+                                  </Form.Group>
+                              </Col>
+                          </Row>
                         </Form>
                       </> 
                       )}
@@ -1124,7 +1158,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                     </Form>
     
                     <Form>
-                      <p className="fs-5 mt-3 mb-0"><strong>Message to Recipients</strong></p>
+                      {/* <p className="fs-5 mt-3 mb-0"><strong>Message to Recipients</strong></p>
                       <Row>
                           <Col md="12">
                               <Form.Group>
@@ -1149,7 +1183,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                                   ></Form.Control>
                               </Form.Group>
                           </Col>
-                      </Row>
+                      </Row> */}
                       <Row className="mt-3 mb-2">
                         <Col md="12">
                           <Form.Group>

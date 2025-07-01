@@ -25,6 +25,8 @@ import LaporanPiutang from "views/LaporanPiutangKaryawan.js";
 import PageScreeningKaryawan from "views/ScreeningKaryawan.js"; 
 import Document from "views/Document.js";
 
+import ReceiveDocument from "views/ReceiveDocument.js"; 
+
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -101,6 +103,7 @@ root.render(
 
             <Route path="/document" element={<Document />} />
             <Route path="/screening-karyawan" element={<PageScreeningKaryawan />} />
+            <Route path="/user/envelope" component={ReceiveDocument} />
             {/* <Route path="/user/envelope" /> */}
             <Redirect from="/" to="/login" />
 

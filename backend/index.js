@@ -15,6 +15,8 @@ import ItemRoute from "./routes/ItemRoute.js";
 import verifyToken from "./middlewares/authMiddleware.js";
 import dotenv from 'dotenv';
 
+import ReceiveDocumentRoute from "./routes/ReceiveDocumentRoute.js";
+
 import './models/KaryawanModel.js';
 import './models/Association.js';
 import './models/UserModel.js';
@@ -51,13 +53,12 @@ io.on("connection", (socket) => {
 
 app.set("io", io);
 
-
-
 app.use(bodyParser.json());
 app.use(cors({origin: "http://localhost:3000", credentials: true}));
 app.use(express.json());
 
 app.use(UserRoute); // Rute user untuk login, tanpa middleware otentikasi
+app.use(ReceiveDocumentRoute);
 
 const protectedRoutes = [
     KaryawanRoute,

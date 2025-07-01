@@ -12,6 +12,8 @@ import SuratPernyataan from "views/SuratPernyataan";
 import Document from "views/Document.js";
 import UploadDocument from "views/UploadDocument.js";
 
+import ReceiveDocument from "views/ReceiveDocument.js";
+
 import Login from "views/Login.js";
 import PreviewDocument from "views/PreviewDocument";
 import { layouts } from "chart.js";
@@ -84,6 +86,13 @@ const dashboardRoutes = [
   //     },
   //   ],
   // },
+
+  {
+    path: "/envelope",
+    name: "Receive Document",
+    component: ReceiveDocument,
+    layout: "/user"
+  },
   
 
 

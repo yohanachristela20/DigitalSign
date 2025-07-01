@@ -1,6 +1,6 @@
 import React, {useRef, useEffect, useState} from "react";
 import * as pdfjsLib from 'pdfjs-dist/webpack';
-import { pdfjs } from "react-pdf";
+import { Document, Page, pdfjs } from "react-pdf";
 import ResizableDragable from "components/ResizeDraggable/rnd.js";
 import ResizableDragableInitial from "components/ResizeDraggable/rndInitial.js";
 import ResizableDragableDate from "components/ResizeDraggable/rndDate.js";

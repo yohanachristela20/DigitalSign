@@ -14,7 +14,8 @@ import {getDocument,
         createLogSign,
         createItem, 
         deleteSign, 
-        deleteLogsign
+        deleteLogsign, 
+        updateReminder
 } from "../controllers/DocumentController.js"; 
 
 const router = express.Router(); 
@@ -54,34 +55,7 @@ router.post('/item', createItem);
 router.delete('/delete-sign/:id_logsign', deleteSign);
 router.delete('/logsign/:id_dokumen/:id_item/:id_signers', deleteLogsign);
 
-router.get('/pdf-document/:id_dokumen?', async (req, res) => {
-    try {
-        let { id_dokumen } = req.params;
-        let pdfDoc;
-
-        if (id_dokumen) {
-            pdfDoc = await Document.findOne({ where: { id_dokumen } });
-        } else {
-            pdfDoc = await Document.findOne({ order: [["id_dokumen", "DESC"]] });
-        }
-
-        // console.log("Fetched document:", pdfDoc);
-
-        if (!pdfDoc || !pdfDoc.filepath_dokumen) {
-            return res.status(404).json({ message: "Document not found." });
-        }
-
-        const filePath = path.join(process.cwd(), pdfDoc.filepath_dokumen);
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ message: "File not found on server." });
-        }
-
-        res.sendFile(filePath);
-    } catch (error) {
-        console.error("Error fetching document:", error.message);
-        res.status(500).json({ message: "Error fetching document." });
-    }
-});
+router.patch('/update-reminder/:id_dokumen', updateReminder);
 
 
 export default router;
