@@ -15,7 +15,10 @@ import {getDocument,
         createItem, 
         deleteSign, 
         deleteLogsign, 
-        updateReminder
+        updateReminder,
+        sendEmailNotification,
+        getSignLink
+        // deleteSigner
 } from "../controllers/DocumentController.js"; 
 
 const router = express.Router(); 
@@ -54,8 +57,11 @@ router.post('/logsign', createLogSign);
 router.post('/item', createItem);
 router.delete('/delete-sign/:id_logsign', deleteSign);
 router.delete('/logsign/:id_dokumen/:id_item/:id_signers', deleteLogsign);
+// router.delete('/delete-signer/:id_signers', deleteSigner);
 
 router.patch('/update-reminder/:id_dokumen', updateReminder);
+router.post('/send-email', sendEmailNotification);
+router.get("/logsign-link/:id_dokumen", getSignLink);
 
 
 export default router;

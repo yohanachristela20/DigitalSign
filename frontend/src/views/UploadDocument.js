@@ -389,24 +389,36 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   };
 
   const deleteLogsign = async(deletedSigner, id_dokumen, id_item) => {
-    // console.log("Deleting signer with:", deletedSigner, id_dokumen, id_item); 
     try {
       await axios.delete(`http://localhost:5000/logsign/${id_dokumen}/${id_item}/${deletedSigner}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      // toast.success("Signer deleted successfully.", {
-      //   position: "top-right", 
-      //   autoClose: 5000, 
-      //   hideProgressBar: true,
-      // });
     } catch (error) {
       console.log("Error deleting signer:", error);
       throw error;
     }
   };
+
+  // const deleteSigner = async(deletedSigner) => {
+  //   console.log("Deleting signer with id_signer:", deletedSigner);
+  //   try {
+  //     await axios.delete(`http://localhost:5000/delete-signer/${deletedSigner}`, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+
+  //     toast.success("Signer deleted successfully.", {
+  //       position: "top-right",
+  //       autoClose: 5000,
+  //       hideProgressBar: true,
+  //     });
+  //   } catch (error) {
+  //     console.log(error.message);
+  //   }
+  // };
 
   const updateSigner = async(id_dokumen, id_item, newIdSigner, oldIdSigner) => { 
     try {
@@ -451,14 +463,59 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       autoClose: 5000,
       hideProgressBar: true,
     });
+
+    const logsigns = JSON.parse(localStorage.getItem("logsigns") || "[]");
+
+    if (logsigns.length > 0) {
+      await sendEmailNotification(logsigns, subject, message, id_dokumen);
+    } else {
+      console.warn("No logsigns found.");
+    }
+
     } catch (error) {
-      toast.success("Reminder updated successfully.", {
+      toast.error("Failed to update reminder.", {
       position: "top-right", 
       autoClose: 5000, 
       hideProgressBar: true,
     });
     }
-  }
+  };
+
+  const sendEmailNotification = async(logsigns, subject, message, id_dokumen) => {
+    console.log("Logsigns:", logsigns);
+    console.log("Subject:", subject);
+    console.log("Message:", message);
+    console.log("ID Dokumen:", id_dokumen);
+    try {
+        const response = await axios.get(`http://localhost:5000/logsign-link/${id_dokumen}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // const { signLink } = response.data;
+      
+      // const subjectt = [subject];
+      // const messagee = [message];
+
+      await axios.post('http://localhost:5000/send-email', {
+        logsigns,
+        id_dokumen,
+        // signLink,
+        subjectt: [subject],
+        messagee: [message],
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success("Email notifications sent!", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
+    } catch (error) {
+      console.error("Failed to send notification email:", error.message);
+      toast.error("Failed to send notification email.");
+    }
+  };
 
   const handleDeleteCard = async (id) => {
   const updatedCards = [...documentCards];
@@ -499,6 +556,23 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     } catch (error) {
       console.error("Failed to delete signer:", error.message);
     }
+  }
+  };
+
+  const handleDeleteStepper2 = async (id) => {
+  const updatedCards = [...documentCards];
+  const index = updatedCards.findIndex(card => card.id === id);
+
+  if (index !== -1) {
+    const deletedCard = updatedCards[index];
+    // console.log("Deleted card: ", deletedCard);
+
+    const deletedIdSigner = deletedCard.id_karyawan;
+    setDeletedSigner(deletedIdSigner);
+
+    // await deleteSigner(deletedIdSigner);
+    updatedCards.splice(index, 1);
+    setDocumentCards(updatedCards);
   }
   };
 
@@ -703,11 +777,9 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
       const logsigns = createdItems.map((item, index) => {
       const signerId = items[index].id_karyawan;
-      
           return {
             action: "Created", 
             status: "Pending", 
-
             id_dokumen,
             id_karyawan,
             id_signers: signerId,
@@ -716,6 +788,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             message,
             };
         });
+
+      localStorage.setItem("logsigns", JSON.stringify(logsigns));
 
       await axios.post('http://localhost:5000/logsign', { logsigns }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -1079,7 +1153,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                             onSortEnd={onSortEnd}
                             useDragHandle={false}
                             handleCardEmployeeChange={handleCardEmployeeChange}
-                            handleDeleteCard={handleDeleteCard}
+                            handleDeleteCard={handleDeleteStepper2}
                             employeeName={employeeName}
                             value={employeeName.id_karyawan}
                           />

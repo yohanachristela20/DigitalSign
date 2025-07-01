@@ -16,7 +16,7 @@ import {
   Modal
 } from "react-bootstrap";
 
-const SortableItem = SortableElement(({ handleEditCard, card, index, handleCardEmployeeChange, handleDeleteCard, employeeName, documentCards }) => (
+const SortableItem = SortableElement(({ handleEditCard, card, index, handleCardEmployeeChange, handleDeleteCard, handleDeleteStepper2, employeeName, documentCards }) => (
   <Card className="mt-3 mb-0">
     <Card.Body>
       <Row className="mt-2">
