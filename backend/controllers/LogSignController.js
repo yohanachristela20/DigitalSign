@@ -7,9 +7,6 @@ import Sign from "../models/SignModel.js";
 export const getLogSign = async(req, res) => {
     try {
         const {id_dokumen, id_signers} = req.query;
-
-        // console.log("Received id dok:", id_dokumen);
-        // console.log("Id signers nya adl:", id_signers);
         const response = await LogSign.findAll({
             include: [
                 {
@@ -36,8 +33,6 @@ export const updateLogsign = async (req, res) => {
   const { id_signers: newIdSigner } = req.body;
 
   try {
-    // console.log("Incoming PATCH:", { id_dokumen, id_item, newIdSigner, oldIdSigner });
-
     const logsign = await LogSign.findOne({
       where: { id_dokumen, id_item, id_signers: oldIdSigner }
     });
@@ -55,41 +50,6 @@ export const updateLogsign = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// export const updateReminder = async(req,res) => {
-//     const {id_dokumen} = req.params;
-//     const {is_deadline, is_download, day_after_reminder, repeat_freq, deadline, subject, message} = req.body;
-
-//     try {
-//         const result = await LogSign.update(
-//       {
-//         is_deadline,
-//         is_download,
-//         day_after_reminder,
-//         repeat_freq,
-//         deadline
-//       },
-//       {
-//         where: { id_dokumen },
-//       }
-//     );
-
-//     // const subject = subject;
-//     console.log("Subject:", subject);
-
-//     // const message = message;
-//     console.log("Message:", message);
-
-
-//     if (result[0] === 0) {
-//       return res.status(404).json({ message: "No log_sign records found to update." });
-//     }
-//     res.status(200).json({msg: "Reminder updated successfully."})
-//     } catch (error) {
-//         console.error("Failed to update reminder:", error.message);
-//         res.status(500).json({message: error.message});
-//     }
-// };
 
 export const getLastLogsignId = async (req, res) => {
     try {

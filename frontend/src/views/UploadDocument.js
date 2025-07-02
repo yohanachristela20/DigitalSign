@@ -98,8 +98,8 @@ function UploadDocument() {
   }, []);
 
   const handleRadioChange = (e) => {
-    const value = e.target.value;
-    setIsDeadline(value === "With Deadline");
+    // const value = e.target.value;
+    setIsDeadline(e.target.value === "With Deadline");
   };
 
   const handleDownload = (e) => {
@@ -246,18 +246,12 @@ function UploadDocument() {
    };
   }, []);
 
-  // console.log("Stepssss: ", steps);
 
   useEffect(() => {
   const handleButtonClicked = () => {
       const signButton = localStorage.getItem("signatureClicked"); 
       const initButton = localStorage.getItem("initialClicked");
       const dateButton = localStorage.getItem("dateFieldClicked");
-
-      // console.log("SignButton clicked from Upload:", signButton);
-      // console.log("InitialButton clicked from Upload:", initButton);
-      // console.log("DateButton clicked from Upload", dateButton);
-
       setSignClicked(signButton === "true");
       setInitClicked(initButton === "true");
       setDateClicked(dateButton === "true");
@@ -280,14 +274,6 @@ function UploadDocument() {
 
     handleNextButton();
   });
-
-
-  // useEffect(() => {
-  //   if(steps === 3) {
-  //     console.log("x_axis from step 3:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height, "jenis_item:", jenis_item);
-  //   }
-  // }, [steps, x_axis, y_axis, width, height, jenis_item]);
-
 
   useEffect(() => {
     const fetchDataKaryawan = async() => {
@@ -320,7 +306,12 @@ const handleChange = (e) => {
 }
 
 const handleDeadline = (e) => {
-  setDeadline(Number(e.target.value));
+  const value = e.target.value;
+  setDeadline(value);
+
+  const isValidDeadline = value && value !== "0000-00-00" || value !== "" || value !== null;
+
+  setIsDeadline(isValidDeadline);
 }
 
 const handleRepeatReminder = (e) => {
@@ -441,7 +432,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   }; 
 
   const updateReminder = async(id_dokumen) => {
-    // console.log(`Updating reminder in dokumen ${id_dokumen}`);
     try {
       
       const response = await axios.patch(`http://localhost:5000/update-reminder/${id_dokumen}`, {
@@ -465,12 +455,17 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     });
 
     const logsigns = JSON.parse(localStorage.getItem("logsigns") || "[]");
+    console.log("LOGSIGN:", logsigns);
+    const id_signers = JSON.parse(localStorage.getItem("id_signers") || "[]");
+    console.log("ID SIGNERS:", id_signers);
 
     if (logsigns.length > 0) {
-      await sendEmailNotification(logsigns, subject, message, id_dokumen);
+      await sendEmailNotification(logsigns, subject, message, id_dokumen, id_signers);
     } else {
       console.warn("No logsigns found.");
     }
+
+    history.push("/admin/document-sent");
 
     } catch (error) {
       toast.error("Failed to update reminder.", {
@@ -481,25 +476,21 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
-  const sendEmailNotification = async(logsigns, subject, message, id_dokumen) => {
+  const sendEmailNotification = async(logsigns, subject, message, id_dokumen, id_signers) => {
     console.log("Logsigns:", logsigns);
     console.log("Subject:", subject);
     console.log("Message:", message);
     console.log("ID Dokumen:", id_dokumen);
+    console.log("Id Signers:", id_signers);
     try {
         const response = await axios.get(`http://localhost:5000/logsign-link/${id_dokumen}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // const { signLink } = response.data;
-      
-      // const subjectt = [subject];
-      // const messagee = [message];
-
       await axios.post('http://localhost:5000/send-email', {
         logsigns,
         id_dokumen,
-        // signLink,
+        id_signers,
         subjectt: [subject],
         messagee: [message],
       }, {
@@ -610,36 +601,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   setDocumentCards(updatedCards);
   };
-
-  // const handleReminder = async (id) => {
-  // const card = documentCards.find(c => c.id === id);
-  // const newIdSigner = card.id_karyawan;
-  // const dokId = card.id_dokumen;
-
-  // const storedIdItems = JSON.parse(localStorage.getItem("id_items")) || [];
-
-  // const cardIndex = documentCards.findIndex(c => c.id === id);
-  // const idItem = storedIdItems[cardIndex]; 
-
-  // if (!idItem || !dokId) {
-  //   console.error("Missing idItem or dokId", { idItem, dokId });
-  //   return;
-  // }
-
-  // console.log("PATCH call for:", { dokId, idItem, newIdSigner });
-
-  // await updateReminder(dokId, idItem, newIdSigner);
-
-  // const updatedCards = documentCards.map(c =>
-  //   c.id === id
-  //     ? { ...c, id_signers: newIdSigner }
-  //     : c
-  // );
-
-  // setDocumentCards(updatedCards);
-  // };
-
-
 
   const saveDocument = async() => {
     if (!file) {
@@ -775,6 +736,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       localStorage.setItem("id_items", JSON.stringify(createdItems.map(item => item.id_item)));
       const orderedSigners = JSON.parse(localStorage.getItem("signers")) || [];
 
+      // localStorage.setItem("id_signers", JSON.stringify(logsigns.map(log => log.id_signers)));
+      
       const logsigns = createdItems.map((item, index) => {
       const signerId = items[index].id_karyawan;
           return {
@@ -790,6 +753,13 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         });
 
       localStorage.setItem("logsigns", JSON.stringify(logsigns));
+      // console.log("Logsign:", Logsign);
+
+      // const uniqueSigners = [...new Set(logsigns.map(log => log.id_signers))];
+      // localStorage.setItem("id_signers", JSON.stringify(uniqueSigners));
+
+      const signerIds = logsigns.map(log => log.id_signers);
+      localStorage.setItem("id_signers", JSON.stringify(signerIds));
 
       await axios.post('http://localhost:5000/logsign', { logsigns }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -1284,7 +1254,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                           <Form.Control
                               type="date"
                               value={deadline}
-                              onChange={(e) => setDeadline(e.target.value)}
+                              onChange={handleDeadline}
                               min={minDate}
                           />
                         </Col>

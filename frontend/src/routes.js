@@ -13,6 +13,7 @@ import Document from "views/Document.js";
 import UploadDocument from "views/UploadDocument.js";
 
 import ReceiveDocument from "views/ReceiveDocument.js";
+import DocumentSent from "views/DocumentSent.js";
 
 import Login from "views/Login.js";
 import PreviewDocument from "views/PreviewDocument";
@@ -48,44 +49,12 @@ const dashboardRoutes = [
     component: PreviewDocument,
     layout: "/admin",
   },
-  // {
-  //   path: "/beranda",
-  //   name: "Drafts",
-  //   icon: "file-signature",
-  //   component: Beranda,
-  //   layout: "/admin"
-  // },
-  // {
-  //   path: "/beranda",
-  //   name: "Trash",
-  //   icon: "trash",
-  //   component: Beranda,
-  //   layout: "/admin"
-  // },
-
-  // {
-  //   path: "/beranda",
-  //   name: "Folders",
-  //   icon: "folder",
-  //   component: Beranda,
-  //   layout: "/admin", 
-  //   children: [
-  //     {
-  //       path: "/subdoc1", 
-  //       name: "Sub doc 1",
-  //       icon: "file-alt",
-  //       component: Beranda,
-  //       layout: "/admin"
-  //     },
-  //     {
-  //       path: "/subdoc2", 
-  //       name: "Sub doc 2",
-  //       icon: "file-alt",
-  //       component: Beranda,
-  //       layout: "/admin"
-  //     },
-  //   ],
-  // },
+  {
+    path: "/document-sent", 
+    name: "Document Sent", 
+    component: DocumentSent,
+    layout: "/admin",
+  },
 
   {
     path: "/envelope",

@@ -26,6 +26,7 @@ import PageScreeningKaryawan from "views/ScreeningKaryawan.js";
 import Document from "views/Document.js";
 
 import ReceiveDocument from "views/ReceiveDocument.js"; 
+import DocumentSent from "views/DocumentSent.js";
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';

@@ -16,10 +16,28 @@ function ReceiveDocument() {
     const [pdfUrl, setPdfUrl] = useState(null);
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState("");
+    const [x_axis, setXAxis] = useState(0);
+    const [y_axis, setYAxis] = useState(0);
+    const [width, setWidth] = useState(0);
+    const [height, setHeight] = useState(0);
+    const [jenis_item, setJenisItem] = useState("");
+    const [fields, setFields] = useState([]);
 
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
+
+    const styleRnd = {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: 'rgba(25, 230, 25, 0.5)'
+    };
+
+    const styleIcon = {
+        width: "25%",
+        height: "25%"
+    }
 
     useEffect(() => {
         const fetchData = async () => {
@@ -28,6 +46,10 @@ function ReceiveDocument() {
             try {
                 const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
+                const id_signers = res.data.id_signers;
+
+                // setIdSigner(id_signers);
+                // console.log("Id Signer:", idSigner);
 
                 if (!id_dokumen) {
                     throw new Error("Document not found.");
@@ -41,6 +63,17 @@ function ReceiveDocument() {
                 const blob = await fileRes.blob();
                 const url = URL.createObjectURL(blob);
                 setPdfUrl(url);
+
+                const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${id_signers}`);
+
+                const validFields = field.data
+                .filter(item => item.ItemField)
+                .map(item => {
+                    const {x_axis, y_axis, width, height, jenis_item} = item.ItemField;
+                    return {x_axis, y_axis, width, height, jenis_item};
+                });
+
+                setFields(validFields);
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
                 setErrorMsg(error.message);
@@ -55,15 +88,28 @@ function ReceiveDocument() {
 
     return (
         <Container fluid className="mt-3">
-            <h5>Preview Dokumen</h5>
+            <h5>Preview Document</h5>
             {loading && <Spinner animation="border" variant="primary" />}
             {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
             {!loading && !errorMsg && pdfUrl && (
                 <PDFCanvas
                     pdfUrl={pdfUrl}
-                    // onLoadSuccess={() => console.log("PDF loaded successfully")}
                 />
             )}
+
+            {fields.map((field, index) => (
+                <Rnd
+                    key={index}
+                    style={styleRnd}
+                    position={{x: field.x_axis, y: field.y_axis}}
+                    size={{width: field.height, height: field.width}}
+                    enableResizing={false}
+                    disableDragging={true}
+                >
+                    {console.log("x:", x_axis, "y:", y_axis, "width:", width, "height:", height)}
+                    <FaSignature style={styleIcon}/>
+                </Rnd>
+            ))}
         </Container>
     );
 }
