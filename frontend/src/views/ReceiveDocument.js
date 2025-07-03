@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-import { FaSignature } from 'react-icons/fa';
+import { FaFont, FaSignature } from 'react-icons/fa';
 
 import PDFCanvas from "components/Canvas/canvas.js";
 import { Rnd } from 'react-rnd';
-import SignatureModal from 'components/ModalForm/SignatureModal.js';
 import { Document, Page, pdfjs } from "react-pdf";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 import { Container, Spinner, Alert } from "react-bootstrap";
 import { toast } from "react-toastify";
+
+import SignatureModal from 'components/ModalForm/SignatureModal.js';
+import InitialModal from "components/ModalForm/InitialModal.js";
+import "../assets/scss/lbd/_receivedoc.scss";
 
 function ReceiveDocument() {
     const [pdfUrl, setPdfUrl] = useState(null);
@@ -22,7 +25,26 @@ function ReceiveDocument() {
     const [height, setHeight] = useState(0);
     const [jenis_item, setJenisItem] = useState("");
     const [fields, setFields] = useState([]);
+    const [id_dokumen, setIdDokumen] = useState("");
 
+    const [showSignatureModal, setShowSignatureModal] = React.useState(false);
+    const [showInitialModal, setShowInitialModal] = React.useState(false);
+    
+    
+    // const signatureFields = [];
+    // const initialFields = [];
+    // const dateFields = [];
+
+    const [initials, setInitials] = useState([]);
+    const [signatures, setSignatures] = useState([]);
+    const [dateField, setDateField] = useState([]);
+    const [clickCount, setClickCount] = useState(0);
+    const timeRef = useRef(null);
+
+    const [signClicked, setSignClicked] = useState(false);
+    const [initClicked, setInitClicked] = useState(false);
+    
+    
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
@@ -39,13 +61,30 @@ function ReceiveDocument() {
         height: "25%"
     }
 
-    useEffect(() => {
+    const handleSignatureClick = () => {
+        setShowSignatureModal(true);
+    };
+
+    const handleInitialClick = () => {
+        setShowInitialModal(true);
+    };
+
+    const handleSignatureSuccess = () => {
+    toast.success("Document signed successfully.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+    });
+    };
+
+     useEffect(() => {
         const fetchData = async () => {
             if (!token) return;
 
             try {
                 const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
+                setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
 
                 // setIdSigner(id_signers);
@@ -66,14 +105,40 @@ function ReceiveDocument() {
 
                 const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${id_signers}`);
 
-                const validFields = field.data
+                const localSignatureFields = [];
+                const localInitialFields = [];
+                const localDateFields = [];
+
+                field.data
                 .filter(item => item.ItemField)
-                .map(item => {
+                .forEach((item, idx) => {
                     const {x_axis, y_axis, width, height, jenis_item} = item.ItemField;
-                    return {x_axis, y_axis, width, height, jenis_item};
+                    const fieldObj = {
+                        id: `field-${idx}`, 
+                        x_axis: x_axis, 
+                        y_axis: y_axis, 
+                        width, 
+                        height, 
+                        jenis_item, 
+                        pageScale: 1,
+                        enableResizing: false,
+                        disableDragging: true,
+                    };
+
+                    if (jenis_item === "Signpad") {
+                        localSignatureFields.push(fieldObj);
+                    } else if (jenis_item === "Initialpad") {
+                        localInitialFields.push(fieldObj);
+                    } else if (jenis_item === "Date") {
+                        localDateFields.push(fieldObj);
+                    }
+
                 });
 
-                setFields(validFields);
+               
+                setSignatures(localSignatureFields);
+                setInitials(localInitialFields);
+                setDateField(localDateFields);
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
                 setErrorMsg(error.message);
@@ -87,30 +152,83 @@ function ReceiveDocument() {
     }, [token]);
 
     return (
-        <Container fluid className="mt-3">
-            <h5>Preview Document</h5>
-            {loading && <Spinner animation="border" variant="primary" />}
-            {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
-            {!loading && !errorMsg && pdfUrl && (
-                <PDFCanvas
-                    pdfUrl={pdfUrl}
-                />
-            )}
+        <div className="center-object">
+            <div className="vertical-center">
+                <Container fluid className="mt-3 pl-0">
+                {/* <h5>Preview Document</h5> */}
+                {loading && <Spinner animation="border" variant="primary" />}
+                {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
+                {!loading && !errorMsg && pdfUrl && (
+                <>
+                    <PDFCanvas pdfUrl={pdfUrl} 
+                    />
+                    {signatures.map((sig, index) => (
+                        <>
+                            <Rnd
+                                key={sig.id}
+                                position={{ x: sig.x_axis, y: sig.y_axis }}
+                                size={{ width: sig.height, height: sig.width }}
+                                enableResizing={sig.enableResizing} 
+                                disableDragging={sig.disableDragging} 
+                                style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "rgba(25, 230, 25, 0.5)", 
+                                }}
+                                onClick={handleSignatureClick}
+                            >
+                                <FaSignature style={{ width: "25%", height: "25%" }} />
+                            </Rnd>
+                            <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} />
+                    
+                        </>
+                    ))}
 
-            {fields.map((field, index) => (
-                <Rnd
-                    key={index}
-                    style={styleRnd}
-                    position={{x: field.x_axis, y: field.y_axis}}
-                    size={{width: field.height, height: field.width}}
-                    enableResizing={false}
-                    disableDragging={true}
-                >
-                    {console.log("x:", x_axis, "y:", y_axis, "width:", width, "height:", height)}
-                    <FaSignature style={styleIcon}/>
-                </Rnd>
-            ))}
-        </Container>
+                    {initials.map((sig, index) => (
+                        <>
+                        <Rnd
+                            key={sig.id}
+                            position={{ x: sig.x_axis, y: sig.y_axis }}
+                            size={{ width: sig.height, height: sig.width }}
+                            enableResizing={sig.enableResizing} 
+                            disableDragging={sig.disableDragging}  
+                            style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: "rgba(25, 230, 25, 0.5)",
+                            }}
+                            onClick={handleInitialClick}
+                        >
+                            <FaFont style={{ width: "25%", height: "25%" }} />
+                        </Rnd>
+                        <InitialModal showInitialModal={showInitialModal} setShowInitialModal={setShowInitialModal} onSuccess={handleSignatureSuccess} />
+                        </>
+                    ))}
+
+                    {dateField.map((sig, index) => (
+                    <Rnd
+                        key={sig.id}
+                        position={{ x: sig.x_axis, y: sig.y_axis }}
+                        size={{ width: sig.height, height: sig.width }}
+                        enableResizing={sig.enableResizing}    
+                        disableDragging={sig.disableDragging} 
+                        style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: "rgba(25, 230, 25, 0.5)",
+                        }}
+                    >
+                        <FaSignature style={{ width: "25%", height: "25%" }} />
+                    </Rnd>
+                    ))}
+                </>
+                )}
+                </Container>
+            </div>
+        </div>
     );
 }
 

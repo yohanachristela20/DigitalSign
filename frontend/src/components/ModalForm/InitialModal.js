@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from 'react-toastify';
 import "../../assets/scss/lbd/_radiobutton.scss";
 
-const InitialModal = ({showAddModal, setshowAddModal, onSuccess}) => {
+const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
     const [initialName, setInitialName] = useState("");
     const [selectedValue, setSelectedValue] = useState('option1');
 
@@ -34,8 +34,8 @@ const InitialModal = ({showAddModal, setshowAddModal, onSuccess}) => {
         <>
             <Modal
             className="modal-primary"
-            show={showAddModal}
-            onHide={() => setshowAddModal(false)}
+            show={showInitialModal}
+            onHide={() => setShowInitialModal(false)}
             >
             <Modal.Header className="text-center">
                 <h3 className="mt-2 mb-0">Make Initial</h3>

@@ -125,7 +125,7 @@ function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, wid
                 setSize({ width: newWidth, height: newHeight });
                 setJenisItem({jenis_item});
             }}
-            onClick={handleClickSign}
+            // onClick={handleClickSign}
             minWidth={120}
             minHeight={80}
             // bounds="parent"

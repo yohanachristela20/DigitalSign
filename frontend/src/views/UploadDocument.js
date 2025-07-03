@@ -1202,32 +1202,6 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                     </Form>
     
                     <Form>
-                      {/* <p className="fs-5 mt-3 mb-0"><strong>Message to Recipients</strong></p>
-                      <Row>
-                          <Col md="12">
-                              <Form.Group>
-                                  <label>Email Subject</label>
-                                  <Form.Control
-                                      type="text"
-                                      value={subject}
-                                      onChange={(e) => setSubject(e.target.value)}
-                                  ></Form.Control>
-                              </Form.Group>
-                          </Col>
-                      </Row>
-                      <Row>
-                          <Col md="12">
-                              <Form.Group>
-                                  <label>Message</label>
-                                  <Form.Control
-                                      as="textarea"
-                                      value={message}
-                                      onChange={(e) => setMessage(e.target.value)}
-                                      rows={4}
-                                  ></Form.Control>
-                              </Form.Group>
-                          </Col>
-                      </Row> */}
                       <Row className="mt-3 mb-2">
                         <Col md="12">
                           <Form.Group>

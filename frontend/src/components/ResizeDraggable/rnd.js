@@ -25,7 +25,7 @@ function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=50, width=50, 
     };
 
     const handleSignatureSuccess = () => {
-    toast.success("Dokumen berhasil ditandatangan.", {
+    toast.success("Document signed successfully.", {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: true,
@@ -118,7 +118,7 @@ function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=50, width=50, 
                 setSize({ width: newWidth, height: newHeight });
                 setJenisItem({jenis_item});
             }}
-            onClick={handleClickSign}
+            // onClick={handleClickSign}
             minWidth={120}
             minHeight={80}
             // bounds="parent"

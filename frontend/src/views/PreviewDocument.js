@@ -45,23 +45,14 @@ function PreviewDocument() {
         fetchPdf();
     }, [selectedDoc]);
 
-
-    // useEffect(() => {
-    //     if (selectedDoc && selectedDoc.id_dokumen) {
-    //         setIdDokumen(selectedDoc.id_dokumen);
-    //     }
-    // }, [selectedDoc]);
-
-    
-
     return(
         <>
-            <Container fluid>
+            <Container fluid className="d-flex justify-content-center">
                 <Form>
                     <div>
                         <h5>Preview</h5>
                         {pdfUrl? (
-                          <PDFCanvas pdfUrl={pdfUrl} />
+                          <PDFCanvas pdfUrl={pdfUrl}/>
                         ) : (
                           <p>Loading PDF...</p>
                           

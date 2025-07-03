@@ -158,14 +158,14 @@ const PDFCanvas = ({pdfUrl}) => {
 
 
     return(
-       <div ref={canvasContainerRef} style={{position: 'relative'}}>
+       <div ref={canvasContainerRef}>
         {canvases.length === 0 && <p>Loading PDF...</p>}
             {canvases.map((imgSrc, index) => (
                 <img
                     key={index}
                     src={imgSrc}
                     alt={`Page ${index + 1}`}
-                    style={{width: '100%', marginBottom: '1rem', border: '1px solid #ccc'}}
+                    style={{marginBottom: '1rem', border: '1px solid #ccc'}}
                 />
             ))}
 
