@@ -186,89 +186,58 @@ const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, 
       }
     });
 
-    for (const log of validLogsigns) {
-      const existingLog = await LogSign.findOne({
-        where: {id_logsign: log.id_logsign},
-      });
+    if (validLogsigns.length === 0) return;
 
-      if (!existingLog) {
-        console.warn(`Logsign ${log.id_logsign} already deleted, skipping email.`);
-        continue;
-      }
+    const log = validLogsigns[0];
 
-      const receiver = await Karyawan.findOne({
-        where: { id_karyawan: log.id_signers },
-        include: [{
-          model: User,
-          as: "Penerima",
-          attributes: ["email"]
-        }],
-        attributes: ["id_karyawan"]
-      });
+    const existingLog = await LogSign.findOne({
+      where: {id_logsign: log.id_logsign},
+    });
 
-      if (!receiver?.Penerima?.email) {
-        console.warn(`Email not found for signer ${log.id_signers}`);
-        continue;
-      }
-
-      const receiverEmail = receiver.Penerima.email;
-      const senderName = await Karyawan.findOne({ where: { id_karyawan: log.id_karyawan } });
-      const receiverName = await Karyawan.findOne({ where: { id_karyawan: log.id_signers } });
-
-      const mailOptions = {
-        from: process.env.EMAIL_ADMIN,
-        to: receiverEmail,
-        subject: subjectt.join(', ') || "You need to sign",
-        text: `${receiverName?.nama || "Signer"}, You are requested to sign a document with ID ${log.id_dokumen} from ${senderName?.nama || "Sender"}.\n
-            ${messagee.join(', ') || "Please review and check the document before signing it."}\n
-            Click link to sign the document ${signLink}\n\n
-            Please do not share this email and the link attached with others.\n
-            Regards, \n
-            Campina Sign.`
-            };
-
-      await transporter.sendMail(mailOptions);
-      console.log(`Email sent to ${receiverEmail} for logsign ${log.id_logsign}`);
+    if (!existingLog) {
+      console.warn(`Logsign ${log.id_logsign} already deleted, skipping email.`);
+      return;
     }
+
+    const receiver = await Karyawan.findOne({
+      where: {id_karyawan: log.id_signers},
+      include: [{
+        model: User,
+        as: "Penerima", 
+        attributes: ["email"]
+      }],
+      attributes: ["id_karyawan"]
+    }); 
+
+    if (!receiver?.Penerima?.email) {
+      console.warn(`Email not found for signer ${log.id_signers}`);
+      return;
+    }
+
+    const receiverEmail = receiver.Penerima.email;
+    const senderName = await Karyawan.findOne({where: {id_karyawan: log.id_karyawan}});
+    const receiverName = await Karyawan.findOne({where: {id_karyawan: log.id_signers}});
+
+    const mailOptions = {
+      from: process.env.EMAIL_ADMIN,
+      to: receiverEmail,
+      subject: subjectt.join(', ') || "You need to sign",
+      text: `${receiverName?.nama || "Signer"}, You are requested to sign a document with ID ${log.id_dokumen} from ${senderName?.nama || "Sender"}.\n
+          ${messagee.join(', ') || "Please review and check the document before signing it."}\n
+          Click link to sign the document ${signLink}\n\n
+          Please do not share this email and the link attached with others.\n
+          Regards, \n
+          Campina Sign.`
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${receiverEmail} for signer ${log.id_signers}`);
 
   } catch (err) {
     console.error("Email sending error:", err.message);
     throw err;
   }
 };
-
-// export const sendEmailNotification = async (req, res) => {
-//   try {
-//     const { subjectt, messagee, id_dokumen, id_signers } = req.body;
-
-//     console.log("RECEIVED IN API:");
-//     console.log("subjectt:", subjectt);
-//     console.log("messagee:", messagee);
-//     console.log("id_dokumen:", id_dokumen);
-//     console.log("id_signers:", id_signers);
-
-//     const validLogsigns = await LogSign.findAll({
-//       where: {id_signers, id_dokumen, status:'Pending'},
-//     });
-//     console.log("validLogsigns:", validLogsigns.map(log => log.toJSON()));
-
-//     if (validLogsigns.length === 0) {
-//       return res.status(400).json({messagee: "No valid logsigns to notify."});
-//     }
-
-//     const jwtSecret = process.env.JWT_SECRET_KEY;
-//     const token = jwt.sign({ dokumenLogsign: [id_dokumen, id_signers] }, jwtSecret);
-//     const signLink = `http://localhost:3000/user/envelope?token=${token}`;
-
-//     await sendEmailNotificationInternal(validLogsigns, signLink, subjectt, messagee);
-
-//     res.status(200).json({ message: "Emails sent successfully." });
-
-//   } catch (error) {
-//     console.error("Failed to send email notification: ", error.message);
-//     res.status(500).json({ message: "Failed to send email notification." });
-//   }
-// };
 
 export const sendEmailNotification = async (req, res) => {
   try {
@@ -282,7 +251,9 @@ export const sendEmailNotification = async (req, res) => {
 
     const jwtSecret = process.env.JWT_SECRET_KEY;
 
-    const signerList = Array.isArray(id_signers) ? id_signers : [id_signers];
+    // const signerList = Array.isArray(id_signers) ? id_signers : [id_signers];
+
+    const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
 
     let emailResults = [];
 
@@ -320,8 +291,6 @@ export const sendEmailNotification = async (req, res) => {
     res.status(500).json({ message: "Failed to send email notification." });
   }
 };
-
-
 
 export const getSignLink = async (req, res) => {
   try {
