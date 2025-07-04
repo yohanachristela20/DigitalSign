@@ -7,6 +7,7 @@ import multer from "multer";
 import fs from "fs";
 import LogSign from "../models/LogSignModel.js";
 import Item from "../models/ItemModel.js";
+import Karyawan from "../models/KaryawanModel.js";
 
 
 const router = express.Router();
@@ -98,6 +99,31 @@ router.get('/pdf-document/:id_dokumen?', async (req, res) => {
     }
 });
 
+// router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
+//     const {id_dokumen, id_signers} = req.params;
+//     console.log("Id Dokumen:", id_dokumen);
+//     console.log("Id Signers:", id_signers);
+
+//     try {
+//         const response = await LogSign.findAll({
+//             where: {id_dokumen, id_signers}, 
+//             attributes: ["id_item", "id_signers"],
+//             include: [
+//                 {
+//                     model: Item,
+//                     as: "ItemField",
+//                     attributes: ["jenis_item", "x_axis", "y_axis", "width", "height"]
+//                 },
+//             ],
+//         });
+
+//         res.status(200).json(response);
+//         console.log("response:", response); 
+//     } catch (error) {
+//         console.log("error:", error.message);
+//     }
+// });
+
 router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
     const {id_dokumen, id_signers} = req.params;
     console.log("Id Dokumen:", id_dokumen);
@@ -113,12 +139,19 @@ router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
                     as: "ItemField",
                     attributes: ["jenis_item", "x_axis", "y_axis", "width", "height"]
                 },
+                {
+                    model: Karyawan, 
+                    as: "Signer",
+                    attributes: ["nama"]
+                }
             ],
         });
 
+        // const namaSigner = response.Signer.nama;
+        // console.log("Nama Signer:", response.Signer.nama);
+
         res.status(200).json(response);
         console.log("response:", response); 
-        // console.log("x_axis resp:", response.x_axis);
     } catch (error) {
         console.log("error:", error.message);
     }

@@ -329,7 +329,7 @@ function ToolbarFields ({ color, routes}) {
               onChange={(e) => setIsSidebarCollapsed(e.target.checked)}
             />
             <img
-              src={require("assets/img/company_logo4.png")}
+              src={require("assets/img/logo4.png")}
               alt="sidebar-logo"
               style={{ width: '30px' }}
               className="img-items"

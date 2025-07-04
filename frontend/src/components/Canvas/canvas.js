@@ -165,7 +165,7 @@ const PDFCanvas = ({pdfUrl}) => {
                     key={index}
                     src={imgSrc}
                     alt={`Page ${index + 1}`}
-                    style={{marginBottom: '1rem', border: '1px solid #ccc'}}
+                    style={{marginBottom: '1rem', border: '1px solid #ccc', boxShadow:"4px 4px 15px rgba(151, 151, 151, 0.5)",}}
                 />
             ))}
 

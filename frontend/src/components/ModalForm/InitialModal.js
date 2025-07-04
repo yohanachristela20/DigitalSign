@@ -1,5 +1,6 @@
 import { Badge, Button, Navbar, Nav, Container, Row, Col, Card, Table, Alert, Modal, Form } from "react-bootstrap";
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { toast } from 'react-toastify';
 import "../../assets/scss/lbd/_radiobutton.scss";
@@ -7,8 +8,99 @@ import "../../assets/scss/lbd/_radiobutton.scss";
 const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
     const [initialName, setInitialName] = useState("");
     const [selectedValue, setSelectedValue] = useState('option1');
+    const [nama, setNama] = useState([]);
+    const [id_dokumen, setIdDokumen] = useState("");
 
-    const token = localStorage.getItem("token");
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const token = queryParams.get("token");
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!token) return;
+
+            try {
+                const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+                const id_dokumen = res.data.id_dokumen;
+                setIdDokumen(id_dokumen);
+                const id_signers = res.data.id_signers;
+
+                console.log("ID Dokumen:", id_dokumen);
+                console.log("ID Signers:", id_signers);
+
+                // if (!id_dokumen) {
+                //     throw new Error("Document not found.");
+                // }
+
+                // const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
+                // if (!fileRes.ok) {
+                //     throw new Error("Failed to get PDF Document.");
+                // }
+
+                // const blob = await fileRes.blob();
+                // const url = URL.createObjectURL(blob);
+                // setPdfUrl(url);
+
+                const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${id_signers}`);
+
+                // const localSignatureFields = [];
+                // const localInitialFields = [];
+                // const localDateFields = [];
+                // const nama = field.data.nama;
+
+                const localNama = [];
+
+                field.data
+                .filter(item => item.Signer)
+                .forEach((item, idx) => {
+                    // const {x_axis, y_axis, width, height, jenis_item} = item.ItemField;
+                    const {nama} = item.Signer;
+
+                    // const fieldObj = {
+                    //     id: `field-${idx}`, 
+                    //     x_axis: x_axis, 
+                    //     y_axis: y_axis, 
+                    //     width, 
+                    //     height, 
+                    //     jenis_item, 
+                    //     pageScale: 1,
+                    //     enableResizing: false,
+                    //     disableDragging: true,
+                    // };
+
+                    const namaSigner = {
+                        nama
+                    }
+                    console.log("NamaSigner:", namaSigner);
+
+                    // if (jenis_item === "Signpad") {
+                    //     localSignatureFields.push(fieldObj);
+                    // } else if (jenis_item === "Initialpad") {
+                    //     localInitialFields.push(fieldObj);
+                    // } else if (jenis_item === "Date") {
+                    //     localDateFields.push(fieldObj);
+                    // }
+
+                    localNama.push(namaSigner);
+
+
+                });
+
+                setNama(localNama);
+                console.log("Namaa:", nama);
+
+                // setSignatures(localSignatureFields);
+                // setInitials(localInitialFields);
+                // setDateField(localDateFields);
+            } catch (error) {
+                console.error("Failed to load PDF:", error.message);
+                // setErrorMsg(error.message);
+                // toast.error("Failed to load PDF Document.");
+            } 
+        };
+
+        fetchData();
+    }, [token]);
 
     const handleRadioChange = (e) => {
         setSelectedValue(e.target.value);

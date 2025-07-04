@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import SignatureModal from 'components/ModalForm/SignatureModal.js';
 import InitialModal from "components/ModalForm/InitialModal.js";
 import "../assets/scss/lbd/_receivedoc.scss";
+import UserNavbar from "components/Navbars/UserNavbar.js";
 
 function ReceiveDocument() {
     const [pdfUrl, setPdfUrl] = useState(null);
@@ -26,6 +27,7 @@ function ReceiveDocument() {
     const [jenis_item, setJenisItem] = useState("");
     const [fields, setFields] = useState([]);
     const [id_dokumen, setIdDokumen] = useState("");
+    // const [nama, setNama] = useState("");
 
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
     const [showInitialModal, setShowInitialModal] = React.useState(false);
@@ -113,6 +115,8 @@ function ReceiveDocument() {
                 .filter(item => item.ItemField)
                 .forEach((item, idx) => {
                     const {x_axis, y_axis, width, height, jenis_item} = item.ItemField;
+                    // const {nama} = item.Signer;
+
                     const fieldObj = {
                         id: `field-${idx}`, 
                         x_axis: x_axis, 
@@ -133,9 +137,12 @@ function ReceiveDocument() {
                         localDateFields.push(fieldObj);
                     }
 
+
                 });
 
-               
+                // setNama(nama);
+                // console.log("Namaa:", nama);
+
                 setSignatures(localSignatureFields);
                 setInitials(localInitialFields);
                 setDateField(localDateFields);
@@ -152,83 +159,88 @@ function ReceiveDocument() {
     }, [token]);
 
     return (
-        <div className="center-object">
-            <div className="vertical-center">
-                <Container fluid className="mt-3 pl-0">
-                {/* <h5>Preview Document</h5> */}
-                {loading && <Spinner animation="border" variant="primary" />}
-                {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
-                {!loading && !errorMsg && pdfUrl && (
-                <>
-                    <PDFCanvas pdfUrl={pdfUrl} 
-                    />
-                    {signatures.map((sig, index) => (
-                        <>
+        <>
+            <div className="bg-receivedoc">
+            <UserNavbar />
+            <div className="center-object">
+                <div className="vertical-center">
+                    <Container fluid className="mt-3 pl-0">
+                    {/* <h5>Preview Document</h5> */}
+                    {loading && <Spinner animation="border" variant="primary" />}
+                    {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
+                    {!loading && !errorMsg && pdfUrl && (
+                    <>
+                        <PDFCanvas pdfUrl={pdfUrl} 
+                        />
+                        {signatures.map((sig, index) => (
+                            <>
+                                <Rnd
+                                    key={sig.id}
+                                    position={{ x: sig.x_axis, y: sig.y_axis }}
+                                    size={{ width: sig.height, height: sig.width }}
+                                    enableResizing={sig.enableResizing} 
+                                    disableDragging={sig.disableDragging} 
+                                    style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    backgroundColor: "rgba(25, 230, 25, 0.5)", 
+                                    }}
+                                    onClick={handleSignatureClick}
+                                >
+                                    <FaSignature style={{ width: "25%", height: "25%" }} />
+                                </Rnd>
+                                <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} />
+                        
+                            </>
+                        ))}
+
+                        {initials.map((sig, index) => (
+                            <>
                             <Rnd
                                 key={sig.id}
                                 position={{ x: sig.x_axis, y: sig.y_axis }}
                                 size={{ width: sig.height, height: sig.width }}
                                 enableResizing={sig.enableResizing} 
-                                disableDragging={sig.disableDragging} 
+                                disableDragging={sig.disableDragging}  
                                 style={{
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                backgroundColor: "rgba(25, 230, 25, 0.5)", 
+                                backgroundColor: "rgba(25, 230, 25, 0.5)",
                                 }}
-                                onClick={handleSignatureClick}
+                                onClick={handleInitialClick}
                             >
-                                <FaSignature style={{ width: "25%", height: "25%" }} />
+                                <FaFont style={{ width: "25%", height: "25%" }} />
                             </Rnd>
-                            <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} />
-                    
-                        </>
-                    ))}
+                            <InitialModal showInitialModal={showInitialModal} setShowInitialModal={setShowInitialModal} onSuccess={handleSignatureSuccess} />
+                            </>
+                        ))}
 
-                    {initials.map((sig, index) => (
-                        <>
+                        {dateField.map((sig, index) => (
                         <Rnd
                             key={sig.id}
                             position={{ x: sig.x_axis, y: sig.y_axis }}
                             size={{ width: sig.height, height: sig.width }}
-                            enableResizing={sig.enableResizing} 
-                            disableDragging={sig.disableDragging}  
+                            enableResizing={sig.enableResizing}    
+                            disableDragging={sig.disableDragging} 
                             style={{
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             backgroundColor: "rgba(25, 230, 25, 0.5)",
                             }}
-                            onClick={handleInitialClick}
                         >
-                            <FaFont style={{ width: "25%", height: "25%" }} />
+                            <FaSignature style={{ width: "25%", height: "25%" }} />
                         </Rnd>
-                        <InitialModal showInitialModal={showInitialModal} setShowInitialModal={setShowInitialModal} onSuccess={handleSignatureSuccess} />
-                        </>
-                    ))}
-
-                    {dateField.map((sig, index) => (
-                    <Rnd
-                        key={sig.id}
-                        position={{ x: sig.x_axis, y: sig.y_axis }}
-                        size={{ width: sig.height, height: sig.width }}
-                        enableResizing={sig.enableResizing}    
-                        disableDragging={sig.disableDragging} 
-                        style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: "rgba(25, 230, 25, 0.5)",
-                        }}
-                    >
-                        <FaSignature style={{ width: "25%", height: "25%" }} />
-                    </Rnd>
-                    ))}
-                </>
-                )}
-                </Container>
+                        ))}
+                    </>
+                    )}
+                    </Container>
+                </div>
             </div>
-        </div>
+            </div>
+        </>
     );
 }
 
