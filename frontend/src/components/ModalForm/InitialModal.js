@@ -104,6 +104,16 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
         option5: "Great Vibes",
     };
 
+    const handleEncode = () => {
+        try {
+        const encoded = btoa(inputText);
+        setEncodedText(encoded);
+        } catch (error) {
+        console.error("Error encoding to Base64:", error);
+        setEncodedText("Error: Could not encode text.");
+        }
+    };
+
     const updateInitialSign = async(id_dokumen, id_item, id_signers) => {
         console.log("Data dokumen:", id_dokumen, id_item, id_signers);
         const font = fontMap[selectedValue] || "Arial";
