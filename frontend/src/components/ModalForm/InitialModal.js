@@ -8,8 +8,10 @@ import "../../assets/scss/lbd/_radiobutton.scss";
 const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
     const [initialName, setInitialName] = useState("");
     const [selectedValue, setSelectedValue] = useState('option1');
-    const [nama, setNama] = useState([]);
+    const [nama, setNama] = useState("");
     const [id_dokumen, setIdDokumen] = useState("");
+    const [id_signers, setIdSigner] = useState("");
+    const [id_item, setIdItem] = useState("");
 
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
@@ -24,74 +26,23 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                 const id_dokumen = res.data.id_dokumen;
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
+                setIdSigner(id_signers);
 
                 console.log("ID Dokumen:", id_dokumen);
                 console.log("ID Signers:", id_signers);
+                const response = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${id_signers}`);
+                const data = response.data;
 
-                // if (!id_dokumen) {
-                //     throw new Error("Document not found.");
-                // }
+                if (data.length > 0 && data[0].Signerr) {
+                setNama(data[0].Signerr.nama);
+                setIdItem(data[0].id_item);
+                setIdSigner(data[0].id_signers);
+                console.log("Nama Signer:", data[0].Signerr.nama);
+                console.log("Item:", data[0].id_item);
+                console.log("Signer:", id_signers);
 
-                // const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
-                // if (!fileRes.ok) {
-                //     throw new Error("Failed to get PDF Document.");
-                // }
+            }
 
-                // const blob = await fileRes.blob();
-                // const url = URL.createObjectURL(blob);
-                // setPdfUrl(url);
-
-                const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${id_signers}`);
-
-                // const localSignatureFields = [];
-                // const localInitialFields = [];
-                // const localDateFields = [];
-                // const nama = field.data.nama;
-
-                const localNama = [];
-
-                field.data
-                .filter(item => item.Signer)
-                .forEach((item, idx) => {
-                    // const {x_axis, y_axis, width, height, jenis_item} = item.ItemField;
-                    const {nama} = item.Signer;
-
-                    // const fieldObj = {
-                    //     id: `field-${idx}`, 
-                    //     x_axis: x_axis, 
-                    //     y_axis: y_axis, 
-                    //     width, 
-                    //     height, 
-                    //     jenis_item, 
-                    //     pageScale: 1,
-                    //     enableResizing: false,
-                    //     disableDragging: true,
-                    // };
-
-                    const namaSigner = {
-                        nama
-                    }
-                    console.log("NamaSigner:", namaSigner);
-
-                    // if (jenis_item === "Signpad") {
-                    //     localSignatureFields.push(fieldObj);
-                    // } else if (jenis_item === "Initialpad") {
-                    //     localInitialFields.push(fieldObj);
-                    // } else if (jenis_item === "Date") {
-                    //     localDateFields.push(fieldObj);
-                    // }
-
-                    localNama.push(namaSigner);
-
-
-                });
-
-                setNama(localNama);
-                console.log("Namaa:", nama);
-
-                // setSignatures(localSignatureFields);
-                // setInitials(localInitialFields);
-                // setDateField(localDateFields);
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
                 // setErrorMsg(error.message);
@@ -121,6 +72,71 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
         setOrganisasi(alphabetValue);
     };
 
+    useEffect(() => {
+        if (nama) {
+            setInitialName(nama.toLowerCase());
+        }
+    }, [nama]);
+
+    const generateImageBase64 = (initialName, fontFamily = "Arial") => {
+        console.log("Initial name:", initialName);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = 200;
+        canvas.height = 100;
+
+        ctx.clearRect(0,0, canvas.width, canvas.height);
+        ctx.font = `48px '${fontFamily}', cursive`;
+        ctx.fillStyle = "black";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(initialName, canvas.width / 2, canvas.height /2);
+
+        return canvas.toDataURL("image/png");
+    };
+
+    const fontMap = {
+        option1: "Sevillana", 
+        option2: "Dancing Script", 
+        option3: "Caveat",
+        option4: "Satisfy", 
+        option5: "Great Vibes",
+    };
+
+    const updateInitialSign = async(id_dokumen, id_item, id_signers) => {
+        console.log("Data dokumen:", id_dokumen, id_item, id_signers);
+        const font = fontMap[selectedValue] || "Arial";
+        const sign_base64 = generateImageBase64(initialName, font);
+        const today = new Date();
+
+        try {
+            const response = await axios.patch(`http://localhost:5000/initialsign/${id_dokumen}/${id_item}/${id_signers}`, {
+                sign_base64,
+                status: "Completed", 
+                tgl_tt: today,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            console.log("Signer logsign updated: ", response.data);
+            
+            toast.success("InitialSign uploaded successfully.", {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: true,
+            });
+            setShowInitialModal(false);
+        } catch (error) {
+            console.error("Failed to save InitialSign", error.message);
+        };
+    }
+
+    const handleSubmit = async(e) => {
+        await updateInitialSign(id_dokumen, id_item, id_signers);
+    }
+
 
     return (
         <>
@@ -133,7 +149,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                 <h3 className="mt-2 mb-0">Make Initial</h3>
             </Modal.Header>
             <Modal.Body className="text-left pt-0 mt-2 my-3">
-                <Form onSubmit={""}>
+                <Form onSubmit={handleSubmit}>
                 <span className="text-danger required-select">(*) Required.</span>
                 <Row className="mt-3 mb-2">
                     <Col md="12">
@@ -144,7 +160,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                                 type="text"
                                 required
                                 value={initialName}
-                                lowercase
+                                defaultValue={nama.toLowerCase()}
                                 onChange={(e) => handleInitialChange(e.target.value.toLowerCase())}
                             ></Form.Control>
                         </Form.Group>
@@ -159,6 +175,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                                 value="option1"
                                 checked={selectedValue === 'option1'}
                                 onChange={handleRadioChange}
+                                style={{fontFamily: fontMap["option1"]}}
                             />
                             <Form.Check 
                                 type="radio"
@@ -168,6 +185,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                                 value="option2"
                                 checked={selectedValue === 'option2'}
                                 onChange={handleRadioChange}
+                                style={{fontFamily: fontMap["option2"]}}
                             />
                             <Form.Check 
                                 type="radio"
@@ -177,6 +195,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                                 value="option3"
                                 checked={selectedValue === 'option3'}
                                 onChange={handleRadioChange}
+                                style={{fontFamily: fontMap["option3"]}}
                             />
                             <Form.Check 
                                 type="radio"
@@ -186,6 +205,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                                 value="option4"
                                 checked={selectedValue === 'option4'}
                                 onChange={handleRadioChange}
+                                style={{fontFamily: fontMap["option4"]}}
                             />
                             <Form.Check 
                                 type="radio"
@@ -195,6 +215,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                                 value="option5"
                                 checked={selectedValue === 'option5'}
                                 onChange={handleRadioChange}
+                                style={{fontFamily: fontMap["option5"]}}
                             />
                         </Form.Group>
                     </Col>
@@ -207,6 +228,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                             className="btn-fill w-100 mt-3"
                             type="submit"
                             variant="primary"
+                            // onClick={updateInitialSign}
                             >
                             Submit
                         </Button>

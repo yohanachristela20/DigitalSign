@@ -11,7 +11,6 @@ const Karyawan = db.define('karyawan', {
     nama: DataTypes.STRING,
     job_title: DataTypes.STRING,
     organisasi: DataTypes.STRING,
-    sign_base64: DataTypes.STRING,
 }, {
     freezeTableName: true,
     timestamps: true,

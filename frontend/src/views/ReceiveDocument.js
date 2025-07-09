@@ -15,6 +15,9 @@ import SignatureModal from 'components/ModalForm/SignatureModal.js';
 import InitialModal from "components/ModalForm/InitialModal.js";
 import "../assets/scss/lbd/_receivedoc.scss";
 import UserNavbar from "components/Navbars/UserNavbar.js";
+// import { converBase64ToImage } from "convert-base64-to-image";
+// import fs from "fs";
+
 
 function ReceiveDocument() {
     const [pdfUrl, setPdfUrl] = useState(null);
@@ -27,11 +30,12 @@ function ReceiveDocument() {
     const [jenis_item, setJenisItem] = useState("");
     const [fields, setFields] = useState([]);
     const [id_dokumen, setIdDokumen] = useState("");
+    const [id_signers, setIdSigner] = useState("");
+    const [sign_base64, setSignBase64] = useState("");
     // const [nama, setNama] = useState("");
 
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
     const [showInitialModal, setShowInitialModal] = React.useState(false);
-    
     
     // const signatureFields = [];
     // const initialFields = [];
@@ -45,6 +49,7 @@ function ReceiveDocument() {
 
     const [signClicked, setSignClicked] = useState(false);
     const [initClicked, setInitClicked] = useState(false);
+    const [nameSigner, setNameSigner] = useState("");
     
     
     const location = useLocation();
@@ -79,6 +84,25 @@ function ReceiveDocument() {
     });
     };
 
+    useEffect(() => {
+        const fetchInitials = async() => {
+            if (!id_dokumen || !id_signers) return;
+            try {
+                const res = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${id_signers}`);
+                console.log("Initialsign:", res.data[0].sign_base64);
+                console.log("Initialsign base64:", res.data[0].sign_base64.slice(0, 100)); 
+                setNameSigner(res.data[0].sign_base64);
+            } catch (error) {
+                console.error("Failed to fetch initialsign", error.message);
+            }
+        };
+
+        fetchInitials(); 
+    }, [id_dokumen, id_signers]);
+
+    // console.log("Name Signer:", nameSigner);
+
+
      useEffect(() => {
         const fetchData = async () => {
             if (!token) return;
@@ -88,6 +112,7 @@ function ReceiveDocument() {
                 const id_dokumen = res.data.id_dokumen;
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
+                setIdSigner(id_signers);
 
                 // setIdSigner(id_signers);
                 // console.log("Id Signer:", idSigner);
@@ -136,8 +161,6 @@ function ReceiveDocument() {
                     } else if (jenis_item === "Date") {
                         localDateFields.push(fieldObj);
                     }
-
-
                 });
 
                 // setNama(nama);
@@ -157,6 +180,7 @@ function ReceiveDocument() {
 
         fetchData();
     }, [token]);
+
 
     return (
         <>
@@ -195,7 +219,7 @@ function ReceiveDocument() {
                             </>
                         ))}
 
-                        {initials.map((sig, index) => (
+                        {/* {initials.map((sig, index) => (
                             <>
                             <Rnd
                                 key={sig.id}
@@ -215,7 +239,84 @@ function ReceiveDocument() {
                             </Rnd>
                             <InitialModal showInitialModal={showInitialModal} setShowInitialModal={setShowInitialModal} onSuccess={handleSignatureSuccess} />
                             </>
+                        ))} */}
+
+                        {/* {initials.map((sig, index) => (
+                            <React.Fragment key={index}>
+                            <Rnd
+                                key={sig.id}
+                                position={{ x: sig.x_axis, y: sig.y_axis }}
+                                size={{ width: sig.height, height: sig.width }}
+                                enableResizing={sig.enableResizing} 
+                                disableDragging={sig.disableDragging}  
+                                style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "transparent",
+                                }}
+                                onClick={handleInitialClick}
+                            >
+                                {sig.sign_base64 && sig.sign_base64.startsWith("data:image") ? (
+                                    <img 
+                                    src={sig.sign_base64.trim()}
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "/fallback.png";
+                                    }}
+                                    alt="Initial"
+                                    style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }}
+                                    />
+                                ) : (
+                                    <span style={{ fontSize: "12px", color: "#ccc" }}>No image</span>
+                                )}
+                            </Rnd>
+                            <InitialModal showInitialModal={showInitialModal} setShowInitialModal={setShowInitialModal} onSuccess={handleSignatureSuccess} />
+                            </React.Fragment>
+                        ))} */}
+
+                        
+                        {initials.map((sig, index) => (
+                            console.log("Sign base64:", nameSigner),
+                            <React.Fragment key={index}>
+                            <Rnd
+                                key={sig.id}
+                                position={{ x: sig.x_axis, y: sig.y_axis }}
+                                size={{ width: sig.height, height: sig.width }} 
+                                enableResizing={sig.enableResizing}
+                                disableDragging={sig.disableDragging}
+                                style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "transparent",
+                                }}
+                                onClick={handleInitialClick}
+                            >
+                                <img
+                                    src={nameSigner} 
+                                    
+                                    alt="Initial"
+                                    style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "contain",
+                                    }}
+                                    onError={(e) => {
+                                        console.error("Image error", e);
+                                        e.target.src = "/fallback.png"; 
+                                    }}
+
+                                />
+                            </Rnd>
+                            </React.Fragment>
                         ))}
+
+                        <InitialModal
+                            showInitialModal={showInitialModal}
+                            setShowInitialModal={setShowInitialModal}
+                            onSuccess={handleSignatureSuccess}
+                        /> 
 
                         {dateField.map((sig, index) => (
                         <Rnd

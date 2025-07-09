@@ -141,19 +141,37 @@ router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
                 },
                 {
                     model: Karyawan, 
-                    as: "Signer",
+                    as: "Signerr",
                     attributes: ["nama"]
                 }
             ],
         });
 
-        // const namaSigner = response.Signer.nama;
-        // console.log("Nama Signer:", response.Signer.nama);
+        const namaSigner = response[0]?.Signerr?.nama || null;
+        console.log("Nama Signer:", namaSigner);
 
         res.status(200).json(response);
         console.log("response:", response); 
     } catch (error) {
         console.log("error:", error.message);
+    }
+});
+
+router.get('/initials/:id_dokumen/:id_signers', async(req, res) => {
+    const {id_dokumen, id_signers} = req.params;
+    console.log("Id Dokumen:", id_dokumen);
+    console.log("Id Signers:", id_signers);
+
+    try {
+        const response = await LogSign.findAll({
+            where: {id_dokumen, id_signers},
+            attributes: ["sign_base64", "status", "id_item"],
+        }); 
+
+        res.status(200).json(response);
+        console.log("Response:", response);
+    } catch (error) {
+        console.error("Failed to get imgBase64", error.message);
     }
 });
 

@@ -17,7 +17,8 @@ import {getDocument,
         deleteLogsign, 
         updateReminder,
         sendEmailNotification,
-        getSignLink
+        getSignLink,
+        updateInitialSign
         // deleteSigner
 } from "../controllers/DocumentController.js"; 
 
@@ -62,6 +63,8 @@ router.delete('/logsign/:id_dokumen/:id_item/:id_signers', deleteLogsign);
 router.patch('/update-reminder/:id_dokumen', updateReminder);
 router.post('/send-email', sendEmailNotification);
 router.get("/logsign-link/:id_dokumen", getSignLink);
+
+router.patch('/initialsign/:id_dokumen/:id_item/:id_signers', updateInitialSign);
 
 
 export default router;
