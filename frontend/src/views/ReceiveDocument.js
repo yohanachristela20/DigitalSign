@@ -32,6 +32,7 @@ function ReceiveDocument() {
     const [id_dokumen, setIdDokumen] = useState("");
     const [id_signers, setIdSigner] = useState("");
     const [sign_base64, setSignBase64] = useState("");
+    const [status, setStatus] = useState("");
     // const [nama, setNama] = useState("");
 
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
@@ -92,6 +93,9 @@ function ReceiveDocument() {
                 console.log("Initialsign:", res.data[0].sign_base64);
                 console.log("Initialsign base64:", res.data[0].sign_base64.slice(0, 100)); 
                 setNameSigner(res.data[0].sign_base64);
+                setStatus(res.data[0].status);
+
+                console.log("Status:", res.data[0].status);
             } catch (error) {
                 console.error("Failed to fetch initialsign", error.message);
             }
@@ -219,6 +223,8 @@ function ReceiveDocument() {
                             </>
                         ))}
 
+                        
+
                         {/* {initials.map((sig, index) => (
                             <>
                             <Rnd
@@ -241,43 +247,11 @@ function ReceiveDocument() {
                             </>
                         ))} */}
 
-                        {/* {initials.map((sig, index) => (
-                            <React.Fragment key={index}>
-                            <Rnd
-                                key={sig.id}
-                                position={{ x: sig.x_axis, y: sig.y_axis }}
-                                size={{ width: sig.height, height: sig.width }}
-                                enableResizing={sig.enableResizing} 
-                                disableDragging={sig.disableDragging}  
-                                style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "transparent",
-                                }}
-                                onClick={handleInitialClick}
-                            >
-                                {sig.sign_base64 && sig.sign_base64.startsWith("data:image") ? (
-                                    <img 
-                                    src={sig.sign_base64.trim()}
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = "/fallback.png";
-                                    }}
-                                    alt="Initial"
-                                    style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }}
-                                    />
-                                ) : (
-                                    <span style={{ fontSize: "12px", color: "#ccc" }}>No image</span>
-                                )}
-                            </Rnd>
-                            <InitialModal showInitialModal={showInitialModal} setShowInitialModal={setShowInitialModal} onSuccess={handleSignatureSuccess} />
-                            </React.Fragment>
-                        ))} */}
-
                         
                         {initials.map((sig, index) => (
-                            console.log("Sign base64:", nameSigner),
+                           <>
+                           {status === "Completed" ? (
+                             console.log("Sign base64:", nameSigner),
                             <React.Fragment key={index}>
                             <Rnd
                                 key={sig.id}
@@ -291,7 +265,7 @@ function ReceiveDocument() {
                                 justifyContent: "center",
                                 backgroundColor: "transparent",
                                 }}
-                                onClick={handleInitialClick}
+                                // onClick={handleInitialClick}
                             >
                                 <img
                                     src={nameSigner} 
@@ -310,6 +284,25 @@ function ReceiveDocument() {
                                 />
                             </Rnd>
                             </React.Fragment>
+                           ): (
+                                <Rnd
+                                key={sig.id}
+                                position={{ x: sig.x_axis, y: sig.y_axis }}
+                                size={{ width: sig.height, height: sig.width }}
+                                enableResizing={sig.enableResizing} 
+                                disableDragging={sig.disableDragging}  
+                                style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "rgba(25, 230, 25, 0.5)",
+                                }}
+                                onClick={handleInitialClick}
+                                >
+                                <FaFont style={{ width: "25%", height: "25%" }} />
+                                </Rnd>
+                           )}
+                           </>
                         ))}
 
                         <InitialModal

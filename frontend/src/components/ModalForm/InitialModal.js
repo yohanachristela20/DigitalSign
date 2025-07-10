@@ -1,9 +1,11 @@
 import { Badge, Button, Navbar, Nav, Container, Row, Col, Card, Table, Alert, Modal, Form } from "react-bootstrap";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { toast } from 'react-toastify';
 import "../../assets/scss/lbd/_radiobutton.scss";
+import html2canvas from "html2canvas";
+import { SketchPicker } from "react-color";
 
 const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
     const [initialName, setInitialName] = useState("");
@@ -12,6 +14,13 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
     const [id_dokumen, setIdDokumen] = useState("");
     const [id_signers, setIdSigner] = useState("");
     const [id_item, setIdItem] = useState("");
+    const [fontColor, setFontColor] = useState("#000000");
+    const [width, setWidth] = useState("");
+    const [height, setHeight] = useState("");
+    const [fontSize, setFontSize] = useState(24);
+
+
+    const previewRef = useRef(null);
 
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
@@ -34,14 +43,25 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                 const data = response.data;
 
                 if (data.length > 0 && data[0].Signerr) {
-                setNama(data[0].Signerr.nama);
-                setIdItem(data[0].id_item);
-                setIdSigner(data[0].id_signers);
-                console.log("Nama Signer:", data[0].Signerr.nama);
-                console.log("Item:", data[0].id_item);
-                console.log("Signer:", id_signers);
+                    setNama(data[0].Signerr.nama);
+                    setIdItem(data[0].id_item);
+                    setIdSigner(data[0].id_signers);
+                    console.log("Nama Signer:", data[0].Signerr.nama);
+                    console.log("Item:", data[0].id_item);
+                    console.log("Signer:", id_signers);
+                }
 
-            }
+                data.filter(item => item.ItemField)
+                .forEach((item, idx) => {
+                    const {width, height} = item.ItemField;
+
+                    setWidth(height);
+                    setHeight(width)
+
+                    console.log("Widthhhh:", width);
+                    console.log("Height: ", height);
+
+                });
 
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
@@ -78,23 +98,53 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
         }
     }, [nama]);
 
-    const generateImageBase64 = (initialName, fontFamily = "Arial") => {
-        console.log("Initial name:", initialName);
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+    // const generateImageBase64 = (initialName, fontFamily = "Arial") => {
+    //     console.log("Initial name:", initialName);
+    //     const canvas = document.createElement("canvas");
+    //     const ctx = canvas.getContext("2d");
 
-        canvas.width = 200;
-        canvas.height = 100;
+    //     canvas.width = 200;
+    //     canvas.height = 100;
 
-        ctx.clearRect(0,0, canvas.width, canvas.height);
-        ctx.font = `48px '${fontFamily}', cursive`;
-        ctx.fillStyle = "black";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(initialName, canvas.width / 2, canvas.height /2);
+    //     ctx.clearRect(0,0, canvas.width, canvas.height);
+    //     ctx.font = `48px '${fontFamily}', cursive`;
+    //     ctx.fillStyle = "black";
+    //     ctx.textAlign = "center";
+    //     ctx.textBaseline = "middle";
+    //     ctx.fillText(initialName, canvas.width / 2, canvas.height /2);
 
-        return canvas.toDataURL("image/png");
+    //     return canvas.toDataURL("image/png");
+    // };
+
+    const generateImageBase64 = (text, fontFamily = "Arial") => {
+        return new Promise((resolve, reject) => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            
+            canvas.width = width;
+            canvas.height = height;
+
+            const estimatedFontSize = Math.min(canvas.width / text.length * 1.5, canvas.height * 0.6);
+
+            const fontLoad = `${estimatedFontSize}px ${fontFamily}`;
+
+            document.fonts.load(fontLoad).then(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = fontLoad;
+                ctx.fillStyle = "black";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+                const dataURL = canvas.toDataURL("image/png");
+                resolve(dataURL);
+            }).catch(err => {
+                console.error("Font failed to load:", err);
+                reject("Font failed to load");
+            });
+        });
     };
+
 
     const fontMap = {
         option1: "Sevillana", 
@@ -114,15 +164,33 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
         }
     };
 
-    const updateInitialSign = async(id_dokumen, id_item, id_signers) => {
-        console.log("Data dokumen:", id_dokumen, id_item, id_signers);
-        const font = fontMap[selectedValue] || "Arial";
-        const sign_base64 = generateImageBase64(initialName, font);
-        const today = new Date();
+    const generateImage = async () => {
+        if (!previewRef.current) return null;
+
+        const canvas = await html2canvas(previewRef.current, {
+            backgroundColor: null, 
+            useCORS: true,         
+        });
+
+        return canvas.toDataURL("image/png");
+    };
+
+    const updateInitialSign = async (id_dokumen, id_item, id_signers) => {
+    console.log("Data dokumen:", id_dokumen, id_item, id_signers);
+    const font = fontMap[selectedValue] || "Arial";
+    const today = new Date();
 
         try {
+            const sign_base64 = await generateImageBase64(initialName, font);
+            console.log("Hasil Base64:", sign_base64?.substring(0, 100));
+
+            if (!sign_base64) {
+                toast.error("Gagal membuat tanda tangan (canvas kosong).");
+                return;
+            }
+
             const response = await axios.patch(`http://localhost:5000/initialsign/${id_dokumen}/${id_item}/${id_signers}`, {
-                sign_base64,
+                sign_base64: sign_base64,
                 status: "Completed", 
                 tgl_tt: today,
             }, {
@@ -130,8 +198,8 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                     Authorization: `Bearer ${token}`,
                 },
             });
+
             console.log("Signer logsign updated: ", response.data);
-            
             toast.success("InitialSign uploaded successfully.", {
                 position: "top-right",
                 autoClose: 5000,
@@ -140,13 +208,22 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
             setShowInitialModal(false);
         } catch (error) {
             console.error("Failed to save InitialSign", error.message);
-        };
-    }
+        }
+    };
+
+    useEffect(() => {
+        generateImage().then(img => {
+            if (img) {
+                console.log("Preview base64:", img);
+            }
+        });
+    }, [initialName, selectedValue, fontColor, fontSize]);
+
 
     const handleSubmit = async(e) => {
+        e.preventDefault();
         await updateInitialSign(id_dokumen, id_item, id_signers);
     }
-
 
     return (
         <>
@@ -238,7 +315,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                             className="btn-fill w-100 mt-3"
                             type="submit"
                             variant="primary"
-                            // onClick={updateInitialSign}
+                            // onClick={generateImage}
                             >
                             Submit
                         </Button>
@@ -246,6 +323,26 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
                 </Col>
                 </Row>
                 </Form>
+
+                {/* <div
+                    ref={previewRef}
+                    style={{
+                    display: "inline-block",
+                    border: "1px solid #C7C7C7",
+                    background: "#E4E3E3",
+                    width: width + "px",
+                    height: height + "px",
+                    fontSize,
+                    color: fontColor,
+                    textAlign: "center",
+                    lineHeight: height + "px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    fontFamily: fontMap[selectedValue] || "Arial",
+                    }}
+                >
+                    {initialName}
+                </div> */}
             </Modal.Body>
             
             </Modal>
