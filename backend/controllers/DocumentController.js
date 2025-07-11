@@ -407,9 +407,6 @@ export const updateInitialSign = async(req, res) => {
 
     await logsign.update(
       {sign_base64, status, tgl_tt}, 
-      // {
-      // where: {id_dokumen, id_item, id_signers},
-      // }
     );
 
     res.status(200).json({msg: "InitialSign saved successful in Logsign."});
