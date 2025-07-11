@@ -56,7 +56,7 @@ const ImportAntreanPengajuan = ({showImportModal, setShowImportModal, onSuccess}
   
       try {
         const csvContent = [header]
-          .map((row) => (Array.isArray(row) ? row.join(",") : "")) // Validasi array sebelum join
+          .map((row) => (Array.isArray(row) ? row.join(",") : "")) 
           .join("\n");
     
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });

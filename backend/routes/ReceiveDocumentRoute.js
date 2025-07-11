@@ -39,6 +39,39 @@ const router = express.Router();
 //     }
 // });
 
+
+//last
+// router.get('/receive-document', async(req, res, next) => {
+//     const token = req.query.token;
+//     const jwtSecret = process.env.JWT_SECRET_KEY;
+
+//     if (!token) {
+//         return res.status(401).json({message: 'Token is required!'});
+//     }
+
+//     try {
+//         const decoded = jwt.verify(token, jwtSecret);
+//         console.log("Decoded token(receive document):", decoded);
+
+//         const dokumenLogsign = decoded.dokumenLogsign?.[0];
+//         console.log("Dokumen logsign:", dokumenLogsign);
+
+//         const idSignerLogsign = decoded.dokumenLogsign?.[1];
+//         console.log("Id signer logsign:", idSignerLogsign);
+
+//         // if (Array.isArray(idSignerLogsign)) {
+//         //     return res.status(400).json({ message: "Invalid token format: id_signers must be a single value." });
+//         // }
+
+//         // const idSignerLogsign = Array.isArray(signerList) ? signerList[1] : signerList;
+//         // console.log("idSignerLogsign:", idSignerLogsign);
+
+//         res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign});
+//     } catch (error) {
+//         return res.status(403).json({message: 'Invalid or expired token'});
+//     }
+// });
+
 router.get('/receive-document', async(req, res, next) => {
     const token = req.query.token;
     const jwtSecret = process.env.JWT_SECRET_KEY;
@@ -51,24 +84,18 @@ router.get('/receive-document', async(req, res, next) => {
         const decoded = jwt.verify(token, jwtSecret);
         console.log("Decoded token(receive document):", decoded);
 
-        const dokumenLogsign = decoded.dokumenLogsign?.[0];
+        const dokumenLogsign = decoded.dokumenLogsign?.id_dokumen;
         console.log("Dokumen logsign:", dokumenLogsign);
 
-        const idSignerLogsign = decoded.dokumenLogsign?.[1];
+        const idSignerLogsign = decoded.dokumenLogsign?.id_signers;
         console.log("Id signer logsign:", idSignerLogsign);
-
-        // if (Array.isArray(idSignerLogsign)) {
-        //     return res.status(400).json({ message: "Invalid token format: id_signers must be a single value." });
-        // }
-
-        // const idSignerLogsign = Array.isArray(signerList) ? signerList[1] : signerList;
-        // console.log("idSignerLogsign:", idSignerLogsign);
 
         res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign});
     } catch (error) {
         return res.status(403).json({message: 'Invalid or expired token'});
     }
 });
+
 
 router.get('/pdf-document/:id_dokumen?', async (req, res) => {
     try {
@@ -137,7 +164,7 @@ router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
                 {
                     model: Item,
                     as: "ItemField",
-                    attributes: ["jenis_item", "x_axis", "y_axis", "width", "height"]
+                    attributes: ["jenis_item", "x_axis", "y_axis", "width", "height", "id_item"]
                 },
                 {
                     model: Karyawan, 
@@ -159,17 +186,26 @@ router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
 
 router.get('/initials/:id_dokumen/:id_signers', async(req, res) => {
     const {id_dokumen, id_signers} = req.params;
+    const idSignerList = id_signers.split(',');
+
     console.log("Id Dokumen:", id_dokumen);
-    console.log("Id Signers:", id_signers);
+    console.log("Id Signers:", idSignerList);
 
     try {
         const response = await LogSign.findAll({
-            where: {id_dokumen, id_signers},
-            attributes: ["sign_base64", "status", "id_item"],
+            where: {id_dokumen, id_signers: idSignerList},
+            attributes: ["sign_base64", "status", "id_item", "id_signers"],
+            include: [
+                {
+                    model: Karyawan,
+                    as: "Signerr",
+                    attributes: ["nama"],
+                }
+            ]
         }); 
-
-        res.status(200).json(response);
         console.log("Response:", response);
+        res.status(200).json(response);
+        
     } catch (error) {
         console.error("Failed to get imgBase64", error.message);
     }

@@ -7,10 +7,10 @@ import "../../assets/scss/lbd/_radiobutton.scss";
 import html2canvas from "html2canvas";
 import { SketchPicker } from "react-color";
 
-const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
+const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selectedIdItem}) => {
     const [initialName, setInitialName] = useState("");
     const [selectedValue, setSelectedValue] = useState('option1');
-    const [nama, setNama] = useState("");
+    const [nama, setNama] = useState([]);
     const [id_dokumen, setIdDokumen] = useState("");
     const [id_signers, setIdSigner] = useState("");
     const [id_item, setIdItem] = useState("");
@@ -18,6 +18,9 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
     const [width, setWidth] = useState("");
     const [height, setHeight] = useState("");
     const [fontSize, setFontSize] = useState(24);
+    const [signerData, setSignerData] = useState([]);
+    const [activeIdItem, setActiveIdItem] = useState(null);
+
 
 
     const previewRef = useRef(null);
@@ -25,6 +28,63 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
+
+    // useEffect(() => {
+    //     const fetchData = async () => {
+    //         if (!token) return;
+
+    //         try {
+    //             const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+    //             const id_dokumen = res.data.id_dokumen;
+    //             setIdDokumen(id_dokumen);
+    //             const id_signers = res.data.id_signers;
+    //             setIdSigner(id_signers);
+
+    //             console.log("ID Dokumen:", id_dokumen);
+    //             console.log("ID Signers:", id_signers);
+
+    //             const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+    //             const namaArray = [];
+
+    //             for (const signer of signerArray) {
+    //                 const response = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`);
+    //                 const data = response.data;
+
+    //                 if (data.length > 0 && data[0].Signerr) {
+    //                     // setNama(data[0].Signerr.nama);
+    //                     namaArray.push(data[0].Signerr.nama);
+
+
+    //                     setIdItem(data[0].id_item);
+    //                     setIdSigner(data[0].id_signers);
+    //                     // console.log("Nama Signer:", data[0].Signerr.nama);
+    //                     console.log("Item:", data[0].id_item);
+    //                     console.log("Signer:", id_signers);
+    //                 }
+
+    //                 data.filter(item => item.ItemField)
+    //                 .forEach((item, idx) => {
+    //                     const {width, height} = item.ItemField;
+
+    //                     setWidth(height);
+    //                     setHeight(width)
+
+    //                     console.log("Widthhhh:", width);
+    //                     console.log("Height: ", height);
+
+    //                 });
+    //             }
+    //             setNama(namaArray);
+    //             console.log("Nama array:", nama)
+    //         } catch (error) {
+    //             console.error("Failed to load PDF:", error.message);
+    //             // setErrorMsg(error.message);
+    //             // toast.error("Failed to load PDF Document.");
+    //         } 
+    //     };
+
+    //     fetchData();
+    // }, [token]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -39,30 +99,34 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
 
                 console.log("ID Dokumen:", id_dokumen);
                 console.log("ID Signers:", id_signers);
-                const response = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${id_signers}`);
-                const data = response.data;
 
-                if (data.length > 0 && data[0].Signerr) {
-                    setNama(data[0].Signerr.nama);
-                    setIdItem(data[0].id_item);
-                    setIdSigner(data[0].id_signers);
-                    console.log("Nama Signer:", data[0].Signerr.nama);
-                    console.log("Item:", data[0].id_item);
-                    console.log("Signer:", id_signers);
+                const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+                
+                const allSignerData = [];
+
+                for (const signer of signerArray) {
+                    const response = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`);
+                    const data = response.data;
+
+                    if (data.length > 0 && data[0].Signerr) {
+                        // setNama(data[0].Signerr.nama);
+                        allSignerData.push({
+                            id_item: data[0].id_item,
+                            id_signers: data[0].id_signers, 
+                            nama: data[0].Signerr.nama.toLowerCase(),
+                        });
+
+                        data.filter(item => item.ItemField).forEach((item) => {
+                            const {width, height} = item.ItemField;
+                            setWidth(height);
+                            setHeight(width);
+                        });
+                    }
                 }
-
-                data.filter(item => item.ItemField)
-                .forEach((item, idx) => {
-                    const {width, height} = item.ItemField;
-
-                    setWidth(height);
-                    setHeight(width)
-
-                    console.log("Widthhhh:", width);
-                    console.log("Height: ", height);
-
-                });
-
+                setSignerData(allSignerData);
+                // if (allSignerData.length > 0) {
+                //     setIdItem(allSignerData[0].id_item);
+                // }
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
                 // setErrorMsg(error.message);
@@ -73,13 +137,23 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
         fetchData();
     }, [token]);
 
-    const handleRadioChange = (e) => {
-        setSelectedValue(e.target.value);
+    const handleRadioChange = (id_item, selectedValue) => {
+        const updated = signerData.map((item) =>
+            item.id_item === id_item ? { ...item, selectedValue } : item
+        );
+        setSignerData(updated);
     }
 
-    const handleInitialChange = (value) => {
-        const alphabetValue = value.replace(/[^a-zA-Z\s]/g, "");
-        setInitialName(alphabetValue);
+    // const handleInitialChange = (value) => {
+    //     const alphabetValue = value.replace(/[^a-zA-Z\s]/g, "");
+    //     setInitialName(alphabetValue);
+    // };
+
+    const handleInitialChange = (id_item, value) => {
+        const updated = signerData.map((item) =>
+            item.id_item === id_item ? { ...item, nama: value } : item
+        );
+        setSignerData(updated);
     };
 
     const handleJobChange = (value) => {
@@ -92,11 +166,19 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
         setOrganisasi(alphabetValue);
     };
 
+    // useEffect(() => {
+    //     if (nama) {
+    //         setInitialName(nama);
+    //     }
+    // }, [nama]);
+
     useEffect(() => {
-        if (nama) {
-            setInitialName(nama.toLowerCase());
+        if (!id_item || signerData.length === 0) return;
+        const found = signerData.find(s => s.id_item === id_item);
+        if (found) {
+            setInitialName(found.nama);
         }
-    }, [nama]);
+    }, [id_item, signerData]);
 
     // const generateImageBase64 = (initialName, fontFamily = "Arial") => {
     //     console.log("Initial name:", initialName);
@@ -223,129 +305,79 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess}) => {
     const handleSubmit = async(e) => {
         e.preventDefault();
         await updateInitialSign(id_dokumen, id_item, id_signers);
+        window.location.reload();
+    }
+
+    const handleCloseModal = () => {
+        setShowInitialModal(false);
     }
 
     return (
         <>
-            <Modal
-            className="modal-primary"
-            show={showInitialModal}
-            onHide={() => setShowInitialModal(false)}
-            >
-            <Modal.Header className="text-center">
-                <h3 className="mt-2 mb-0">Make Initial</h3>
-            </Modal.Header>
-            <Modal.Body className="text-left pt-0 mt-2 my-3">
-                <Form onSubmit={handleSubmit}>
-                <span className="text-danger required-select">(*) Required.</span>
-                <Row className="mt-3 mb-2">
-                    <Col md="12">
-                        <Form.Group>
-                        <span className="text-danger">*</span>
-                            <label>Initials</label>
-                            <Form.Control
-                                type="text"
-                                required
-                                value={initialName}
-                                defaultValue={nama.toLowerCase()}
-                                onChange={(e) => handleInitialChange(e.target.value.toLowerCase())}
-                            ></Form.Control>
-                        </Form.Group>
-                    </Col>
-                    <Col md="12">
-                        <Form.Group>
-                            <Form.Check 
-                                type="radio"
-                                id={1}
-                                label={initialName.toLowerCase()}
-                                className="mt-3 radio-label1"
-                                value="option1"
-                                checked={selectedValue === 'option1'}
-                                onChange={handleRadioChange}
-                                style={{fontFamily: fontMap["option1"]}}
-                            />
-                            <Form.Check 
-                                type="radio"
-                                id={2}
-                                label={initialName.toLowerCase()}
-                                className="mt-3 radio-label2"
-                                value="option2"
-                                checked={selectedValue === 'option2'}
-                                onChange={handleRadioChange}
-                                style={{fontFamily: fontMap["option2"]}}
-                            />
-                            <Form.Check 
-                                type="radio"
-                                id={3}
-                                label={initialName.toLowerCase()}
-                                className="mt-3 radio-label3"
-                                value="option3"
-                                checked={selectedValue === 'option3'}
-                                onChange={handleRadioChange}
-                                style={{fontFamily: fontMap["option3"]}}
-                            />
-                            <Form.Check 
-                                type="radio"
-                                id={4}
-                                label={initialName.toLowerCase()}
-                                className="mt-3 radio-label4"
-                                value="option4"
-                                checked={selectedValue === 'option4'}
-                                onChange={handleRadioChange}
-                                style={{fontFamily: fontMap["option4"]}}
-                            />
-                            <Form.Check 
-                                type="radio"
-                                id={5}
-                                label={initialName.toLowerCase()}
-                                className="mt-3 radio-label5"
-                                value="option5"
-                                checked={selectedValue === 'option5'}
-                                onChange={handleRadioChange}
-                                style={{fontFamily: fontMap["option5"]}}
-                            />
-                        </Form.Group>
-                    </Col>
-                </Row>
-               
-                <Row>
-                <Col md="12">
-                    <div className="d-flex flex-column">
-                        <Button
-                            className="btn-fill w-100 mt-3"
-                            type="submit"
-                            variant="primary"
-                            // onClick={generateImage}
-                            >
-                            Submit
-                        </Button>
-                    </div>
-                </Col>
-                </Row>
-                </Form>
-
-                {/* <div
-                    ref={previewRef}
-                    style={{
-                    display: "inline-block",
-                    border: "1px solid #C7C7C7",
-                    background: "#E4E3E3",
-                    width: width + "px",
-                    height: height + "px",
-                    fontSize,
-                    color: fontColor,
-                    textAlign: "center",
-                    lineHeight: height + "px",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    fontFamily: fontMap[selectedValue] || "Arial",
-                    }}
-                >
-                    {initialName}
-                </div> */}
-            </Modal.Body>
-            
-            </Modal>
+            {signerData
+                .filter((signer) => signer.id_item === selectedIdItem) 
+                .map((signer) => (
+                    <Modal
+                    key={signer.id_item}
+                    show={showInitialModal}
+                    onHide={() => handleCloseModal(signer.id_item)}
+                    backdrop="static"
+                    keyboard={false}
+                    >
+                    <Modal.Header closeButton>
+                        <Modal.Title>Make Initial</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className="text-left pt-0 mt-2 my-3">
+                        <Form onSubmit={(e) => handleSubmit(e, signer)}>
+                            <span className="text-danger required-select">(*) Required.</span>
+                            <Row className="mt-3 mb-2">
+                                <Col md="12">
+                                    <Form.Group>
+                                    <span className="text-danger">*</span>
+                                    <label>Initials</label>
+                                    <Form.Control
+                                        type="text"
+                                        required
+                                        value={signer.nama}
+                                        onChange={(e) =>
+                                        handleInitialChange(signer.id_item, e.target.value.toLowerCase())
+                                        }
+                                    />
+                                    </Form.Group>
+                                </Col>
+                                <Col md="12">
+                                    <Form.Group>
+                                    {[1, 2, 3, 4, 5].map((val) => (
+                                        <Form.Check
+                                        key={val}
+                                        type="radio"
+                                        id={`${signer.id_item}-option${val}`}
+                                        label={signer.nama}
+                                        className={`mt-3 radio-label${val}`}
+                                        value={`option${val}`}
+                                        checked={signer.selectedValue === `option${val}`}
+                                        onChange={(e) =>
+                                            handleRadioChange(signer.id_item, e.target.value)
+                                        }
+                                        style={{ fontFamily: fontMap[`option${val}`] }}
+                                        />
+                                    ))}
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+                            <Row>
+                            <Col md="12">
+                                <div className="d-flex flex-column">
+                                <Button className="btn-fill w-100 mt-3" type="submit" variant="primary">
+                                    Submit
+                                </Button>
+                                </div>
+                            </Col>
+                            </Row>
+                        </Form>
+                    </Modal.Body>
+                    </Modal>
+                ))}
         </>
     )
 }

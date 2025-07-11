@@ -239,6 +239,61 @@ const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, 
   }
 };
 
+//last (2 signers, 2 token)
+// export const sendEmailNotification = async (req, res) => {
+//   try {
+//     const { subjectt, messagee, id_dokumen, id_signers } = req.body;
+
+//     console.log("RECEIVED IN API:");
+//     console.log("subjectt:", subjectt);
+//     console.log("messagee:", messagee);
+//     console.log("id_dokumen:", id_dokumen);
+//     console.log("id_signers:", id_signers);
+
+//     const jwtSecret = process.env.JWT_SECRET_KEY;
+
+//     // const signerList = Array.isArray(id_signers) ? id_signers : [id_signers];
+
+//     const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
+
+//     let emailResults = [];
+
+//     for (const signer of signerList) {
+//       const validLogsigns = await LogSign.findAll({
+//         where: {
+//           id_signers: signer,
+//           id_dokumen,
+//           status: 'Pending',
+//         },
+//       });
+
+//       console.log(`Valid logsigns for ${signer}:`, validLogsigns.map(log => log.toJSON()));
+
+//       if (validLogsigns.length === 0) {
+//         emailResults.push({ signer, message: 'No valid logsigns to notify.' });
+//         continue;
+//       }
+
+//       const token = jwt.sign({ dokumenLogsign: [id_dokumen, signer] }, jwtSecret);
+//       const signLink = `http://localhost:3000/user/envelope?token=${token}`;
+
+//       await sendEmailNotificationInternal(validLogsigns, signLink, subjectt, messagee);
+
+//       emailResults.push({ signer, message: 'Email sent.' });
+//     }
+
+//     res.status(200).json({
+//       message: 'Emails processed.',
+//       results: emailResults,
+//     });
+
+//   } catch (error) {
+//     console.error("Failed to send email notification:", error.message);
+//     res.status(500).json({ message: "Failed to send email notification." });
+//   }
+// };
+
+// 1 token, 2 signers
 export const sendEmailNotification = async (req, res) => {
   try {
     const { subjectt, messagee, id_dokumen, id_signers } = req.body;
@@ -254,6 +309,9 @@ export const sendEmailNotification = async (req, res) => {
     // const signerList = Array.isArray(id_signers) ? id_signers : [id_signers];
 
     const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
+
+    const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList}}, jwtSecret);
+    const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
     let emailResults = [];
 
@@ -273,11 +331,10 @@ export const sendEmailNotification = async (req, res) => {
         continue;
       }
 
-      const token = jwt.sign({ dokumenLogsign: [id_dokumen, signer] }, jwtSecret);
-      const signLink = `http://localhost:3000/user/envelope?token=${token}`;
+      // const token = jwt.sign({ dokumenLogsign: [id_dokumen, signer] }, jwtSecret);
+      // const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
       await sendEmailNotificationInternal(validLogsigns, signLink, subjectt, messagee);
-
       emailResults.push({ signer, message: 'Email sent.' });
     }
 

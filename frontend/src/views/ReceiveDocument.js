@@ -16,7 +16,6 @@ import InitialModal from "components/ModalForm/InitialModal.js";
 import "../assets/scss/lbd/_receivedoc.scss";
 import UserNavbar from "components/Navbars/UserNavbar.js";
 // import { converBase64ToImage } from "convert-base64-to-image";
-// import fs from "fs";
 
 
 function ReceiveDocument() {
@@ -33,10 +32,11 @@ function ReceiveDocument() {
     const [id_signers, setIdSigner] = useState("");
     const [sign_base64, setSignBase64] = useState("");
     const [status, setStatus] = useState("");
-    // const [nama, setNama] = useState("");
+    const [nama, setNama] = useState("");
 
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
-    const [showInitialModal, setShowInitialModal] = React.useState(false);
+    const [showInitialModal, setShowInitialModal] = useState(false);
+    const [selectedIdItem, setSelectedIdItem] = useState(null);
     
     // const signatureFields = [];
     // const initialFields = [];
@@ -73,7 +73,8 @@ function ReceiveDocument() {
         setShowSignatureModal(true);
     };
 
-    const handleInitialClick = () => {
+    const handleInitialClick = (id_item) => {
+        setSelectedIdItem(id_item);
         setShowInitialModal(true);
     };
 
@@ -85,77 +86,250 @@ function ReceiveDocument() {
     });
     };
 
-    useEffect(() => {
-        const fetchInitials = async() => {
-            if (!id_dokumen || !id_signers) return;
-            try {
-                const res = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${id_signers}`);
-                console.log("Initialsign:", res.data[0].sign_base64);
-                console.log("Initialsign base64:", res.data[0].sign_base64.slice(0, 100)); 
-                setNameSigner(res.data[0].sign_base64);
-                setStatus(res.data[0].status);
+    // useEffect(() => {
+    //     const fetchInitials = async() => {
+    //         if (!id_dokumen || !id_signers) return;
+    //         try {
+    //             const res = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${id_signers}`);
+    //             console.log("Initialsign:", res.data[0].sign_base64);
+    //             console.log("Initialsign base64:", res.data[0].sign_base64.slice(0, 100)); 
+    //             setNameSigner(res.data[0].sign_base64);
+    //             setStatus(res.data[0].status);
 
-                console.log("Status:", res.data[0].status);
-            } catch (error) {
-                console.error("Failed to fetch initialsign", error.message);
-            }
-        };
+    //             console.log("Status:", res.data[0].status);
+    //         } catch (error) {
+    //             console.error("Failed to fetch initialsign", error.message);
+    //         }
+    //     };
 
-        fetchInitials(); 
-    }, [id_dokumen, id_signers]);
+    //     fetchInitials(); 
+    // }, [id_dokumen, id_signers]);
 
     // console.log("Name Signer:", nameSigner);
 
 
-     useEffect(() => {
-        const fetchData = async () => {
-            if (!token) return;
+    // fetch 1 data
+    //  useEffect(() => {
+    //     const fetchData = async () => {
+    //         if (!token) return;
 
-            try {
-                const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
-                const id_dokumen = res.data.id_dokumen;
-                setIdDokumen(id_dokumen);
-                const id_signers = res.data.id_signers;
-                setIdSigner(id_signers);
+    //         try {
+    //             const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+    //             const id_dokumen = res.data.id_dokumen;
+    //             setIdDokumen(id_dokumen);
+    //             const id_signers = res.data.id_signers;
+    //             setIdSigner(id_signers);
 
-                // setIdSigner(id_signers);
-                // console.log("Id Signer:", idSigner);
+    //             // setIdSigner(id_signers);
+    //             // console.log("Id Signer:", idSigner);
 
-                if (!id_dokumen) {
-                    throw new Error("Document not found.");
-                }
+    //             if (!id_dokumen) {
+    //                 throw new Error("Document not found.");
+    //             }
 
-                const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
-                if (!fileRes.ok) {
-                    throw new Error("Failed to get PDF Document.");
-                }
+    //             const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
+    //             if (!fileRes.ok) {
+    //                 throw new Error("Failed to get PDF Document.");
+    //             }
 
-                const blob = await fileRes.blob();
-                const url = URL.createObjectURL(blob);
-                setPdfUrl(url);
+    //             const blob = await fileRes.blob();
+    //             const url = URL.createObjectURL(blob);
+    //             setPdfUrl(url);
 
-                const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${id_signers}`);
+    //             const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${id_signers}`);
 
-                const localSignatureFields = [];
-                const localInitialFields = [];
-                const localDateFields = [];
+    //             const localSignatureFields = [];
+    //             const localInitialFields = [];
+    //             const localDateFields = [];
+
+    //             field.data
+    //             .filter(item => item.ItemField)
+    //             .forEach((item, idx) => {
+    //                 const {x_axis, y_axis, width, height, jenis_item} = item.ItemField;
+    //                 // const {nama} = item.Signer;
+
+    //                 const fieldObj = {
+    //                     id: `field-${idx}`, 
+    //                     x_axis: x_axis, 
+    //                     y_axis: y_axis, 
+    //                     width, 
+    //                     height, 
+    //                     jenis_item, 
+    //                     pageScale: 1,
+    //                     enableResizing: false,
+    //                     disableDragging: true,
+    //                 };
+
+    //                 if (jenis_item === "Signpad") {
+    //                     localSignatureFields.push(fieldObj);
+    //                 } else if (jenis_item === "Initialpad") {
+    //                     localInitialFields.push(fieldObj);
+    //                 } else if (jenis_item === "Date") {
+    //                     localDateFields.push(fieldObj);
+    //                 }
+    //             });
+
+    //             // setNama(nama);
+    //             // console.log("Namaa:", nama);
+
+    //             setSignatures(localSignatureFields);
+    //             setInitials(localInitialFields);
+    //             setDateField(localDateFields);
+    //         } catch (error) {
+    //             console.error("Failed to load PDF:", error.message);
+    //             setErrorMsg(error.message);
+    //             toast.error("Failed to load PDF Document.");
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+
+    //     fetchData();
+    // }, [token]);
+
+
+    //LAST
+    // useEffect(() => {
+    //     const fetchInitials = async() => {
+    //         if (!id_dokumen || !id_signers) return;
+
+    //         try {
+    //             const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+    //             const signerParam = signerArray.join(",");
+
+    //             const res = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
+    //             const data = res.data;
+
+    //             console.log("Initialsigns response:", data);
+
+    //             const initialList = data.map((item) => ({
+    //                 id_item: item.id_item,
+    //                 id_signers: item.id_signers,
+    //                 sign_base64: item.sign_base64,
+    //                 status: item.status,
+    //                 nama: item.Signerr?.nama || "-",
+    //             }));
+
+    //             setInitials(initialList);
+    //             // setNameSigner(res.data[0].sign_base64);
+    //             // setStatus(res.data[0].status);
+
+    //         } catch (error) {
+    //             console.error("Failed to fetch initialsign", error.message);
+    //         }
+    //     };
+
+    //     fetchInitials();
+    // }, [id_dokumen, id_signers]);
+
+    useEffect(() => {
+    const fetchInitials = async () => {
+        if (!id_dokumen || !id_signers) return;
+
+        try {
+            const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+            const signerParam = signerArray.join(",");
+
+            const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
+            const initialsData = initialsRes.data;
+
+            const axisFieldPromises = signerArray.map((signer) =>
+                axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
+            );
+            const axisFieldResponses = await Promise.all(axisFieldPromises);
+
+            const axisFieldData = axisFieldResponses.flatMap(res => res.data);
+
+            const initialList = initialsData.map(initial => {
+                const match = axisFieldData.find(field =>
+                    field.id_signers === initial.id_signers &&
+                    field.Signerr?.nama === initial.Signerr?.nama &&
+                    field.ItemField?.jenis_item === "Initialpad"
+                );
+
+                return {
+                    id_item: match?.id_item || null,
+                    id_signers: initial.id_signers,
+                    sign_base64: initial.sign_base64,
+                    status: initial.status,
+                    nama: initial.Signerr?.nama || "-",
+                    x_axis: match?.ItemField?.x_axis || 0,
+                    y_axis: match?.ItemField?.y_axis || 0,
+                    width: match?.ItemField?.width || 50,
+                    height: match?.ItemField?.height || 50,
+                    enableResizing: false,
+                    disableDragging: true
+
+                };
+            });
+
+            console.log("Initial list with id_item:", initialList);
+            setInitials(initialList);
+
+        } catch (error) {
+            console.error("Failed to fetch initials or axis-field:", error.message);
+        }
+    };
+
+    fetchInitials();
+}, [id_dokumen, id_signers]);
+
+
+    useEffect(() => {
+    const fetchData = async () => {
+        if (!token) return;
+
+        try {
+            const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+            const id_dokumen = res.data.id_dokumen;
+            const id_signers = res.data.id_signers;
+
+            if (!id_dokumen || !id_signers) {
+                throw new Error("Missing id_dokumen or id_signers from token.");
+            }
+
+            setIdDokumen(id_dokumen);
+            setIdSigner(id_signers);
+
+            //yg terambil hanya yg first
+            // const firstSigner = Array.isArray(id_signers) ? id_signers[0] : id_signers;
+
+            const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
+            if (!fileRes.ok) {
+                throw new Error("Failed to get PDF Document.");
+            }
+
+            const blob = await fileRes.blob();
+            const url = URL.createObjectURL(blob);
+            setPdfUrl(url);
+
+            // const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${firstSigner}`);
+
+            const localSignatureFields = [];
+            const localInitialFields = [];
+            const localDateFields = [];
+
+            const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+
+            for (const signer of signerArray) {
+                const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
 
                 field.data
                 .filter(item => item.ItemField)
                 .forEach((item, idx) => {
-                    const {x_axis, y_axis, width, height, jenis_item} = item.ItemField;
-                    // const {nama} = item.Signer;
+                    const { x_axis, y_axis, width, height, jenis_item, id_item } = item.ItemField;
 
                     const fieldObj = {
-                        id: `field-${idx}`, 
-                        x_axis: x_axis, 
-                        y_axis: y_axis, 
-                        width, 
-                        height, 
-                        jenis_item, 
+                        id: `field-${signer}-${idx}`,
+                        x_axis,
+                        y_axis,
+                        width,
+                        height,
+                        jenis_item,
                         pageScale: 1,
                         enableResizing: false,
                         disableDragging: true,
+                        id_item,
                     };
 
                     if (jenis_item === "Signpad") {
@@ -165,18 +339,16 @@ function ReceiveDocument() {
                     } else if (jenis_item === "Date") {
                         localDateFields.push(fieldObj);
                     }
-                });
+            });
+            }
 
-                // setNama(nama);
-                // console.log("Namaa:", nama);
-
-                setSignatures(localSignatureFields);
-                setInitials(localInitialFields);
-                setDateField(localDateFields);
-            } catch (error) {
-                console.error("Failed to load PDF:", error.message);
-                setErrorMsg(error.message);
-                toast.error("Failed to load PDF Document.");
+            setSignatures(localSignatureFields);
+            setInitials(localInitialFields);
+            setDateField(localDateFields);
+        } catch (error) {
+            console.error("Failed to load PDF:", error.message);
+            setErrorMsg(error.message);
+             toast.error("Failed to load PDF Document.");
             } finally {
                 setLoading(false);
             }
@@ -184,6 +356,8 @@ function ReceiveDocument() {
 
         fetchData();
     }, [token]);
+
+
 
 
     return (
@@ -224,7 +398,7 @@ function ReceiveDocument() {
                         ))}
 
                         
-
+                        {/* Hanya menampilkan 1 signer */}
                         {/* {initials.map((sig, index) => (
                             <>
                             <Rnd
@@ -248,7 +422,7 @@ function ReceiveDocument() {
                         ))} */}
 
                         
-                        {initials.map((sig, index) => (
+                        {/* {initials.map((sig, index) => (
                            <>
                            {status === "Completed" ? (
                              console.log("Sign base64:", nameSigner),
@@ -303,12 +477,71 @@ function ReceiveDocument() {
                                 </Rnd>
                            )}
                            </>
+                        ))} */}
+
+
+                        {initials.map((sig, index) => (
+                           <>
+                           {sig.status === "Completed" ? (
+                            <React.Fragment key={index}>
+                            <Rnd
+                                key={sig.id}
+                                position={{ x: sig.x_axis, y: sig.y_axis }}
+                                size={{ width: sig.height, height: sig.width }} 
+                                enableResizing={sig.enableResizing}
+                                disableDragging={sig.disableDragging}
+                                style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "transparent",
+                                }}
+                                // onClick={handleInitialClick}
+                            >
+                                <img
+                                    src={sig.nama} 
+                                    alt="Initial"
+                                    style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "contain",
+                                    }}
+                                    onError={(e) => {
+                                        console.error("Image error", e);
+                                        e.target.src = "/fallback.png"; 
+                                    }}
+                                />
+                            </Rnd>
+                            </React.Fragment>
+                           ): (
+                                <Rnd
+                                key={sig.id}
+                                position={{ x: sig.x_axis, y: sig.y_axis }}
+                                size={{ width: sig.height, height: sig.width }}
+                                enableResizing={sig.enableResizing} 
+                                disableDragging={sig.disableDragging}  
+                                style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "rgba(25, 230, 25, 0.5)",
+                                }}
+                                onClick={() => {
+                                    handleInitialClick(sig.id_item);
+                                    console.log("Id item clicked:", sig);
+                                }}
+                                >
+                                <FaFont style={{ width: "25%", height: "25%" }} />
+                                </Rnd>
+                           )}
+                           </>
                         ))}
 
                         <InitialModal
                             showInitialModal={showInitialModal}
                             setShowInitialModal={setShowInitialModal}
                             onSuccess={handleSignatureSuccess}
+                            selectedIdItem={selectedIdItem}
                         /> 
 
                         {dateField.map((sig, index) => (
