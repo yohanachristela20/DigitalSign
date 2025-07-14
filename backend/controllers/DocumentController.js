@@ -398,18 +398,40 @@ export const updateInitialSign = async(req, res) => {
 
   try {
     const logsign = await LogSign.findOne({
-      where: { id_dokumen, id_item, id_signers}
+      where: { id_dokumen, id_item, id_signers}, 
+      include: {
+        model: Item,
+        as: "ItemField"
+      }
     });
 
     if (!logsign) {
       return res.status(404).json({ message: "Logsign not found" });
     }
 
-    await logsign.update(
-      {sign_base64, status, tgl_tt}, 
-    );
+    const jenis_item = logsign.ItemField?.jenis_item;
 
-    res.status(200).json({msg: "InitialSign saved successful in Logsign."});
+    if (!jenis_item) {
+      return res.status(400).json({message: "Jenis item tidak ditemukan."});
+    }
+
+    const relatedLogs = await LogSign.findAll({
+      where: {
+        id_dokumen,
+        id_signers
+      },
+      include: {
+        model: Item, 
+        as: "ItemField",
+        where: { jenis_item }
+      }
+    });
+
+    for (const log of relatedLogs) {
+      await log.update({sign_base64, status, tgl_tt});
+    }
+
+    res.status(200).json({msg: `${relatedLogs.length} InitialSign saved successful in Logsign.`});
 
   } catch (error) {
     console.log("Failed to save InitialSign:", error.message);

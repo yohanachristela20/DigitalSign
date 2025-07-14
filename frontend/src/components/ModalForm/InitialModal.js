@@ -27,6 +27,13 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
+
+    useEffect(() => {
+        console.log("InitialModal receive id_item:", selectedIdItem);
+        console.log("InitialModal show initialmodal:", showInitialModal);
+    }, [selectedIdItem, showInitialModal]);
+
+
     useEffect(() => {
         const fetchData = async () => {
             if (!token) return;
@@ -108,6 +115,8 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
             setInitialName(found.nama);
         }
     }, [id_item, signerData]);
+
+
 
     const generateImageBase64 = (text, fontFamily = "Arial") => {
         return new Promise((resolve, reject) => {
@@ -237,7 +246,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
                     // keyboard={false}
                     >
                     <Modal.Header closeButton>
-                        <Modal.Title>Make Initial</Modal.Title>
+                        <Modal.Title>Make Initial - ID Item: {selectedIdItem}</Modal.Title>
                     </Modal.Header>
                     <Modal.Body className="text-left pt-0 mt-2 my-3">
                         <Form onSubmit={(e) => handleSubmit(e, signer)}>

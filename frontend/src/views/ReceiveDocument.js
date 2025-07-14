@@ -36,7 +36,7 @@ function ReceiveDocument() {
 
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
     const [showInitialModal, setShowInitialModal] = useState(false);
-    const [selectedIdItem, setSelectedIdItem] = useState(null);
+    const [selectedIdItem, setSelectedIdItem] = useState([]);
     
     const [initials, setInitials] = useState([]);
     const [signedInitials, setSignedInitials] = useState([]);
@@ -76,6 +76,22 @@ function ReceiveDocument() {
         setShowInitialModal(true);
     };
 
+    // const handleInitialClick = (clickedIdItem) => {
+    //     const clickedItem = initials.find(sig => sig.id_item === clickedIdItem);
+    //     if (!clickedItem) return;
+
+    //     const relatedItems = initials
+    //         .filter(sig => 
+    //             sig.id_signers === clickedItem.id_signers && 
+    //             sig.status !== "Completed"
+    //         )
+    //         .map(sig => sig.id_item);
+
+    //     setSelectedIdItem(relatedItems);
+    //     setShowInitialModal(true);
+    // };
+
+    
     const handleSignatureSuccess = () => {
         toast.success("Document signed successfully.", {
             position: "top-right",
@@ -85,6 +101,65 @@ function ReceiveDocument() {
     };
 
     
+    // useEffect(() => {
+    // const fetchInitials = async () => {
+    //     if (!id_dokumen || !id_signers || id_signers.length === 0) return;
+
+    //     try {
+    //         const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+    //         const signerParam = signerArray.join(",");
+
+    //         const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
+    //         const initialsData = initialsRes.data;
+
+    //         const axisFieldPromises = signerArray.map((signer) =>
+    //             axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
+    //         );
+    //         const axisFieldResponses = await Promise.all(axisFieldPromises);
+
+    //         const axisFieldData = axisFieldResponses.flatMap(res => res.data);
+
+    //         const initialList = initialsData.map((initial, i) => {
+    //         const match = axisFieldData.find(field =>
+    //             field.id_signers === initial.id_signers &&
+    //             field.Signerr?.nama === initial.Signerr?.nama &&
+    //             field.ItemField?.jenis_item === "Initialpad"
+    //         );
+
+    //         const base64 = initial.sign_base64;
+    //         const formattedBase64 = base64?.startsWith("data:image")
+    //             ? base64
+    //             : base64 ? `data:image/png;base64,${base64}` : null;
+
+    //         console.log("Formatted base64:", formattedBase64);
+
+    //         return {
+    //             id_item: match?.id_item || `unknown-${i}`,
+    //             id_signers: initial.id_signers,
+    //             sign_base64: formattedBase64,
+    //             status: initial.status,
+    //             nama: initial.Signerr?.nama || "-",
+    //             x_axis: match?.ItemField?.x_axis || 0,
+    //             y_axis: match?.ItemField?.y_axis || 0,
+    //             width: match?.ItemField?.width || 50,
+    //             height: match?.ItemField?.height || 50,
+    //             enableResizing: false,
+    //             disableDragging: true
+    //         };
+    //         });
+
+    //         setSignedInitials(initialList);
+    //         console.log("Initial list with id_item:", initialList);
+    //         // console.log("Signbase:", initialList[1].sign_base64);
+
+    //     } catch (error) {
+    //         console.error("Failed to fetch initials or axis-field:", error.message);
+    //     }
+    // };
+
+    // fetchInitials();
+    // }, [id_dokumen, id_signers]);
+
     useEffect(() => {
     const fetchInitials = async () => {
         if (!id_dokumen || !id_signers || id_signers.length === 0) return;
@@ -103,33 +178,37 @@ function ReceiveDocument() {
 
             const axisFieldData = axisFieldResponses.flatMap(res => res.data);
 
-            const initialList = initialsData.map((initial, i) => {
-            const match = axisFieldData.find(field =>
+            const initialList = [];
+
+            initialsData.forEach((initial, i) => {
+            const match = axisFieldData.filter(field =>
                 field.id_signers === initial.id_signers &&
                 field.Signerr?.nama === initial.Signerr?.nama &&
                 field.ItemField?.jenis_item === "Initialpad"
             );
 
-            const base64 = initial.sign_base64;
-            const formattedBase64 = base64?.startsWith("data:image")
-                ? base64
-                : base64 ? `data:image/png;base64,${base64}` : null;
+                match.forEach((field, j) => {
+                    const base64 = initial.sign_base64;
+                    const formattedBase64 = base64?.startsWith("data:image")
+                        ? base64
+                        : base64 ? `data:image/png;base64,${base64}` : null;
+                
 
-            console.log("Formatted base64:", formattedBase64);
-
-            return {
-                id_item: match?.id_item || `unknown-${i}`,
-                id_signers: initial.id_signers,
-                sign_base64: formattedBase64,
-                status: initial.status,
-                nama: initial.Signerr?.nama || "-",
-                x_axis: match?.ItemField?.x_axis || 0,
-                y_axis: match?.ItemField?.y_axis || 0,
-                width: match?.ItemField?.width || 50,
-                height: match?.ItemField?.height || 50,
-                enableResizing: false,
-                disableDragging: true
-            };
+                    initialList.push(
+                        {
+                        id_item: field.id_item || `unknown-${i}-${j}`,
+                        id_signers: initial.id_signers,
+                        sign_base64: formattedBase64,
+                        status: initial.status,
+                        nama: initial.Signerr?.nama || "-",
+                        x_axis: field.ItemField?.x_axis || 0,
+                        y_axis: field.ItemField?.y_axis || 0,
+                        width: field.ItemField?.width || 50,
+                        height: field.ItemField?.height || 50,
+                        enableResizing: false,
+                        disableDragging: true
+                    });
+                });
             });
 
             setSignedInitials(initialList);
@@ -143,7 +222,6 @@ function ReceiveDocument() {
 
     fetchInitials();
     }, [id_dokumen, id_signers]);
-
 
     useEffect(() => {
     const fetchData = async () => {
@@ -233,9 +311,6 @@ function ReceiveDocument() {
     useEffect(() => {
         console.log("All sign STATUS:", signStatus);
     }, [signStatus]);
-
-
-
 
     return (
         <>
@@ -377,8 +452,10 @@ function ReceiveDocument() {
 
                         if (sig.status !== "Completed") {
                             return (
-                            <Rnd
-                                key={sig.id_item || index}
+                                <Rnd
+                                // key={sig.id_item || index}
+                                key={`${sig.id_signers}-${sig.id_item}`}
+                                // key={sig.id}
                                 position={{ x: sig.x_axis, y: sig.y_axis }}
                                 size={{ width: sig.height, height: sig.width }}
                                 enableResizing={sig.enableResizing} 
@@ -388,6 +465,7 @@ function ReceiveDocument() {
                                 alignItems: "center",
                                 justifyContent: "center",
                                 backgroundColor: "rgba(25, 230, 25, 0.5)",
+                                cursor: "pointer"
                                 }}
                                 onClick={() => {
                                     handleInitialClick(sig.id_item);
@@ -397,17 +475,18 @@ function ReceiveDocument() {
                                 <FaFont style={{ width: "25%", height: "25%" }} />
                             </Rnd>
                             )
+                            
                         }
                             return null;
                         })}
-                        
+
                         <InitialModal
                             showInitialModal={showInitialModal}
                             setShowInitialModal={setShowInitialModal}
                             onSuccess={handleSignatureSuccess}
                             selectedIdItem={selectedIdItem}
-                        /> 
-
+                        />
+                        
                         {dateField.map((sig, index) => (
                         <Rnd
                             key={sig.id}
