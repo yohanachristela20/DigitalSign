@@ -75,22 +75,6 @@ function ReceiveDocument() {
         setSelectedIdItem(id_item);
         setShowInitialModal(true);
     };
-
-    // const handleInitialClick = (clickedIdItem) => {
-    //     const clickedItem = initials.find(sig => sig.id_item === clickedIdItem);
-    //     if (!clickedItem) return;
-
-    //     const relatedItems = initials
-    //         .filter(sig => 
-    //             sig.id_signers === clickedItem.id_signers && 
-    //             sig.status !== "Completed"
-    //         )
-    //         .map(sig => sig.id_item);
-
-    //     setSelectedIdItem(relatedItems);
-    //     setShowInitialModal(true);
-    // };
-
     
     const handleSignatureSuccess = () => {
         toast.success("Document signed successfully.", {
@@ -100,7 +84,6 @@ function ReceiveDocument() {
         });
     };
 
-    
     // useEffect(() => {
     // const fetchInitials = async () => {
     //     if (!id_dokumen || !id_signers || id_signers.length === 0) return;
@@ -119,33 +102,37 @@ function ReceiveDocument() {
 
     //         const axisFieldData = axisFieldResponses.flatMap(res => res.data);
 
-    //         const initialList = initialsData.map((initial, i) => {
-    //         const match = axisFieldData.find(field =>
+    //         const initialList = [];
+
+    //         initialsData.forEach((initial, i) => {
+    //         const match = axisFieldData.filter(field =>
     //             field.id_signers === initial.id_signers &&
     //             field.Signerr?.nama === initial.Signerr?.nama &&
     //             field.ItemField?.jenis_item === "Initialpad"
     //         );
 
-    //         const base64 = initial.sign_base64;
-    //         const formattedBase64 = base64?.startsWith("data:image")
-    //             ? base64
-    //             : base64 ? `data:image/png;base64,${base64}` : null;
+    //             match.forEach((field, j) => {
+    //                 const base64 = initial.sign_base64;
+    //                 const formattedBase64 = base64?.startsWith("data:image")
+    //                     ? base64
+    //                     : base64 ? `data:image/png;base64,${base64}` : null;
+                
 
-    //         console.log("Formatted base64:", formattedBase64);
-
-    //         return {
-    //             id_item: match?.id_item || `unknown-${i}`,
-    //             id_signers: initial.id_signers,
-    //             sign_base64: formattedBase64,
-    //             status: initial.status,
-    //             nama: initial.Signerr?.nama || "-",
-    //             x_axis: match?.ItemField?.x_axis || 0,
-    //             y_axis: match?.ItemField?.y_axis || 0,
-    //             width: match?.ItemField?.width || 50,
-    //             height: match?.ItemField?.height || 50,
-    //             enableResizing: false,
-    //             disableDragging: true
-    //         };
+    //                 initialList.push(
+    //                     {
+    //                     id_item: field.id_item || `unknown-${i}-${j}`,
+    //                     id_signers: initial.id_signers,
+    //                     sign_base64: formattedBase64,
+    //                     status: initial.status,
+    //                     nama: initial.Signerr?.nama || "-",
+    //                     x_axis: field.ItemField?.x_axis || 0,
+    //                     y_axis: field.ItemField?.y_axis || 0,
+    //                     width: field.ItemField?.width || 50,
+    //                     height: field.ItemField?.height || 50,
+    //                     enableResizing: false,
+    //                     disableDragging: true
+    //                 });
+    //             });
     //         });
 
     //         setSignedInitials(initialList);
@@ -171,45 +158,20 @@ function ReceiveDocument() {
             const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
             const initialsData = initialsRes.data;
 
-            const axisFieldPromises = signerArray.map((signer) =>
-                axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
+            const axisFieldResponses = await Promise.all(
+                signerArray.map((signer) => 
+                    axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
+                )
             );
-            const axisFieldResponses = await Promise.all(axisFieldPromises);
+                
+            // const axisFieldResponses = await Promise.all(axisFieldPromises);
 
             const axisFieldData = axisFieldResponses.flatMap(res => res.data);
-
             const initialList = [];
 
-            initialsData.forEach((initial, i) => {
-            const match = axisFieldData.filter(field =>
-                field.id_signers === initial.id_signers &&
-                field.Signerr?.nama === initial.Signerr?.nama &&
-                field.ItemField?.jenis_item === "Initialpad"
-            );
-
-                match.forEach((field, j) => {
-                    const base64 = initial.sign_base64;
-                    const formattedBase64 = base64?.startsWith("data:image")
-                        ? base64
-                        : base64 ? `data:image/png;base64,${base64}` : null;
-                
-
-                    initialList.push(
-                        {
-                        id_item: field.id_item || `unknown-${i}-${j}`,
-                        id_signers: initial.id_signers,
-                        sign_base64: formattedBase64,
-                        status: initial.status,
-                        nama: initial.Signerr?.nama || "-",
-                        x_axis: field.ItemField?.x_axis || 0,
-                        y_axis: field.ItemField?.y_axis || 0,
-                        width: field.ItemField?.width || 50,
-                        height: field.ItemField?.height || 50,
-                        enableResizing: false,
-                        disableDragging: true
-                    });
-                });
-            });
+            signerArray.forEach((signer) => {
+                const signerInitials = initialsData.filter(initial => initial.id_signers === signer);
+            })
 
             setSignedInitials(initialList);
             console.log("Initial list with id_item:", initialList);
@@ -350,64 +312,6 @@ function ReceiveDocument() {
 
                         {console.log("Initials:", initials)}
 
-                        {/* {initials.map((sig, index) => {
-                            if (!sig || !sig.id_item) return null;
-                            
-                            if (sig.status === "Completed") {
-                                console.log("Sign base64:", sig.sign_base64);
-                                return (
-                                    <div
-                                    key={sig.id_item || index}
-                                    style={{
-                                        position: "absolute",
-                                        top: sig.y_axis,
-                                        left: sig.x_axis,
-                                        width: sig.height,
-                                        height: sig.width, 
-                                        zIndex: 10,
-                                    }}
-                                >
-                                <img
-                                    src={sig.sign_base64} 
-                                    alt="Initial"
-                                    onLoad={() => console.log("Image loaded:", sig.sign_base64)}
-                                    style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "contain",
-                                    }}
-                                    onError={(e) => {
-                                        console.error("Image error", e);
-                                        e.target.src = "/fallback.png"; 
-                                    }}
-                                />
-                                </div>
-                                ); 
-                            } else {
-                                return (
-                                <Rnd
-                                key={sig.id_item || index}
-                                position={{ x: sig.x_axis, y: sig.y_axis }}
-                                size={{ width: sig.height, height: sig.width }}
-                                enableResizing={sig.enableResizing} 
-                                disableDragging={sig.disableDragging}  
-                                style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "rgba(25, 230, 25, 0.5)",
-                                }}
-                                onClick={() => {
-                                    handleInitialClick(sig.id_item);
-                                    console.log("Id item clicked:", sig.id_item);
-                                }}
-                                >
-                                <FaFont style={{ width: "25%", height: "25%" }} />
-                                </Rnd>
-                                );
-                            }
-                        })} */}
-
                         {signedInitials.map((sig, index) => {
                             if (!sig || !sig.id_item) return null;
                             
@@ -453,9 +357,7 @@ function ReceiveDocument() {
                         if (sig.status !== "Completed") {
                             return (
                                 <Rnd
-                                // key={sig.id_item || index}
                                 key={`${sig.id_signers}-${sig.id_item}`}
-                                // key={sig.id}
                                 position={{ x: sig.x_axis, y: sig.y_axis }}
                                 size={{ width: sig.height, height: sig.width }}
                                 enableResizing={sig.enableResizing} 
