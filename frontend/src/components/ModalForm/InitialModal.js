@@ -217,7 +217,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     const handleSubmit = async(e, signer) => {
         e.preventDefault();
         await updateInitialSign(id_dokumen, signer.id_item, signer.id_signers, signer);
-        // window.location.reload();
+        window.location.reload();
     }
 
     const handleCloseModal = () => {

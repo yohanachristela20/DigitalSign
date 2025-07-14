@@ -159,7 +159,7 @@ router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
     try {
         const response = await LogSign.findAll({
             where: {id_dokumen, id_signers}, 
-            attributes: ["id_item", "id_signers"],
+            attributes: ["id_item", "id_signers", "status"],
             include: [
                 {
                     model: Item,

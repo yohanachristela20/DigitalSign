@@ -30,7 +30,8 @@ function ReceiveDocument() {
     const [id_dokumen, setIdDokumen] = useState("");
     const [id_signers, setIdSigner] = useState("");
     const [sign_base64, setSignBase64] = useState("");
-    const [status, setStatus] = useState("");
+    const [status, setStatus] = useState([]);
+    const [signStatus, setSignStatus] = useState([]);
     const [nama, setNama] = useState("");
 
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
@@ -38,6 +39,8 @@ function ReceiveDocument() {
     const [selectedIdItem, setSelectedIdItem] = useState(null);
     
     const [initials, setInitials] = useState([]);
+    const [signedInitials, setSignedInitials] = useState([]);
+
     const [signatures, setSignatures] = useState([]);
     const [dateField, setDateField] = useState([]);
     const [clickCount, setClickCount] = useState(0);
@@ -74,11 +77,11 @@ function ReceiveDocument() {
     };
 
     const handleSignatureSuccess = () => {
-    toast.success("Document signed successfully.", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-    });
+        toast.success("Document signed successfully.", {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: true,
+        });
     };
 
     
@@ -100,29 +103,6 @@ function ReceiveDocument() {
 
             const axisFieldData = axisFieldResponses.flatMap(res => res.data);
 
-            // const initialList = initialsData.map(initial => {
-            //     const match = axisFieldData.find(field =>
-            //         field.id_signers === initial.id_signers &&
-            //         field.Signerr?.nama === initial.Signerr?.nama &&
-            //         field.ItemField?.jenis_item === "Initialpad"
-            //     );
-
-            //     return {
-            //         id_item: match?.id_item || "-",
-            //         id_signers: initial.id_signers,
-            //         sign_base64: initial.sign_base64,
-            //         status: initial.status,
-            //         nama: initial.Signerr?.nama || "-",
-            //         x_axis: match?.ItemField?.x_axis || 0,
-            //         y_axis: match?.ItemField?.y_axis || 0,
-            //         width: match?.ItemField?.width || 50,
-            //         height: match?.ItemField?.height || 50,
-            //         enableResizing: false,
-            //         disableDragging: true
-
-            //     };
-            // });
-
             const initialList = initialsData.map((initial, i) => {
             const match = axisFieldData.find(field =>
                 field.id_signers === initial.id_signers &&
@@ -134,6 +114,7 @@ function ReceiveDocument() {
             const formattedBase64 = base64?.startsWith("data:image")
                 ? base64
                 : base64 ? `data:image/png;base64,${base64}` : null;
+
             console.log("Formatted base64:", formattedBase64);
 
             return {
@@ -149,9 +130,9 @@ function ReceiveDocument() {
                 enableResizing: false,
                 disableDragging: true
             };
-        });
+            });
 
-            setInitials(initialList);
+            setSignedInitials(initialList);
             console.log("Initial list with id_item:", initialList);
             // console.log("Signbase:", initialList[1].sign_base64);
 
@@ -161,7 +142,7 @@ function ReceiveDocument() {
     };
 
     fetchInitials();
-}, [id_dokumen, id_signers]);
+    }, [id_dokumen, id_signers]);
 
 
     useEffect(() => {
@@ -192,16 +173,17 @@ function ReceiveDocument() {
             const localSignatureFields = [];
             const localInitialFields = [];
             const localDateFields = [];
+            const allStatus = [];
 
             const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
 
             for (const signer of signerArray) {
                 const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
-
                 field.data
                 .filter(item => item.ItemField)
                 .forEach((item, idx) => {
                     const { x_axis, y_axis, width, height, jenis_item, id_item } = item.ItemField;
+                    const status = item.status || "Pending";
 
                     const fieldObj = {
                         id: `field-${signer}-${idx}`,
@@ -214,7 +196,10 @@ function ReceiveDocument() {
                         enableResizing: false,
                         disableDragging: true,
                         id_item,
+                        status
                     };
+
+                    allStatus.push({ id_item, status });
 
                     if (jenis_item === "Signpad") {
                         localSignatureFields.push(fieldObj);
@@ -229,6 +214,10 @@ function ReceiveDocument() {
             setSignatures(localSignatureFields);
             setInitials(localInitialFields);
             setDateField(localDateFields);
+            setSignStatus(allStatus);
+            
+
+            console.log("SIGN STATUS:", signStatus);
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
             setErrorMsg(error.message);
@@ -240,6 +229,10 @@ function ReceiveDocument() {
 
         fetchData();
     }, [token]);
+
+    useEffect(() => {
+        console.log("All sign STATUS:", signStatus);
+    }, [signStatus]);
 
 
 
@@ -280,119 +273,9 @@ function ReceiveDocument() {
                             </>
                         ))}
 
-                        {/* {initials.map((sig, index) => {
-                            const formattedBase64 = sig.sign_base64?.startsWith("data:image")
-                            ? sig.sign_base64
-                            : `data:image/png;base64,${sig.sign_base64}`;
-
-                           return sig.status === "Completed" ? (
-                                 <div
-                                    key={sig.id_item || index}
-                                    style={{
-                                        position: "absolute",
-                                        top: sig.y_axis,
-                                        left: sig.x_axis,
-                                        width: sig.height,
-                                        height: sig.width, 
-                                        zIndex: 10,
-                                    }}
-                                >
-                                <img
-                                    src={formattedBase64} 
-                                    alt="Initial"
-                                    onLoad={() => console.log("Image loaded:", sig.id_item)}
-                                    style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "contain",
-                                    }}
-                                    onError={(e) => {
-                                        console.error("Image error", e);
-                                        e.target.src = "/fallback.png"; 
-                                    }}
-                                />
-                                </div>
-                           ) : (
-                                <Rnd
-                                key={sig.id_item || index}
-                                position={{ x: sig.x_axis, y: sig.y_axis }}
-                                size={{ width: sig.height, height: sig.width }}
-                                enableResizing={sig.enableResizing} 
-                                disableDragging={sig.disableDragging}  
-                                style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "rgba(25, 230, 25, 0.5)",
-                                }}
-                                onClick={() => {
-                                    handleInitialClick(sig.id_item);
-                                    console.log("Id item clicked:", sig.id_item);
-                                }}
-                                >
-                                <FaFont style={{ width: "25%", height: "25%" }} />
-                                </Rnd>
-                           )
-                        })} */}
-
-                        {/* {initials.map((sig, index) => {
-                            const formattedBase64 = sig.sign_base64?.startsWith("data:image")
-                            ? sig.sign_base64
-                            : `data:image/png;base64,${sig.sign_base64}`;
-
-                           return sig.status === "Completed" ? (
-                                 <div
-                                    key={sig.id_item || index}
-                                    style={{
-                                        position: "absolute",
-                                        top: sig.y_axis,
-                                        left: sig.x_axis,
-                                        width: sig.height,
-                                        height: sig.width, 
-                                        zIndex: 10,
-                                    }}
-                                >
-                                <img
-                                    src={formattedBase64} 
-                                    alt="Initial"
-                                    onLoad={() => console.log("Image loaded:", sig.id_item)}
-                                    style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "contain",
-                                    }}
-                                    onError={(e) => {
-                                        console.error("Image error", e);
-                                        e.target.src = "/fallback.png"; 
-                                    }}
-                                />
-                                </div>
-                           ) : (
-                                <Rnd
-                                key={sig.id_item || index}
-                                position={{ x: sig.x_axis, y: sig.y_axis }}
-                                size={{ width: sig.height, height: sig.width }}
-                                enableResizing={sig.enableResizing} 
-                                disableDragging={sig.disableDragging}  
-                                style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "rgba(25, 230, 25, 0.5)",
-                                }}
-                                onClick={() => {
-                                    handleInitialClick(sig.id_item);
-                                    console.log("Id item clicked:", sig.id_item);
-                                }}
-                                >
-                                <FaFont style={{ width: "25%", height: "25%" }} />
-                                </Rnd>
-                           )
-                        })} */}
-
                         {console.log("Initials:", initials)}
 
-                        {initials.map((sig, index) => {
+                        {/* {initials.map((sig, index) => {
                             if (!sig || !sig.id_item) return null;
                             
                             if (sig.status === "Completed") {
@@ -410,9 +293,9 @@ function ReceiveDocument() {
                                     }}
                                 >
                                 <img
-                                    src={sign_base64} 
+                                    src={sig.sign_base64} 
                                     alt="Initial"
-                                    onLoad={() => console.log("Image loaded:", sig.id_item)}
+                                    onLoad={() => console.log("Image loaded:", sig.sign_base64)}
                                     style={{
                                     width: "100%",
                                     height: "100%",
@@ -448,6 +331,74 @@ function ReceiveDocument() {
                                 </Rnd>
                                 );
                             }
+                        })} */}
+
+                        {signedInitials.map((sig, index) => {
+                            if (!sig || !sig.id_item) return null;
+                            
+                            if (sig.status == "Completed") {
+                                console.log("Sign base64:", sig.sign_base64);
+                                return (
+                                <Rnd
+                                    key={sig.id_item || index}
+                                    position={{ x: sig.x_axis, y: sig.y_axis }}
+                                    size={{ width: sig.height, height: sig.width }}
+                                    enableResizing={sig.enableResizing} 
+                                    disableDragging={sig.disableDragging}  
+                                    style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    backgroundColor: "transparent",
+                                    }}
+                                    >
+                                    <img
+                                        src={sig.sign_base64} 
+                                        alt="Initial"
+                                        onLoad={() => console.log("Image loaded:", sig.sign_base64)}
+                                        style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "contain",
+                                        }}
+                                        onError={(e) => {
+                                            console.error("Image error", e);
+                                            e.target.src = "/fallback.png"; 
+                                        }}
+                                    />
+                                </Rnd>
+                                ); 
+                            } 
+                            return null;
+                        })}
+
+                        {initials.map((sig, index) => {
+                        if (!sig || !sig.id_item) return null;
+
+                        if (sig.status !== "Completed") {
+                            return (
+                            <Rnd
+                                key={sig.id_item || index}
+                                position={{ x: sig.x_axis, y: sig.y_axis }}
+                                size={{ width: sig.height, height: sig.width }}
+                                enableResizing={sig.enableResizing} 
+                                disableDragging={sig.disableDragging}  
+                                style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "rgba(25, 230, 25, 0.5)",
+                                }}
+                                onClick={() => {
+                                    handleInitialClick(sig.id_item);
+                                    console.log("Id item clicked:", sig.id_item);
+                                }}
+                                >
+                                <FaFont style={{ width: "25%", height: "25%" }} />
+                            </Rnd>
+                            )
+                        }
+                            return null;
                         })}
                         
                         <InitialModal
