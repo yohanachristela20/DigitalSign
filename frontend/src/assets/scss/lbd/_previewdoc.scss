@@ -7,22 +7,10 @@
     position: relative; //untuk container
 }
 
-
-.vertical-center {
+.pdf-preview-container{
     left: 50%;
     position: absolute; //untuk content
-    transform: translate(-50%, 0);
-}
-
-.centered-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.body {
-    background-color: rgb(241, 241, 241);  
+    transform: translate(-50%, 0);     
 }
 
 canvas{

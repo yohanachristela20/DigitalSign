@@ -18,6 +18,7 @@ import { useInitial } from "components/Provider/InitialContext.js";
 import { useSignature } from "components/Provider/SignatureContext.js";
 import { useDateField } from "components/Provider/DateContext.js";
 import moment from 'moment';
+import "../assets/scss/lbd/_previewdoc.scss"
 
 import {
   Card,
@@ -1021,7 +1022,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
         <Heartbeat/>
         <Row>
           <Col md="12">
-            <Card className="p-4">
+            <Card className="p-3">
               <Card.Body>
               <Card.Header className="px-0">
                   <Card.Title>
@@ -1169,9 +1170,9 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
             </Card>
 
             {steps === 3 && (
-              <>
+              <div className="pdf-preview-container mt-4">
                 <PreviewDocument />
-              </>
+              </div>
             )}
             {steps === 4 && (
               <>

@@ -1,0 +1,13 @@
+// .sidebar-container{
+//     width: 240px;
+//     background-color: #ffa7a5;
+//     z-index: 2;
+//     position: relative;
+// }
+
+.content-container{
+    overflow-y: auto;
+    position: relative;
+    z-index: 1;
+    background-color: #fff;
+}

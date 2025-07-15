@@ -8,7 +8,7 @@ import { Rnd } from 'react-rnd';
 import { Document, Page, pdfjs } from "react-pdf";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-import { Container, Spinner, Alert } from "react-bootstrap";
+import { Container, Spinner, Alert, Row, Col, Card } from "react-bootstrap";
 import { toast } from "react-toastify";
 
 import SignatureModal from 'components/ModalForm/SignatureModal.js';
@@ -84,69 +84,7 @@ function ReceiveDocument() {
         });
     };
 
-    // useEffect(() => {
-    // const fetchInitials = async () => {
-    //     if (!id_dokumen || !id_signers || id_signers.length === 0) return;
-
-    //     try {
-    //         const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
-    //         const signerParam = signerArray.join(",");
-
-    //         const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
-    //         const initialsData = initialsRes.data;
-
-    //         const axisFieldPromises = signerArray.map((signer) =>
-    //             axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
-    //         );
-    //         const axisFieldResponses = await Promise.all(axisFieldPromises);
-
-    //         const axisFieldData = axisFieldResponses.flatMap(res => res.data);
-
-    //         const initialList = [];
-
-    //         initialsData.forEach((initial, i) => {
-    //         const match = axisFieldData.filter(field =>
-    //             field.id_signers === initial.id_signers &&
-    //             field.Signerr?.nama === initial.Signerr?.nama &&
-    //             field.ItemField?.jenis_item === "Initialpad"
-    //         );
-
-    //             match.forEach((field, j) => {
-    //                 const base64 = initial.sign_base64;
-    //                 const formattedBase64 = base64?.startsWith("data:image")
-    //                     ? base64
-    //                     : base64 ? `data:image/png;base64,${base64}` : null;
-                
-
-    //                 initialList.push(
-    //                     {
-    //                     id_item: field.id_item || `unknown-${i}-${j}`,
-    //                     id_signers: initial.id_signers,
-    //                     sign_base64: formattedBase64,
-    //                     status: initial.status,
-    //                     nama: initial.Signerr?.nama || "-",
-    //                     x_axis: field.ItemField?.x_axis || 0,
-    //                     y_axis: field.ItemField?.y_axis || 0,
-    //                     width: field.ItemField?.width || 50,
-    //                     height: field.ItemField?.height || 50,
-    //                     enableResizing: false,
-    //                     disableDragging: true
-    //                 });
-    //             });
-    //         });
-
-    //         setSignedInitials(initialList);
-    //         console.log("Initial list with id_item:", initialList);
-    //         // console.log("Signbase:", initialList[1].sign_base64);
-
-    //     } catch (error) {
-    //         console.error("Failed to fetch initials or axis-field:", error.message);
-    //     }
-    // };
-
-    // fetchInitials();
-    // }, [id_dokumen, id_signers]);
-
+    //LAST
     useEffect(() => {
     const fetchInitials = async () => {
         if (!id_dokumen || !id_signers || id_signers.length === 0) return;
@@ -158,20 +96,45 @@ function ReceiveDocument() {
             const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
             const initialsData = initialsRes.data;
 
-            const axisFieldResponses = await Promise.all(
-                signerArray.map((signer) => 
-                    axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
-                )
+            const axisFieldPromises = signerArray.map((signer) =>
+                axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
             );
-                
-            // const axisFieldResponses = await Promise.all(axisFieldPromises);
+            const axisFieldResponses = await Promise.all(axisFieldPromises);
 
             const axisFieldData = axisFieldResponses.flatMap(res => res.data);
+
             const initialList = [];
 
-            signerArray.forEach((signer) => {
-                const signerInitials = initialsData.filter(initial => initial.id_signers === signer);
-            })
+            initialsData.forEach((initial, i) => {
+            const match = axisFieldData.filter(field =>
+                field.id_signers === initial.id_signers &&
+                field.Signerr?.nama === initial.Signerr?.nama &&
+                field.ItemField?.jenis_item === "Initialpad"
+            );
+
+                match.forEach((field, j) => {
+                    const base64 = initial.sign_base64;
+                    const formattedBase64 = base64?.startsWith("data:image")
+                        ? base64
+                        : base64 ? `data:image/png;base64,${base64}` : null;
+                
+
+                    initialList.push(
+                        {
+                        id_item: field.id_item || `unknown-${i}-${j}`,
+                        id_signers: initial.id_signers,
+                        sign_base64: formattedBase64,
+                        status: initial.status,
+                        nama: initial.Signerr?.nama || "-",
+                        x_axis: field.ItemField?.x_axis || 0,
+                        y_axis: field.ItemField?.y_axis || 0,
+                        width: field.ItemField?.width || 50,
+                        height: field.ItemField?.height || 50,
+                        enableResizing: false,
+                        disableDragging: true
+                    });
+                });
+            });
 
             setSignedInitials(initialList);
             console.log("Initial list with id_item:", initialList);
@@ -184,6 +147,44 @@ function ReceiveDocument() {
 
     fetchInitials();
     }, [id_dokumen, id_signers]);
+
+    // useEffect(() => {
+    // const fetchInitials = async () => {
+    //     if (!id_dokumen || !id_signers || id_signers.length === 0) return;
+
+    //     try {
+    //         const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+    //         const signerParam = signerArray.join(",");
+
+    //         const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
+    //         const initialsData = initialsRes.data;
+
+    //         const axisFieldResponses = await Promise.all(
+    //             signerArray.map((signer) => 
+    //                 axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
+    //             )
+    //         );
+                
+    //         // const axisFieldResponses = await Promise.all(axisFieldPromises);
+
+    //         const axisFieldData = axisFieldResponses.flatMap(res => res.data);
+    //         const initialList = [];
+
+    //         signerArray.forEach((signer) => {
+    //             const signerInitials = initialsData.filter(initial => initial.id_signers === signer);
+    //         })
+
+    //         setSignedInitials(initialList);
+    //         console.log("Initial list with id_item:", initialList);
+    //         // console.log("Signbase:", initialList[1].sign_base64);
+
+    //     } catch (error) {
+    //         console.error("Failed to fetch initials or axis-field:", error.message);
+    //     }
+    // };
+
+    // fetchInitials();
+    // }, [id_dokumen, id_signers]);
 
     useEffect(() => {
     const fetchData = async () => {
@@ -276,141 +277,141 @@ function ReceiveDocument() {
 
     return (
         <>
-            <div className="bg-receivedoc">
             <UserNavbar />
-            <div className="center-object">
-                <div className="vertical-center">
-                    <Container fluid className="mt-3 pl-0">
-                    {loading && <Spinner animation="border" variant="primary" />}
-                    {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
-                    {!loading && !errorMsg && pdfUrl && (
-                    <>
-                        <PDFCanvas pdfUrl={pdfUrl} 
-                        />
-                        {signatures.map((sig, index) => (
+            <div className="center-object my-4">
+                <div>
+                    <Container fluid className="mt-3 px-0">
+                            {loading && <Spinner animation="border" variant="primary" />}
+                            {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
+                            {!loading && !errorMsg && pdfUrl && (
                             <>
+                                <div className="vertical-center">
+                                <PDFCanvas pdfUrl={pdfUrl} />
+                                
+                                {signatures.map((sig, index) => (
+                                    <>
+                                        <Rnd
+                                            key={sig.id}
+                                            position={{ x: sig.x_axis, y: sig.y_axis }}
+                                            size={{ width: sig.height, height: sig.width }}
+                                            enableResizing={sig.enableResizing} 
+                                            disableDragging={sig.disableDragging} 
+                                            style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            backgroundColor: "rgba(25, 230, 25, 0.5)", 
+                                            }}
+                                            onClick={handleSignatureClick}
+                                        >
+                                            <FaSignature style={{ width: "25%", height: "25%" }} />
+                                        </Rnd>
+                                        <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} />
+                                
+                                    </>
+                                ))}
+
+                                {console.log("Initials:", initials)}
+
+                                {signedInitials.map((sig, index) => {
+                                    if (!sig || !sig.id_item) return null;
+                                    
+                                    if (sig.status == "Completed") {
+                                        console.log("Sign base64:", sig.sign_base64);
+                                        return (
+                                        <Rnd
+                                            key={sig.id_item || index}
+                                            position={{ x: sig.x_axis, y: sig.y_axis }}
+                                            size={{ width: sig.height, height: sig.width }}
+                                            enableResizing={sig.enableResizing} 
+                                            disableDragging={sig.disableDragging}  
+                                            style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            backgroundColor: "transparent",
+                                            }}
+                                            >
+                                            <img
+                                                src={sig.sign_base64} 
+                                                alt="Initial"
+                                                onLoad={() => console.log("Image loaded:", sig.sign_base64)}
+                                                style={{
+                                                width: "100%",
+                                                height: "100%",
+                                                objectFit: "contain",
+                                                }}
+                                                onError={(e) => {
+                                                    console.error("Image error", e);
+                                                    e.target.src = "/fallback.png"; 
+                                                }}
+                                            />
+                                        </Rnd>
+                                        ); 
+                                    } 
+                                    return null;
+                                })}
+
+                                {initials.map((sig, index) => {
+                                if (!sig || !sig.id_item) return null;
+
+                                if (sig.status !== "Completed") {
+                                    return (
+                                        <Rnd
+                                        key={`${sig.id_signers}-${sig.id_item}`}
+                                        position={{ x: sig.x_axis, y: sig.y_axis }}
+                                        size={{ width: sig.height, height: sig.width }}
+                                        enableResizing={sig.enableResizing} 
+                                        disableDragging={sig.disableDragging}  
+                                        style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        backgroundColor: "rgba(25, 230, 25, 0.5)",
+                                        cursor: "pointer"
+                                        }}
+                                        onClick={() => {
+                                            handleInitialClick(sig.id_item);
+                                            console.log("Id item clicked:", sig.id_item);
+                                        }}
+                                        >
+                                        <FaFont style={{ width: "25%", height: "25%" }} />
+                                    </Rnd>
+                                    )
+                                    
+                                }
+                                    return null;
+                                })}
+
+                                <InitialModal
+                                    showInitialModal={showInitialModal}
+                                    setShowInitialModal={setShowInitialModal}
+                                    onSuccess={handleSignatureSuccess}
+                                    selectedIdItem={selectedIdItem}
+                                />
+                                
+                                {dateField.map((sig, index) => (
                                 <Rnd
                                     key={sig.id}
                                     position={{ x: sig.x_axis, y: sig.y_axis }}
                                     size={{ width: sig.height, height: sig.width }}
-                                    enableResizing={sig.enableResizing} 
+                                    enableResizing={sig.enableResizing}    
                                     disableDragging={sig.disableDragging} 
                                     style={{
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
-                                    backgroundColor: "rgba(25, 230, 25, 0.5)", 
+                                    backgroundColor: "rgba(25, 230, 25, 0.5)",
                                     }}
-                                    onClick={handleSignatureClick}
                                 >
                                     <FaSignature style={{ width: "25%", height: "25%" }} />
                                 </Rnd>
-                                <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} />
-                        
+                                ))}
+                                </div>
                             </>
-                        ))}
-
-                        {console.log("Initials:", initials)}
-
-                        {signedInitials.map((sig, index) => {
-                            if (!sig || !sig.id_item) return null;
-                            
-                            if (sig.status == "Completed") {
-                                console.log("Sign base64:", sig.sign_base64);
-                                return (
-                                <Rnd
-                                    key={sig.id_item || index}
-                                    position={{ x: sig.x_axis, y: sig.y_axis }}
-                                    size={{ width: sig.height, height: sig.width }}
-                                    enableResizing={sig.enableResizing} 
-                                    disableDragging={sig.disableDragging}  
-                                    style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    backgroundColor: "transparent",
-                                    }}
-                                    >
-                                    <img
-                                        src={sig.sign_base64} 
-                                        alt="Initial"
-                                        onLoad={() => console.log("Image loaded:", sig.sign_base64)}
-                                        style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "contain",
-                                        }}
-                                        onError={(e) => {
-                                            console.error("Image error", e);
-                                            e.target.src = "/fallback.png"; 
-                                        }}
-                                    />
-                                </Rnd>
-                                ); 
-                            } 
-                            return null;
-                        })}
-
-                        {initials.map((sig, index) => {
-                        if (!sig || !sig.id_item) return null;
-
-                        if (sig.status !== "Completed") {
-                            return (
-                                <Rnd
-                                key={`${sig.id_signers}-${sig.id_item}`}
-                                position={{ x: sig.x_axis, y: sig.y_axis }}
-                                size={{ width: sig.height, height: sig.width }}
-                                enableResizing={sig.enableResizing} 
-                                disableDragging={sig.disableDragging}  
-                                style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "rgba(25, 230, 25, 0.5)",
-                                cursor: "pointer"
-                                }}
-                                onClick={() => {
-                                    handleInitialClick(sig.id_item);
-                                    console.log("Id item clicked:", sig.id_item);
-                                }}
-                                >
-                                <FaFont style={{ width: "25%", height: "25%" }} />
-                            </Rnd>
-                            )
-                            
-                        }
-                            return null;
-                        })}
-
-                        <InitialModal
-                            showInitialModal={showInitialModal}
-                            setShowInitialModal={setShowInitialModal}
-                            onSuccess={handleSignatureSuccess}
-                            selectedIdItem={selectedIdItem}
-                        />
-                        
-                        {dateField.map((sig, index) => (
-                        <Rnd
-                            key={sig.id}
-                            position={{ x: sig.x_axis, y: sig.y_axis }}
-                            size={{ width: sig.height, height: sig.width }}
-                            enableResizing={sig.enableResizing}    
-                            disableDragging={sig.disableDragging} 
-                            style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            backgroundColor: "rgba(25, 230, 25, 0.5)",
-                            }}
-                        >
-                            <FaSignature style={{ width: "25%", height: "25%" }} />
-                        </Rnd>
-                        ))}
-                    </>
-                    )}
-                    </Container>
+                            )}
+                    </Container>   
                 </div>
-            </div>
             </div>
         </>
     );

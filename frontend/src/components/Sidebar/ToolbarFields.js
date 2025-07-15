@@ -403,7 +403,7 @@ function ToolbarFields ({ color, routes}) {
           <Button
             type="button"
             className="btn mb-3 bg-transparent mt-2"
-            style={{width:"190px", border:"1px solid #eed4dd"}}
+            style={{width:"230px", border:"1px solid #eed4dd"}}
             onClick={handleAddSignature}>
             <i class="fa fa-signature" style={{ marginRight: '8px' }}></i>
               Signature
@@ -411,7 +411,7 @@ function ToolbarFields ({ color, routes}) {
           <Button
             type="button"
             className="btn mb-3 bg-transparent mt-2"
-            style={{width:"190px", border:"1px solid #eed4dd"}}
+            style={{width:"230px", border:"1px solid #eed4dd"}}
             onClick={handleAddInitials}>
             <i class="fa fa-font" style={{ marginRight: '8px' }}></i>
               Initial
@@ -419,7 +419,7 @@ function ToolbarFields ({ color, routes}) {
           <Button
             type="button"
             className="btn mb-3 bg-transparent mt-2"
-            style={{width:"190px", border:"1px solid #eed4dd"}}
+            style={{width:"230px", border:"1px solid #eed4dd"}}
             onClick={handleAddDate}>
             <i class="fa fa-calendar" style={{ marginRight: '8px' }}></i>
               Date Signed

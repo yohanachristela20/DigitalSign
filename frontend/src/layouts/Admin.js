@@ -8,6 +8,7 @@ import ToolbarFields from "../components/Sidebar/ToolbarFields.js";
 import UploadDocument from "views/UploadDocument.js";
 import routes from "routes.js";
 import sidebarImage from "assets/img/sidebar-3.jpg";
+import "../assets/scss/lbd/_admin.scss";
 
 function Admin() {
   const [image, setImage] = React.useState(sidebarImage);
@@ -84,15 +85,15 @@ function Admin() {
   // );
 
 return (
-  <div className="main w-100">
+  <div className="d-flex" style={{height: '100vh'}}>
     { token && isUploadDocumentPage && stepStepper === 3 ? (
-      <ToolbarFields color={color} image={hasImage ? image : ""} routes={routes}/>  
+      <ToolbarFields color={color} image={hasImage ? image : ""} routes={routes}/>
     ) : (
       <Side color={color} image={hasImage ? image : ""} routes={routes}/>
     )}
     
-    <div ref={mainPanel} className="w-100">
-      <AdminNavbar />
+    <div ref={mainPanel} className="content-container flex-grow-1">
+      <AdminNavbar/>
       <div className="content">
         <Switch>
           {routes.map((prop, key) => {
@@ -105,7 +106,6 @@ return (
                     render={(props) => (
                       <UploadDocument {...props} steps={stepStepper} setSteps={() => {}} 
                       />
-                      
                     )}
                   />
                 );

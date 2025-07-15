@@ -4,6 +4,7 @@ import axios from "axios";
 import PDFCanvas from "components/Canvas/canvas.js";
 import {Button, Container, Row, Col, Card, Table, Spinner, Badge, Form} from "react-bootstrap";
 import { Document, Page } from "react-pdf";
+import "../assets/scss/lbd/_previewdoc.scss"
 
 function PreviewDocument() {
     const location = useLocation();
@@ -47,19 +48,22 @@ function PreviewDocument() {
 
     return(
         <>
-            <Container fluid className="d-flex justify-content-center">
+            <div>
+                <Container fluid className="mt-5 mb-5 px-0">
                 <Form>
                     <div>
                         <h5>Preview</h5>
+                        <div>
                         {pdfUrl? (
                           <PDFCanvas pdfUrl={pdfUrl}/>
                         ) : (
-                          <p>Loading PDF...</p>
-                          
+                          <p>Loading PDF...</p>  
                         )}
+                        </div>
                     </div>
                 </Form>
             </Container>
+            </div>
         </>
     );
 }
