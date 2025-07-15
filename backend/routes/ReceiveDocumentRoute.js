@@ -74,9 +74,10 @@ const router = express.Router();
 
 router.get('/receive-document', async(req, res, next) => {
     const token = req.query.token;
+    const receiver = req.query.receiver;
     const jwtSecret = process.env.JWT_SECRET_KEY;
 
-    if (!token) {
+    if (!token || !receiver) {
         return res.status(401).json({message: 'Token is required!'});
     }
 
@@ -87,7 +88,7 @@ router.get('/receive-document', async(req, res, next) => {
         const dokumenLogsign = decoded.dokumenLogsign?.id_dokumen;
         console.log("Dokumen logsign:", dokumenLogsign);
 
-        const idSignerLogsign = decoded.dokumenLogsign?.id_signers;
+        const idSignerLogsign = receiver;
         console.log("Id signer logsign:", idSignerLogsign);
 
         res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign});

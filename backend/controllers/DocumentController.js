@@ -311,7 +311,7 @@ export const sendEmailNotification = async (req, res) => {
     const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
 
     const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList}}, jwtSecret);
-    const signLink = `http://localhost:3000/user/envelope?token=${token}`;
+    // const signLink = `http://localhost:3000/user/envelope?token=${token}&receiver=${id_signers}`;
 
     let emailResults = [];
 
@@ -330,6 +330,8 @@ export const sendEmailNotification = async (req, res) => {
         emailResults.push({ signer, message: 'No valid logsigns to notify.' });
         continue;
       }
+
+      const signLink = `http://localhost:3000/user/envelope?token=${token}&receiver=${signer}`;
 
       // const token = jwt.sign({ dokumenLogsign: [id_dokumen, signer] }, jwtSecret);
       // const signLink = `http://localhost:3000/user/envelope?token=${token}`;

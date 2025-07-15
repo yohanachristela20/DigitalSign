@@ -49,11 +49,21 @@ function ReceiveDocument() {
     const [signClicked, setSignClicked] = useState(false);
     const [initClicked, setInitClicked] = useState(false);
     const [nameSigner, setNameSigner] = useState("");
+
+    const [selectedSigner, setSelectedSigner] = useState(null);
     
     
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
+
+    const [currentReceiver, setCurrentReceiver] = useState(null);
+
+    // const urlParams = new URLSearchParams(window.location.search);
+    // const receiver = urlParams.get("receiver");
+    // setCurrentReceiver(receiver);
+
+
 
     const styleRnd = {
         display: "flex",
@@ -72,8 +82,17 @@ function ReceiveDocument() {
     };
 
     const handleInitialClick = (id_item) => {
-        setSelectedIdItem(id_item);
-        setShowInitialModal(true);
+        const signer = initials.find(i => i.id_item === id_item);
+        if (signer) {
+            setSelectedIdItem(id_item);
+            setSelectedSigner(signer);
+            setShowInitialModal(true);
+
+            console.log("ID Item clicked:", id_item);
+        }
+
+        // setSelectedIdItem(id_item);
+        // setShowInitialModal(true);
     };
     
     const handleSignatureSuccess = () => {
@@ -85,69 +104,71 @@ function ReceiveDocument() {
     };
 
     //LAST
-    useEffect(() => {
-    const fetchInitials = async () => {
-        if (!id_dokumen || !id_signers || id_signers.length === 0) return;
+    // useEffect(() => {
+    // const fetchInitials = async () => {
+    //     if (!id_dokumen || !id_signers || id_signers.length === 0) return;
 
-        try {
-            const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
-            const signerParam = signerArray.join(",");
+    //     try {
+    //         const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+    //         const signerParam = signerArray.join(",");
 
-            const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
-            const initialsData = initialsRes.data;
+    //         const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
+    //         const initialsData = initialsRes.data;
 
-            const axisFieldPromises = signerArray.map((signer) =>
-                axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
-            );
-            const axisFieldResponses = await Promise.all(axisFieldPromises);
+    //         const axisFieldPromises = signerArray.map((signer) =>
+    //             axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
+    //         );
+    //         const axisFieldResponses = await Promise.all(axisFieldPromises);
 
-            const axisFieldData = axisFieldResponses.flatMap(res => res.data);
+    //         const axisFieldData = axisFieldResponses.flatMap(res => res.data);
 
-            const initialList = [];
+    //         const initialList = [];
 
-            initialsData.forEach((initial, i) => {
-            const match = axisFieldData.filter(field =>
-                field.id_signers === initial.id_signers &&
-                field.Signerr?.nama === initial.Signerr?.nama &&
-                field.ItemField?.jenis_item === "Initialpad"
-            );
+    //         initialsData.forEach((initial, i) => {
+    //         const match = axisFieldData.filter(field =>
+    //             field.id_signers === initial.id_signers &&
+    //             field.Signerr?.nama === initial.Signerr?.nama &&
+    //             field.ItemField?.jenis_item === "Initialpad"
+    //         );
 
-                match.forEach((field, j) => {
-                    const base64 = initial.sign_base64;
-                    const formattedBase64 = base64?.startsWith("data:image")
-                        ? base64
-                        : base64 ? `data:image/png;base64,${base64}` : null;
+    //             match.forEach((field, j) => {
+    //                 const base64 = initial.sign_base64;
+    //                 const formattedBase64 = base64?.startsWith("data:image")
+    //                     ? base64
+    //                     : base64 ? `data:image/png;base64,${base64}` : null;
                 
 
-                    initialList.push(
-                        {
-                        id_item: field.id_item || `unknown-${i}-${j}`,
-                        id_signers: initial.id_signers,
-                        sign_base64: formattedBase64,
-                        status: initial.status,
-                        nama: initial.Signerr?.nama || "-",
-                        x_axis: field.ItemField?.x_axis || 0,
-                        y_axis: field.ItemField?.y_axis || 0,
-                        width: field.ItemField?.width || 50,
-                        height: field.ItemField?.height || 50,
-                        enableResizing: false,
-                        disableDragging: true
-                    });
-                });
-            });
+    //                 initialList.push(
+    //                     {
+    //                     id_item: field.id_item || `unknown-${i}-${j}`,
+    //                     id_signers: initial.id_signers,
+    //                     sign_base64: formattedBase64,
+    //                     status: initial.status,
+    //                     nama: initial.Signerr?.nama || "-",
+    //                     x_axis: field.ItemField?.x_axis || 0,
+    //                     y_axis: field.ItemField?.y_axis || 0,
+    //                     width: field.ItemField?.width || 50,
+    //                     height: field.ItemField?.height || 50,
+    //                     enableResizing: false,
+    //                     disableDragging: true
+    //                 });
+    //             });
+    //         });
 
-            setSignedInitials(initialList);
-            console.log("Initial list with id_item:", initialList);
-            // console.log("Signbase:", initialList[1].sign_base64);
+    //         setSignedInitials(initialList);
+    //         console.log("Initial list with id_item:", initialList);
+    //         // console.log("Signbase:", initialList[1].sign_base64);
 
-        } catch (error) {
-            console.error("Failed to fetch initials or axis-field:", error.message);
-        }
-    };
+    //     } catch (error) {
+    //         console.error("Failed to fetch initials or axis-field:", error.message);
+    //     }
+    // };
 
-    fetchInitials();
-    }, [id_dokumen, id_signers]);
+    // fetchInitials();
+    // }, [id_dokumen, id_signers]);
 
+
+    //DRAFT
     // useEffect(() => {
     // const fetchInitials = async () => {
     //     if (!id_dokumen || !id_signers || id_signers.length === 0) return;
@@ -170,9 +191,90 @@ function ReceiveDocument() {
     //         const axisFieldData = axisFieldResponses.flatMap(res => res.data);
     //         const initialList = [];
 
-    //         signerArray.forEach((signer) => {
+    //         for (let i = 0; i < signerArray.length; i++) {
+    //             const signer = signerArray[i];
+
     //             const signerInitials = initialsData.filter(initial => initial.id_signers === signer);
-    //         })
+    //             const signerFields = axisFieldData.filter(field => 
+    //                 field.id_signers === signer &&
+    //                 field.ItemField?.jenis_item === "Initialpad"
+    //             );
+
+    //             const combined = signerFields.map(field => {
+    //                 const initial = signerInitials.find(init => init.id_signers === signer && init.Signerr?.nama === field.Signerr?.nama);
+    //                 const base64 = initial?.sign_base64;
+    //                 const formattedBase64 = base64?.startsWith("data:image")
+    //                 ? base64
+    //                 : base64 ? `data:image/png;base64,${base64}` : null;
+
+    //                 return {
+    //                     id_item: field.id_item,
+    //                     id_signers: signer,
+    //                     sign_base64: formattedBase64,
+    //                     status: initial?.status || "Pending",
+    //                     nama: initial?.Signerr?.nama || "-",
+    //                     x_axis: field.ItemField?.x_axis || 0,
+    //                     y_axis: field.ItemField?.y_axis || 0,
+    //                     width: field.ItemField?.width || 50,
+    //                     height: field.ItemField?.height || 50,
+    //                     enableResizing: false,
+    //                     disableDragging: true,
+    //                     show: false
+    //                 };
+    //             });
+
+    //             if (i === 0) {
+    //                 combined.forEach((item, index) => {
+    //                     item.show = index === 0;
+    //                     initialList.push(item);
+    //                 });
+    //             } else {
+    //                 const prevSigner = signerArray[i - 1];
+    //                 console.log("prevSigner:", prevSigner);
+
+    //                 const prevFields = axisFieldData.filter(field => 
+    //                     field.id_signers === prevSigner && 
+    //                     field.ItemField?.jenis_item === "Initialpad"
+    //                 );
+
+    //                 console.log("Prev Fields:", prevFields);
+
+    //                 const prevInitials = initialsData.filter(init => init.id_signers === prevSigner);
+    //                 const isPrevCompleted = prevInitials.some(init => init.status === "Completed");
+
+    //                 if (isPrevCompleted) {
+    //                     combined.forEach(item => {
+    //                         item.show = true;
+    //                         initialList.push(item);
+    //                     });
+    //                 } else {
+    //                     prevFields.forEach(field => {
+    //                         const match = prevInitials.find(init => init.Signerr?.nama === field.Signerr?.nama);
+    //                         const base64 = match?.sign_base64;
+    //                         const formattedBase64 = base64?.startsWith("data:image")
+    //                         ? base64 
+    //                         : base64 ? `data:image/png;base64,${base64}`: null;
+
+    //                         initialList.push({
+    //                             id_item: field.id_item,
+    //                             id_signers: prevSigner,
+    //                             sign_base64: formattedBase64,
+    //                             status: match?.status || "Pending",
+    //                             nama: match?.Signerr?.nama || "-",
+    //                             x_axis: field.ItemField?.x_axis || 0,
+    //                             y_axis: field.ItemField?.y_axis || 0,
+    //                             width: field.ItemField?.width || 50,
+    //                             height: field.ItemField?.height || 50,
+    //                             enableResizing: false,
+    //                             disableDragging: true,
+    //                             show: true
+    //                         });
+    //                     });
+    //                     break;
+    //                 }
+
+    //             }
+    //         }
 
     //         setSignedInitials(initialList);
     //         console.log("Initial list with id_item:", initialList);
@@ -186,12 +288,18 @@ function ReceiveDocument() {
     // fetchInitials();
     // }, [id_dokumen, id_signers]);
 
+
     useEffect(() => {
     const fetchData = async () => {
-        if (!token) return;
+        const urlParams = new URLSearchParams(window.location.search);
+        const receiver = urlParams.get("receiver");
+        setCurrentReceiver(receiver);
+        console.log("Current receiver:", currentReceiver);
+
+        if (!token || !receiver) return;
 
         try {
-            const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+            const res = await axios.get(`http://localhost:5000/receive-document?token=${token}&receiver=${receiver}`);
             const id_dokumen = res.data.id_dokumen;
             const id_signers = res.data.id_signers;
 
@@ -270,6 +378,89 @@ function ReceiveDocument() {
 
         fetchData();
     }, [token]);
+
+    useEffect(() => {
+    const fetchInitials = async () => {
+        if (!id_dokumen || !id_signers || !currentReceiver) return;
+
+        try {
+            const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+            const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerArray.join(",")}`);
+            const initialsData = initialsRes.data;
+
+            const axisFieldResponses = await Promise.all(
+                signerArray.map((signer) =>
+                    axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
+                )
+            );
+            const axisFieldData = axisFieldResponses.flatMap(res => res.data);
+            const initialList = [];
+
+            let canRender = false;
+
+            for (let i = 0; i < signerArray.length; i++) {
+                const signer = signerArray[i];
+
+                const signerInitials = initialsData.filter(init => init.id_signers === signer);
+                const signerFields = axisFieldData.filter(field =>
+                    field.id_signers === signer &&
+                    field.ItemField?.jenis_item === "Initialpad"
+                );
+               
+                const isCurrentReceiver = signer === currentReceiver;
+
+                if (i === 0) {
+                    if (isCurrentReceiver) {
+                        canRender = true;
+                    }
+                } else {
+                    const prevSigner = signerArray[i - 1];
+                    const prevInitials = initialsData.filter(init => init.id_signers === prevSigner);
+                    const isPrevCompleted = prevInitials.every(init => init.status === "Completed");
+
+                    if (isPrevCompleted && isCurrentReceiver) {
+                        canRender = true;
+                    }
+                }
+
+                if (isCurrentReceiver) {
+                    signerFields.forEach(field => {
+                    const matchedInitial = signerInitials.find(init => init.id_item === field.id_item);
+                    const base64 = matchedInitial?.sign_base64;
+                    const formattedBase64 = base64?.startsWith("data:image")
+                        ? base64
+                        : base64 ? `data:image/png;base64,${base64}` : null;
+
+                    return {
+                        id_item: field.id_item,
+                        id_signers: signer,
+                        sign_base64: formattedBase64,
+                        status: matchedInitial?.status || "Pending",
+                        nama: matchedInitial?.Signerr?.nama || "-",
+                        x_axis: field.ItemField?.x_axis || 0,
+                        y_axis: field.ItemField?.y_axis || 0,
+                        width: field.ItemField?.width || 50,
+                        height: field.ItemField?.height || 50,
+                        enableResizing: false,
+                        disableDragging: true,
+                        show: canRender
+                    };
+                });
+                break;
+                }
+            }
+
+            setSignedInitials(initialList);
+            console.log("Initial list with id_item:", initialList);
+        } catch (error) {
+            console.error("Failed to fetch initials or axis-field:", error.message);
+        }
+    };
+
+    fetchInitials();
+    }, [id_dokumen, id_signers, currentReceiver]);
+
+
 
     useEffect(() => {
         console.log("All sign STATUS:", signStatus);
@@ -353,22 +544,22 @@ function ReceiveDocument() {
                                 })}
 
                                 {initials.map((sig, index) => {
-                                if (!sig || !sig.id_item) return null;
+                                if (!sig || !sig.id_item ) return null;
 
                                 if (sig.status !== "Completed") {
                                     return (
                                         <Rnd
                                         key={`${sig.id_signers}-${sig.id_item}`}
-                                        position={{ x: sig.x_axis, y: sig.y_axis }}
-                                        size={{ width: sig.height, height: sig.width }}
+                                        position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
+                                        size={{ width: Number(sig.height), height: Number( sig.width) }}
                                         enableResizing={sig.enableResizing} 
                                         disableDragging={sig.disableDragging}  
                                         style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        backgroundColor: "rgba(25, 230, 25, 0.5)",
-                                        cursor: "pointer"
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            backgroundColor: "rgba(25, 230, 25, 0.5)",
+                                            cursor: "pointer"
                                         }}
                                         onClick={() => {
                                             handleInitialClick(sig.id_item);
@@ -388,6 +579,7 @@ function ReceiveDocument() {
                                     setShowInitialModal={setShowInitialModal}
                                     onSuccess={handleSignatureSuccess}
                                     selectedIdItem={selectedIdItem}
+                                    selectedSigner={selectedSigner}
                                 />
                                 
                                 {dateField.map((sig, index) => (
