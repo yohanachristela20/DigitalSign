@@ -594,6 +594,7 @@ function ReceiveDocument() {
                                                 backgroundColor: isCompleted
                                                     ? "transparent"
                                                     : "rgba(25, 230, 25, 0.5)",
+                                                border: "solid 1px #ccc", 
                                                 cursor: sig.editable && !isSubmitted ? "pointer" : "default",
                                                 zIndex: isCompleted? 1 : 2
                                             }}
