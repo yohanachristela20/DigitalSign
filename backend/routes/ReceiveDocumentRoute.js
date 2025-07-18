@@ -85,7 +85,7 @@ router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
     try {
         const response = await LogSign.findAll({
             where: {id_dokumen, id_signers}, 
-            attributes: ["id_item", "id_signers", "status", "urutan"],
+            attributes: ["id_item", "id_signers", "status", "urutan", "is_submitted"],
             include: [
                 {
                     model: Item,
@@ -136,6 +136,29 @@ router.get('/initials/:id_dokumen/:id_signers', async(req, res) => {
         
     } catch (error) {
         console.error("Failed to get imgBase64", error.message);
+    }
+});
+
+router.patch('/update-submitted/:id_dokumen/:id_signers', async(req, res) => {
+    const {id_dokumen, id_signers} = req.params;
+    const {is_submitted} = req.body;
+
+    try {
+        const submitted = await LogSign.update(
+            {is_submitted},
+            {
+                where: {id_dokumen, id_signers},
+            }
+        );
+
+        if(submitted[0] === 0) {
+            return res.status(404).json({message: "No logsign records found to submitted."});
+        }
+
+        res.status(200).json({msg: "Document submitted successfully."});
+    } catch (error) {
+        console.error("Failed to submitted signed document.", error.message);
+        res.status(500).json({message: error.message});
     }
 });
 

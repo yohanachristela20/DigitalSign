@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import axios from "axios";
 import { FaFont, FaSignature } from 'react-icons/fa';
 
@@ -8,13 +8,15 @@ import { Rnd } from 'react-rnd';
 import { Document, Page, pdfjs } from "react-pdf";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-import { Container, Spinner, Alert, Row, Col, Card } from "react-bootstrap";
+import { Container, Spinner, Alert, Row, Col, Card, Navbar, Nav, Dropdown, Button, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { toast } from "react-toastify";
 
 import SignatureModal from 'components/ModalForm/SignatureModal.js';
 import InitialModal from "components/ModalForm/InitialModal.js";
 import "../assets/scss/lbd/_receivedoc.scss";
 import UserNavbar from "components/Navbars/UserNavbar.js";
+import UbahPassword from "components/ModalForm/UbahPassword.js";
+import "../assets/scss/lbd/_usernavbar.scss";
 
 
 function ReceiveDocument() {
@@ -32,6 +34,7 @@ function ReceiveDocument() {
     const [sign_base64, setSignBase64] = useState("");
     const [status, setStatus] = useState([]);
     const [signStatus, setSignStatus] = useState([]);
+    const [initial_status, setInitialStatus] = useState([]);
     const [nama, setNama] = useState("");
 
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
@@ -58,6 +61,25 @@ function ReceiveDocument() {
     // const [signerUrutan, setSignerUrutan] = useState(null);
 
     const [allSigners, setAllSigners] = useState("");
+    // const [is_submitted, setIsSubmitted] = useState("");
+    const [submittedMap, setSubmittedMap] = useState({});
+    const [completeSubmitted, setCompleteSubmitted] = useState("");
+    const [nextSigner, setNextSigner] = useState("");
+    const [nextSignCompleted, setNextSignCompleted] = useState("");
+
+    const history = useHistory();
+
+    const mobileSidebarToggle = (e) => {
+        e.preventDefault();
+        document.documentElement.classList.toggle("nav-open");
+        var node = document.createElement("div");
+        node.id = "bodyClick";
+        node.onclick = function () {
+        this.parentElement.removeChild(this);
+        document.documentElement.classList.toggle("nav-open");
+        };
+        document.body.appendChild(node);
+    };
     
     
     const location = useLocation();
@@ -138,6 +160,7 @@ function ReceiveDocument() {
             const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
 
             const urutanMapping = {};
+            const submittedMapping = {}
 
             for (const signer of signerArray) {
                 const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
@@ -146,9 +169,15 @@ function ReceiveDocument() {
                 .forEach((item, idx) => {
                     const { x_axis, y_axis, width, height, jenis_item, id_item } = item.ItemField;
                     const status = item.status || "Pending";
+                    
                     const urutan = item.urutan;
                     if (!urutanMapping[signer]) {
                         urutanMapping[signer] = urutan;
+                    }
+
+                    const is_submitted = item.is_submitted;
+                    if (!submittedMapping[signer]) {
+                        submittedMapping[signer] = is_submitted;
                     }
 
                     const fieldObj = {
@@ -164,6 +193,7 @@ function ReceiveDocument() {
                         id_item,
                         status, 
                         urutan,
+                        is_submitted,
                     };
 
                     allStatus.push({ id_item, status });
@@ -183,6 +213,7 @@ function ReceiveDocument() {
             setDateField(localDateFields);
             setSignStatus(allStatus);
             setUrutanMap(urutanMapping);
+            setSubmittedMap(submittedMapping);
             
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
@@ -195,6 +226,33 @@ function ReceiveDocument() {
 
         fetchData();
     }, [token]);
+
+    const updateSubmitted = async(id_dokumen, id_signers) => {
+        console.log("Id Dokumen:", id_dokumen);
+        console.log("Id Signers:", id_signers);
+
+        try {
+            const response = await axios.patch(`http://localhost:5000/update-submitted/${id_dokumen}/${id_signers}`, {
+                is_submitted: true,
+            });
+
+            console.log("Document signed submitted:", response);
+            toast.success("Document signed successfully.", {
+                position: "top-right", 
+                autoClose: 5000, 
+                hideProgressBar: true,
+            });
+
+            window.location.reload();
+        } catch (error) {
+            console.log("Failed to save signed document:", error.message);
+            toast.error("Failed to save signed document.", {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: true,
+            });
+        }
+    }
 
     useEffect(() => {
         const fetchInitials = async () => {
@@ -213,6 +271,9 @@ function ReceiveDocument() {
             const currentUrutan = Number(urutanMap[signer]);
             console.log("CURRENT URUTAN:", currentUrutan);
 
+            const currentSubmitted = (submittedMap[signer]);
+            console.log("CURRENT SUBMITTED:", currentSubmitted);
+
             const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`);
             const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item === "Initialpad");
 
@@ -220,33 +281,68 @@ function ReceiveDocument() {
 
             let show = false;
             let editable = false;
+            const prevSigner = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan - 1);
+            console.log("PREV SIGNER:", prevSigner);
+
+            const prevStatusList = allInitialFields
+            .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
+            .map(field => field.status);
+
+            const prevSubmittedList = allInitialFields
+            .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
+            .map(field => field.is_submitted);
+
+            console.log("PREVSTATUS LIST:", prevStatusList);
+            console.log("PREVSUBMITTED LIST:", prevSubmittedList);
+
+            const allCompleted = prevStatusList.length > 0 && prevStatusList.every(status => status === "Completed" && prevSubmittedList.every(is_submitted => is_submitted !== false));
+            console.log("allCompleted:", allCompleted);
+            setCompleteSubmitted(allCompleted);
+
+            // if (currentUrutan === 1 ) {
+            //     show = true;
+            //     editable = true;
+            // } else {
+            //     if (allCompleted) {
+            //         show = true;
+            //         editable = true;
+            //     } else if (prevStatusList.every(status => status === "Pending")) {
+            //         show = false;
+            //         editable = false;
+            //     } else if (prevSubmittedList.every(is_submitted => is_submitted !== true)) {
+            //         show = false;
+            //         editable = false;
+            //     }
+            //     else {
+            //         show = true;
+            //         editable = false;
+            //     }
+            // }
 
             if (currentUrutan === 1) {
                 show = true;
                 editable = true;
+            } else if (prevStatusList.length === 0) {
+                show = false;
+                editable = false;
+            } else if (prevStatusList.every(status => status === "Completed") && prevSubmittedList.every(is_submitted => is_submitted === true)) {
+                show = true;
+                editable = true;
+            } else if (prevStatusList.every(status => status === "Pending") || prevSubmittedList.every(is_submitted => is_submitted !== true)) {
+                show = false;
+                editable = false;
             } else {
-                const prevSigner = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan - 1);
-                console.log("PREV SIGNER:", prevSigner);
-
-                const prevStatusList = allInitialFields
-                .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
-                .map(field => field.status);
-
-                console.log("PREVSTATUS LIST:", prevStatusList);
-
-                const allCompleted = prevStatusList.length > 0 && prevStatusList.every(status => status === "Completed");
-
-                if (allCompleted) {
-                    show = true;
-                    editable = true;
-                    } else if (prevStatusList.every(status => status === "Pending")) {
-                    show = false;
-                    editable = false;
-                    } else {
-                    show = true;
-                    editable = false;
-                }
+                show = tru;
+                editable = false;
             }
+
+            const nextSign = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan + 1);
+            console.log("NEXT SIGNER:", nextSign);
+            // setNextSigner(nextSign);
+
+            const nextSignerInitials = initialsData.filter(init => init.id_signers === nextSign);
+            const nextSignerSubmitted = submittedMap[nextSign];
+            const nextSignCompleted = nextSignerInitials.length > 0 && nextSignerSubmitted === true;
 
             const initialListForSigner = signerFields.map(field => {
                 const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
@@ -271,6 +367,10 @@ function ReceiveDocument() {
                 editable,
                 urutan: currentUrutan,
                 id_dokumen,
+                is_submitted: currentSubmitted,
+                nextSigner: nextSign,
+                prevSigner: prevSigner, 
+                nextSignCompleted: nextSignCompleted,
                 };
             });
 
@@ -280,9 +380,24 @@ function ReceiveDocument() {
             setSignedInitials(allInitialFields);
             console.log("All Initial list:", allInitialFields);
 
+            const nextSignCompleted = allInitialFields
+            .filter(field => field.prevSigner === id_signers)
+            .map(field => field.is_submitted);
+
+            console.log("nextSignCompleted:", nextSignCompleted);
+            setNextSignCompleted(nextSignCompleted);
+
+
             const filteredFields = allInitialFields.filter(field => field.id_signers === id_signers);
             setInitial(filteredFields);
             console.log("Initial satuan:", filteredFields);
+
+            const initialStatus = allInitialFields
+            .filter(field => field.id_signers === id_signers)
+            .map(field => field.status);
+
+            console.log("Initial status:", initialStatus);
+            setInitialStatus(initialStatus);
             
 
             } catch (error) {
@@ -300,7 +415,95 @@ function ReceiveDocument() {
 
     return (
         <>
-            <UserNavbar />
+            {/* <UserNavbar /> */}
+
+            <Navbar className="bg-navbar" expand="lg">
+                <Container fluid>
+                <div className="d-flex justify-content-center align-items-center ml-2 ml-lg-0">
+                    <Button
+                    variant="dark"
+                    className="d-lg-none btn-fill d-flex justify-content-center align-items-center rounded-circle p-2"
+                    onClick={mobileSidebarToggle}
+                    >
+                    <i className="fas fa-ellipsis-v"></i>
+                    </Button>
+                    <Navbar.Brand
+                    onClick={(e) => e.preventDefault()}
+                    >
+                    <img
+                        src={require("assets/img/logo2.png")}
+                        alt="sidebar-logo"
+                        style={{ width: '30px' }}
+                        className="img-items mr-2"
+                    />
+                    <span className="fs-5">Campina Sign</span>
+                    </Navbar.Brand>
+                </div>
+                <Navbar.Collapse id="basic-navbar-nav">
+                    <Nav className="ml-auto" style={{marginRight:'50px'}}>
+                    <Dropdown as={Nav.Item}>
+                        <Dropdown.Toggle
+                        aria-expanded={false}
+                        as={Nav.Link}
+                        id="navbarDropdownMenuLink"
+                        variant="default"
+                        className="mr-3 mt-2"
+                        >
+                        <span className="fs-6">Actions</span>
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu aria-labelledby="navbarDropdownMenuLink" style={{ width: '200px' }}>
+                        <Dropdown.Item
+                            onClick={(e) => e.preventDefault()}
+                        >
+                        Decline
+                        </Dropdown.Item>
+                        <div className="divider"></div>
+                        <Dropdown.Item
+                            href="#"
+                            onClick={(e) => {
+                            e.preventDefault();
+                            
+                            setShowUbahPassword(true); 
+                            }}
+                        >
+                            Document Info
+                        </Dropdown.Item>
+                        <div className="divider"></div>
+                        
+                        <Dropdown.Item
+                            href="#"
+                            onClick={(e) => {
+                            e.preventDefault();
+                            setShowModal(true); 
+                            }}
+                        >Audit Trail
+                        </Dropdown.Item>
+                        <div className="divider"></div>
+                        <Dropdown.Item
+                            href="#"
+                            onClick={(e) => {
+                            e.preventDefault();
+                            setShowModal(true); 
+                            }}
+                        >Download
+                        </Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
+        
+                    <Button
+                        className="submit-btn w-100 mt-3 fs-6"
+                        type="submit"
+                        onClick={() => updateSubmitted(id_dokumen, id_signers)}
+                        disabled={!initial_status.every(status => status === "Completed")}
+                        // disabled={sign_base64 == "" || sign_base64 == null}
+                    >
+                        Finish
+                    </Button>
+                    </Nav>
+                </Navbar.Collapse>
+                </Container>
+            </Navbar>
+
             <div className="center-object my-4">
                 <div>
                     <Container fluid className="mt-3 px-0">
@@ -339,6 +542,7 @@ function ReceiveDocument() {
                                     if (!sig || !sig.id_item || sig.show !== true) return null;
 
                                     const isCompleted = sig.status === "Completed";
+                                    const completedNext = sig.is_submitted === true;
 
                                     return (
                                         <Rnd
@@ -354,11 +558,12 @@ function ReceiveDocument() {
                                               
                                             }}
                                         >
-                                            {isCompleted && sig.sign_base64 ? (
+                                            {isCompleted && completedNext && sig.sign_base64 ? (
                                                 <img
                                                     src={sig.sign_base64}
                                                     alt="Initial"
                                                     style={{ width: "100%", height: "100%" }}
+                                                    // hidden={nextSignCompleted === false}
                                                 />
                                             ) : (
                                                 <></>
@@ -373,6 +578,7 @@ function ReceiveDocument() {
                                     if (!sig || !sig.id_item || sig.show !== true) return null;
 
                                     const isCompleted = sig.status === "Completed";
+                                    const isSubmitted = sig.is_submitted === true;
 
                                     return (
                                         <Rnd
@@ -388,16 +594,16 @@ function ReceiveDocument() {
                                                 backgroundColor: isCompleted
                                                     ? "transparent"
                                                     : "rgba(25, 230, 25, 0.5)",
-                                                cursor: sig.editable ? "pointer" : "default",
+                                                cursor: sig.editable && !isSubmitted ? "pointer" : "default",
                                                 zIndex: isCompleted? 1 : 2
                                             }}
                                             onClick={() => {
-                                                if (sig.editable) {
+                                                if (sig.editable && !isSubmitted) {
                                                     handleInitialClick(sig.id_item);
                                                 }
                                             }}
                                         >
-                                            {isCompleted && sig.sign_base64 ? (
+                                            {/* {isCompleted && sig.sign_base64 ? (
                                                 <img
                                                     src={sig.sign_base64}
                                                     alt="Initial"
@@ -405,7 +611,44 @@ function ReceiveDocument() {
                                                 />
                                             ) : (
                                                 <FaFont style={{ width: "25%", height: "25%" }} />
+                                            )} */}
+
+                                            {!isSubmitted ? (
+                                            <OverlayTrigger
+                                                placement="bottom"
+                                                overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
+                                            >
+                                                {({ ref, ...triggerHandler }) => (
+                                                <>
+                                                    {isCompleted && sig.sign_base64 ? (
+                                                    <img
+                                                        {...triggerHandler}
+                                                        ref={ref}
+                                                        src={sig.sign_base64}
+                                                        alt="Initial"
+                                                        style={{ width: "100%", height: "100%" }}
+                                                    />
+                                                    ) : (
+                                                    <FaFont style={{ width: "25%", height: "25%" }} />
+                                                    )}
+                                                </>
+                                                )}
+                                            </OverlayTrigger>
+                                            ) : (
+                                            <>
+                                                {isCompleted && sig.sign_base64 ? (
+                                                <img
+                                                    src={sig.sign_base64}
+                                                    alt="Initial"
+                                                    style={{ width: "100%", height: "100%" }}
+                                                />
+                                                ) : (
+                                                <FaFont style={{ width: "25%", height: "25%" }} />
+                                                )}
+                                            </>
                                             )}
+
+
                                         </Rnd>
                                     );
                                 })}

@@ -272,14 +272,14 @@ function MasterKaryawan() {
       <Container fluid>
       <Row>
           <div>
-            <Button
+            {/* <Button
               className="btn-fill pull-right ml-lg-3 ml-md-4 ml-sm-3 mb-4"
               type="button"
               variant="success"
               onClick={() => setShowAddModal(true)}>
               <FaPlusCircle style={{ marginRight: '8px' }} />
               Tambah Data
-            </Button>
+            </Button> */}
 
             <AddKaryawan showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
 

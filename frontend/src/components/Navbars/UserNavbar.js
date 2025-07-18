@@ -23,6 +23,7 @@ function UserHeader() {
 
   const [notifications, setNotifications] = useState([]);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false); 
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -154,16 +155,16 @@ function UserHeader() {
           </Navbar.Brand>
         </div>
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="ml-auto" navbar style={{marginRight:'40px'}}>
+          <Nav className="ml-auto" style={{marginRight:'50px'}}>
             <Dropdown as={Nav.Item}>
               <Dropdown.Toggle
                 aria-expanded={false}
                 as={Nav.Link}
                 id="navbarDropdownMenuLink"
                 variant="default"
-                className="mr-5 mt-2"
+                className="mr-3 mt-2"
               >
-            <span className="fs-6">Actions</span>
+              <span className="fs-6">Actions</span>
               </Dropdown.Toggle>
               <Dropdown.Menu aria-labelledby="navbarDropdownMenuLink" style={{ width: '200px' }}>
                 <Dropdown.Item
@@ -203,6 +204,13 @@ function UserHeader() {
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
+
+            <Button
+              className="submit-btn w-100 mt-3 fs-6"
+              type="submit"
+            >
+              Submit
+            </Button>
           </Nav>
         </Navbar.Collapse>
       </Container>

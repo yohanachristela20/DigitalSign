@@ -375,7 +375,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
                             <Row>
                             <Col md="12">
                                 <div className="d-flex flex-column">
-                                <Button className="btn-fill w-100 mt-3" type="submit" variant="primary">
+                                <Button className="btn-fill w-100 mt-3" type="submit" variant="primary" disabled={!selectedValues[selectedSigner.id_item]}>
                                     Submit
                                 </Button>
                                 </div>

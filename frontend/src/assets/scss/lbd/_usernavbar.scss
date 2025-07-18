@@ -2,3 +2,15 @@
     background-color: #e8eeff;  
     z-index: 1;
 }
+
+.submit-btn{  
+    background-color: rgb(77, 80, 253);
+    border: none;
+    color: white;
+
+    &:hover, 
+    &:focus{
+        background-color: #4c4ef9;
+        color: white;
+    }
+}
