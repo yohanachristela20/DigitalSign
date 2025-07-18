@@ -22,6 +22,7 @@ const LogSign = db.define('log_sign', {
     repeat_freq: DataTypes.STRING, 
     is_download: DataTypes.BOOLEAN,
     sign_base64: DataTypes.TEXT('long'),
+    urutan: DataTypes.INTEGER,
     id_dokumen: {
         type: DataTypes.STRING,
         allowNull:false,

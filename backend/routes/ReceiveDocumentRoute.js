@@ -12,72 +12,13 @@ import Karyawan from "../models/KaryawanModel.js";
 
 const router = express.Router();
 
-// router.get('/receive-document', async(req, res, next) => {
-//     const token = req.query.token;
-//     const jwtSecret = process.env.JWT_SECRET_KEY;
-
-//     if (!token) {
-//         return res.status(401).json({message: 'Token is required!'});
-//     }
-
-//     try {
-//         const decoded = jwt.verify(token, jwtSecret);
-//         console.log("Decoded token(receive document):", decoded);
-
-//         const dokumenLogsign = Array.isArray(decoded.dokumenLogsign) ? decoded.dokumenLogsign[0] : decoded.dokumenLogsign;
-//         console.log("Dokumen logsign:", dokumenLogsign);
-
-//         const signerList = Array.isArray(decoded.dokumenLogsign) ? decoded.dokumenLogsign[1] : [];
-//         console.log("Id signer logsign:", signerList);
-
-//         const idSignerLogsign = Array.isArray(signerList) ? signerList[0] : signerList;
-//         console.log("idSignerLogsign:", idSignerLogsign);
-
-//         res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign});
-//     } catch (error) {
-//         return res.status(403).json({message: 'Invalid or expired token'});
-//     }
-// });
-
-
-//last
-// router.get('/receive-document', async(req, res, next) => {
-//     const token = req.query.token;
-//     const jwtSecret = process.env.JWT_SECRET_KEY;
-
-//     if (!token) {
-//         return res.status(401).json({message: 'Token is required!'});
-//     }
-
-//     try {
-//         const decoded = jwt.verify(token, jwtSecret);
-//         console.log("Decoded token(receive document):", decoded);
-
-//         const dokumenLogsign = decoded.dokumenLogsign?.[0];
-//         console.log("Dokumen logsign:", dokumenLogsign);
-
-//         const idSignerLogsign = decoded.dokumenLogsign?.[1];
-//         console.log("Id signer logsign:", idSignerLogsign);
-
-//         // if (Array.isArray(idSignerLogsign)) {
-//         //     return res.status(400).json({ message: "Invalid token format: id_signers must be a single value." });
-//         // }
-
-//         // const idSignerLogsign = Array.isArray(signerList) ? signerList[1] : signerList;
-//         // console.log("idSignerLogsign:", idSignerLogsign);
-
-//         res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign});
-//     } catch (error) {
-//         return res.status(403).json({message: 'Invalid or expired token'});
-//     }
-// });
 
 router.get('/receive-document', async(req, res, next) => {
     const token = req.query.token;
-    const receiver = req.query.receiver;
+    // const receiver = req.query.receiver;
     const jwtSecret = process.env.JWT_SECRET_KEY;
 
-    if (!token || !receiver) {
+    if (!token) {
         return res.status(401).json({message: 'Token is required!'});
     }
 
@@ -88,10 +29,17 @@ router.get('/receive-document', async(req, res, next) => {
         const dokumenLogsign = decoded.dokumenLogsign?.id_dokumen;
         console.log("Dokumen logsign:", dokumenLogsign);
 
-        const idSignerLogsign = receiver;
+        const idSignerLogsign = decoded.dokumenLogsign?.id_signers;
+        // const idSignerLogsign = receiver;
         console.log("Id signer logsign:", idSignerLogsign);
 
-        res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign});
+        const urutanLogsign = decoded.dokumenLogsign?.urutan;
+        console.log("Urutan logsign:", urutanLogsign);
+
+        const currentSigner = decoded.dokumenLogsign?.currentSigner;
+        console.log("Current signer:", currentSigner);
+
+        res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign, urutan: urutanLogsign, currentSigner});
     } catch (error) {
         return res.status(403).json({message: 'Invalid or expired token'});
     }
@@ -127,40 +75,17 @@ router.get('/pdf-document/:id_dokumen?', async (req, res) => {
     }
 });
 
-// router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
-//     const {id_dokumen, id_signers} = req.params;
-//     console.log("Id Dokumen:", id_dokumen);
-//     console.log("Id Signers:", id_signers);
-
-//     try {
-//         const response = await LogSign.findAll({
-//             where: {id_dokumen, id_signers}, 
-//             attributes: ["id_item", "id_signers"],
-//             include: [
-//                 {
-//                     model: Item,
-//                     as: "ItemField",
-//                     attributes: ["jenis_item", "x_axis", "y_axis", "width", "height"]
-//                 },
-//             ],
-//         });
-
-//         res.status(200).json(response);
-//         console.log("response:", response); 
-//     } catch (error) {
-//         console.log("error:", error.message);
-//     }
-// });
-
+// untuk menampilkan field item (kotak hijau)
 router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
-    const {id_dokumen, id_signers} = req.params;
+    const {id_dokumen, id_signers, urutan} = req.params;
     console.log("Id Dokumen:", id_dokumen);
     console.log("Id Signers:", id_signers);
+    // console.log("Urutan:", urutan);
 
     try {
         const response = await LogSign.findAll({
             where: {id_dokumen, id_signers}, 
-            attributes: ["id_item", "id_signers", "status"],
+            attributes: ["id_item", "id_signers", "status", "urutan"],
             include: [
                 {
                     model: Item,
@@ -185,6 +110,8 @@ router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
     }
 });
 
+
+// untuk menampilkan nama di initialpad
 router.get('/initials/:id_dokumen/:id_signers', async(req, res) => {
     const {id_dokumen, id_signers} = req.params;
     const idSignerList = id_signers.split(',');

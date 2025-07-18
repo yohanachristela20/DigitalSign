@@ -11,14 +11,14 @@ import "../assets/scss/lbd/_stepper.scss";
 import { SortableContainer, SortableElement } from "react-sortable-hoc";
 import arrayMove from "array-move-item";
 import PreviewDocument from "./PreviewDocument.js";
-import ToolbarFields from "components/Sidebar/ToolbarFields.js";
 import SortableItem from "components/SortableList/SortableList.js";
 
 import { useInitial } from "components/Provider/InitialContext.js";
 import { useSignature } from "components/Provider/SignatureContext.js";
 import { useDateField } from "components/Provider/DateContext.js";
-import moment from 'moment';
-import "../assets/scss/lbd/_previewdoc.scss"
+import "../assets/scss/lbd/_previewdoc.scss";
+
+import { arrayMoveImmutable } from "array-move";
 
 import {
   Card,
@@ -91,6 +91,8 @@ function UploadDocument() {
   const [day_after_reminder, setDayAfterReminder] = useState(1);
   const [repeat_freq, setRepeatFreq] = useState("none");
   const [deadline, setDeadline] = useState("");
+
+  const [urutan, setUrutan] = useState("");
   
   const minDate = useMemo(() => {
     const tomorrow = new Date(); 
@@ -163,6 +165,7 @@ function UploadDocument() {
       repeat_freq: "",
       is_download: "",
       deadline: "",
+      urutan: "",
     },
   ]);
 
@@ -184,6 +187,7 @@ function UploadDocument() {
           repeat_freq: "",
           is_download: "",
           deadline: "",
+          urutan: ""
         }
       ]);
   }, []);
@@ -319,11 +323,17 @@ const handleRepeatReminder = (e) => {
   setRepeatFreq(e.target.value);
 }
 
+// const onSortEnd = ({ oldIndex, newIndex }) => {
+//   setDocumentCards((prevCards) => {
+//     const newCards = arrayMove([...prevCards], oldIndex, newIndex);
+//     return newCards;
+//   });
+// };
+
 const onSortEnd = ({ oldIndex, newIndex }) => {
-  setDocumentCards((prevCards) => {
-    const newCards = arrayMove([...prevCards], oldIndex, newIndex);
-    return newCards;
-  });
+  const newOrder = arrayMoveImmutable(documentCards, oldIndex, newIndex)
+  .map((card, idx) => ({...card, urutan: idx + 1})); 
+  setDocumentCards(newOrder);
 };
 
   useEffect(() => {
@@ -338,16 +348,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   const handleAddCard = () => {
     setDocumentCards(prevCards => {
-      let lastId = 0;
-      if (prevCards.length > 0) {
-        const lastCard = prevCards[prevCards.length - 1];
-        lastId = parseInt(lastCard.id_signers.substring(1), 10);
-      } else {
-        lastId = parseInt(id_signers.substring(1), 10);
-      }
-
-      const incrementedId = (lastId + 1).toString().padStart(5, '0');
-      const newIdSign = `K${incrementedId}`;
+      const newUrutan = prevCards.length + 1;
 
       const newCard = {
         id: Date.now(),
@@ -358,7 +359,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         action: "Created", 
         id_dokumen:"", 
         id_item:"",
-        ori_id_items: ""
+        ori_id_items: "", 
+        urutan: newUrutan,
       };
 
       return [...prevCards, newCard];
@@ -459,9 +461,11 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     console.log("LOGSIGN:", logsigns);
     const id_signers = JSON.parse(localStorage.getItem("id_signers") || "[]");
     console.log("ID SIGNERS:", id_signers);
+    const urutan = JSON.parse(localStorage.getItem("urutan") || "[]");
+    console.log("URUTAN:", urutan);
 
     if (logsigns.length > 0) {
-      await sendEmailNotification(logsigns, subject, message, id_dokumen, id_signers);
+      await sendEmailNotification(logsigns, subject, message, id_dokumen, id_signers, urutan);
     } else {
       console.warn("No logsigns found.");
     }
@@ -477,12 +481,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
-  const sendEmailNotification = async(logsigns, subject, message, id_dokumen, id_signers) => {
-    console.log("Logsigns:", logsigns);
-    console.log("Subject:", subject);
-    console.log("Message:", message);
-    console.log("ID Dokumen:", id_dokumen);
-    console.log("Id Signers:", id_signers);
+  const sendEmailNotification = async(logsigns, subject, message, id_dokumen, id_signers, urutan) => {
+    console.log("Urutan dari sendemail:", urutan);
     try {
         const response = await axios.get(`http://localhost:5000/logsign-link/${id_dokumen}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -494,6 +494,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         id_signers,
         subjectt: [subject],
         messagee: [message],
+        urutan,
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -510,45 +511,45 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   };
 
   const handleDeleteCard = async (id) => {
-  const updatedCards = [...documentCards];
-  const index = updatedCards.findIndex(card => card.id === id);
+    const updatedCards = [...documentCards];
+    const index = updatedCards.findIndex(card => card.id === id);
 
-  const card = documentCards.find(c => c.id === id);
-  if (!card) {
-    console.error("Card not found");
-    return;
-  }
-
-  if (index !== -1) {
-    const deletedCard = updatedCards[index];
-    // console.log("Deleted card: ", deletedCard);
-
-    const deletedIdSigner = deletedCard.id_karyawan;
-    const dokId = deletedCard.id_dokumen;
-
-    const storedIdItems = JSON.parse(localStorage.getItem("id_items")) || [];
-
-    const cardIndex = documentCards.findIndex(c => c.id === id);
-    const itemId = storedIdItems[cardIndex]; 
-
-    // console.log("deleting id signers with:", deletedIdSigner, dokId, itemId);
-    setDeletedSigner(deletedIdSigner);
-
-    try {
-      await deleteLogsign(deletedIdSigner, dokId, itemId);
-      updatedCards.splice(index, 1); 
-      setDocumentCards(updatedCards);
-
-      toast.success("Card deleted successfully.", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-      });
-
-    } catch (error) {
-      console.error("Failed to delete signer:", error.message);
+    const card = documentCards.find(c => c.id === id);
+    if (!card) {
+      console.error("Card not found");
+      return;
     }
-  }
+
+    if (index !== -1) {
+      const deletedCard = updatedCards[index];
+      // console.log("Deleted card: ", deletedCard);
+
+      const deletedIdSigner = deletedCard.id_karyawan;
+      const dokId = deletedCard.id_dokumen;
+
+      const storedIdItems = JSON.parse(localStorage.getItem("id_items")) || [];
+
+      const cardIndex = documentCards.findIndex(c => c.id === id);
+      const itemId = storedIdItems[cardIndex]; 
+
+      // console.log("deleting id signers with:", deletedIdSigner, dokId, itemId);
+      setDeletedSigner(deletedIdSigner);
+
+      try {
+        await deleteLogsign(deletedIdSigner, dokId, itemId);
+        updatedCards.splice(index, 1); 
+        setDocumentCards(updatedCards);
+
+        toast.success("Card deleted successfully.", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: true,
+        });
+
+      } catch (error) {
+        console.error("Failed to delete signer:", error.message);
+      }
+    }
   };
 
   const handleDeleteStepper2 = async (id) => {
@@ -741,6 +742,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       
       const logsigns = createdItems.map((item, index) => {
       const signerId = items[index].id_karyawan;
+      const cardData = documentCards.find(card => card.id_karyawan === signerId);
+
           return {
             action: "Created", 
             status: "Pending", 
@@ -750,17 +753,19 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             id_item: item.id_item,
             subject,
             message,
+            // urutan: cardData?.urutan?? index + 1,
+            urutan: Number(cardData?.urutan) || index + 1,
             };
         });
 
       localStorage.setItem("logsigns", JSON.stringify(logsigns));
-      // console.log("Logsign:", Logsign);
-
-      // const uniqueSigners = [...new Set(logsigns.map(log => log.id_signers))];
-      // localStorage.setItem("id_signers", JSON.stringify(uniqueSigners));
+      // localStorage.setItem("urutan", JSON.stringify(urutan));
 
       const signerIds = logsigns.map(log => log.id_signers);
       localStorage.setItem("id_signers", JSON.stringify(signerIds));
+
+      const urutanList = logsigns.map(log => log.urutan);
+      localStorage.setItem("urutan", JSON.stringify(urutanList));
 
       await axios.post('http://localhost:5000/logsign', { logsigns }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -780,7 +785,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             day_after_reminder: day_after_reminder,
             repeat_freq: repeat_freq,
             is_download: is_download,
-            deadline: deadline
+            deadline: deadline, 
+            urutan: card.urutan,
           };
         })
       );

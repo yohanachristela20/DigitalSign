@@ -12,6 +12,7 @@ import Karyawan from "../models/KaryawanModel.js";
 import User from "../models/UserModel.js";
 import jwt from 'jsonwebtoken';
 import { log } from "console";
+import { Op } from "sequelize";
 
 dotenv.config();
 
@@ -117,12 +118,14 @@ export const createLogSign = async (req, res) => {
     });
 
     let lastIdNumber = lastRecord ? parseInt(lastRecord.id_logsign.substring(2), 10) : 0;
+    // let lastUrutan = lastRecord ? parseInt(lastRecord.urutan) : 0;
     const newLogSign = [];
 
     for (const log of logsigns) {
       const items = Array.isArray(log.id_item) ? log.id_item : [log.id_item];
       for (const item of items) {
         lastIdNumber += 1;
+        // lastUrutan += 1;
         const newIdNumber = lastIdNumber.toString().padStart(5, "0");
 
         newLogSign.push({
@@ -133,6 +136,7 @@ export const createLogSign = async (req, res) => {
           id_karyawan: log.id_karyawan,
           id_signers: log.id_signers,
           id_item: item,
+          urutan: parseInt(log.urutan),
         });
       }
     }
@@ -239,79 +243,24 @@ const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, 
   }
 };
 
-//last (2 signers, 2 token)
-// export const sendEmailNotification = async (req, res) => {
-//   try {
-//     const { subjectt, messagee, id_dokumen, id_signers } = req.body;
 
-//     console.log("RECEIVED IN API:");
-//     console.log("subjectt:", subjectt);
-//     console.log("messagee:", messagee);
-//     console.log("id_dokumen:", id_dokumen);
-//     console.log("id_signers:", id_signers);
-
-//     const jwtSecret = process.env.JWT_SECRET_KEY;
-
-//     // const signerList = Array.isArray(id_signers) ? id_signers : [id_signers];
-
-//     const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
-
-//     let emailResults = [];
-
-//     for (const signer of signerList) {
-//       const validLogsigns = await LogSign.findAll({
-//         where: {
-//           id_signers: signer,
-//           id_dokumen,
-//           status: 'Pending',
-//         },
-//       });
-
-//       console.log(`Valid logsigns for ${signer}:`, validLogsigns.map(log => log.toJSON()));
-
-//       if (validLogsigns.length === 0) {
-//         emailResults.push({ signer, message: 'No valid logsigns to notify.' });
-//         continue;
-//       }
-
-//       const token = jwt.sign({ dokumenLogsign: [id_dokumen, signer] }, jwtSecret);
-//       const signLink = `http://localhost:3000/user/envelope?token=${token}`;
-
-//       await sendEmailNotificationInternal(validLogsigns, signLink, subjectt, messagee);
-
-//       emailResults.push({ signer, message: 'Email sent.' });
-//     }
-
-//     res.status(200).json({
-//       message: 'Emails processed.',
-//       results: emailResults,
-//     });
-
-//   } catch (error) {
-//     console.error("Failed to send email notification:", error.message);
-//     res.status(500).json({ message: "Failed to send email notification." });
-//   }
-// };
-
-// 1 token, 2 signers
 export const sendEmailNotification = async (req, res) => {
   try {
-    const { subjectt, messagee, id_dokumen, id_signers } = req.body;
+    const { subjectt, messagee, id_dokumen, id_signers, urutan } = req.body;
 
     console.log("RECEIVED IN API:");
     console.log("subjectt:", subjectt);
     console.log("messagee:", messagee);
     console.log("id_dokumen:", id_dokumen);
     console.log("id_signers:", id_signers);
+    console.log("Urutan:", urutan);
 
     const jwtSecret = process.env.JWT_SECRET_KEY;
 
     // const signerList = Array.isArray(id_signers) ? id_signers : [id_signers];
 
     const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
-
-    const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList}}, jwtSecret);
-    // const signLink = `http://localhost:3000/user/envelope?token=${token}&receiver=${id_signers}`;
+    const urutanList = [...new Set(Array.isArray(urutan) ? urutan : [urutan])];
 
     let emailResults = [];
 
@@ -321,6 +270,7 @@ export const sendEmailNotification = async (req, res) => {
           id_signers: signer,
           id_dokumen,
           status: 'Pending',
+          // urutan,
         },
       });
 
@@ -331,10 +281,13 @@ export const sendEmailNotification = async (req, res) => {
         continue;
       }
 
-      const signLink = `http://localhost:3000/user/envelope?token=${token}&receiver=${signer}`;
+      // const signLink = `http://localhost:3000/user/envelope?token=${token}&receiver=${signer}`;
 
       // const token = jwt.sign({ dokumenLogsign: [id_dokumen, signer] }, jwtSecret);
       // const signLink = `http://localhost:3000/user/envelope?token=${token}`;
+
+      const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList, urutan: urutanList, currentSigner: signer}}, jwtSecret);
+      const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
       await sendEmailNotificationInternal(validLogsigns, signLink, subjectt, messagee);
       emailResults.push({ signer, message: 'Email sent.' });
@@ -454,6 +407,8 @@ export const deleteLogsign = async(req, res) => {
           return res.status(404).json({ message: "Logsign not found" });
         }
 
+        const deletedUrutan = parseInt(logsign.urutan);
+
         await Sign.destroy({
             where: {id_logsign: logsign.id_logsign},
             transaction
@@ -463,6 +418,17 @@ export const deleteLogsign = async(req, res) => {
             where: {id_dokumen, id_item, id_signers},
             transaction
         });
+
+        await LogSign.update(
+          {urutan: db.literal('urutan - 1')},
+          {
+            where: {
+              id_dokumen,
+              urutan: { [Op.gt] : deletedUrutan },
+            },
+            transaction,
+          }
+        );
 
         await transaction.commit();
         res.status(200).json({message: "Logsign deleted successfully."});

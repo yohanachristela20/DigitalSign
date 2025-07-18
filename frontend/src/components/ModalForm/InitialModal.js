@@ -88,15 +88,15 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
 
     useEffect(() => {
         const fetchData = async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const receiver = urlParams.get("receiver");
-            setCurrentReceiver(receiver);
-            console.log("Current receiver:", currentReceiver);
+            // const urlParams = new URLSearchParams(window.location.search);
+            // const receiver = urlParams.get("receiver");
+            // setCurrentReceiver(receiver);
+            // console.log("Current receiver:", currentReceiver);
 
-            if (!token || !receiver) return;
+            if (!token ) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/receive-document?token=${token}&receiver=${receiver}`);
+                const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
