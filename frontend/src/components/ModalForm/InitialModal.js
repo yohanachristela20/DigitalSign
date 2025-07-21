@@ -35,64 +35,8 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     }, [selectedIdItem, showInitialModal]);
 
 
-    // useEffect(() => {
-    //     const fetchData = async () => {
-    //         if (!token) return;
-
-    //         try {
-    //             const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
-    //             const id_dokumen = res.data.id_dokumen;
-    //             setIdDokumen(id_dokumen);
-    //             const id_signers = res.data.id_signers;
-    //             setIdSigner(id_signers);
-
-    //             console.log("ID Dokumen:", id_dokumen);
-    //             console.log("ID Signers:", id_signers);
-
-    //             const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
-                
-    //             const allSignerData = [];
-
-    //             for (const selectedSigner of signerArray) {
-    //                 const response = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${selectedSigner}`);
-    //                 const data = response.data;
-
-    //                 if (data.length > 0 && data[0].Signerr) {
-    //                     allSignerData.push({
-    //                         id_item: data[0].id_item,
-    //                         id_signers: data[0].id_signers, 
-    //                         nama: data[0].Signerr.nama.toLowerCase(),
-    //                     });
-
-    //                     data.filter(item => item.ItemField).forEach((item) => {
-    //                         const {width, height} = item.ItemField;
-    //                         setWidth(height);
-    //                         setHeight(width);
-    //                     });
-    //                 }
-    //             }
-    //             setSignerData(allSignerData);
-    //         } catch (error) {
-    //             console.error("Failed to load PDF:", error.message);
-    //         } 
-    //     };
-
-    //     fetchData();
-    // }, [token]);
-
-    // const handleRadioChange = (e) => {
-    //     const value = e.target.value;
-    //     setSelectedValue(value);
-    //     console.log("Selected value:", selectedValue);
-    // }
-
     useEffect(() => {
         const fetchData = async () => {
-            // const urlParams = new URLSearchParams(window.location.search);
-            // const receiver = urlParams.get("receiver");
-            // setCurrentReceiver(receiver);
-            // console.log("Current receiver:", currentReceiver);
-
             if (!token ) return;
 
             try {

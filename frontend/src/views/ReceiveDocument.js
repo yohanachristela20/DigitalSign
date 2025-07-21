@@ -46,6 +46,9 @@ function ReceiveDocument() {
     const [initial, setInitial] = useState([]);
 
     const [signatures, setSignatures] = useState([]);
+    const [signedSignatures, setSignedSignatures] = useState([]);
+    const [signature, setSignature] = useState([]);
+
     const [dateField, setDateField] = useState([]);
     const [clickCount, setClickCount] = useState(0);
     const timeRef = useRef(null);
@@ -98,8 +101,15 @@ function ReceiveDocument() {
         height: "25%"
     }
 
-    const handleSignatureClick = () => {
-        setShowSignatureModal(true);
+    const handleSignatureClick = (id_item) => {
+        const signer = signatures.find(i => i.id_item === id_item);
+        if (signer) {
+            setSelectedIdItem(id_item);
+            setSelectedSigner(signer);
+            setShowSignatureModal(true);
+
+            console.log("ID Item clicked:", id_item);
+        }
     };
 
     const handleInitialClick = (id_item) => {
@@ -408,6 +418,140 @@ function ReceiveDocument() {
     fetchInitials();
     }, [id_dokumen, id_signers, urutanMap, allSigners]);
 
+    useEffect(() => {
+    const fetchSignatures = async () => {
+        if (!id_dokumen || !allSigners || allSigners.length === 0 || Object.keys(urutanMap).length === 0) return;
+
+        try {
+        const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
+        const signerParam = signerArray.join(",");
+        const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
+        const initialsData = initialsRes.data;
+
+        const allSignatureFields = [];
+
+        for (let i = 0; i < signerArray.length; i++) {
+        const signer = signerArray[i];
+        const currentUrutan = Number(urutanMap[signer]);
+        console.log("CURRENT URUTAN:", currentUrutan);
+
+        const currentSubmitted = (submittedMap[signer]);
+        console.log("CURRENT SUBMITTED:", currentSubmitted);
+
+        const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`);
+        const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item === "Signpad");
+
+        const signerInitials = initialsData.filter(init => init.id_signers === signer);
+
+        let show = false;
+        let editable = false;
+        const prevSigner = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan - 1);
+        console.log("PREV SIGNER:", prevSigner);
+
+        const prevStatusList = allSignatureFields
+        .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
+        .map(field => field.status);
+
+        const prevSubmittedList = allSignatureFields
+        .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
+        .map(field => field.is_submitted);
+
+        console.log("PREVSTATUS LIST:", prevStatusList);
+        console.log("PREVSUBMITTED LIST:", prevSubmittedList);
+
+        const allCompleted = prevStatusList.length > 0 && prevStatusList.every(status => status === "Completed" && prevSubmittedList.every(is_submitted => is_submitted !== false));
+        console.log("allCompleted:", allCompleted);
+        setCompleteSubmitted(allCompleted);
+
+        if (currentUrutan === 1) {
+            show = true;
+            editable = true;
+        } else if (prevStatusList.length === 0) {
+            show = false;
+            editable = false;
+        } else if (prevStatusList.every(status => status === "Completed") && prevSubmittedList.every(is_submitted => is_submitted === true)) {
+            show = true;
+            editable = true;
+        } else if (prevStatusList.every(status => status === "Pending") || prevSubmittedList.every(is_submitted => is_submitted !== true)) {
+            show = false;
+            editable = false;
+        } else {
+            show = true;
+            editable = false;
+        }
+
+        const nextSign = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan + 1);
+        console.log("NEXT SIGNER:", nextSign);
+        // setNextSigner(nextSign);
+
+        const nextSignerInitials = initialsData.filter(init => init.id_signers === nextSign);
+        const nextSignerSubmitted = submittedMap[nextSign];
+        const nextSignCompleted = nextSignerInitials.length > 0 && nextSignerSubmitted === true;
+
+        const signatureList = signerFields.map(field => {
+            const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
+            const base64 = matchInitial?.sign_base64;
+            const formattedBase64 = base64?.startsWith("data:image")
+            ? base64
+            : base64 ? `data:image/png;base64,${base64}` : null;
+
+            return {
+            id_item: field.id_item,
+            id_signers: signer,
+            sign_base64: formattedBase64,
+            status: matchInitial?.status || "Pending",
+            nama: matchInitial?.Signerr?.nama || "-",
+            x_axis: field.ItemField?.x_axis || 0,
+            y_axis: field.ItemField?.y_axis || 0,
+            width: field.ItemField?.width || 50,
+            height: field.ItemField?.height || 50,
+            enableResizing: false,
+            disableDragging: true,
+            show,
+            editable,
+            urutan: currentUrutan,
+            id_dokumen,
+            is_submitted: currentSubmitted,
+            nextSigner: nextSign,
+            prevSigner: prevSigner, 
+            nextSignCompleted: nextSignCompleted,
+            };
+        });
+
+            allSignatureFields.push(...signatureList);
+        }
+
+        setSignedSignatures(allSignatureFields);
+        console.log("All Initial list:", allSignatureFields);
+
+        const nextSignCompleted = allSignatureFields
+        .filter(field => field.prevSigner === id_signers)
+        .map(field => field.is_submitted);
+
+        console.log("nextSignCompleted:", nextSignCompleted);
+        setNextSignCompleted(nextSignCompleted);
+
+
+        const filteredFields = allSignatureFields.filter(field => field.id_signers === id_signers);
+        setSignature(filteredFields);
+        console.log("Initial satuan:", filteredFields);
+
+        const initialStatus = allSignatureFields
+        .filter(field => field.id_signers === id_signers)
+        .map(field => field.status);
+
+        console.log("Initial status:", initialStatus);
+        setInitialStatus(initialStatus);
+        
+
+        } catch (error) {
+        console.error("Failed to fetch initials or axis-field:", error.message);
+        }
+    };
+
+    fetchSignatures();
+    }, [id_dokumen, id_signers, urutanMap, allSigners]);
+
 
     useEffect(() => {
         console.log("All sign STATUS:", signStatus);
@@ -514,7 +658,7 @@ function ReceiveDocument() {
                                 <div className="vertical-center">
                                 <PDFCanvas pdfUrl={pdfUrl} />
                                 
-                                {signatures.map((sig, index) => (
+                                {/* {signatures.map((sig) => (
                                     <>
                                         <Rnd
                                             key={sig.id}
@@ -531,11 +675,9 @@ function ReceiveDocument() {
                                             onClick={handleSignatureClick}
                                         >
                                             <FaSignature style={{ width: "25%", height: "25%" }} />
-                                        </Rnd>
-                                        <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} />
-                                
+                                        </Rnd>                                
                                     </>
-                                ))}
+                                ))} */}
 
                                 {/* image -- setelah di ttd */}
                                 {signedInitials.map((sig) => {
@@ -594,7 +736,7 @@ function ReceiveDocument() {
                                                 backgroundColor: isCompleted
                                                     ? "transparent"
                                                     : "rgba(25, 230, 25, 0.5)",
-                                                border: "solid 1px #ccc", 
+                                                border: isSubmitted ? "none" : "solid 3px rgba(10, 193, 10, 0.5)", 
                                                 cursor: sig.editable && !isSubmitted ? "pointer" : "default",
                                                 zIndex: isCompleted? 1 : 2
                                             }}
@@ -653,6 +795,89 @@ function ReceiveDocument() {
                                         </Rnd>
                                     );
                                 })}
+
+                                {signature.map((sig) => {
+                                    if (!sig || !sig.id_item || sig.show !== true) return null;
+
+                                    const isCompleted = sig.status === "Completed";
+                                    const isSubmitted = sig.is_submitted === true;
+
+                                    return (
+                                        <Rnd
+                                            key={`${sig.id_signers}-${sig.id_item}`}
+                                            position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
+                                            size={{ width: Number(sig.height), height: Number(sig.width) }}
+                                            enableResizing={sig.enableResizing}
+                                            disableDragging={sig.disableDragging}
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                backgroundColor: isCompleted
+                                                    ? "transparent"
+                                                    : "rgba(25, 230, 25, 0.5)",
+                                                border: isSubmitted ? "none" : "solid 3px rgba(10, 193, 10, 0.5)", 
+                                                cursor: sig.editable && !isSubmitted ? "pointer" : "default",
+                                                zIndex: isCompleted? 1 : 2
+                                            }}
+                                            onClick={() => {
+                                                if (sig.editable && !isSubmitted) {
+                                                    console.log("Signature clicked", sig.id_item);
+                                                    handleSignatureClick(sig.id_item);
+                                                }
+                                            }}
+                                        >
+                                            {/* {isCompleted && sig.sign_base64 ? (
+                                                <img
+                                                    src={sig.sign_base64}
+                                                    alt="Initial"
+                                                    style={{ width: "100%", height: "100%" }}
+                                                />
+                                            ) : (
+                                                <FaFont style={{ width: "25%", height: "25%" }} />
+                                            )} */}
+
+                                            {!isSubmitted ? (
+                                            <OverlayTrigger
+                                                placement="bottom"
+                                                overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
+                                            >
+                                                {({ ref, ...triggerHandler }) => (
+                                                <>
+                                                    {isCompleted && sig.sign_base64 ? (
+                                                    <img
+                                                        {...triggerHandler}
+                                                        ref={ref}
+                                                        src={sig.sign_base64}
+                                                        alt="Signpad"
+                                                        style={{ width: "100%", height: "100%" }}
+                                                    />
+                                                    ) : (
+                                                    <FaSignature style={{ width: "25%", height: "25%" }} />
+                                                    )}
+                                                </>
+                                                )}
+                                            </OverlayTrigger>
+                                            ) : (
+                                            <>
+                                                {isCompleted && sig.sign_base64 ? (
+                                                <img
+                                                    src={sig.sign_base64}
+                                                    alt="Signpad"
+                                                    style={{ width: "100%", height: "100%" }}
+                                                />
+                                                ) : (
+                                                <FaSignature style={{ width: "25%", height: "25%" }} />
+                                                )}
+                                            </>
+                                            )}
+
+
+                                        </Rnd>
+                                    );
+                                })}
+
+                                <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} selectedIdItem={selectedIdItem} selectedSigner={selectedSigner} />
 
                                 <InitialModal
                                     showInitialModal={showInitialModal}
