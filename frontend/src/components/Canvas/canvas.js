@@ -20,8 +20,8 @@ const PDFCanvas = ({pdfUrl}) => {
 
     const [x_axis, setXAxis] = useState(0);
     const [y_axis, setYAxis] = useState(0);
-    const [width, setWidth] = useState(150);
-    const [height, setHeight] = useState(200);
+    const [width, setWidth] = useState(200);
+    const [height, setHeight] = useState(250);
     const [jenis_item, setJenisItem] = useState("");
     const [selectedSigId, setSelectedSigId] = useState("");
 

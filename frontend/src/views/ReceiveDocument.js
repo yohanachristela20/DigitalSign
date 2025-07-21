@@ -36,6 +36,7 @@ function ReceiveDocument() {
     const [status, setStatus] = useState([]);
     const [signStatus, setSignStatus] = useState([]);
     const [initial_status, setInitialStatus] = useState([]);
+    const [submitted_list, setSubmittedList] = useState([]);
     const [nama, setNama] = useState("");
 
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
@@ -256,6 +257,7 @@ function ReceiveDocument() {
         try {
             const response = await axios.patch(`http://localhost:5000/update-submitted/${id_dokumen}/${id_signers}`, {
                 is_submitted: true,
+                status: "Completed",
             });
 
             console.log("Document signed submitted:", response);
@@ -394,6 +396,10 @@ function ReceiveDocument() {
         const statusList = filteredFields.map(field => field.status);
         setInitialStatus(statusList);
 
+        const submittedList = filteredFields.map(field => field.is_submitted);
+        setSubmittedList(submittedList);
+
+
         } catch (error) {
         console.error("Failed to fetch initials or axis-field:", error.message);
         }
@@ -487,6 +493,7 @@ function ReceiveDocument() {
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, id_signers)}
                         // disabled={!initial_status.every(status => status === "Completed")}
+                        hidden={submitted_list.every(is_completed => is_completed === true)}
                     >
                         Finish
                     </Button>
@@ -589,7 +596,13 @@ function ReceiveDocument() {
                                                             style={{ width: "100%", height: "100%" }}
                                                         />
                                                         ) : (
-                                                            isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
+                                                            isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : <></>
+                                                        )}
+
+                                                        {isCompleted && isDatefield ? (
+                                                            currentDate
+                                                        ) : (
+                                                            isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
                                                         )}
                                                     </>
                                                     )}
@@ -603,7 +616,13 @@ function ReceiveDocument() {
                                                         style={{ width: "100%", height: "100%" }}
                                                     />
                                                     ) : (
-                                                        isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
+                                                        isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : <></>
+                                                    )}
+
+                                                    {isCompleted && isDatefield ? (
+                                                        currentDate
+                                                    ) : (
+                                                        isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }}/> : <></>
                                                     )}
                                                 </>
                                                 )}

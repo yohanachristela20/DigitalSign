@@ -141,11 +141,11 @@ router.get('/initials/:id_dokumen/:id_signers', async(req, res) => {
 
 router.patch('/update-submitted/:id_dokumen/:id_signers', async(req, res) => {
     const {id_dokumen, id_signers} = req.params;
-    const {is_submitted} = req.body;
+    const {is_submitted, status} = req.body;
 
     try {
         const submitted = await LogSign.update(
-            {is_submitted},
+            {is_submitted, status},
             {
                 where: {id_dokumen, id_signers},
             }

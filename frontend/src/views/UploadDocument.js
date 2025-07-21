@@ -491,10 +491,10 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       await axios.post('http://localhost:5000/send-email', {
         logsigns,
         id_dokumen,
-        id_signers,
+        id_signers: logsigns.map(log => log.id_signers),
         subjectt: [subject],
         messagee: [message],
-        urutan,
+        urutan: logsigns.map(log=> log.urutan),
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -663,6 +663,164 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
+  const groupBySignerAndJenis = (items) => {
+    const grouped = {};
+    items.forEach((item) => {
+      const key = `${item.id_karyawan}-${item.jenis_item}`;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(item);
+    });
+    return grouped;
+  }
+
+
+  // const saveLogSignandItems = async (e) => {
+  // e.preventDefault();
+  // try {
+  //   if (!nextStep4) {
+  //     let items = [];
+
+  //     const clickedOrder = JSON.parse(localStorage.getItem("clickedFields")) || [];
+
+  //     for (const type of clickedOrder) {
+  //       if (type === "Signpad" && signClicked && Array.isArray(signatures)) {
+  //         items = [
+  //           ...items,
+  //           ...signatures.map(sig => ({
+  //             jenis_item: "Signpad",
+  //             x_axis: sig.x_axis,
+  //             y_axis: sig.y_axis,
+  //             width: sig.width,
+  //             height: sig.height,
+  //             id_karyawan: sig.id_karyawan,
+  //           }))
+  //         ];
+  //       }
+
+  //       if (type === "Initialpad" && initClicked && Array.isArray(initials)) {
+  //         items = [
+  //           ...items,
+  //           ...initials.map(sig => ({
+  //             jenis_item: "Initialpad",
+  //             x_axis: sig.x_axis,
+  //             y_axis: sig.y_axis,
+  //             width: sig.width,
+  //             height: sig.height,
+  //             id_karyawan: sig.id_karyawan,
+  //           }))
+  //         ];
+  //       }
+
+  //       if (type === "Date" && dateClicked && Array.isArray(dateField)) {
+  //         items = [
+  //           ...items,
+  //           ...dateField.map(sig => ({
+  //             jenis_item: "Date",
+  //             x_axis: sig.x_axis,
+  //             y_axis: sig.y_axis,
+  //             width: sig.width,
+  //             height: sig.height,
+  //             id_karyawan: sig.id_karyawan,
+  //           }))
+  //         ];
+  //       }
+  //     }
+
+  //     const itemKaryawan = items.map(item => item.id_karyawan);
+  //     const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
+  //     const missingItemSigners = allSigners.filter(signer => !itemKaryawan.includes(signer.value));
+
+  //     if (missingItemSigners.length > 0) {
+  //       setError('Signer should have an item.');
+  //       toast.error('Signer should have an item.', {
+  //         position: "top-right",
+  //         autoClose: 5000,
+  //         hideProgressBar: true,
+  //       });
+  //       return;
+  //     }
+
+  //     const itemResponse = await axios.post('http://localhost:5000/item', items, {
+  //       headers: { Authorization: `Bearer ${token}` }
+  //     });
+
+  //     const createdItems = itemResponse.data.data.items;
+  //     localStorage.setItem("id_items", JSON.stringify(createdItems.map(item => item.id_item)));
+  //     const orderedSigners = JSON.parse(localStorage.getItem("signers")) || [];
+
+  //     // localStorage.setItem("id_signers", JSON.stringify(logsigns.map(log => log.id_signers)));
+      
+  //     const logsigns = createdItems.map((item, index) => {
+  //     const signerId = items[index].id_karyawan;
+  //     const cardData = documentCards.find(card => card.id_karyawan === signerId);
+
+  //         return {
+  //           action: "Created", 
+  //           status: "Pending", 
+  //           id_dokumen,
+  //           id_karyawan,
+  //           id_signers: signerId,
+  //           id_item: item.id_item,
+  //           subject,
+  //           message,
+  //           // urutan: cardData?.urutan?? index + 1,
+  //           urutan: Number(cardData?.urutan) || index + 1,
+  //           };
+  //       });
+
+  //     localStorage.setItem("logsigns", JSON.stringify(logsigns));
+  //     // localStorage.setItem("urutan", JSON.stringify(urutan));
+
+  //     const signerIds = logsigns.map(log => log.id_signers);
+  //     localStorage.setItem("id_signers", JSON.stringify(signerIds));
+
+  //     const urutanList = logsigns.map(log => log.urutan);
+  //     localStorage.setItem("urutan", JSON.stringify(urutanList));
+
+  //     await axios.post('http://localhost:5000/logsign', { logsigns }, {
+  //       headers: { Authorization: `Bearer ${token}` }
+  //     });
+
+  //     setDocumentCards(prevCards =>
+  //       prevCards.map((card) => {
+  //         const matchItem = items.find(item => item.id_karyawan === card.id_karyawan);
+  //         return {
+  //           ...card,
+  //           id_signers: matchItem?.id_karyawan || card.id_signers,
+  //           ori_id_signers: matchItem?.id_karyawan || card.ori_id_signers,
+  //           id_item: matchItem?.id_item || "",
+  //           ori_id_items: matchItem?.id_item || "",
+  //           id_dokumen: id_dokumen, 
+  //           is_deadline: is_deadline,
+  //           day_after_reminder: day_after_reminder,
+  //           repeat_freq: repeat_freq,
+  //           is_download: is_download,
+  //           deadline: deadline, 
+  //           urutan: card.urutan,
+  //         };
+  //       })
+  //     );
+
+
+  //     // console.log("Id items:", id_item);
+  //     // console.log("Ori id items:", ori_id_items);
+  //     // console.log("DocumentCards:", documentCards);
+
+  //     toast.success("Logsigns and items created successfully!", {
+  //       position: "top-right",
+  //       autoClose: 5000,
+  //       hideProgressBar: true,
+  //     });
+
+  //     localStorage.removeItem("clickedFields");
+  //   }
+
+  //   nextLastStep();
+  // } catch (error) {
+  //   console.error("Failed to save logsigns and items:", error.message);
+  //   toast.error("Failed to save logsigns and items.");
+  // }
+  // };
 
   const saveLogSignandItems = async (e) => {
   e.preventDefault();
@@ -674,48 +832,40 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
       for (const type of clickedOrder) {
         if (type === "Signpad" && signClicked && Array.isArray(signatures)) {
-          items = [
-            ...items,
-            ...signatures.map(sig => ({
-              jenis_item: "Signpad",
-              x_axis: sig.x_axis,
-              y_axis: sig.y_axis,
-              width: sig.width,
-              height: sig.height,
-              id_karyawan: sig.id_karyawan,
-            }))
-          ];
+          items.push(...signatures.map(sig => ({
+            jenis_item: "Signpad",
+            x_axis: sig.x_axis,
+            y_axis: sig.y_axis,
+            width: sig.width,
+            height: sig.height,
+            id_karyawan: sig.id_karyawan,
+          })));
         }
 
         if (type === "Initialpad" && initClicked && Array.isArray(initials)) {
-          items = [
-            ...items,
-            ...initials.map(sig => ({
-              jenis_item: "Initialpad",
-              x_axis: sig.x_axis,
-              y_axis: sig.y_axis,
-              width: sig.width,
-              height: sig.height,
-              id_karyawan: sig.id_karyawan,
-            }))
-          ];
+          items.push(...initials.map(sig => ({
+            jenis_item: "Initialpad",
+            x_axis: sig.x_axis,
+            y_axis: sig.y_axis,
+            width: sig.width,
+            height: sig.height,
+            id_karyawan: sig.id_karyawan,
+          })));
         }
 
         if (type === "Date" && dateClicked && Array.isArray(dateField)) {
-          items = [
-            ...items,
-            ...dateField.map(sig => ({
-              jenis_item: "Date",
-              x_axis: sig.x_axis,
-              y_axis: sig.y_axis,
-              width: sig.width,
-              height: sig.height,
-              id_karyawan: sig.id_karyawan,
-            }))
-          ];
+          items.push(...dateField.map(sig => ({
+            jenis_item: "Date",
+            x_axis: sig.x_axis,
+            y_axis: sig.y_axis,
+            width: sig.width,
+            height: sig.height,
+            id_karyawan: sig.id_karyawan,
+          })));
         }
       }
 
+      // Validasi: semua signer harus punya item
       const itemKaryawan = items.map(item => item.id_karyawan);
       const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
       const missingItemSigners = allSigners.filter(signer => !itemKaryawan.includes(signer.value));
@@ -730,71 +880,82 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         return;
       }
 
+      // Kirim item ke backend
       const itemResponse = await axios.post('http://localhost:5000/item', items, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       const createdItems = itemResponse.data.data.items;
       localStorage.setItem("id_items", JSON.stringify(createdItems.map(item => item.id_item)));
-      const orderedSigners = JSON.parse(localStorage.getItem("signers")) || [];
 
-      // localStorage.setItem("id_signers", JSON.stringify(logsigns.map(log => log.id_signers)));
-      
-      const logsigns = createdItems.map((item, index) => {
-      const signerId = items[index].id_karyawan;
-      const cardData = documentCards.find(card => card.id_karyawan === signerId);
+      // Gabungkan info jenis_item & id_karyawan ke dalam createdItems
+      const itemsWithInfo = createdItems.map((item, index) => ({
+        ...item,
+        jenis_item: items[index].jenis_item,
+        id_karyawan: items[index].id_karyawan,
+      }));
 
-          return {
-            action: "Created", 
-            status: "Pending", 
+      // Grouping by id_karyawan + jenis_item
+      const grouped = {};
+      for (const item of itemsWithInfo) {
+        const key = `${item.id_karyawan}-${item.jenis_item}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(item);
+      }
+
+      let urutan = 1;
+      const logsigns = [];
+
+      for (const key in grouped) {
+        const [id_karyawan, jenis_item] = key.split("-");
+        const signerId = id_karyawan;
+        const groupItems = grouped[key];
+        const cardData = documentCards.find(card => card.id_karyawan === signerId);
+
+        for (const item of groupItems) {
+          logsigns.push({
+            action: "Created",
+            status: "Pending",
             id_dokumen,
             id_karyawan,
             id_signers: signerId,
             id_item: item.id_item,
             subject,
             message,
-            // urutan: cardData?.urutan?? index + 1,
-            urutan: Number(cardData?.urutan) || index + 1,
-            };
-        });
+            urutan: urutan++, // urutan unik per group
+          });
+        }
+      }
 
       localStorage.setItem("logsigns", JSON.stringify(logsigns));
-      // localStorage.setItem("urutan", JSON.stringify(urutan));
+      localStorage.setItem("id_signers", JSON.stringify(logsigns.map(log => log.id_signers)));
+      localStorage.setItem("urutan", JSON.stringify(logsigns.map(log => log.urutan)));
 
-      const signerIds = logsigns.map(log => log.id_signers);
-      localStorage.setItem("id_signers", JSON.stringify(signerIds));
-
-      const urutanList = logsigns.map(log => log.urutan);
-      localStorage.setItem("urutan", JSON.stringify(urutanList));
-
+      // Kirim logsigns ke backend
       await axios.post('http://localhost:5000/logsign', { logsigns }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      // Update documentCards
       setDocumentCards(prevCards =>
-        prevCards.map((card) => {
-          const matchItem = items.find(item => item.id_karyawan === card.id_karyawan);
+        prevCards.map(card => {
+          const match = itemsWithInfo.find(item => item.id_karyawan === card.id_karyawan);
           return {
             ...card,
-            id_signers: matchItem?.id_karyawan || card.id_signers,
-            ori_id_signers: matchItem?.id_karyawan || card.ori_id_signers,
-            id_item: matchItem?.id_item || "",
-            ori_id_items: matchItem?.id_item || "",
-            id_dokumen: id_dokumen, 
-            is_deadline: is_deadline,
-            day_after_reminder: day_after_reminder,
-            repeat_freq: repeat_freq,
-            is_download: is_download,
-            deadline: deadline, 
+            id_signers: match?.id_karyawan || card.id_signers,
+            ori_id_signers: match?.id_karyawan || card.ori_id_signers,
+            id_item: match?.id_item || "",
+            ori_id_items: match?.id_item || "",
+            id_dokumen,
+            is_deadline,
+            day_after_reminder,
+            repeat_freq,
+            is_download,
+            deadline,
             urutan: card.urutan,
           };
         })
       );
-
-
-      // console.log("Id items:", id_item);
-      // console.log("Ori id items:", ori_id_items);
-      // console.log("DocumentCards:", documentCards);
 
       toast.success("Logsigns and items created successfully!", {
         position: "top-right",
@@ -810,7 +971,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     console.error("Failed to save logsigns and items:", error.message);
     toast.error("Failed to save logsigns and items.");
   }
-  };
+};
+
 
   useEffect(() => {
   if (selectedDoc?.id_dokumen) {
