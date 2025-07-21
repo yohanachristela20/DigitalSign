@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import axios from "axios";
-import { FaFont, FaSignature } from 'react-icons/fa';
+import { FaCalendar, FaFont, FaSignature } from 'react-icons/fa';
 
 import PDFCanvas from "components/Canvas/canvas.js";
 import { Rnd } from 'react-rnd';
@@ -17,6 +17,7 @@ import "../assets/scss/lbd/_receivedoc.scss";
 import UserNavbar from "components/Navbars/UserNavbar.js";
 import UbahPassword from "components/ModalForm/UbahPassword.js";
 import "../assets/scss/lbd/_usernavbar.scss";
+import { isDate } from "moment";
 
 
 function ReceiveDocument() {
@@ -71,6 +72,17 @@ function ReceiveDocument() {
     const [nextSignCompleted, setNextSignCompleted] = useState("");
 
     const history = useHistory();
+    const [current, setCurrentDate] = useState(new Date());
+
+    const date = new Date();
+    const day = String(date.getDate()).padStart(2, '0');
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] 
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+
+    const currentDate = `${day} ${month} ${year}`;
+
+    console.log("Current date:", currentDate);
 
     const mobileSidebarToggle = (e) => {
         e.preventDefault();
@@ -474,7 +486,7 @@ function ReceiveDocument() {
                         className="submit-btn w-100 mt-3 fs-6"
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, id_signers)}
-                        disabled={!initial_status.every(status => status === "Completed")}
+                        // disabled={!initial_status.every(status => status === "Completed")}
                     >
                         Finish
                     </Button>
@@ -491,142 +503,147 @@ function ReceiveDocument() {
                             {!loading && !errorMsg && pdfUrl && (
                             <>
                                 <div className="vertical-center">
-                                <PDFCanvas pdfUrl={pdfUrl} />
-                                
-                                {/* image -- setelah di ttd */}
-                                {signedInitials.map((sig) => {
-                                    if (!sig || !sig.id_item || sig.show !== true) return null;
+                                    <PDFCanvas pdfUrl={pdfUrl} />
+                                    
+                                    {/* image -- setelah di ttd */}
+                                    {signedInitials.map((sig) => {
+                                        if (!sig || !sig.id_item || sig.show !== true) return null;
 
-                                    const isCompleted = sig.status === "Completed";
-                                    const completedNext = sig.is_submitted === true;
+                                        const isCompleted = sig.status === "Completed";
+                                        const completedNext = sig.is_submitted === true;
 
-                                    return (
-                                        <Rnd
-                                            key={`${sig.id_signers}-${sig.id_item}`}
-                                            position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
-                                            size={{ width: Number(sig.height), height: Number(sig.width) }}
-                                            enableResizing={sig.enableResizing}
-                                            disableDragging={sig.disableDragging}
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                              
-                                            }}
-                                        >
-                                            {isCompleted && completedNext && sig.sign_base64 ? (
-                                                <img
-                                                    src={sig.sign_base64}
-                                                    alt="Initial"
-                                                    style={{ width: "100%", height: "100%" }}
-                                                    // hidden={nextSignCompleted === false}
-                                                />
-                                            ) : (
-                                                <></>
-                                            )}
-                                        </Rnd>
-                                    );
-                                })}
-
-
-                                {/* field sign */}
-                                {initial.map((sig) => {
-                                    if (!sig || !sig.id_item || sig.show !== true) return null;
-
-                                    const isCompleted = sig.status === "Completed";
-                                    const isSubmitted = sig.is_submitted === true;
-                                    const isInitialpad = sig.jenis_item === "Initialpad";
-                                    const isSignpad = sig.jenis_item === "Signpad";
-
-                                    return (
-                                        <Rnd
-                                            key={`${sig.id_signers}-${sig.id_item}`}
-                                            position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
-                                            size={{ width: Number(sig.height), height: Number(sig.width) }}
-                                            enableResizing={sig.enableResizing}
-                                            disableDragging={sig.disableDragging}
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                backgroundColor: isCompleted
-                                                    ? "transparent"
-                                                    : "rgba(25, 230, 25, 0.5)",
-                                                border: isSubmitted ? "none" : "solid 3px rgba(10, 193, 10, 0.5)", 
-                                                cursor: sig.editable && !isSubmitted ? "pointer" : "default",
-                                                zIndex: isCompleted? 1 : 2
-                                            }}
-                                            onClick={() => {
-                                                sig.editable && !isSubmitted && isInitialpad ? (handleInitialClick(sig.id_item)) : sig.editable && !isSubmitted && isSignpad ? (handleSignatureClick(sig.id_item)) : <></>
-                                            }}
-                                        >
-                                            {!isSubmitted ? (
-                                            <OverlayTrigger
-                                                placement="bottom"
-                                                overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
+                                        return (
+                                            <Rnd
+                                                key={`${sig.id_signers}-${sig.id_item}`}
+                                                position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
+                                                size={{ width: Number(sig.height), height: Number(sig.width) }}
+                                                enableResizing={sig.enableResizing}
+                                                disableDragging={sig.disableDragging}
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                
+                                                }}
                                             >
-                                                {({ ref, ...triggerHandler }) => (
+                                                {isCompleted && completedNext && sig.sign_base64 ? (
+                                                    <img
+                                                        src={sig.sign_base64}
+                                                        alt="Initial"
+                                                        style={{ width: "100%", height: "100%" }}
+                                                        // hidden={nextSignCompleted === false}
+                                                    />
+                                                ) : (
+                                                    <></>
+                                                )}
+                                            </Rnd>
+                                        );
+                                    })}
+
+
+                                    {/* field sign */}
+                                    {initial.map((sig) => {
+                                        if (!sig || !sig.id_item || sig.show !== true) return null;
+
+                                        const isCompleted = sig.status === "Completed";
+                                        const isSubmitted = sig.is_submitted === true;
+                                        const isInitialpad = sig.jenis_item === "Initialpad";
+                                        const isSignpad = sig.jenis_item === "Signpad";
+                                        const isDatefield = sig.jenis_item === "Date"
+
+                                        return (
+                                            <Rnd
+                                                key={`${sig.id_signers}-${sig.id_item}`}
+                                                position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
+                                                size={{ width: Number(sig.height), height: Number(sig.width) }}
+                                                enableResizing={sig.enableResizing}
+                                                disableDragging={sig.disableDragging}
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    backgroundColor: isCompleted
+                                                        ? "transparent"
+                                                        : "rgba(25, 230, 25, 0.5)",
+                                                    border: isSubmitted ? "none" : "solid 3px rgba(10, 193, 10, 0.5)", 
+                                                    cursor: sig.editable && !isSubmitted ? "pointer" : "default",
+                                                    zIndex: isCompleted? 1 : 2
+                                                }}
+                                                onClick={() => {
+                                                    sig.editable && !isSubmitted && isInitialpad ? (handleInitialClick(sig.id_item)) : sig.editable && !isSubmitted && isSignpad ? (handleSignatureClick(sig.id_item)) : <></>
+                                                }}
+                                            >
+                                                {!isSubmitted ? (
+                                                <OverlayTrigger
+                                                    placement="bottom"
+                                                    overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
+                                                >
+                                                    {({ ref, ...triggerHandler }) => (
+                                                    <>
+                                                        {isCompleted && sig.sign_base64 ? (
+                                                        <img
+                                                            {...triggerHandler}
+                                                            ref={ref}
+                                                            src={sig.sign_base64}
+                                                            alt="Initial"
+                                                            style={{ width: "100%", height: "100%" }}
+                                                        />
+                                                        ) : (
+                                                            isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
+                                                        )}
+                                                    </>
+                                                    )}
+                                                </OverlayTrigger>
+                                                ) : (
                                                 <>
                                                     {isCompleted && sig.sign_base64 ? (
                                                     <img
-                                                        {...triggerHandler}
-                                                        ref={ref}
                                                         src={sig.sign_base64}
                                                         alt="Initial"
                                                         style={{ width: "100%", height: "100%" }}
                                                     />
                                                     ) : (
-                                                        isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : <></>
+                                                        isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
                                                     )}
                                                 </>
                                                 )}
-                                            </OverlayTrigger>
-                                            ) : (
-                                            <>
-                                                {isCompleted && sig.sign_base64 ? (
-                                                <img
-                                                    src={sig.sign_base64}
-                                                    alt="Initial"
-                                                    style={{ width: "100%", height: "100%" }}
-                                                />
-                                                ) : (
-                                                     isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : <></>
-                                                )}
-                                            </>
-                                            )}
 
 
-                                        </Rnd>
-                                    );
-                                })}
+                                            </Rnd>
+                                        );
+                                    })}
 
-                                <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} selectedIdItem={selectedIdItem} selectedSigner={selectedSigner} />
+                                    <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} selectedIdItem={selectedIdItem} selectedSigner={selectedSigner} />
 
-                                <InitialModal
-                                    showInitialModal={showInitialModal}
-                                    setShowInitialModal={setShowInitialModal}
-                                    onSuccess={handleSignatureSuccess}
-                                    selectedIdItem={selectedIdItem}
-                                    selectedSigner={selectedSigner}
-                                />
-                                
-                                {dateField.map((sig, index) => (
-                                <Rnd
-                                    key={sig.id}
-                                    position={{ x: sig.x_axis, y: sig.y_axis }}
-                                    size={{ width: sig.height, height: sig.width }}
-                                    enableResizing={sig.enableResizing}    
-                                    disableDragging={sig.disableDragging} 
-                                    style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    backgroundColor: "rgba(25, 230, 25, 0.5)",
-                                    }}
-                                >
-                                    <FaSignature style={{ width: "25%", height: "25%" }} />
-                                </Rnd>
-                                ))}
+                                    <InitialModal
+                                        showInitialModal={showInitialModal}
+                                        setShowInitialModal={setShowInitialModal}
+                                        onSuccess={handleSignatureSuccess}
+                                        selectedIdItem={selectedIdItem}
+                                        selectedSigner={selectedSigner}
+                                    />
+                                    
+                                    {/* {dateField.map((sig) => {
+                                        if (!sig || !sig.id_item || sig.show !== true) return null;
+
+                                        return (
+                                            <Rnd
+                                                key={sig.id}
+                                                position={{ x: sig.x_axis, y: sig.y_axis }}
+                                                size={{ width: sig.height, height: sig.width }}
+                                                enableResizing={sig.enableResizing}    
+                                                disableDragging={sig.disableDragging} 
+                                                style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                backgroundColor: "rgba(25, 230, 25, 0.5)",
+                                                }}
+                                            >
+                                                <FaSignature style={{ width: "25%", height: "25%" }} />
+                                            </Rnd>
+                                        );
+                                    })} */}
                                 </div>
                             </>
                             )}
