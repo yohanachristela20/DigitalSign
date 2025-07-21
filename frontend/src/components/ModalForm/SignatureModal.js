@@ -7,23 +7,26 @@ import { toast } from "react-toastify";
 import axios from "axios";
 
 function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, selectedIdItem, selectedSigner}) {
-    const signatureRef = useRef(null);
+    const signatureRef = useRef();
     const [id_item, setIdItem] = useState("");
     const [selectedValue, setSelectedValue] = useState('');
     const [selectedValues, setSelectedValues] = useState({});
-    const location = useLocation();
-    const queryParams = new URLSearchParams(location.search);
-    const token = queryParams.get("token");
     const [id_dokumen, setIdDokumen] = useState("");
     const [id_signers, setIdSigner] = useState("");
     const [signerData, setSignerData] = useState([]);
-    const [width, setWidth] = useState(200);
-    const [height, setHeight] = useState(100);
-    
+    const [width, setWidth] = useState(0);
+    const [height, setHeight] = useState(0);
+    const previewRef = useRef(null);
+
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const token = queryParams.get("token");
+
     useEffect(() => {
-        console.log("InitialModal receive id_item:", selectedIdItem);
-        console.log("InitialModal show initialmodal:", showSignatureModal);
-    }, [selectedIdItem, showSignatureModal]);
+        console.log("SignatureModal receive id_item:", selectedIdItem);
+        console.log("show SignatureModal:", showSignatureModal);
+        console.log("Selected signer:", selectedSigner);
+    }, [selectedIdItem, showSignatureModal, selectedSigner]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -62,6 +65,7 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
                     }
                 }
                 setSignerData(allSignerData);
+                console.log("Signer data:", signerData);
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
             } 
@@ -74,59 +78,13 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
         if (!signatureRef.current || signatureRef.current.isEmpty()) {
             return null;
         }
-
-        return signatureRef.current.getTrimmedCanvas().toDataURL("image/png");
+        return signatureRef.current.toDataURL();
     }
 
-    // const generateImage = async () => {
-    //     if (!signatureRef.current) return null;
+    const updateSignature = async (id_dokumen, id_item, id_signers, selectedSigner) => {
+        console.log("Data update signature:", "id_dokumen:", id_dokumen, "id_item:",id_item, "id_signers:", id_signers, "selectedSigner:", selectedSigner);
 
-    //     const canvas = await html2canvas(signatureRef.current, {
-    //         backgroundColor: null, 
-    //         useCORS: true,         
-    //     });
-
-    //     return canvas.toDataURL("image/png");
-    // };
-
-    // const updateInitialSign = async (id_dokumen, id_item, id_signers, selectedSigner) => {
-    //     console.log("Data dokumen:", id_dokumen, id_item, id_signers);
-    //     const today = new Date();
-    
-    //         try {
-    //             const sign_base64 = getSignatureImageBase64();
-    //             console.log("Hasil Base64:", sign_base64?.substring(0, 100));
-    
-    //             if (!sign_base64) {
-    //                 toast.error("Failed to generate initial sign.");
-    //                 return;
-    //             }
-    
-    //             const response = await axios.patch(`http://localhost:5000/initialsign/${id_dokumen}/${id_item}/${id_signers}`, {
-    //                 sign_base64,
-    //                 status: "Completed", 
-    //                 tgl_tt: today,
-    //             }, {
-    //                 headers: {
-    //                     Authorization: `Bearer ${token}`,
-    //                 },
-    //             });
-    
-    //             console.log("Signer logsign updated: ", response.data);
-    //             toast.success("InitialSign uploaded successfully.", {
-    //                 position: "top-right",
-    //                 autoClose: 5000,
-    //                 hideProgressBar: true,
-    //             });
-    //             setShowSignatureModal(false);
-    //         } catch (error) {
-    //             console.error("Failed to save InitialSign", error.message);
-    //         }
-    // };
-    
-
-    const updateInitialSign = async (id_dokumen, id_item, id_signers) => {
-        const today = new Date().toISOString(); 
+        const today = new Date(); 
         if (!id_dokumen || !id_item || !id_signers) {
             toast.error("Missing document, item, or signer ID.");
             return;
@@ -134,7 +92,11 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
 
         const sign_base64 = getSignatureImageBase64();
 
-        if (!sign_base64) {
+        console.log("Signbase64:", sign_base64);
+        console.log("sign_base64 type:", typeof sign_base64);
+        console.log("sign_base64 size:", sign_base64?.length);
+
+        if (!sign_base64 || typeof sign_base64 !== 'string') {
             toast.error("Signature is empty.");
             return;
         }
@@ -155,59 +117,39 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
             );
 
             console.log("Signer logsign updated:", response.data);
-            toast.success("Initial Sign uploaded successfully.");
             setShowSignatureModal(false);
 
             if (onSuccess) {
-                onSuccess(); // Trigger any parent action if needed
+                onSuccess();
             }
         } catch (error) {
-            console.error("Failed to save Initial Sign:", error.message);
+            console.error("Failed to save Initial Sign:", error);
             toast.error("Failed to save Initial Sign.");
         }
     };
 
-
-    // useEffect(() => {
-    //     generateImage().then(img => {
-    //         if (img) {
-    //             console.log("Preview base64:", img);
-    //         }
-    //     });
-    // }, [selectedValue]);
-    
-    
-    const handleSubmit = async (e) => {
+    const handleSubmit = async(e, selectedSigner) => {
         e.preventDefault();
 
-        if (!signatureRef.current || signatureRef.current.isEmpty()) {
-            toast.error("Please sign the document first.");
+        const base64Signature = getSignatureImageBase64();
+        if (!base64Signature) {
+            alert("Please provide a signature before submitting.");
             return;
         }
 
-        console.log("Selected signer:", selectedSigner);
-        console.log("Selected id item:", selectedSigner.id_item);
-        console.log("Selected id signers:", selectedSigner.id_signers);
+        console.log("type of base64Signature:", typeof base64Signature);
+        console.log("base64Signature size:", base64Signature.length);
+        setShowSignatureModal(false);
 
-        if (!selectedSigner || !selectedSigner.id_item || !selectedSigner.id_signers) {
-            toast.error("Selected signer data is incomplete.");
-            console.log("selectedSigner:", selectedSigner);
-            return;
-        }
+        await updateSignature(id_dokumen, selectedSigner.id_item, selectedSigner.id_signers, selectedSigner);
+        window.location.reload();
+    }
 
-        try {
-            await updateInitialSign(id_dokumen, selectedSigner.id_item, selectedSigner.id_signers);
-            toast.success("Signed document saved successfully.");
-            setShowSignatureModal(false);
-        } catch (error) {
-            console.error("Error submitting sign:", error.message);
+    const clearCanvas = () => {
+        if (signatureRef.current) {
+            signatureRef.current.clear();
         }
     };
-
-
-    const handleCloseModal = () => {
-        setShowSignatureModal(false);
-    }
 
     if (!selectedSigner || !selectedSigner.id_item) return null;
     console.log("Selected signer:", selectedSigner);
@@ -215,7 +157,10 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
 
     return(
         <>
-            <Modal
+            {signerData
+            .filter((selectedSigner) => selectedSigner.id_item === selectedIdItem) 
+            .map((selectedSigner) => (
+                <Modal
                 key={selectedSigner.id_item}
                 className="modal-primary"
                 show={showSignatureModal}
@@ -228,26 +173,36 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
                 <Form onSubmit={(e) => handleSubmit(e, selectedSigner)}>
                     <Row>
                         <Col md="12">
-                            <SignatureCanvas 
+                            <div className="d-flex flex-column"> 
+                                <SignatureCanvas 
                                 ref={signatureRef}
                                 penColor="black"
+                                className="w-100"
                                 canvasProps={{style: {width: '100%', height: '100%', border: '1px solid black'}}}
                             />
+                            </div>
                         </Col>
                     </Row>
                     <Row>
-                        <Col md="12">
+                        <Col md="6">
                             <div className="d-flex flex-column">
                                 <Button className="btn-fill w-100 mt-3" type="submit" variant="primary">
                                     Submit
                                 </Button>
                             </div>
                         </Col>
+                        <Col md="6">
+                            <div className="d-flex flex-column">
+                                <Button className="btn-fill w-100 mt-3" variant="danger" onClick={clearCanvas}>
+                                    Clear
+                                </Button>
+                            </div>
+                        </Col>
                     </Row>
                 </Form>
             </Modal.Body>
-
             </Modal>
+            ))}
         </>
     )
 }

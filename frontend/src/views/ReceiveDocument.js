@@ -265,70 +265,48 @@ function ReceiveDocument() {
     }
 
     useEffect(() => {
-        const fetchInitials = async () => {
-            if (!id_dokumen || !allSigners || allSigners.length === 0 || Object.keys(urutanMap).length === 0) return;
+    const fetchAllFields = async () => {
+        if (!id_dokumen || !allSigners || allSigners.length === 0 || Object.keys(urutanMap).length === 0) return;
 
-            try {
-            const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
-            const signerParam = signerArray.join(",");
-            const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
-            const initialsData = initialsRes.data;
+        try {
+        const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
+        const signerParam = signerArray.join(",");
+        const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
+        const initialsData = initialsRes.data;
 
-            const allInitialFields = [];
+        const allFields = [];
 
-            for (let i = 0; i < signerArray.length; i++) {
+        for (let i = 0; i < signerArray.length; i++) {
             const signer = signerArray[i];
             const currentUrutan = Number(urutanMap[signer]);
-            console.log("CURRENT URUTAN:", currentUrutan);
-
-            const currentSubmitted = (submittedMap[signer]);
-            console.log("CURRENT SUBMITTED:", currentSubmitted);
+            const currentSubmitted = submittedMap[signer];
 
             const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`);
-            const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item === "Initialpad");
+            const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
 
             const signerInitials = initialsData.filter(init => init.id_signers === signer);
 
-            let show = false;
-            let editable = false;
-            const prevSigner = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan - 1);
-            console.log("PREV SIGNER:", prevSigner);
+            const prevSigner = Object.keys(urutanMap).find(
+            key => Number(urutanMap[key]) === currentUrutan - 1
+            );
 
-            const prevStatusList = allInitialFields
+            const prevStatusList = allFields
             .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
             .map(field => field.status);
 
-            const prevSubmittedList = allInitialFields
+            const prevSubmittedList = allFields
             .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
             .map(field => field.is_submitted);
 
-            console.log("PREVSTATUS LIST:", prevStatusList);
-            console.log("PREVSUBMITTED LIST:", prevSubmittedList);
+            const allCompleted =
+            prevStatusList.length > 0 &&
+            prevStatusList.every(status => status === "Completed") &&
+            prevSubmittedList.every(is_submitted => is_submitted !== false);
 
-            const allCompleted = prevStatusList.length > 0 && prevStatusList.every(status => status === "Completed" && prevSubmittedList.every(is_submitted => is_submitted !== false));
-            console.log("allCompleted:", allCompleted);
             setCompleteSubmitted(allCompleted);
 
-            // if (currentUrutan === 1 ) {
-            //     show = true;
-            //     editable = true;
-            // } else {
-            //     if (allCompleted) {
-            //         show = true;
-            //         editable = true;
-            //     } else if (prevStatusList.every(status => status === "Pending")) {
-            //         show = false;
-            //         editable = false;
-            //     } else if (prevSubmittedList.every(is_submitted => is_submitted !== true)) {
-            //         show = false;
-            //         editable = false;
-            //     }
-            //     else {
-            //         show = true;
-            //         editable = false;
-            //     }
-            // }
-
+            let show = false;
+            let editable = false;
             if (currentUrutan === 1) {
                 show = true;
                 editable = true;
@@ -342,26 +320,26 @@ function ReceiveDocument() {
                 show = false;
                 editable = false;
             } else {
-                show = tru;
+                show = true;
                 editable = false;
             }
 
-            const nextSign = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan + 1);
-            console.log("NEXT SIGNER:", nextSign);
-            // setNextSigner(nextSign);
+            const nextSign = Object.keys(urutanMap).find(
+            key => Number(urutanMap[key]) === currentUrutan + 1
+            );
 
             const nextSignerInitials = initialsData.filter(init => init.id_signers === nextSign);
             const nextSignerSubmitted = submittedMap[nextSign];
             const nextSignCompleted = nextSignerInitials.length > 0 && nextSignerSubmitted === true;
 
-            const initialListForSigner = signerFields.map(field => {
-                const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
-                const base64 = matchInitial?.sign_base64;
-                const formattedBase64 = base64?.startsWith("data:image")
+            const mappedFields = signerFields.map(field => {
+            const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
+            const base64 = matchInitial?.sign_base64;
+            const formattedBase64 = base64?.startsWith("data:image")
                 ? base64
                 : base64 ? `data:image/png;base64,${base64}` : null;
 
-                return {
+            return {
                 id_item: field.id_item,
                 id_signers: signer,
                 sign_base64: formattedBase64,
@@ -379,177 +357,37 @@ function ReceiveDocument() {
                 id_dokumen,
                 is_submitted: currentSubmitted,
                 nextSigner: nextSign,
-                prevSigner: prevSigner, 
+                prevSigner: prevSigner,
                 nextSignCompleted: nextSignCompleted,
-                };
+                jenis_item: field.ItemField?.jenis_item || "",
+            };
             });
 
-                allInitialFields.push(...initialListForSigner);
-            }
+            allFields.push(...mappedFields);
+        }
 
-            setSignedInitials(allInitialFields);
-            console.log("All Initial list:", allInitialFields);
+        setSignedInitials(allFields); 
+        setSignedSignatures(allFields);
+        console.log("All Mapped Fields:", allFields);
 
-            const nextSignCompleted = allInitialFields
+        const nextSignCompleted = allFields
             .filter(field => field.prevSigner === id_signers)
             .map(field => field.is_submitted);
-
-            console.log("nextSignCompleted:", nextSignCompleted);
-            setNextSignCompleted(nextSignCompleted);
-
-
-            const filteredFields = allInitialFields.filter(field => field.id_signers === id_signers);
-            setInitial(filteredFields);
-            console.log("Initial satuan:", filteredFields);
-
-            const initialStatus = allInitialFields
-            .filter(field => field.id_signers === id_signers)
-            .map(field => field.status);
-
-            console.log("Initial status:", initialStatus);
-            setInitialStatus(initialStatus);
-            
-
-            } catch (error) {
-            console.error("Failed to fetch initials or axis-field:", error.message);
-            }
-        };
-
-    fetchInitials();
-    }, [id_dokumen, id_signers, urutanMap, allSigners]);
-
-    useEffect(() => {
-    const fetchSignatures = async () => {
-        if (!id_dokumen || !allSigners || allSigners.length === 0 || Object.keys(urutanMap).length === 0) return;
-
-        try {
-        const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
-        const signerParam = signerArray.join(",");
-        const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
-        const initialsData = initialsRes.data;
-
-        const allSignatureFields = [];
-
-        for (let i = 0; i < signerArray.length; i++) {
-        const signer = signerArray[i];
-        const currentUrutan = Number(urutanMap[signer]);
-        console.log("CURRENT URUTAN:", currentUrutan);
-
-        const currentSubmitted = (submittedMap[signer]);
-        console.log("CURRENT SUBMITTED:", currentSubmitted);
-
-        const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`);
-        const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item === "Signpad");
-
-        const signerInitials = initialsData.filter(init => init.id_signers === signer);
-
-        let show = false;
-        let editable = false;
-        const prevSigner = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan - 1);
-        console.log("PREV SIGNER:", prevSigner);
-
-        const prevStatusList = allSignatureFields
-        .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
-        .map(field => field.status);
-
-        const prevSubmittedList = allSignatureFields
-        .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
-        .map(field => field.is_submitted);
-
-        console.log("PREVSTATUS LIST:", prevStatusList);
-        console.log("PREVSUBMITTED LIST:", prevSubmittedList);
-
-        const allCompleted = prevStatusList.length > 0 && prevStatusList.every(status => status === "Completed" && prevSubmittedList.every(is_submitted => is_submitted !== false));
-        console.log("allCompleted:", allCompleted);
-        setCompleteSubmitted(allCompleted);
-
-        if (currentUrutan === 1) {
-            show = true;
-            editable = true;
-        } else if (prevStatusList.length === 0) {
-            show = false;
-            editable = false;
-        } else if (prevStatusList.every(status => status === "Completed") && prevSubmittedList.every(is_submitted => is_submitted === true)) {
-            show = true;
-            editable = true;
-        } else if (prevStatusList.every(status => status === "Pending") || prevSubmittedList.every(is_submitted => is_submitted !== true)) {
-            show = false;
-            editable = false;
-        } else {
-            show = true;
-            editable = false;
-        }
-
-        const nextSign = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan + 1);
-        console.log("NEXT SIGNER:", nextSign);
-        // setNextSigner(nextSign);
-
-        const nextSignerInitials = initialsData.filter(init => init.id_signers === nextSign);
-        const nextSignerSubmitted = submittedMap[nextSign];
-        const nextSignCompleted = nextSignerInitials.length > 0 && nextSignerSubmitted === true;
-
-        const signatureList = signerFields.map(field => {
-            const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
-            const base64 = matchInitial?.sign_base64;
-            const formattedBase64 = base64?.startsWith("data:image")
-            ? base64
-            : base64 ? `data:image/png;base64,${base64}` : null;
-
-            return {
-            id_item: field.id_item,
-            id_signers: signer,
-            sign_base64: formattedBase64,
-            status: matchInitial?.status || "Pending",
-            nama: matchInitial?.Signerr?.nama || "-",
-            x_axis: field.ItemField?.x_axis || 0,
-            y_axis: field.ItemField?.y_axis || 0,
-            width: field.ItemField?.width || 50,
-            height: field.ItemField?.height || 50,
-            enableResizing: false,
-            disableDragging: true,
-            show,
-            editable,
-            urutan: currentUrutan,
-            id_dokumen,
-            is_submitted: currentSubmitted,
-            nextSigner: nextSign,
-            prevSigner: prevSigner, 
-            nextSignCompleted: nextSignCompleted,
-            };
-        });
-
-            allSignatureFields.push(...signatureList);
-        }
-
-        setSignedSignatures(allSignatureFields);
-        console.log("All Initial list:", allSignatureFields);
-
-        const nextSignCompleted = allSignatureFields
-        .filter(field => field.prevSigner === id_signers)
-        .map(field => field.is_submitted);
-
-        console.log("nextSignCompleted:", nextSignCompleted);
         setNextSignCompleted(nextSignCompleted);
 
-
-        const filteredFields = allSignatureFields.filter(field => field.id_signers === id_signers);
+        const filteredFields = allFields.filter(field => field.id_signers === id_signers);
+        setInitial(filteredFields);
         setSignature(filteredFields);
-        console.log("Initial satuan:", filteredFields);
 
-        const initialStatus = allSignatureFields
-        .filter(field => field.id_signers === id_signers)
-        .map(field => field.status);
-
-        console.log("Initial status:", initialStatus);
-        setInitialStatus(initialStatus);
-        
+        const statusList = filteredFields.map(field => field.status);
+        setInitialStatus(statusList);
 
         } catch (error) {
         console.error("Failed to fetch initials or axis-field:", error.message);
         }
     };
 
-    fetchSignatures();
+    fetchAllFields();
     }, [id_dokumen, id_signers, urutanMap, allSigners]);
 
 
@@ -559,8 +397,6 @@ function ReceiveDocument() {
 
     return (
         <>
-            {/* <UserNavbar /> */}
-
             <Navbar className="bg-navbar" expand="lg">
                 <Container fluid>
                 <div className="d-flex justify-content-center align-items-center ml-2 ml-lg-0">
@@ -639,7 +475,6 @@ function ReceiveDocument() {
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, id_signers)}
                         disabled={!initial_status.every(status => status === "Completed")}
-                        // disabled={sign_base64 == "" || sign_base64 == null}
                     >
                         Finish
                     </Button>
@@ -658,27 +493,6 @@ function ReceiveDocument() {
                                 <div className="vertical-center">
                                 <PDFCanvas pdfUrl={pdfUrl} />
                                 
-                                {/* {signatures.map((sig) => (
-                                    <>
-                                        <Rnd
-                                            key={sig.id}
-                                            position={{ x: sig.x_axis, y: sig.y_axis }}
-                                            size={{ width: sig.height, height: sig.width }}
-                                            enableResizing={sig.enableResizing} 
-                                            disableDragging={sig.disableDragging} 
-                                            style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            backgroundColor: "rgba(25, 230, 25, 0.5)", 
-                                            }}
-                                            onClick={handleSignatureClick}
-                                        >
-                                            <FaSignature style={{ width: "25%", height: "25%" }} />
-                                        </Rnd>                                
-                                    </>
-                                ))} */}
-
                                 {/* image -- setelah di ttd */}
                                 {signedInitials.map((sig) => {
                                     if (!sig || !sig.id_item || sig.show !== true) return null;
@@ -721,6 +535,8 @@ function ReceiveDocument() {
 
                                     const isCompleted = sig.status === "Completed";
                                     const isSubmitted = sig.is_submitted === true;
+                                    const isInitialpad = sig.jenis_item === "Initialpad";
+                                    const isSignpad = sig.jenis_item === "Signpad";
 
                                     return (
                                         <Rnd
@@ -741,21 +557,9 @@ function ReceiveDocument() {
                                                 zIndex: isCompleted? 1 : 2
                                             }}
                                             onClick={() => {
-                                                if (sig.editable && !isSubmitted) {
-                                                    handleInitialClick(sig.id_item);
-                                                }
+                                                sig.editable && !isSubmitted && isInitialpad ? (handleInitialClick(sig.id_item)) : sig.editable && !isSubmitted && isSignpad ? (handleSignatureClick(sig.id_item)) : <></>
                                             }}
                                         >
-                                            {/* {isCompleted && sig.sign_base64 ? (
-                                                <img
-                                                    src={sig.sign_base64}
-                                                    alt="Initial"
-                                                    style={{ width: "100%", height: "100%" }}
-                                                />
-                                            ) : (
-                                                <FaFont style={{ width: "25%", height: "25%" }} />
-                                            )} */}
-
                                             {!isSubmitted ? (
                                             <OverlayTrigger
                                                 placement="bottom"
@@ -772,7 +576,7 @@ function ReceiveDocument() {
                                                         style={{ width: "100%", height: "100%" }}
                                                     />
                                                     ) : (
-                                                    <FaFont style={{ width: "25%", height: "25%" }} />
+                                                        isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : <></>
                                                     )}
                                                 </>
                                                 )}
@@ -786,88 +590,7 @@ function ReceiveDocument() {
                                                     style={{ width: "100%", height: "100%" }}
                                                 />
                                                 ) : (
-                                                <FaFont style={{ width: "25%", height: "25%" }} />
-                                                )}
-                                            </>
-                                            )}
-
-
-                                        </Rnd>
-                                    );
-                                })}
-
-                                {signature.map((sig) => {
-                                    if (!sig || !sig.id_item || sig.show !== true) return null;
-
-                                    const isCompleted = sig.status === "Completed";
-                                    const isSubmitted = sig.is_submitted === true;
-
-                                    return (
-                                        <Rnd
-                                            key={`${sig.id_signers}-${sig.id_item}`}
-                                            position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
-                                            size={{ width: Number(sig.height), height: Number(sig.width) }}
-                                            enableResizing={sig.enableResizing}
-                                            disableDragging={sig.disableDragging}
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                backgroundColor: isCompleted
-                                                    ? "transparent"
-                                                    : "rgba(25, 230, 25, 0.5)",
-                                                border: isSubmitted ? "none" : "solid 3px rgba(10, 193, 10, 0.5)", 
-                                                cursor: sig.editable && !isSubmitted ? "pointer" : "default",
-                                                zIndex: isCompleted? 1 : 2
-                                            }}
-                                            onClick={() => {
-                                                if (sig.editable && !isSubmitted) {
-                                                    console.log("Signature clicked", sig.id_item);
-                                                    handleSignatureClick(sig.id_item);
-                                                }
-                                            }}
-                                        >
-                                            {/* {isCompleted && sig.sign_base64 ? (
-                                                <img
-                                                    src={sig.sign_base64}
-                                                    alt="Initial"
-                                                    style={{ width: "100%", height: "100%" }}
-                                                />
-                                            ) : (
-                                                <FaFont style={{ width: "25%", height: "25%" }} />
-                                            )} */}
-
-                                            {!isSubmitted ? (
-                                            <OverlayTrigger
-                                                placement="bottom"
-                                                overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
-                                            >
-                                                {({ ref, ...triggerHandler }) => (
-                                                <>
-                                                    {isCompleted && sig.sign_base64 ? (
-                                                    <img
-                                                        {...triggerHandler}
-                                                        ref={ref}
-                                                        src={sig.sign_base64}
-                                                        alt="Signpad"
-                                                        style={{ width: "100%", height: "100%" }}
-                                                    />
-                                                    ) : (
-                                                    <FaSignature style={{ width: "25%", height: "25%" }} />
-                                                    )}
-                                                </>
-                                                )}
-                                            </OverlayTrigger>
-                                            ) : (
-                                            <>
-                                                {isCompleted && sig.sign_base64 ? (
-                                                <img
-                                                    src={sig.sign_base64}
-                                                    alt="Signpad"
-                                                    style={{ width: "100%", height: "100%" }}
-                                                />
-                                                ) : (
-                                                <FaSignature style={{ width: "25%", height: "25%" }} />
+                                                     isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : <></>
                                                 )}
                                             </>
                                             )}

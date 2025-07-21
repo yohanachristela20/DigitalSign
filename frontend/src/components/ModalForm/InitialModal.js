@@ -30,8 +30,8 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     const token = queryParams.get("token");
 
     useEffect(() => {
-        console.log("InitialModal receive id_item:", selectedIdItem);
-        console.log("InitialModal show initialmodal:", showInitialModal);
+        // console.log("InitialModal receive id_item:", selectedIdItem);
+        // console.log("InitialModal show initialmodal:", showInitialModal);
     }, [selectedIdItem, showInitialModal]);
 
 
@@ -45,9 +45,6 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
                 setIdSigner(id_signers);
-
-                console.log("ID Dokumen:", id_dokumen);
-                console.log("ID Signers:", id_signers);
 
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
                 
@@ -91,16 +88,6 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
             item.id_item === id_item ? { ...item, nama: value } : item
         );
         setSignerData(updated);
-    };
-
-    const handleJobChange = (value) => {
-        const alphabetValue = value.replace(/[^a-zA-Z\s]/g, "");
-        setJob(alphabetValue);
-    };
-
-    const handleOrganization = (value) => {
-        const alphabetValue = value.replace(/[^a-zA-Z\s]/g, "");
-        setOrganisasi(alphabetValue);
     };
 
     useEffect(() => {
@@ -151,15 +138,6 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
         option5: "Great Vibes",
     };
 
-    const handleEncode = () => {
-        try {
-        const encoded = btoa(inputText);
-        setEncodedText(encoded);
-        } catch (error) {
-        console.error("Error encoding to Base64:", error);
-        setEncodedText("Error: Could not encode text.");
-        }
-    };
 
     const generateImage = async () => {
         if (!previewRef.current) return null;
@@ -237,8 +215,6 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
                     key={selectedSigner.id_item}
                     show={showInitialModal}
                     onHide={() => handleCloseModal(selectedSigner.id_item)}
-                    // backdrop="static"
-                    // keyboard={false}
                     >
                     <Modal.Header closeButton>
                         <Modal.Title>Make Initial - ID Item: {selectedIdItem}</Modal.Title>

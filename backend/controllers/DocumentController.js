@@ -370,6 +370,8 @@ export const updateInitialSign = async(req, res) => {
       return res.status(400).json({message: "Jenis item tidak ditemukan."});
     }
 
+    console.log("Jenis item:", jenis_item);
+
     const relatedLogs = await LogSign.findAll({
       where: {
         id_dokumen,
