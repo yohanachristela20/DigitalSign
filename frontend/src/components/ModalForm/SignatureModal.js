@@ -6,7 +6,7 @@ import html2canvas from "html2canvas";
 import { toast } from "react-toastify";
 import axios from "axios";
 
-function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, selectedIdItem, selectedSigner}) {
+function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, selectedIdItem, selectedSigner, show, editable}) {
     const signatureRef = useRef();
     const [id_item, setIdItem] = useState("");
     const [selectedValue, setSelectedValue] = useState('');
@@ -26,7 +26,9 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
         console.log("SignatureModal receive id_item:", selectedIdItem);
         console.log("show SignatureModal:", showSignatureModal);
         console.log("Selected signer:", selectedSigner);
-    }, [selectedIdItem, showSignatureModal, selectedSigner]);
+        console.log("Show from initial modal:", show);
+        console.log("Editable from initial modal:", editable);
+    }, [selectedIdItem, showSignatureModal, selectedSigner, show, editable]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -38,30 +40,36 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
                 setIdSigner(id_signers);
+                const id_item = res.data.id_item;
+                setIdItem(id_item);
 
                 console.log("ID Dokumen:", id_dokumen);
                 console.log("ID Signers:", id_signers);
+                console.log("ID Item: ", id_item);
 
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+                const itemArray = Array.isArray(id_item) ? id_item : [id_item];
                 
                 const allSignerData = [];
 
                 for (const selectedSigner of signerArray) {
-                    const response = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${selectedSigner}`);
-                    const data = response.data;
+                    for (const itemId of itemArray) {
+                        const response = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${selectedSigner}/${itemId}`);
+                        const data = response.data;
 
-                    if (data.length > 0 && data[0].Signerr) {
-                        allSignerData.push({
-                            id_item: data[0].id_item,
-                            id_signers: data[0].id_signers, 
-                            nama: data[0].Signerr.nama.toLowerCase(),
-                        });
+                        if (data.length > 0 && data[0].Signerr) {
+                            allSignerData.push({
+                                id_item: data[0].id_item,
+                                id_signers: data[0].id_signers, 
+                                nama: data[0].Signerr.nama.toLowerCase(),
+                            });
 
-                        data.filter(item => item.ItemField).forEach((item) => {
-                            const {width, height} = item.ItemField;
-                            setWidth(height);
-                            setHeight(width);
-                        });
+                            data.filter(item => item.ItemField).forEach((item) => {
+                                const {width, height} = item.ItemField;
+                                setWidth(height);
+                                setHeight(width);
+                            });
+                        }
                     }
                 }
                 setSignerData(allSignerData);

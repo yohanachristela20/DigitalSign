@@ -39,7 +39,10 @@ router.get('/receive-document', async(req, res, next) => {
         const currentSigner = decoded.dokumenLogsign?.currentSigner;
         console.log("Current signer:", currentSigner);
 
-        res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign, urutan: urutanLogsign, currentSigner});
+        const itemLogsign = decoded.dokumenLogsign?.id_item;
+        console.log("Id Item logsign:", itemLogsign);
+
+        res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign, urutan: urutanLogsign, currentSigner, id_item: itemLogsign});
     } catch (error) {
         return res.status(403).json({message: 'Invalid or expired token'});
     }
@@ -76,15 +79,16 @@ router.get('/pdf-document/:id_dokumen?', async (req, res) => {
 });
 
 // untuk menampilkan field item (kotak hijau)
-router.get('/axis-field/:id_dokumen/:id_signers', async(req, res) => {
-    const {id_dokumen, id_signers, urutan} = req.params;
+router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async(req, res) => {
+    const {id_dokumen, id_signers, urutan, id_item} = req.params;
     console.log("Id Dokumen:", id_dokumen);
     console.log("Id Signers:", id_signers);
+    console.log("Id Item:", id_item);
     // console.log("Urutan:", urutan);
 
     try {
         const response = await LogSign.findAll({
-            where: {id_dokumen, id_signers}, 
+            where: {id_dokumen, id_signers, id_item}, 
             attributes: ["id_item", "id_signers", "status", "urutan", "is_submitted"],
             include: [
                 {

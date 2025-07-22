@@ -244,123 +244,55 @@ const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, 
 };
 
 
-// export const sendEmailNotification = async (req, res) => {
-//   try {
-//     const { subjectt, messagee, id_dokumen, id_signers, urutan } = req.body;
-
-//     console.log("RECEIVED IN API:");
-//     console.log("subjectt:", subjectt);
-//     console.log("messagee:", messagee);
-//     console.log("id_dokumen:", id_dokumen);
-//     console.log("id_signers:", id_signers);
-//     console.log("Urutan:", urutan);
-
-//     const jwtSecret = process.env.JWT_SECRET_KEY;
-
-//     // const signerList = Array.isArray(id_signers) ? id_signers : [id_signers];
-
-//     const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
-//     const urutanList = [...new Set(Array.isArray(urutan) ? urutan : [urutan])];
-
-//     let emailResults = [];
-
-//     for (const signer of signerList) {
-//       const validLogsigns = await LogSign.findAll({
-//         where: {
-//           id_signers: signer,
-//           id_dokumen,
-//           status: 'Pending',
-//           // urutan,
-//         },
-//       });
-
-//       console.log(`Valid logsigns for ${signer}:`, validLogsigns.map(log => log.toJSON()));
-
-//       if (validLogsigns.length === 0) {
-//         emailResults.push({ signer, message: 'No valid logsigns to notify.' });
-//         continue;
-//       }
-
-//       // const signLink = `http://localhost:3000/user/envelope?token=${token}&receiver=${signer}`;
-
-//       // const token = jwt.sign({ dokumenLogsign: [id_dokumen, signer] }, jwtSecret);
-//       // const signLink = `http://localhost:3000/user/envelope?token=${token}`;
-
-//       const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList, urutan: urutanList, currentSigner: signer}}, jwtSecret);
-//       const signLink = `http://localhost:3000/user/envelope?token=${token}`;
-
-//       await sendEmailNotificationInternal(validLogsigns, signLink, subjectt, messagee);
-//       emailResults.push({ signer, message: 'Email sent.' });
-//     }
-
-//     res.status(200).json({
-//       message: 'Emails processed.',
-//       results: emailResults,
-//     });
-
-//   } catch (error) {
-//     console.error("Failed to send email notification:", error.message);
-//     res.status(500).json({ message: "Failed to send email notification." });
-//   }
-// };
-
 export const sendEmailNotification = async (req, res) => {
   try {
-    const { subjectt, messagee, id_dokumen, id_signers, urutan } = req.body;
+    const { subjectt, messagee, id_dokumen, id_signers, urutan, id_item } = req.body;
+
+    console.log("RECEIVED IN API:");
+    console.log("subjectt:", subjectt);
+    console.log("messagee:", messagee);
+    console.log("id_dokumen:", id_dokumen);
+    console.log("id_signers:", id_signers);
+    console.log("Urutan:", urutan);
+    console.log("Id_Item:", id_item);
+
     const jwtSecret = process.env.JWT_SECRET_KEY;
 
-    console.log("RECEIVED IN API:", { subjectt, messagee, id_dokumen, id_signers, urutan });
+    // const signerList = Array.isArray(id_signers) ? id_signers : [id_signers];
 
-    // Normalisasi input ke dalam array
-    const signerList = Array.isArray(id_signers) ? id_signers : [id_signers];
-    const urutanList = Array.isArray(urutan) ? urutan : [urutan];
+    const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
+    const urutanList = [...new Set(Array.isArray(urutan) ? urutan : [urutan])];
+    const itemList = [...new Set(Array.isArray(id_item) ? id_item : [id_item])];
 
-    const uniquePairs = [];
+    let emailResults = [];
+
     for (const signer of signerList) {
-      for (const u of urutanList) {
-        uniquePairs.push({ signer, urutan: u });
-      }
-    }
-
-    const emailResults = [];
-
-    for (const pair of uniquePairs) {
-      const { signer, urutan } = pair;
-
-      // Cek LogSign yang valid
       const validLogsigns = await LogSign.findAll({
         where: {
           id_signers: signer,
           id_dokumen,
           status: 'Pending',
-          urutan,
+          // urutan,
         },
       });
 
-      console.log(`Valid logsigns for signer ${signer} (urutan ${urutan}):`, validLogsigns.map(log => log.toJSON()));
+      console.log(`Valid logsigns for ${signer}:`, validLogsigns.map(log => log.toJSON()));
 
       if (validLogsigns.length === 0) {
-        emailResults.push({ signer, urutan, message: 'No valid logsigns to notify.' });
+        emailResults.push({ signer, message: 'No valid logsigns to notify.' });
         continue;
       }
 
-      // Buat token dan link untuk masing-masing kombinasi signer + urutan
-      const tokenPayload = {
-        dokumenLogsign: {
-          id_dokumen,
-          id_signers: signer,
-          urutan,
-          currentSigner: signer
-        }
-      };
+      // const signLink = `http://localhost:3000/user/envelope?token=${token}&receiver=${signer}`;
 
-      const token = jwt.sign(tokenPayload, jwtSecret, { expiresIn: '7d' }); // Bisa tambahkan waktu kedaluwarsa
+      // const token = jwt.sign({ dokumenLogsign: [id_dokumen, signer] }, jwtSecret);
+      // const signLink = `http://localhost:3000/user/envelope?token=${token}`;
+
+      const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList, urutan: urutanList, currentSigner: signer, id_item: itemList}}, jwtSecret);
       const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
-      // Kirim email
       await sendEmailNotificationInternal(validLogsigns, signLink, subjectt, messagee);
-
-      emailResults.push({ signer, urutan, message: 'Email sent.' });
+      emailResults.push({ signer, message: 'Email sent.' });
     }
 
     res.status(200).json({
@@ -369,11 +301,10 @@ export const sendEmailNotification = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Failed to send email notification:", error);
-    res.status(500).json({ message: "Failed to send email notification.", error: error.message });
+    console.error("Failed to send email notification:", error.message);
+    res.status(500).json({ message: "Failed to send email notification." });
   }
 };
-
 
 export const getSignLink = async (req, res) => {
   try {
@@ -418,6 +349,55 @@ export const updateReminder = async(req,res) => {
     }
 };
 
+// export const updateInitialSign = async(req, res) => {
+//   const {id_dokumen, id_item, id_signers} = req.params;
+//   const {sign_base64, status, tgl_tt} = req.body;
+
+//   try {
+//     const logsign = await LogSign.findOne({
+//       where: { id_dokumen, id_item, id_signers}, 
+//       include: {
+//         model: Item,
+//         as: "ItemField"
+//       }
+//     });
+
+//     if (!logsign) {
+//       return res.status(404).json({ message: "Logsign not found" });
+//     }
+
+//     const jenis_item = logsign.ItemField?.jenis_item;
+
+//     if (!jenis_item) {
+//       return res.status(400).json({message: "Jenis item tidak ditemukan."});
+//     }
+
+//     console.log("Jenis item:", jenis_item);
+
+//     const relatedLogs = await LogSign.findAll({
+//       where: {
+//         id_dokumen,
+//         id_signers
+//       },
+//       include: {
+//         model: Item, 
+//         as: "ItemField",
+//         where: { jenis_item }
+//       }
+//     });
+
+//     for (const log of relatedLogs) {
+//       await log.update({sign_base64, status, tgl_tt});
+//     }
+
+//     res.status(200).json({msg: `${relatedLogs.length} InitialSign saved successful in Logsign.`});
+
+//   } catch (error) {
+//     console.log("Failed to save InitialSign:", error.message);
+//     res.status(500).json({ message: error.message });
+//   }
+// }
+
 export const updateInitialSign = async(req, res) => {
   const {id_dokumen, id_item, id_signers} = req.params;
   const {sign_base64, status, tgl_tt} = req.body;
@@ -436,12 +416,38 @@ export const updateInitialSign = async(req, res) => {
     }
 
     const jenis_item = logsign.ItemField?.jenis_item;
+    const currentUrutan = logsign.urutan;
 
-    if (!jenis_item) {
-      return res.status(400).json({message: "Jenis item tidak ditemukan."});
+    if (!jenis_item || !currentUrutan) {
+      return res.status(400).json({message: "Missing jenis item or urutan"});
     }
 
     console.log("Jenis item:", jenis_item);
+    console.log("Current urutan:", currentUrutan);
+
+    let finalSignBase64 = sign_base64;
+    const prevUrutan = currentUrutan - 1;
+
+    if (prevUrutan > 1) {
+      const prevLog = await LogSign.findOne({
+        where: {
+          id_dokumen,
+          urutan: prevUrutan,
+        }, 
+        include: {
+          model: Item,
+          as: "ItemField", 
+        }, 
+      });
+
+      if (prevLog) {
+        const prevJenisItem = prevLog.ItemField?.jenis_item;
+
+        if (prevJenisItem === jenis_item) {
+          finalSignBase64 = prevLog.sign_base64;
+        }
+      }
+    }
 
     const relatedLogs = await LogSign.findAll({
       where: {
@@ -451,12 +457,12 @@ export const updateInitialSign = async(req, res) => {
       include: {
         model: Item, 
         as: "ItemField",
-        where: { jenis_item }
+        where: { jenis_item: jenis_item }
       }
     });
 
     for (const log of relatedLogs) {
-      await log.update({sign_base64, status, tgl_tt});
+      await log.update({sign_base64: finalSignBase64, status, tgl_tt});
     }
 
     res.status(200).json({msg: `${relatedLogs.length} InitialSign saved successful in Logsign.`});

@@ -17,8 +17,6 @@ import "../assets/scss/lbd/_receivedoc.scss";
 import UserNavbar from "components/Navbars/UserNavbar.js";
 import UbahPassword from "components/ModalForm/UbahPassword.js";
 import "../assets/scss/lbd/_usernavbar.scss";
-import { isDate } from "moment";
-
 
 function ReceiveDocument() {
     const [pdfUrl, setPdfUrl] = useState(null);
@@ -73,7 +71,12 @@ function ReceiveDocument() {
     const [nextSignCompleted, setNextSignCompleted] = useState("");
 
     const history = useHistory();
-    const [current, setCurrentDate] = useState(new Date());
+
+    const [show, setShow] = useState("");
+    const [editable, setEditable] = useState("");
+
+    const [allItems, setAllItems] = useState("");
+
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -114,26 +117,45 @@ function ReceiveDocument() {
         height: "25%"
     }
 
-    const handleSignatureClick = (id_item) => {
+    const handleSignatureClick = (id_item, show, editable) => {
         const signer = signatures.find(i => i.id_item === id_item);
+        console.log("Signer from signature click:", signer);
         if (signer) {
             setSelectedIdItem(id_item);
             setSelectedSigner(signer);
             setShowSignatureModal(true);
+            setShow(show);
+            setEditable(editable);
 
-            console.log("ID Item clicked:", id_item);
+            console.log("Data from signature click:", "id_item:", id_item, "show:", show, "editable:", editable);
         }
     };
 
-    const handleInitialClick = (id_item) => {
-        const signer = initials.find(i => i.id_item === id_item);
-        if (signer) {
-            setSelectedIdItem(id_item);
-            setSelectedSigner(signer);
-            setShowInitialModal(true);
-
-            console.log("ID Item clicked:", id_item);
+    const handleInitialClick = (id_item, show, editable) => {
+        console.log("Id Item initial click:", id_item);
+        
+        const clickedField = initials.find(i => i.id_item === id_item);
+        console.log("Signer from initial click:", clickedField);
+        
+        if (!clickedField) {
+            console.warn(`handleInitialClick: No initial field found for id_item: ${id_item}`);
+            return;
         }
+
+        setSelectedIdItem(id_item);
+        setSelectedSigner(clickedField?.id_signers || null);
+        setShowInitialModal(true);
+        setShow(show);
+        setEditable(editable);
+
+        console.log("Selected signer:", selectedSigner);
+
+        console.log("Initial clicked:", {
+            id_item, 
+            signer: clickedField?.id_signers, 
+            show,
+            editable,
+        });
     };
     
     const handleSignatureSuccess = () => {
@@ -144,6 +166,120 @@ function ReceiveDocument() {
         });
     };
 
+    // useEffect(() => {
+    // const fetchData = async () => {
+    //     if (!token) return;
+
+    //     try {
+    //         const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+    //         const id_dokumen = res.data.id_dokumen;
+    //         const id_signers = res.data.id_signers;
+    //         const urutan = res.data.urutan;
+    //         const currentSigner = res.data.currentSigner;
+    //         const allItems = res.data.id_item;
+
+    //         if (!id_dokumen || !id_signers || !urutan || !allItems) {
+    //             throw new Error("Missing id_dokumen, id_signers, id_item or urutan from token.");
+    //         }
+
+    //         setIdDokumen(id_dokumen);
+    //         setIdSigner(currentSigner);
+    //         setAllSigners(id_signers);
+    //         setAllItems(allItems);
+
+    //         console.log("Current signer:", currentSigner);
+    //         console.log("All ID signer:", id_signers);
+    //         console.log("All Id item:", allItems);
+
+    //         const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
+    //         if (!fileRes.ok) {
+    //             throw new Error("Failed to get PDF Document.");
+    //         }
+
+    //         const blob = await fileRes.blob();
+    //         const url = URL.createObjectURL(blob);
+    //         setPdfUrl(url);
+
+    //         const localSignatureFields = [];
+    //         const localInitialFields = [];
+    //         const localDateFields = [];
+    //         const allStatus = [];
+
+    //         const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+    //         const itemArray = Array.isArray(allItems) ? allItems : [allItems];
+
+    //         const urutanMapping = {};
+    //         const submittedMapping = {};
+
+    //         for (const signer of signerArray) {
+    //             const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemArray}`)
+    //             field.data
+    //             .filter(item => item.ItemField)
+    //             .forEach((item, idx) => {
+    //                 const { x_axis, y_axis, width, height, jenis_item, itemId } = item.ItemField;
+    //                 const status = item.status || "Pending";
+    //                 const urutan = item.urutan;
+    //                 const is_submitted = item.is_submitted;
+
+    //                 if (!urutanMapping[itemId]) {
+    //                     urutanMapping[itemId] = urutan;
+    //                 }
+
+    //                 if (!submittedMapping[signer]) {
+    //                     submittedMapping[signer] = is_submitted;
+    //                 }
+
+    //                 const fieldObj = {
+    //                     id: `field-${signer}-${idx}`,
+    //                     x_axis,
+    //                     y_axis,
+    //                     width,
+    //                     height,
+    //                     jenis_item,
+    //                     pageScale: 1,
+    //                     enableResizing: false,
+    //                     disableDragging: true,
+    //                     itemId,
+    //                     status, 
+    //                     urutan,
+    //                     is_submitted,
+    //                     show, 
+    //                     editable,
+    //                 };
+
+    //                 allStatus.push({ itemId, status });
+
+    //                 if (jenis_item === "Signpad") {
+    //                     localSignatureFields.push(fieldObj);
+    //                 } else if (jenis_item === "Initialpad") {
+    //                     localInitialFields.push(fieldObj);
+    //                 } else if (jenis_item === "Date") {
+    //                     localDateFields.push(fieldObj);
+    //                 }
+    //         });
+    //         }
+
+    //         setSignatures(localSignatureFields);
+    //         setInitials(localInitialFields);
+    //         setDateField(localDateFields);
+    //         setSignStatus(allStatus);
+    //         setUrutanMap(urutanMapping);
+    //         console.log("UrutanMap:", urutanMapping);
+    //         setSubmittedMap(submittedMapping);
+            
+    //     } catch (error) {
+    //         console.error("Failed to load PDF:", error.message);
+    //         setErrorMsg(error.message);
+    //          toast.error("Failed to load PDF Document.");
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+
+    //     fetchData();
+    // }, [token]);
+
+
     useEffect(() => {
     const fetchData = async () => {
         if (!token) return;
@@ -151,20 +287,24 @@ function ReceiveDocument() {
         try {
             const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
             const id_dokumen = res.data.id_dokumen;
-            const id_signers = res.data.id_signers;
+            const allSigners = res.data.id_signers;
             const urutan = res.data.urutan;
             const currentSigner = res.data.currentSigner;
+            const allItems = res.data.id_item;
 
-            if (!id_dokumen || !id_signers || !urutan) {
-                throw new Error("Missing id_dokumen, id_signers, or urutan from token.");
+            if (!id_dokumen || !allSigners || !urutan || !allItems) {
+                throw new Error("Missing id_dokumen, id_signers, id_item or urutan from token.");
             }
 
             setIdDokumen(id_dokumen);
             setIdSigner(currentSigner);
-            setAllSigners(id_signers);
+            setAllSigners(allSigners);
+            setAllItems(allItems);
 
             console.log("Current signer:", currentSigner);
-            console.log("All ID signer:", id_signers);
+            console.log("All ID signer:", allSigners);
+            console.log("All Id item:", allItems);
+            
 
             const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
             if (!fileRes.ok) {
@@ -180,25 +320,37 @@ function ReceiveDocument() {
             const localDateFields = [];
             const allStatus = [];
 
-            const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+            const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
+            const itemArray = Array.isArray(allItems) ? allItems : [allItems];
 
             const urutanMapping = {};
-            const submittedMapping = {}
+            const submittedMapping = {};
 
             for (const signer of signerArray) {
-                const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`)
-                field.data
-                .filter(item => item.ItemField)
-                .forEach((item, idx) => {
-                    const { x_axis, y_axis, width, height, jenis_item, id_item } = item.ItemField;
+                for (const itemID of itemArray) {
+                const fieldRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemID}`);
+
+                const validFields = fieldRes.data.filter(item => item.ItemField);
+
+                for (let idx = 0; idx < validFields.length; idx++) {
+                    const item = validFields[idx];
+                    const{
+                        x_axis, 
+                        y_axis, 
+                        width, 
+                        height, 
+                        jenis_item, 
+                        id_item: fieldItemId,
+                    } = item.ItemField;
+
                     const status = item.status || "Pending";
-                    
                     const urutan = item.urutan;
-                    if (!urutanMapping[signer]) {
-                        urutanMapping[signer] = urutan;
+                    const is_submitted = item.is_submitted;
+
+                    if (!urutanMapping[fieldItemId]) {
+                        urutanMapping[fieldItemId] = urutan;
                     }
 
-                    const is_submitted = item.is_submitted;
                     if (!submittedMapping[signer]) {
                         submittedMapping[signer] = is_submitted;
                     }
@@ -208,18 +360,21 @@ function ReceiveDocument() {
                         x_axis,
                         y_axis,
                         width,
-                        height,
+                        height, 
                         jenis_item,
                         pageScale: 1,
                         enableResizing: false,
                         disableDragging: true,
-                        id_item,
-                        status, 
-                        urutan,
-                        is_submitted,
-                    };
+                        id_item: fieldItemId, 
+                        status,
+                        urutan, 
+                        is_submitted, 
+                        show,
+                        editable,
+                        id_signers: currentSigner, 
+                    }; 
 
-                    allStatus.push({ id_item, status });
+                    allStatus.push({id_item: fieldItemId, status});
 
                     if (jenis_item === "Signpad") {
                         localSignatureFields.push(fieldObj);
@@ -228,7 +383,8 @@ function ReceiveDocument() {
                     } else if (jenis_item === "Date") {
                         localDateFields.push(fieldObj);
                     }
-            });
+                }
+                }
             }
 
             setSignatures(localSignatureFields);
@@ -237,6 +393,9 @@ function ReceiveDocument() {
             setSignStatus(allStatus);
             setUrutanMap(urutanMapping);
             setSubmittedMap(submittedMapping);
+
+            console.log("UrutanMap:", urutanMapping);
+            console.log("SubmittedMap:", submittedMap); 
             
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
@@ -278,24 +437,165 @@ function ReceiveDocument() {
         }
     }
 
+    // useEffect(() => {
+    // const fetchAllFields = async () => {
+    //     if (!id_dokumen || !allSigners || !allItems || allSigners.length === 0 || Object.keys(urutanMap).length === 0) return;
+
+    //     try {
+    //     const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
+    //     const itemArray = Array.isArray(allItems) ? allItems : [allItems];
+    //     const signerParam = signerArray.join(",");
+    //     const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
+    //     const initialsData = initialsRes.data;
+
+    //     const allFields = [];
+
+    //     for (let i = 0; i < signerArray.length; i++) {
+    //         const signer = signerArray[i];
+    //         const itemId = itemArray[i];
+    //         const currentUrutan = Number(urutanMap[itemId]);
+    //         console.log("currentUrutan allFields:", currentUrutan);
+    //         const currentSubmitted = submittedMap[signer];
+
+    //         const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
+    //         const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
+
+    //         const signerInitials = initialsData.filter(init => init.id_signers === signer);
+
+    //         const prevSigner = Object.keys(urutanMap).find(
+    //         key => Number(urutanMap[key]) === currentUrutan - 1
+    //         );
+
+    //         const prevStatusList = allFields
+    //         .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
+    //         .map(field => field.status);
+
+    //         const prevSubmittedList = allFields
+    //         .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
+    //         .map(field => field.is_submitted);
+
+    //         const allCompleted =
+    //         prevStatusList.length > 0 &&
+    //         prevStatusList.every(status => status === "Completed") &&
+    //         prevSubmittedList.every(is_submitted => is_submitted !== false);
+
+    //         setCompleteSubmitted(allCompleted);
+
+    //         let show = false;
+    //         let editable = false;
+    //         if (currentUrutan === 1) {
+    //             show = true;
+    //             editable = true;
+    //         } else if (prevStatusList.length === 0) {
+    //             show = false;
+    //             editable = false;
+    //         } else if (prevStatusList.every(status => status === "Completed") && prevSubmittedList.every(is_submitted => is_submitted === true)) {
+    //             show = true;
+    //             editable = true;
+    //         } else if (prevStatusList.every(status => status === "Pending") || prevSubmittedList.every(is_submitted => is_submitted !== true)) {
+    //             show = false;
+    //             editable = false;
+    //         } else {
+    //             show = true;
+    //             editable = false;
+    //         }
+
+    //         const nextSign = Object.keys(urutanMap).find(
+    //         key => Number(urutanMap[key]) === currentUrutan + 1
+    //         );
+
+    //         const nextSignerInitials = initialsData.filter(init => init.id_signers === nextSign);
+    //         const nextSignerSubmitted = submittedMap[nextSign];
+    //         const nextSignCompleted = nextSignerInitials.length > 0 && nextSignerSubmitted === true;
+
+    //         const mappedFields = signerFields.map(field => {
+    //         const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
+    //         const base64 = matchInitial?.sign_base64;
+    //         const formattedBase64 = base64?.startsWith("data:image")
+    //             ? base64
+    //             : base64 ? `data:image/png;base64,${base64}` : null;
+
+    //         return {
+    //             id_item: field.id_item,
+    //             id_signers: signer,
+    //             sign_base64: formattedBase64,
+    //             status: matchInitial?.status || "Pending",
+    //             nama: matchInitial?.Signerr?.nama || "-",
+    //             x_axis: field.ItemField?.x_axis || 0,
+    //             y_axis: field.ItemField?.y_axis || 0,
+    //             width: field.ItemField?.width || 50,
+    //             height: field.ItemField?.height || 50,
+    //             enableResizing: false,
+    //             disableDragging: true,
+    //             show,
+    //             editable,
+    //             urutan: currentUrutan,
+    //             id_dokumen,
+    //             is_submitted: currentSubmitted,
+    //             nextSigner: nextSign,
+    //             prevSigner: prevSigner,
+    //             nextSignCompleted: nextSignCompleted,
+    //             jenis_item: field.ItemField?.jenis_item || "",
+    //         };
+    //         });
+
+    //         allFields.push(...mappedFields);
+    //     }
+
+    //     setSignedInitials(allFields); 
+    //     setSignedSignatures(allFields);
+    //     console.log("All Mapped Fields:", allFields);
+
+    //     const nextSignCompleted = allFields
+    //         .filter(field => field.prevSigner === id_signers)
+    //         .map(field => field.is_submitted);
+    //     setNextSignCompleted(nextSignCompleted);
+
+    //     const filteredFields = allFields.filter(field => field.id_signers === id_signers);
+    //     setInitial(filteredFields);
+    //     setSignature(filteredFields);
+
+    //     const statusList = filteredFields.map(field => field.status);
+    //     setInitialStatus(statusList);
+
+    //     const submittedList = filteredFields.map(field => field.is_submitted);
+    //     setSubmittedList(submittedList);
+
+
+    //     } catch (error) {
+    //     console.error("Failed to fetch initials or axis-field:", error.message);
+    //     }
+    // };
+
+    // fetchAllFields();
+    // }, [id_dokumen, id_signers, urutanMap, allSigners]);
+
+
     useEffect(() => {
     const fetchAllFields = async () => {
-        if (!id_dokumen || !allSigners || allSigners.length === 0 || Object.keys(urutanMap).length === 0) return;
+        if (!id_dokumen || !allSigners || !allItems || allSigners.length === 0 || Object.keys(urutanMap).length === 0) return;
 
         try {
         const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
+        const itemArray = Array.isArray(allItems) ? allItems : [allItems];
         const signerParam = signerArray.join(",");
         const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
         const initialsData = initialsRes.data;
+        
+
+
+        console.log("Signer array:", signerArray);
+        console.log("Signer array length:", signerArray.length);
 
         const allFields = [];
 
-        for (let i = 0; i < signerArray.length; i++) {
-            const signer = signerArray[i];
-            const currentUrutan = Number(urutanMap[signer]);
+        for (const signer of signerArray) {
+            for (const itemId of itemArray) {
+            const currentUrutan = Number(urutanMap[itemId]);
+            console.log("currentUrutan allFields:", currentUrutan);
             const currentSubmitted = submittedMap[signer];
 
-            const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}`);
+            const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
             const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
 
             const signerInitials = initialsData.filter(init => init.id_signers === signer);
@@ -303,39 +603,52 @@ function ReceiveDocument() {
             const prevSigner = Object.keys(urutanMap).find(
             key => Number(urutanMap[key]) === currentUrutan - 1
             );
+            console.log("prevSigner:", prevSigner);
 
-            const prevStatusList = allFields
-            .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
-            .map(field => field.status);
+            console.log("initialsData:", initialsData);
+            const initialsForPrevSigner = initialsData.filter(init => init.id_item === prevSigner);
+            console.log("initialsForPrevSigner:", initialsForPrevSigner);
 
-            const prevSubmittedList = allFields
-            .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
-            .map(field => field.is_submitted);
+
+            const prevFields = allFields.filter(
+                field => field.id_item === prevSigner
+            );
+
+            console.log("prevField:", prevFields);
+
+            const prevStatusList = prevFields.map(field => field.status);
+            console.log("prevStatusList:", prevStatusList);
+            const prevSubmittedList = prevFields.map(field => field.is_submitted);
+            console.log("prevSubmittedList:", prevSubmittedList);
 
             const allCompleted =
             prevStatusList.length > 0 &&
             prevStatusList.every(status => status === "Completed") &&
-            prevSubmittedList.every(is_submitted => is_submitted !== false);
+            prevSubmittedList.every(is_submitted => is_submitted === true);
 
             setCompleteSubmitted(allCompleted);
 
-            let show = false;
-            let editable = false;
-            if (currentUrutan === 1) {
-                show = true;
-                editable = true;
-            } else if (prevStatusList.length === 0) {
-                show = false;
-                editable = false;
-            } else if (prevStatusList.every(status => status === "Completed") && prevSubmittedList.every(is_submitted => is_submitted === true)) {
-                show = true;
-                editable = true;
-            } else if (prevStatusList.every(status => status === "Pending") || prevSubmittedList.every(is_submitted => is_submitted !== true)) {
-                show = false;
-                editable = false;
-            } else {
-                show = true;
-                editable = false;
+            let show = true;
+            let editable = true;
+            
+
+            if (signerArray.length > 1) {
+                if (currentUrutan === 1) {
+                    show = true;
+                    editable = true;
+                } else if (prevStatusList.length === 0) {
+                    show = false;
+                    editable = false;
+                } else if (prevStatusList.every(status => status === "Completed") && prevSubmittedList.every(is_submitted => is_submitted === true)) {
+                    show = true;
+                    editable = true;
+                } else if (prevStatusList.every(status => status === "Pending") || prevSubmittedList.every(is_submitted => is_submitted !== true)) {
+                    show = false;
+                    editable = false;
+                } else {
+                    show = true;
+                    editable = false;
+                }
             }
 
             const nextSign = Object.keys(urutanMap).find(
@@ -352,6 +665,11 @@ function ReceiveDocument() {
             const formattedBase64 = base64?.startsWith("data:image")
                 ? base64
                 : base64 ? `data:image/png;base64,${base64}` : null;
+
+            if (field.ItemField?.jenis_item === "Date") {
+                show = true;
+                editable = false; 
+            }
 
             return {
                 id_item: field.id_item,
@@ -371,33 +689,36 @@ function ReceiveDocument() {
                 id_dokumen,
                 is_submitted: currentSubmitted,
                 nextSigner: nextSign,
-                prevSigner: prevSigner,
-                nextSignCompleted: nextSignCompleted,
+                prevSigner,
+                nextSignCompleted,
                 jenis_item: field.ItemField?.jenis_item || "",
             };
             });
 
             allFields.push(...mappedFields);
+            }
         }
 
         setSignedInitials(allFields); 
         setSignedSignatures(allFields);
         console.log("All Mapped Fields:", allFields);
 
-        const nextSignCompleted = allFields
-            .filter(field => field.prevSigner === id_signers)
-            .map(field => field.is_submitted);
-        setNextSignCompleted(nextSignCompleted);
 
         const filteredFields = allFields.filter(field => field.id_signers === id_signers);
         setInitial(filteredFields);
         setSignature(filteredFields);
+        setDateField(filteredFields);
 
         const statusList = filteredFields.map(field => field.status);
         setInitialStatus(statusList);
 
         const submittedList = filteredFields.map(field => field.is_submitted);
         setSubmittedList(submittedList);
+
+        const nextSignCompletedList = allFields
+            .filter(field => field.prevSigner === id_signers)
+            .map(field => field.is_submitted);
+        setNextSignCompleted(nextSignCompletedList);
 
 
         } catch (error) {
@@ -407,7 +728,6 @@ function ReceiveDocument() {
 
     fetchAllFields();
     }, [id_dokumen, id_signers, urutanMap, allSigners]);
-
 
     useEffect(() => {
         console.log("All sign STATUS:", signStatus);
@@ -518,6 +838,7 @@ function ReceiveDocument() {
 
                                         const isCompleted = sig.status === "Completed";
                                         const completedNext = sig.is_submitted === true;
+                                        const isDatefield = sig.jenis_item === "Date"
 
                                         return (
                                             <Rnd
@@ -540,6 +861,11 @@ function ReceiveDocument() {
                                                         style={{ width: "100%", height: "100%" }}
                                                         // hidden={nextSignCompleted === false}
                                                     />
+                                                ) : (
+                                                    <></>
+                                                )}
+                                                {isCompleted && completedNext && isDatefield ? (
+                                                    currentDate
                                                 ) : (
                                                     <></>
                                                 )}
@@ -577,7 +903,13 @@ function ReceiveDocument() {
                                                     zIndex: isCompleted? 1 : 2
                                                 }}
                                                 onClick={() => {
-                                                    sig.editable && !isSubmitted && isInitialpad ? (handleInitialClick(sig.id_item)) : sig.editable && !isSubmitted && isSignpad ? (handleSignatureClick(sig.id_item)) : <></>
+                                                    if (sig.editable && !isSubmitted) {
+                                                        if (isInitialpad) {
+                                                            handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                        } else if (isSignpad) {
+                                                            handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                        }
+                                                    }
                                                 }}
                                             >
                                                 {!isSubmitted ? (
@@ -596,7 +928,7 @@ function ReceiveDocument() {
                                                             style={{ width: "100%", height: "100%" }}
                                                         />
                                                         ) : (
-                                                            isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : <></>
+                                                            isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> :  <></>
                                                         )}
 
                                                         {isCompleted && isDatefield ? (

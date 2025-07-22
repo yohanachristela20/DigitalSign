@@ -7,7 +7,7 @@ import "../../assets/scss/lbd/_radiobutton.scss";
 import html2canvas from "html2canvas";
 import { SketchPicker } from "react-color";
 
-const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selectedIdItem, selectedSigner}) => {
+const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selectedIdItem, selectedSigner, show, editable}) => {
     const [initialName, setInitialName] = useState("");
     const [selectedValue, setSelectedValue] = useState('');
     const [selectedValues, setSelectedValues] = useState({});
@@ -30,9 +30,11 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     const token = queryParams.get("token");
 
     useEffect(() => {
-        // console.log("InitialModal receive id_item:", selectedIdItem);
-        // console.log("InitialModal show initialmodal:", showInitialModal);
-    }, [selectedIdItem, showInitialModal]);
+        console.log("InitialModal receive id_item:", selectedIdItem);
+        console.log("InitialModal show initialmodal:", showInitialModal);
+        console.log("Show from initial modal:", show);
+        console.log("Editable from initial modal:", editable);
+    }, [selectedIdItem, showInitialModal, show, editable]);
 
 
     useEffect(() => {
@@ -45,27 +47,32 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
                 setIdSigner(id_signers);
+                const id_item = res.data.id_item;
+                setIdItem(id_item);
 
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+                const itemArray = Array.isArray(id_item) ? id_item : [id_item];
                 
                 const allSignerData = [];
 
                 for (const selectedSigner of signerArray) {
-                    const response = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${selectedSigner}`);
-                    const data = response.data;
+                    for (const itemID of itemArray) {
+                        const response = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${selectedSigner}/${itemID}`);
+                        const data = response.data;
 
-                    if (data.length > 0 && data[0].Signerr) {
-                        allSignerData.push({
-                            id_item: data[0].id_item,
-                            id_signers: data[0].id_signers, 
-                            nama: data[0].Signerr.nama.toLowerCase(),
-                        });
+                        if (data.length > 0 && data[0].Signerr) {
+                            allSignerData.push({
+                                id_item: data[0].id_item,
+                                id_signers: data[0].id_signers, 
+                                nama: data[0].Signerr.nama.toLowerCase(),
+                            });
 
-                        data.filter(item => item.ItemField).forEach((item) => {
-                            const {width, height} = item.ItemField;
-                            setWidth(height);
-                            setHeight(width);
-                        });
+                            data.filter(item => item.ItemField).forEach((item) => {
+                                const {width, height} = item.ItemField;
+                                setWidth(height);
+                                setHeight(width);
+                            });
+                        }
                     }
                 }
                 setSignerData(allSignerData);
@@ -204,6 +211,9 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
 
     const handleCloseModal = () => {
         setShowInitialModal(false);
+        setInitialName("");
+        setSelectedValue("");
+        setSelectedValues({});
     }
 
     return (
