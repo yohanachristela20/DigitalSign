@@ -150,32 +150,32 @@ function Header() {
         </div>
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ml-auto" navbar style={{marginRight:'40px'}}>
-          <Dropdown as={Nav.Item} show={showNotifDropdown} onToggle={setShowNotifDropdown} hidden={role === "Karyawan" || role === "Super Admin"}>
-                <Dropdown.Toggle as={Nav.Link} className="position-relative">
-                  <FaBell style={{ marginTop: '9px' }} size={20} />
-                  {notifications.length > 0 && (
-                    <span className="badge badge-danger position-absolute">
-                      {notifications.length}
-                    </span>
-                  )}
-                </Dropdown.Toggle>
-                <Dropdown.Menu style={{ width: '200px'}}>
-                  {notifications.length > 0 ? (
-                    notifications.map((notif, index) => (
-                      <Dropdown.Item key={index} className="text-wrap">
-                      <FaInfoCircle style={{ marginRight: '8px' }} />
-                        {notif.message}
-                        <div className="divider"></div>
-                      </Dropdown.Item>
-                    ))
-                  ) : (
-                    <Dropdown.Item>
-                      <FaInfoCircle style={{ marginRight: '8px' }} />
-                        No notifications
-                    </Dropdown.Item>
-                  )}
-                </Dropdown.Menu>
-              </Dropdown>
+          {/* <Dropdown as={Nav.Item} show={showNotifDropdown} onToggle={setShowNotifDropdown} hidden={role === "Karyawan" || role === "Super Admin"}>
+            <Dropdown.Toggle as={Nav.Link} className="position-relative">
+              <FaBell style={{ marginTop: '9px' }} size={20} />
+              {notifications.length > 0 && (
+                <span className="badge badge-danger position-absolute">
+                  {notifications.length}
+                </span>
+              )}
+            </Dropdown.Toggle>
+            <Dropdown.Menu style={{ width: '200px'}}>
+              {notifications.length > 0 ? (
+                notifications.map((notif, index) => (
+                  <Dropdown.Item key={index} className="text-wrap">
+                  <FaInfoCircle style={{ marginRight: '8px' }} />
+                    {notif.message}
+                    <div className="divider"></div>
+                  </Dropdown.Item>
+                ))
+              ) : (
+                <Dropdown.Item>
+                  <FaInfoCircle style={{ marginRight: '8px' }} />
+                    No notifications
+                </Dropdown.Item>
+              )}
+            </Dropdown.Menu>
+          </Dropdown> */}
 
             <Dropdown as={Nav.Item}>
               <Dropdown.Toggle

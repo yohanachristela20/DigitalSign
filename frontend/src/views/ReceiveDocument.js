@@ -579,12 +579,12 @@ function ReceiveDocument() {
                         <Dropdown.Menu aria-labelledby="navbarDropdownMenuLink" style={{ width: '200px' }}>
                         <Dropdown.Item
                             onClick={() => handleDeclineClick(id_dokumen, id_signers)}
-                            hidden={initial_status.every(status => status === "Decline")}
+                            hidden={initial_status.every(status => status === "Decline" || status === "Completed")}
 
                         >
                         Decline
                         </Dropdown.Item>
-                        <div className="divider" hidden={initial_status.every(status => status === "Decline")}></div>
+                        <div className="divider" hidden={initial_status.every(status => status === "Decline" || status === "Completed")}></div>
                         <Dropdown.Item
                             href="#"
                             onClick={(e) => {

@@ -118,14 +118,12 @@ export const createLogSign = async (req, res) => {
     });
 
     let lastIdNumber = lastRecord ? parseInt(lastRecord.id_logsign.substring(2), 10) : 0;
-    // let lastUrutan = lastRecord ? parseInt(lastRecord.urutan) : 0;
     const newLogSign = [];
 
     for (const log of logsigns) {
       const items = Array.isArray(log.id_item) ? log.id_item : [log.id_item];
       for (const item of items) {
         lastIdNumber += 1;
-        // lastUrutan += 1;
         const newIdNumber = lastIdNumber.toString().padStart(5, "0");
 
         newLogSign.push({
@@ -248,18 +246,7 @@ const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, 
 export const sendEmailNotification = async (req, res) => {
   try {
     const { subjectt, messagee, id_dokumen, id_signers, urutan, id_item } = req.body;
-
-    // console.log("RECEIVED IN API:");
-    // console.log("subjectt:", subjectt);
-    // console.log("messagee:", messagee);
-    // console.log("id_dokumen:", id_dokumen);
-    // console.log("id_signers:", id_signers);
-    // console.log("Urutan:", urutan);
-    // console.log("Id_Item:", id_item);
-
     const jwtSecret = process.env.JWT_SECRET_KEY;
-
-    // const signerList = Array.isArray(id_signers) ? id_signers : [id_signers];
 
     const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
     const urutanList = [...new Set(Array.isArray(urutan) ? urutan : [urutan])];
@@ -273,7 +260,6 @@ export const sendEmailNotification = async (req, res) => {
           id_signers: signer,
           id_dokumen,
           status: 'Pending',
-          // urutan,
         },
       });
 
@@ -283,12 +269,6 @@ export const sendEmailNotification = async (req, res) => {
         emailResults.push({ signer, message: 'No valid logsigns to notify.' });
         continue;
       }
-
-      // const signLink = `http://localhost:3000/user/envelope?token=${token}&receiver=${signer}`;
-
-      // const token = jwt.sign({ dokumenLogsign: [id_dokumen, signer] }, jwtSecret);
-      // const signLink = `http://localhost:3000/user/envelope?token=${token}`;
-
       const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList, urutan: urutanList, currentSigner: signer, id_item: itemList}}, jwtSecret);
       const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
@@ -362,55 +342,6 @@ export const updateReminder = async(req,res) => {
         res.status(500).json({message: error.message});
     }
 };
-
-// export const updateInitialSign = async(req, res) => {
-//   const {id_dokumen, id_item, id_signers} = req.params;
-//   const {sign_base64, status, tgl_tt} = req.body;
-
-//   try {
-//     const logsign = await LogSign.findOne({
-//       where: { id_dokumen, id_item, id_signers}, 
-//       include: {
-//         model: Item,
-//         as: "ItemField"
-//       }
-//     });
-
-//     if (!logsign) {
-//       return res.status(404).json({ message: "Logsign not found" });
-//     }
-
-//     const jenis_item = logsign.ItemField?.jenis_item;
-
-//     if (!jenis_item) {
-//       return res.status(400).json({message: "Jenis item tidak ditemukan."});
-//     }
-
-//     console.log("Jenis item:", jenis_item);
-
-//     const relatedLogs = await LogSign.findAll({
-//       where: {
-//         id_dokumen,
-//         id_signers
-//       },
-//       include: {
-//         model: Item, 
-//         as: "ItemField",
-//         where: { jenis_item }
-//       }
-//     });
-
-//     for (const log of relatedLogs) {
-//       await log.update({sign_base64, status, tgl_tt});
-//     }
-
-//     res.status(200).json({msg: `${relatedLogs.length} InitialSign saved successful in Logsign.`});
-
-//   } catch (error) {
-//     console.log("Failed to save InitialSign:", error.message);
-//     res.status(500).json({ message: error.message });
-//   }
-// }
 
 export const updateInitialSign = async(req, res) => {
   const {id_dokumen, id_item, id_signers} = req.params;
@@ -531,27 +462,6 @@ export const deleteLogsign = async(req, res) => {
         res.status(500).json({message: error.message});
     }
 };
-
-// export const deleteSigner = async(req, res) => {
-//     const {id_signers} = req.params;
-
-//     try {
-//         const lastRecord = await LogSign.findOne({
-//             order: [['id_dokumen', 'DESC']]
-//         });
-
-//         if (id_signers) {
-//             await LogSign.destroy({
-//                 where: {id_dokumen: lastRecord.id_dokumen, id_signers},
-//             });
-//             res.status(200).json({message: "Logsign deleted successfully."})
-//         }
-//     } catch (error) {
-//         console.error("Failed to delete logsign by id_signers", error);
-//         res.status(500).json({message: error.message});
-//     }
-// }
-
 
 export const deleteSign = async(req, res) => {
   const {id_logsign} = req.params;

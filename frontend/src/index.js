@@ -10,23 +10,18 @@ import "./assets/css/demo.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 import AdminLayout from "layouts/Admin.js";
-import FinanceLayout from "layouts/Finance.js";
 import KaryawanLayout from "layouts/Karyawan.js";
 import SuperAdminLayout from "layouts/SuperAdmin.js"; 
 import Login from "views/Login.js";
 import PrivateRoute from "components/PrivateRoute/PrivateRoute.js";
 
-import ScreeningKaryawan from "views/ScreeningKaryawan";
 import { PlafondProvider } from "components/Provider/PlafondContext.js";
 import { SignatureProvider } from "components/Provider/SignatureContext.js";
 import { InitialProvider } from "components/Provider/InitialContext.js";
 import { DateProvider } from "components/Provider/DateContext.js";
-import LaporanPiutang from "views/LaporanPiutangKaryawan.js";
-import PageScreeningKaryawan from "views/ScreeningKaryawan.js"; 
 import Document from "views/Document.js";
 
 import ReceiveDocument from "views/ReceiveDocument.js"; 
-import DocumentSent from "views/DocumentSent.js";
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -81,14 +76,6 @@ root.render(
                 <Heartbeat />
                 </>
               )} />
-              
-            <PrivateRoute path="/finance" roles={["Finance"]} render={(props) => (
-              <>
-                <FinanceLayout {...props} />
-                <Heartbeat />
-              </>
-              )
-              } />
             <PrivateRoute path="/admin" roles={["Admin"]} render={(props) => (
               <>
                 <AdminLayout {...props} />
@@ -103,7 +90,6 @@ root.render(
             )} />
 
             <Route path="/document" element={<Document />} />
-            <Route path="/screening-karyawan" element={<PageScreeningKaryawan />} />
             <Route path="/user/envelope" component={ReceiveDocument} />
             {/* <Route path="/user/envelope" /> */}
             <Redirect from="/" to="/login" />
