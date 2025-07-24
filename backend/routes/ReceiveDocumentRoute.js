@@ -1,6 +1,5 @@
 import express from "express";
 import jwt, { decode } from 'jsonwebtoken';
-import dotenv from 'dotenv';
 import Document from "../models/DokumenModel.js";
 import path from "path";
 import multer from "multer";
@@ -8,7 +7,12 @@ import fs from "fs";
 import LogSign from "../models/LogSignModel.js";
 import Item from "../models/ItemModel.js";
 import Karyawan from "../models/KaryawanModel.js";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+import User from "../models/UserModel.js";
+import Dokumen from "../models/DokumenModel.js";
 
+dotenv.config();
 
 const router = express.Router();
 
@@ -115,6 +119,35 @@ router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async(req, res) => {
 });
 
 
+router.get('/decline/:id_dokumen/:id_signers', async(req, res) => {
+    const {id_dokumen, id_signers} = req.params;
+    console.log("Id Dokumen:", id_dokumen);
+    console.log("Id Signers:", id_signers);
+
+    try {
+        const response = await LogSign.findAll({
+            where: {id_dokumen, id_signers}, 
+            attributes: ["id_signers", "id_dokumen"],
+            include: [
+                {
+                    model: Karyawan, 
+                    as: "Signerr",
+                    attributes: ["nama"]
+                }
+            ],
+        });
+
+        const namaSigner = response[0]?.Signerr?.nama || null;
+        console.log("Nama Signer:", namaSigner);
+
+        res.status(200).json(response);
+        console.log("response:", response); 
+    } catch (error) {
+        console.log("error:", error.message);
+    }
+});
+
+
 // untuk menampilkan nama di initialpad
 router.get('/initials/:id_dokumen/:id_signers', async(req, res) => {
     const {id_dokumen, id_signers} = req.params;
@@ -165,5 +198,130 @@ router.patch('/update-submitted/:id_dokumen/:id_signers', async(req, res) => {
         res.status(500).json({message: error.message});
     }
 });
+
+
+router.patch('/update-status/:id_dokumen/:id_signers', async(req, res) => {
+    const {id_dokumen, id_signers} = req.params;
+    const {status} = req.body;
+    // const currentTime = new Date().toISOString().split("T")[0];
+    const currentTime = new Date();
+
+    console.log("CURRENT TIME:", currentTime);
+
+    try {
+        const response = await LogSign.update(
+            {status, tgl_tt: currentTime},
+            {
+                where: {id_dokumen, id_signers},
+            }
+        );
+
+        res.status(200).json(response);
+    } catch (error) {
+        console.error("Failed to decline document.", error.message);
+        res.status(500).json({message: error.message});
+    }
+});
+
+router.post('/send-decline-email', async(req, res) => {
+    try {
+        const {id_dokumen, signerID, reason, token} = req.body;
+
+        let emailResults = [];
+
+        console.log("RECEIVE DECLINE DATA:", "ID Dokumen:", id_dokumen, "signerID:", signerID, "reason:", reason, "token:", token);
+        const declineLink = `http://localhost:3000/user/envelope?token=${token}`;
+
+        const docName = await LogSign.findOne({
+            where: {id_dokumen: id_dokumen}, 
+            include: [{
+                model: Dokumen, 
+                as: "DocName",
+                attributes: ["nama_dokumen"]
+            }], 
+            attributes: ["id_dokumen"]
+        });
+
+        const documentName = docName?.DocName?.nama_dokumen;
+        console.log("DOC NAME:", documentName);
+
+        await sendEmailDeclineInternal(declineLink, reason, id_dokumen, signerID, documentName);
+        emailResults.push({signerID, message: 'Decline email sent successfully.'});
+
+        res.status(200).json({
+            message: 'Decline email processed.',
+            results: emailResults,
+        });
+    } catch (error) {
+        console.error("Failed to send decline email:", error.message);
+        res.status(500).json({ message: "Failed to send decline email." });
+    }
+});
+
+const sendEmailDeclineInternal = async(declineLink, reason, id_dokumen, signerID, documentName) => {
+    console.log("declineLink", declineLink);
+    console.log("reason:", reason);
+    console.log("id_dokumen:", id_dokumen);
+    console.log("signerID:", signerID);
+
+    try {
+        const transporter = nodemailer.createTransport({
+            service: "gmail", 
+            auth: {
+                user: process.env.EMAIL_ADMIN, 
+                pass: process.env.EMAIL_PASS_ADMIN, 
+            }
+        });
+
+        const existingLog = await LogSign.findOne({
+            where: {id_dokumen: id_dokumen, id_signers: signerID}, 
+        });
+
+        if (!existingLog) {
+            console.warn(`Document ${id_dokumen} already deleted, skipping email.`);
+            return;
+        }
+
+        const receiver = await Karyawan.findOne({
+            where: {id_karyawan: signerID}, 
+            include: [{
+                model: User, 
+                as: "Penerima", 
+                attributes: ["email"]
+            }], 
+            attributes: ["id_karyawan"]
+        }); 
+
+        if (!receiver?.Penerima?.email) {
+            console.warn(`Email not found for signer ${signerID}`);
+            return;
+        }
+
+        const receiverEmail = receiver.Penerima.email;
+        // const senderName = await Karyawan.findOne({where: {id_karyawan: id_karyawan}});
+        const receiverName = await Karyawan.findOne({where: {id_karyawan: signerID}});
+
+        const mailOptions = {
+        from: process.env.EMAIL_ADMIN,
+        to: receiverEmail,
+        subject: `Declined document: ${documentName}`,
+        // html: <a href={declineLink}>Click link</a>, 
+        text: `The Document was declined. \n
+            ${receiverName?.nama || "Signer"} was declined to sign this document.\n
+            As a result, the documents can not be completed for the following reasons: ${reason}. \n
+            Click link to review the document ${declineLink}\n
+            Please do not share this email and the link attached with others.\n\n
+            Regards, \n
+            Campina Sign.`
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`Email sent to ${receiverEmail} for signer ${signerID}`);
+
+    } catch (error) {
+        console.error("Failed to send decline email:", error.message);
+        throw error;
+    }
+}
 
 export default router;

@@ -458,13 +458,10 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     });
 
     const logsigns = JSON.parse(localStorage.getItem("logsigns") || "[]");
-    console.log("LOGSIGN:", logsigns);
     const id_signers = JSON.parse(localStorage.getItem("id_signers") || "[]");
-    console.log("ID SIGNERS:", id_signers);
     const urutan = JSON.parse(localStorage.getItem("urutan") || "[]");
-    console.log("URUTAN:", urutan);
     const id_item = JSON.parse(localStorage.getItem("id_item") || "[]");
-    console.log("ID ITEM LIST:", id_item);
+
 
     if (logsigns.length > 0) {
       await sendEmailNotification(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item);
@@ -473,6 +470,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
 
     history.push("/admin/document-sent");
+    window.location.reload();
 
     } catch (error) {
       toast.error("Failed to update reminder.", {
@@ -811,14 +809,12 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       // console.log("Id items:", id_item);
       // console.log("Ori id items:", ori_id_items);
       // console.log("DocumentCards:", documentCards);
-
+      localStorage.removeItem("clickedFields");
       toast.success("Logsigns and items created successfully!", {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: true,
       });
-
-      localStorage.removeItem("clickedFields");
     }
 
     nextLastStep();
@@ -1408,9 +1404,9 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                 </Button>
               </div>
               <div className="col-12 col-md-auto my-2">
-                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={() => updateReminder(id_dokumen)} >
+                <Button variant="success" type="submit" className="btn-fill w-100" onClick={() => updateReminder(id_dokumen)} >
                 <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
-                  Next
+                  Send
                 </Button>
               </div>
             </>

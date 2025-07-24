@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import axios from "axios";
-import { FaCalendar, FaFont, FaSignature } from 'react-icons/fa';
+import { FaCalendar, FaExclamationTriangle, FaFont, FaInfo, FaInfoCircle, FaSignature } from 'react-icons/fa';
 
 import PDFCanvas from "components/Canvas/canvas.js";
 import { Rnd } from 'react-rnd';
@@ -13,9 +13,9 @@ import { toast } from "react-toastify";
 
 import SignatureModal from 'components/ModalForm/SignatureModal.js';
 import InitialModal from "components/ModalForm/InitialModal.js";
+import DeclineModal from "components/ModalForm/DeclineModal.js";
+
 import "../assets/scss/lbd/_receivedoc.scss";
-import UserNavbar from "components/Navbars/UserNavbar.js";
-import UbahPassword from "components/ModalForm/UbahPassword.js";
 import "../assets/scss/lbd/_usernavbar.scss";
 
 function ReceiveDocument() {
@@ -30,15 +30,16 @@ function ReceiveDocument() {
     const [fields, setFields] = useState([]);
     const [id_dokumen, setIdDokumen] = useState("");
     const [id_signers, setIdSigner] = useState("");
+    const [id_item, setIdItem] = useState("");
     const [sign_base64, setSignBase64] = useState("");
     const [status, setStatus] = useState([]);
     const [signStatus, setSignStatus] = useState([]);
-    const [initial_status, setInitialStatus] = useState([]);
-    const [submitted_list, setSubmittedList] = useState([]);
     const [nama, setNama] = useState("");
 
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
     const [showInitialModal, setShowInitialModal] = useState(false);
+    const [showDeclineModal, setShowDeclineModal] = useState(false);
+
     const [selectedIdItem, setSelectedIdItem] = useState([]);
     
     const [initials, setInitials] = useState([]);
@@ -58,6 +59,7 @@ function ReceiveDocument() {
     const [nameSigner, setNameSigner] = useState("");
 
     const [selectedSigner, setSelectedSigner] = useState(null);
+    const [selectedDocument, setSelectedDocument] = useState(null);
 
     const [urutan, setUrutan] = useState("");
     const [urutanMap, setUrutanMap] = useState({});
@@ -76,7 +78,11 @@ function ReceiveDocument() {
     const [editable, setEditable] = useState("");
 
     const [allItems, setAllItems] = useState("");
+    const [signerData, setSignerData] = useState([]);
 
+    const [initial_status, setInitialStatus] = useState([]);
+    const [submitted_list, setSubmittedList] = useState([]);
+    const [jenisItem_list, setJenisItemList] = useState([]);
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -132,10 +138,10 @@ function ReceiveDocument() {
     };
 
     const handleInitialClick = (id_item, show, editable) => {
-        console.log("Id Item initial click:", id_item);
+        // console.log("Id Item initial click:", id_item);
         
         const clickedField = initials.find(i => i.id_item === id_item);
-        console.log("Signer from initial click:", clickedField);
+        // console.log("Signer from initial click:", clickedField);
         
         if (!clickedField) {
             console.warn(`handleInitialClick: No initial field found for id_item: ${id_item}`);
@@ -148,7 +154,7 @@ function ReceiveDocument() {
         setShow(show);
         setEditable(editable);
 
-        console.log("Selected signer:", selectedSigner);
+        // console.log("Selected signer:", selectedSigner);
 
         console.log("Initial clicked:", {
             id_item, 
@@ -156,6 +162,19 @@ function ReceiveDocument() {
             show,
             editable,
         });
+    };
+
+    const handleDeclineClick = (id_dokumen, id_signers) => {
+        console.log("ID Dokumen from decline:", id_dokumen);
+        console.log("ID Signers from decline:", id_signers);
+        if (!id_dokumen || !id_signers) {
+            console.warn("id_dokumen or id_signers not found.");
+            return;
+        }
+
+        setSelectedSigner(id_signers);
+        setSelectedDocument(id_dokumen);
+        setShowDeclineModal(true);
     };
     
     const handleSignatureSuccess = () => {
@@ -165,120 +184,6 @@ function ReceiveDocument() {
             hideProgressBar: true,
         });
     };
-
-    // useEffect(() => {
-    // const fetchData = async () => {
-    //     if (!token) return;
-
-    //     try {
-    //         const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
-    //         const id_dokumen = res.data.id_dokumen;
-    //         const id_signers = res.data.id_signers;
-    //         const urutan = res.data.urutan;
-    //         const currentSigner = res.data.currentSigner;
-    //         const allItems = res.data.id_item;
-
-    //         if (!id_dokumen || !id_signers || !urutan || !allItems) {
-    //             throw new Error("Missing id_dokumen, id_signers, id_item or urutan from token.");
-    //         }
-
-    //         setIdDokumen(id_dokumen);
-    //         setIdSigner(currentSigner);
-    //         setAllSigners(id_signers);
-    //         setAllItems(allItems);
-
-    //         console.log("Current signer:", currentSigner);
-    //         console.log("All ID signer:", id_signers);
-    //         console.log("All Id item:", allItems);
-
-    //         const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
-    //         if (!fileRes.ok) {
-    //             throw new Error("Failed to get PDF Document.");
-    //         }
-
-    //         const blob = await fileRes.blob();
-    //         const url = URL.createObjectURL(blob);
-    //         setPdfUrl(url);
-
-    //         const localSignatureFields = [];
-    //         const localInitialFields = [];
-    //         const localDateFields = [];
-    //         const allStatus = [];
-
-    //         const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
-    //         const itemArray = Array.isArray(allItems) ? allItems : [allItems];
-
-    //         const urutanMapping = {};
-    //         const submittedMapping = {};
-
-    //         for (const signer of signerArray) {
-    //             const field = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemArray}`)
-    //             field.data
-    //             .filter(item => item.ItemField)
-    //             .forEach((item, idx) => {
-    //                 const { x_axis, y_axis, width, height, jenis_item, itemId } = item.ItemField;
-    //                 const status = item.status || "Pending";
-    //                 const urutan = item.urutan;
-    //                 const is_submitted = item.is_submitted;
-
-    //                 if (!urutanMapping[itemId]) {
-    //                     urutanMapping[itemId] = urutan;
-    //                 }
-
-    //                 if (!submittedMapping[signer]) {
-    //                     submittedMapping[signer] = is_submitted;
-    //                 }
-
-    //                 const fieldObj = {
-    //                     id: `field-${signer}-${idx}`,
-    //                     x_axis,
-    //                     y_axis,
-    //                     width,
-    //                     height,
-    //                     jenis_item,
-    //                     pageScale: 1,
-    //                     enableResizing: false,
-    //                     disableDragging: true,
-    //                     itemId,
-    //                     status, 
-    //                     urutan,
-    //                     is_submitted,
-    //                     show, 
-    //                     editable,
-    //                 };
-
-    //                 allStatus.push({ itemId, status });
-
-    //                 if (jenis_item === "Signpad") {
-    //                     localSignatureFields.push(fieldObj);
-    //                 } else if (jenis_item === "Initialpad") {
-    //                     localInitialFields.push(fieldObj);
-    //                 } else if (jenis_item === "Date") {
-    //                     localDateFields.push(fieldObj);
-    //                 }
-    //         });
-    //         }
-
-    //         setSignatures(localSignatureFields);
-    //         setInitials(localInitialFields);
-    //         setDateField(localDateFields);
-    //         setSignStatus(allStatus);
-    //         setUrutanMap(urutanMapping);
-    //         console.log("UrutanMap:", urutanMapping);
-    //         setSubmittedMap(submittedMapping);
-            
-    //     } catch (error) {
-    //         console.error("Failed to load PDF:", error.message);
-    //         setErrorMsg(error.message);
-    //          toast.error("Failed to load PDF Document.");
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-
-    //     fetchData();
-    // }, [token]);
-
 
     useEffect(() => {
     const fetchData = async () => {
@@ -319,6 +224,7 @@ function ReceiveDocument() {
             const localInitialFields = [];
             const localDateFields = [];
             const allStatus = [];
+            const allSigner = [];
 
             const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
             const itemArray = Array.isArray(allItems) ? allItems : [allItems];
@@ -327,65 +233,78 @@ function ReceiveDocument() {
             const submittedMapping = {};
 
             for (const signer of signerArray) {
-                for (const itemID of itemArray) {
-                const fieldRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemID}`);
+                const response = await axios.get(`http://localhost:5000/decline/${id_dokumen}/${signer}`);
+                const data = response.data;
 
-                const validFields = fieldRes.data.filter(item => item.ItemField);
-
-                for (let idx = 0; idx < validFields.length; idx++) {
-                    const item = validFields[idx];
-                    const{
-                        x_axis, 
-                        y_axis, 
-                        width, 
-                        height, 
-                        jenis_item, 
-                        id_item: fieldItemId,
-                    } = item.ItemField;
-
-                    const status = item.status || "Pending";
-                    const urutan = item.urutan;
-                    const is_submitted = item.is_submitted;
-
-                    if (!urutanMapping[fieldItemId]) {
-                        urutanMapping[fieldItemId] = urutan;
-                    }
-
-                    if (!submittedMapping[signer]) {
-                        submittedMapping[signer] = is_submitted;
-                    }
-
-                    const fieldObj = {
-                        id: `field-${signer}-${idx}`,
-                        x_axis,
-                        y_axis,
-                        width,
-                        height, 
-                        jenis_item,
-                        pageScale: 1,
-                        enableResizing: false,
-                        disableDragging: true,
-                        id_item: fieldItemId, 
-                        status,
-                        urutan, 
-                        is_submitted, 
-                        show,
-                        editable,
-                        id_signers: currentSigner, 
-                    }; 
-
-                    allStatus.push({id_item: fieldItemId, status});
-
-                    if (jenis_item === "Signpad") {
-                        localSignatureFields.push(fieldObj);
-                    } else if (jenis_item === "Initialpad") {
-                        localInitialFields.push(fieldObj);
-                    } else if (jenis_item === "Date") {
-                        localDateFields.push(fieldObj);
-                    }
+                if (data.length > 0 && data[0].Signerr){
+                    allSigner.push({
+                        id_signers: data[0].id_signers, 
+                        nama: data[0].Signerr.nama,
+                    });
                 }
+                
+                for (const itemID of itemArray) {
+                    const fieldRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemID}`);
+
+                    const validFields = fieldRes.data.filter(item => item.ItemField);
+
+                    for (let idx = 0; idx < validFields.length; idx++) {
+                        const item = validFields[idx];
+                        const{
+                            x_axis, 
+                            y_axis, 
+                            width, 
+                            height, 
+                            jenis_item, 
+                            id_item: fieldItemId,
+                        } = item.ItemField;
+
+                        const status = item.status || "Pending";
+                        const urutan = item.urutan;
+                        const is_submitted = item.is_submitted;
+
+                        if (!urutanMapping[fieldItemId]) {
+                            urutanMapping[fieldItemId] = urutan;
+                        }
+
+                        if (!submittedMapping[signer]) {
+                            submittedMapping[signer] = is_submitted;
+                        }
+
+                        const fieldObj = {
+                            id: `field-${signer}-${idx}`,
+                            x_axis,
+                            y_axis,
+                            width,
+                            height, 
+                            jenis_item,
+                            pageScale: 1,
+                            enableResizing: false,
+                            disableDragging: true,
+                            id_item: fieldItemId, 
+                            status,
+                            urutan, 
+                            is_submitted, 
+                            show,
+                            editable,
+                            id_signers: currentSigner, 
+                        }; 
+
+                        allStatus.push({id_item: fieldItemId, status});
+
+                        if (jenis_item === "Signpad") {
+                            localSignatureFields.push(fieldObj);
+                        } else if (jenis_item === "Initialpad") {
+                            localInitialFields.push(fieldObj);
+                        } else if (jenis_item === "Date") {
+                            localDateFields.push(fieldObj);
+                        }
+                    }
                 }
             }
+
+            console.log("SIGNER DATA FROM RECEIVE:", allSigner);
+            setSignerData(allSigner);
 
             setSignatures(localSignatureFields);
             setInitials(localInitialFields);
@@ -394,8 +313,8 @@ function ReceiveDocument() {
             setUrutanMap(urutanMapping);
             setSubmittedMap(submittedMapping);
 
-            console.log("UrutanMap:", urutanMapping);
-            console.log("SubmittedMap:", submittedMap); 
+            // console.log("UrutanMap:", urutanMapping);
+            // console.log("SubmittedMap:", submittedMap); 
             
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
@@ -408,6 +327,16 @@ function ReceiveDocument() {
 
         fetchData();
     }, [token]);
+
+    useEffect(() => {
+        if (signerData.length === 0) return;
+        const foundSigner = signerData.find(s => s.id_signers === id_signers); 
+        console.log("FOUND SIGNER FROM RECEIVE:", foundSigner);
+
+        if (foundSigner) {
+            setNama(foundSigner.nama);
+        }
+    }, [id_signers, signerData]);
 
     const updateSubmitted = async(id_dokumen, id_signers) => {
         console.log("Id Dokumen:", id_dokumen);
@@ -436,140 +365,6 @@ function ReceiveDocument() {
             });
         }
     }
-
-    // useEffect(() => {
-    // const fetchAllFields = async () => {
-    //     if (!id_dokumen || !allSigners || !allItems || allSigners.length === 0 || Object.keys(urutanMap).length === 0) return;
-
-    //     try {
-    //     const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
-    //     const itemArray = Array.isArray(allItems) ? allItems : [allItems];
-    //     const signerParam = signerArray.join(",");
-    //     const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
-    //     const initialsData = initialsRes.data;
-
-    //     const allFields = [];
-
-    //     for (let i = 0; i < signerArray.length; i++) {
-    //         const signer = signerArray[i];
-    //         const itemId = itemArray[i];
-    //         const currentUrutan = Number(urutanMap[itemId]);
-    //         console.log("currentUrutan allFields:", currentUrutan);
-    //         const currentSubmitted = submittedMap[signer];
-
-    //         const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
-    //         const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
-
-    //         const signerInitials = initialsData.filter(init => init.id_signers === signer);
-
-    //         const prevSigner = Object.keys(urutanMap).find(
-    //         key => Number(urutanMap[key]) === currentUrutan - 1
-    //         );
-
-    //         const prevStatusList = allFields
-    //         .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
-    //         .map(field => field.status);
-
-    //         const prevSubmittedList = allFields
-    //         .filter(field => field.id_signers === prevSigner && field.id_dokumen === id_dokumen)
-    //         .map(field => field.is_submitted);
-
-    //         const allCompleted =
-    //         prevStatusList.length > 0 &&
-    //         prevStatusList.every(status => status === "Completed") &&
-    //         prevSubmittedList.every(is_submitted => is_submitted !== false);
-
-    //         setCompleteSubmitted(allCompleted);
-
-    //         let show = false;
-    //         let editable = false;
-    //         if (currentUrutan === 1) {
-    //             show = true;
-    //             editable = true;
-    //         } else if (prevStatusList.length === 0) {
-    //             show = false;
-    //             editable = false;
-    //         } else if (prevStatusList.every(status => status === "Completed") && prevSubmittedList.every(is_submitted => is_submitted === true)) {
-    //             show = true;
-    //             editable = true;
-    //         } else if (prevStatusList.every(status => status === "Pending") || prevSubmittedList.every(is_submitted => is_submitted !== true)) {
-    //             show = false;
-    //             editable = false;
-    //         } else {
-    //             show = true;
-    //             editable = false;
-    //         }
-
-    //         const nextSign = Object.keys(urutanMap).find(
-    //         key => Number(urutanMap[key]) === currentUrutan + 1
-    //         );
-
-    //         const nextSignerInitials = initialsData.filter(init => init.id_signers === nextSign);
-    //         const nextSignerSubmitted = submittedMap[nextSign];
-    //         const nextSignCompleted = nextSignerInitials.length > 0 && nextSignerSubmitted === true;
-
-    //         const mappedFields = signerFields.map(field => {
-    //         const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
-    //         const base64 = matchInitial?.sign_base64;
-    //         const formattedBase64 = base64?.startsWith("data:image")
-    //             ? base64
-    //             : base64 ? `data:image/png;base64,${base64}` : null;
-
-    //         return {
-    //             id_item: field.id_item,
-    //             id_signers: signer,
-    //             sign_base64: formattedBase64,
-    //             status: matchInitial?.status || "Pending",
-    //             nama: matchInitial?.Signerr?.nama || "-",
-    //             x_axis: field.ItemField?.x_axis || 0,
-    //             y_axis: field.ItemField?.y_axis || 0,
-    //             width: field.ItemField?.width || 50,
-    //             height: field.ItemField?.height || 50,
-    //             enableResizing: false,
-    //             disableDragging: true,
-    //             show,
-    //             editable,
-    //             urutan: currentUrutan,
-    //             id_dokumen,
-    //             is_submitted: currentSubmitted,
-    //             nextSigner: nextSign,
-    //             prevSigner: prevSigner,
-    //             nextSignCompleted: nextSignCompleted,
-    //             jenis_item: field.ItemField?.jenis_item || "",
-    //         };
-    //         });
-
-    //         allFields.push(...mappedFields);
-    //     }
-
-    //     setSignedInitials(allFields); 
-    //     setSignedSignatures(allFields);
-    //     console.log("All Mapped Fields:", allFields);
-
-    //     const nextSignCompleted = allFields
-    //         .filter(field => field.prevSigner === id_signers)
-    //         .map(field => field.is_submitted);
-    //     setNextSignCompleted(nextSignCompleted);
-
-    //     const filteredFields = allFields.filter(field => field.id_signers === id_signers);
-    //     setInitial(filteredFields);
-    //     setSignature(filteredFields);
-
-    //     const statusList = filteredFields.map(field => field.status);
-    //     setInitialStatus(statusList);
-
-    //     const submittedList = filteredFields.map(field => field.is_submitted);
-    //     setSubmittedList(submittedList);
-
-
-    //     } catch (error) {
-    //     console.error("Failed to fetch initials or axis-field:", error.message);
-    //     }
-    // };
-
-    // fetchAllFields();
-    // }, [id_dokumen, id_signers, urutanMap, allSigners]);
-
 
     useEffect(() => {
     const fetchAllFields = async () => {
@@ -703,7 +498,6 @@ function ReceiveDocument() {
         setSignedSignatures(allFields);
         console.log("All Mapped Fields:", allFields);
 
-
         const filteredFields = allFields.filter(field => field.id_signers === id_signers);
         setInitial(filteredFields);
         setSignature(filteredFields);
@@ -714,6 +508,11 @@ function ReceiveDocument() {
 
         const submittedList = filteredFields.map(field => field.is_submitted);
         setSubmittedList(submittedList);
+
+        const jenisItemList = filteredFields.map(field => field.jenis_item);
+        setJenisItemList(jenisItemList);
+
+        console.log("Jenis item list:", jenisItemList);
 
         const nextSignCompletedList = allFields
             .filter(field => field.prevSigner === id_signers)
@@ -732,6 +531,14 @@ function ReceiveDocument() {
     useEffect(() => {
         console.log("All sign STATUS:", signStatus);
     }, [signStatus]);
+
+    // const isJenisItemList = jenisItem_list.every(jenis_item => jenis_item !== "Date");
+
+    const nonDateItems = jenisItem_list
+    .map((jenis_item, index) => ({jenis_item, status: initial_status[index]}))
+    .filter(item => item.jenis_item !== "Date");
+
+    const isNonDateCompleted = nonDateItems.every(item => item.status === "Completed");
 
     return (
         <>
@@ -765,17 +572,19 @@ function ReceiveDocument() {
                         as={Nav.Link}
                         id="navbarDropdownMenuLink"
                         variant="default"
-                        className="mr-3 mt-2"
+                        className="mr-5 mt-2"
                         >
                         <span className="fs-6">Actions</span>
                         </Dropdown.Toggle>
                         <Dropdown.Menu aria-labelledby="navbarDropdownMenuLink" style={{ width: '200px' }}>
                         <Dropdown.Item
-                            onClick={(e) => e.preventDefault()}
+                            onClick={() => handleDeclineClick(id_dokumen, id_signers)}
+                            hidden={initial_status.every(status => status === "Decline")}
+
                         >
                         Decline
                         </Dropdown.Item>
-                        <div className="divider"></div>
+                        <div className="divider" hidden={initial_status.every(status => status === "Decline")}></div>
                         <Dropdown.Item
                             href="#"
                             onClick={(e) => {
@@ -812,8 +621,8 @@ function ReceiveDocument() {
                         className="submit-btn w-100 mt-3 fs-6"
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, id_signers)}
-                        // disabled={!initial_status.every(status => status === "Completed")}
-                        hidden={submitted_list.every(is_completed => is_completed === true)}
+                        disabled={!isNonDateCompleted}
+                        hidden={submitted_list.every(is_completed => is_completed === true) || initial_status.every(status => status === "Decline")}
                     >
                         Finish
                     </Button>
@@ -830,6 +639,9 @@ function ReceiveDocument() {
                             {!loading && !errorMsg && pdfUrl && (
                             <>
                                 <div className="vertical-center">
+                                    <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
+                                      <FaExclamationTriangle className="mb-1 mr-2"/>  {nama} has declined to sign this document.
+                                    </Alert>
                                     <PDFCanvas pdfUrl={pdfUrl} />
                                     
                                     {/* image -- setelah di ttd */}
@@ -902,6 +714,7 @@ function ReceiveDocument() {
                                                     cursor: sig.editable && !isSubmitted ? "pointer" : "default",
                                                     zIndex: isCompleted? 1 : 2
                                                 }}
+                                                hidden={initial_status.every(status => status === "Decline")}
                                                 onClick={() => {
                                                     if (sig.editable && !isSubmitted) {
                                                         if (isInitialpad) {
@@ -973,28 +786,15 @@ function ReceiveDocument() {
                                         selectedIdItem={selectedIdItem}
                                         selectedSigner={selectedSigner}
                                     />
-                                    
-                                    {/* {dateField.map((sig) => {
-                                        if (!sig || !sig.id_item || sig.show !== true) return null;
 
-                                        return (
-                                            <Rnd
-                                                key={sig.id}
-                                                position={{ x: sig.x_axis, y: sig.y_axis }}
-                                                size={{ width: sig.height, height: sig.width }}
-                                                enableResizing={sig.enableResizing}    
-                                                disableDragging={sig.disableDragging} 
-                                                style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                backgroundColor: "rgba(25, 230, 25, 0.5)",
-                                                }}
-                                            >
-                                                <FaSignature style={{ width: "25%", height: "25%" }} />
-                                            </Rnd>
-                                        );
-                                    })} */}
+                                    <DeclineModal
+                                        showDeclineModal={showDeclineModal}
+                                        setShowDeclineModal={setShowDeclineModal}
+                                        onSuccess={handleSignatureSuccess}
+                                        selectedSigner={selectedSigner}
+                                        selectedDocument={selectedDocument}
+                                    />
+                                    
                                 </div>
                             </>
                             )}

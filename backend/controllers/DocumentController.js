@@ -176,11 +176,12 @@ export const createLogSign = async (req, res) => {
   }
 };
 
-const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, messagee) => {
+const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, messagee, documentName) => {
     console.log("Logsigns:", validLogsigns);
     console.log("Signlink:", signLink);
     console.log("Subjectt:", subjectt);
     console.log("Messagee:", messagee);
+    console.log("Document name:", documentName);
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -225,8 +226,8 @@ const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, 
     const mailOptions = {
       from: process.env.EMAIL_ADMIN,
       to: receiverEmail,
-      subject: subjectt.join(', ') || "You need to sign",
-      text: `${receiverName?.nama || "Signer"}, You are requested to sign a document with ID ${log.id_dokumen} from ${senderName?.nama || "Sender"}.\n
+      subject: subjectt.join(', ') || `You need to sign ${documentName}`,
+      text: `${receiverName?.nama || "Signer"}, You are requested to sign a document ${documentName} from ${senderName?.nama || "Sender"}.\n
           ${messagee.join(', ') || "Please review and check the document before signing it."}\n
           Click link to sign the document ${signLink}\n\n
           Please do not share this email and the link attached with others.\n
@@ -248,13 +249,13 @@ export const sendEmailNotification = async (req, res) => {
   try {
     const { subjectt, messagee, id_dokumen, id_signers, urutan, id_item } = req.body;
 
-    console.log("RECEIVED IN API:");
-    console.log("subjectt:", subjectt);
-    console.log("messagee:", messagee);
-    console.log("id_dokumen:", id_dokumen);
-    console.log("id_signers:", id_signers);
-    console.log("Urutan:", urutan);
-    console.log("Id_Item:", id_item);
+    // console.log("RECEIVED IN API:");
+    // console.log("subjectt:", subjectt);
+    // console.log("messagee:", messagee);
+    // console.log("id_dokumen:", id_dokumen);
+    // console.log("id_signers:", id_signers);
+    // console.log("Urutan:", urutan);
+    // console.log("Id_Item:", id_item);
 
     const jwtSecret = process.env.JWT_SECRET_KEY;
 
@@ -291,7 +292,20 @@ export const sendEmailNotification = async (req, res) => {
       const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList, urutan: urutanList, currentSigner: signer, id_item: itemList}}, jwtSecret);
       const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
-      await sendEmailNotificationInternal(validLogsigns, signLink, subjectt, messagee);
+      const docName = await LogSign.findOne({
+            where: {id_dokumen: id_dokumen}, 
+            include: [{
+                model: Dokumen, 
+                as: "DocName",
+                attributes: ["nama_dokumen"]
+            }], 
+            attributes: ["id_dokumen"]
+        });
+
+      const documentName = docName?.DocName?.nama_dokumen;
+      console.log("DOC NAME:", documentName);
+
+      await sendEmailNotificationInternal(validLogsigns, signLink, subjectt, messagee, documentName);
       emailResults.push({ signer, message: 'Email sent.' });
     }
 

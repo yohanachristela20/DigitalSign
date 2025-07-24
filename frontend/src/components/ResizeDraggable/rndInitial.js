@@ -112,6 +112,7 @@ function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, wid
                 setPosition({x: d.x, y: d.y});
                 setJenisItem({jenis_item});
             }}
+            bounds="parent"
             onResizeStop={(e, direction, ref, delta, position) => {
                 const newWidth = parseFloat(ref.style.width);
                 const newHeight = parseFloat(ref.style.height);
