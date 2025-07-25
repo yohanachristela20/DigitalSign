@@ -461,10 +461,10 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     const id_signers = JSON.parse(localStorage.getItem("id_signers") || "[]");
     const urutan = JSON.parse(localStorage.getItem("urutan") || "[]");
     const id_item = JSON.parse(localStorage.getItem("id_item") || "[]");
-
+    const id_karyawan = JSON.parse(localStorage.getItem("id_karyawan") || "[]");
 
     if (logsigns.length > 0) {
-      await sendEmailNotification(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item);
+      await sendEmailNotification(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan);
     } else {
       console.warn("No logsigns found.");
     }
@@ -481,7 +481,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
-  const sendEmailNotification = async(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item) => {
+  const sendEmailNotification = async(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan) => {
     console.log("Urutan dari sendemail:", urutan);
     try {
         const response = await axios.get(`http://localhost:5000/logsign-link/${id_dokumen}`, {
@@ -496,6 +496,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         messagee: [message],
         urutan: logsigns.map(log=> log.urutan),
         id_item: logsigns.map(log => log.id_item),
+        id_karyawan:  logsigns.map(log => log.id_karyawan),
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -780,6 +781,10 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
       const idItemList = logsigns.map(log => log.id_item);
       localStorage.setItem("id_item", JSON.stringify(idItemList));
+
+      const senderIds = logsigns.map(log => log.id_karyawan);
+      console.log("senderIds:", senderIds);
+      localStorage.setItem("id_karyawan", JSON.stringify(senderIds));
 
       await axios.post('http://localhost:5000/logsign', { logsigns }, {
         headers: { Authorization: `Bearer ${token}` }

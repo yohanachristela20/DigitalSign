@@ -8,18 +8,8 @@ import html2canvas from "html2canvas";
 import { SketchPicker } from "react-color";
 
 const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, selectedDocument}) => {
-    const [initialName, setInitialName] = useState("");
     const [selectedValue, setSelectedValue] = useState('');
-    const [id_item, setIdItem] = useState("");
-    const [fontColor, setFontColor] = useState("#000000");
-    const [width, setWidth] = useState("");
-    const [height, setHeight] = useState("");
-    const [fontSize, setFontSize] = useState(24);
     const [signerData, setSignerData] = useState([]);
-    const [activeIdItem, setActiveIdItem] = useState(null);
-    const [currentReceiver, setCurrentReceiver] = useState(null);
-
-    const previewRef = useRef(null);
 
     const [selectedValues, setSelectedValues] = useState({});
     const [nama, setNama] = useState("");
@@ -27,18 +17,17 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
     const [id_signers, setIdSigner] = useState("");
     const [signerID, setSignerID] = useState("");
     const [reason, setReason] = useState("");
-    const [status, setStatus] = useState("");
 
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
 
-    console.log("TOKEN FROM DECLINE MODAL:", token);
+    // console.log("TOKEN FROM DECLINE MODAL:", token);
 
     useEffect(() => {
-        console.log("DeclineModal receive id_signers:", selectedSigner);
-        console.log("DeclineModal show DeclineModal:", showDeclineModal);
-        console.log("DeclineModal receive id_dokumen:", selectedDocument);
+        // console.log("DeclineModal receive id_signers:", selectedSigner);
+        // console.log("DeclineModal show DeclineModal:", showDeclineModal);
+        // console.log("DeclineModal receive id_dokumen:", selectedDocument);
     }, [selectedSigner, showDeclineModal, selectedDocument]);
 
 
@@ -69,7 +58,7 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
                     }
                 }
 
-                console.log("SIGNER DATA:", allSigners);
+                // console.log("SIGNER DATA:", allSigners);
                 setSignerData(allSigners);
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
@@ -82,7 +71,7 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
     useEffect(() => {
         if (!selectedSigner || signerData.length === 0) return;
         const found = signerData.find(s => s.id_signers === selectedSigner);
-        console.log("FOUND SIGNER:", found);
+        // console.log("FOUND SIGNER:", found);
         if (found) {
             setNama(found.nama);
             setSignerID(found.id_signers)
@@ -97,7 +86,7 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
     }
 
     const updateStatus = async(id_dokumen, signerID) => {
-        console.log("Data update status:", id_dokumen, signerID);
+        // console.log("Data update status:", id_dokumen, signerID);
 
         try {
             const response = await axios.patch(`http://localhost:5000/update-status/${id_dokumen}/${signerID}`, {
@@ -106,7 +95,7 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
 
             sendEmailDecline(id_dokumen, signerID, reason, token);
 
-            console.log("Signer status updated:", response.data);
+            // console.log("Signer status updated:", response.data);
             toast.success("Decline document successful.", {
                 position: "top-right", 
                 autoClose: 5000,
@@ -120,7 +109,7 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
     };
 
     const sendEmailDecline = async(id_dokumen, signerID, reason) => {
-        console.log("sendEmailDecline: ", id_dokumen, signerID, reason, token);
+        // console.log("sendEmailDecline: ", id_dokumen, signerID, reason, token);
 
         try {
             const responseDecline = await axios.post('http://localhost:5000/send-decline-email', {
@@ -136,7 +125,7 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
                 hideProgressBar: true,
             });
 
-            console.log("Decline sign document successfully.", responseDecline);
+            // console.log("Decline sign document successfully.", responseDecline);
         } catch (error) {
             console.error("Failed to send decline email:", error.message);
             toast.error("Failed to send decline email.");

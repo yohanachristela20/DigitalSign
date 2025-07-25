@@ -245,12 +245,13 @@ const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, 
 
 export const sendEmailNotification = async (req, res) => {
   try {
-    const { subjectt, messagee, id_dokumen, id_signers, urutan, id_item } = req.body;
+    const {subjectt, messagee, id_dokumen, id_signers, urutan, id_item, id_karyawan } = req.body;
     const jwtSecret = process.env.JWT_SECRET_KEY;
 
     const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
     const urutanList = [...new Set(Array.isArray(urutan) ? urutan : [urutan])];
     const itemList = [...new Set(Array.isArray(id_item) ? id_item : [id_item])];
+    const senderList = [...new Set(Array.isArray(id_karyawan) ? id_karyawan : [id_karyawan])];
 
     let emailResults = [];
 
@@ -269,7 +270,7 @@ export const sendEmailNotification = async (req, res) => {
         emailResults.push({ signer, message: 'No valid logsigns to notify.' });
         continue;
       }
-      const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList, urutan: urutanList, currentSigner: signer, id_item: itemList}}, jwtSecret);
+      const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList, urutan: urutanList, currentSigner: signer, id_item: itemList, id_karyawan: senderList}}, jwtSecret);
       const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
       const docName = await LogSign.findOne({

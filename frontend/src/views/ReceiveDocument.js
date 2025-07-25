@@ -14,9 +14,12 @@ import { toast } from "react-toastify";
 import SignatureModal from 'components/ModalForm/SignatureModal.js';
 import InitialModal from "components/ModalForm/InitialModal.js";
 import DeclineModal from "components/ModalForm/DeclineModal.js";
+import DocInfoModal from "components/ModalForm/DocInfoModal.js";
+import AuditTrailModal from "components/ModalForm/AuditTrailModal.js";
 
 import "../assets/scss/lbd/_receivedoc.scss";
 import "../assets/scss/lbd/_usernavbar.scss";
+import { get } from "jquery";
 
 function ReceiveDocument() {
     const [pdfUrl, setPdfUrl] = useState(null);
@@ -30,6 +33,7 @@ function ReceiveDocument() {
     const [fields, setFields] = useState([]);
     const [id_dokumen, setIdDokumen] = useState("");
     const [id_signers, setIdSigner] = useState("");
+    const [id_karyawan, setIdKaryawan] = useState("");
     const [id_item, setIdItem] = useState("");
     const [sign_base64, setSignBase64] = useState("");
     const [status, setStatus] = useState([]);
@@ -39,6 +43,8 @@ function ReceiveDocument() {
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
     const [showInitialModal, setShowInitialModal] = useState(false);
     const [showDeclineModal, setShowDeclineModal] = useState(false);
+    const [showDocInfoModal, setShowDocInfoModal] = useState(false);
+    const [showAuditTrailModal, setShowAuditTrailModal] = useState(false);
 
     const [selectedIdItem, setSelectedIdItem] = useState([]);
     
@@ -60,6 +66,7 @@ function ReceiveDocument() {
 
     const [selectedSigner, setSelectedSigner] = useState(null);
     const [selectedDocument, setSelectedDocument] = useState(null);
+    const [selectedKaryawan, setSelectedKaryawan] = useState(null);
 
     const [urutan, setUrutan] = useState("");
     const [urutanMap, setUrutanMap] = useState({});
@@ -176,6 +183,36 @@ function ReceiveDocument() {
         setSelectedDocument(id_dokumen);
         setShowDeclineModal(true);
     };
+
+    const handleDocInfoClick = (id_dokumen, id_signers, id_karyawan) => {
+        console.log("ID Dokumen from docInfo:", id_dokumen);
+        console.log("ID Signers from docInfo:", id_signers);
+        console.log("ID Karyawan from docInfo:", id_karyawan);
+        if (!id_dokumen || !id_signers) {
+            console.warn("id_dokumen or id_signers not found.");
+            return;
+        }
+
+        setSelectedSigner(id_signers);
+        setSelectedDocument(id_dokumen);
+        setSelectedKaryawan(id_karyawan);
+        setShowDocInfoModal(true);
+    };
+
+    const handleAuditTrail = (id_dokumen, id_signers) => {
+        console.log("ID Dokumen from docInfo:", id_dokumen);
+        console.log("ID Signers from docInfo:", id_signers);
+        // console.log("ID Karyawan from docInfo:", id_karyawan);
+        if (!id_dokumen || !id_signers) {
+            console.warn("id_dokumen or id_signers not found.");
+            return;
+        }
+
+        setSelectedSigner(id_signers);
+        setSelectedDocument(id_dokumen);
+        setSelectedKaryawan(id_karyawan);
+        setShowAuditTrailModal(true);
+    };
     
     const handleSignatureSuccess = () => {
         toast.success("Document signed successfully.", {
@@ -183,6 +220,10 @@ function ReceiveDocument() {
             autoClose: 5000,
             hideProgressBar: true,
         });
+    };
+
+    const getSelectedSignerInfo = () => {
+        return signerData.find(signer => signer.id_signers === selectedSigner && signer.id_karyawan === selectedKaryawan);
     };
 
     useEffect(() => {
@@ -196,19 +237,22 @@ function ReceiveDocument() {
             const urutan = res.data.urutan;
             const currentSigner = res.data.currentSigner;
             const allItems = res.data.id_item;
+            const idKaryawan = res.data.id_karyawan;
 
-            if (!id_dokumen || !allSigners || !urutan || !allItems) {
-                throw new Error("Missing id_dokumen, id_signers, id_item or urutan from token.");
+            if (!id_dokumen || !allSigners || !urutan || !allItems || !idKaryawan) {
+                throw new Error("Missing id_dokumen, id_signers, id_item, id_karyawan or urutan from token.");
             }
 
             setIdDokumen(id_dokumen);
             setIdSigner(currentSigner);
             setAllSigners(allSigners);
             setAllItems(allItems);
+            setIdKaryawan(idKaryawan);
 
             console.log("Current signer:", currentSigner);
             console.log("All ID signer:", allSigners);
             console.log("All Id item:", allItems);
+            console.log("ID Karyawan:", idKaryawan);
             
 
             const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
@@ -225,14 +269,33 @@ function ReceiveDocument() {
             const localDateFields = [];
             const allStatus = [];
             const allSigner = [];
+            // const allSenders = [];
 
             const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
             const itemArray = Array.isArray(allItems) ? allItems : [allItems];
+            const karyawanArray = Array.isArray(idKaryawan) ? idKaryawan : [idKaryawan];
 
             const urutanMapping = {};
             const submittedMapping = {};
 
             for (const signer of signerArray) {
+                const resSignerInfo = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
+                    console.log("RESPONSE DOC INFO:", resSignerInfo);
+                    const dataSignerInfo = resSignerInfo.data;
+                    console.log("DATA DOC INFO:", dataSignerInfo);
+
+                    if (dataSignerInfo.length > 0 && dataSignerInfo[0]?.Signerr && dataSignerInfo[0]?.DocName) {
+                        const signerInfo = {
+                            id_signers: dataSignerInfo[0].id_signers,
+                            nama: dataSignerInfo[0].Signerr.nama,
+                            organisasi: dataSignerInfo[0].Signerr.organisasi,
+                            doc_name: dataSignerInfo[0].DocName.nama_dokumen,
+                            email: dataSignerInfo[0].Signerr.Penerima?.email,
+                        };
+                        console.log("SIGNER INFO DOC INFO:", signerInfo);
+                        signerData.push(signerInfo);
+                    }
+
                 const response = await axios.get(`http://localhost:5000/decline/${id_dokumen}/${signer}`);
                 const data = response.data;
 
@@ -377,8 +440,6 @@ function ReceiveDocument() {
         const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
         const initialsData = initialsRes.data;
         
-
-
         console.log("Signer array:", signerArray);
         console.log("Signer array length:", signerArray.length);
 
@@ -587,11 +648,7 @@ function ReceiveDocument() {
                         <div className="divider" hidden={initial_status.every(status => status === "Decline" || status === "Completed")}></div>
                         <Dropdown.Item
                             href="#"
-                            onClick={(e) => {
-                            e.preventDefault();
-                            
-                            setShowUbahPassword(true); 
-                            }}
+                            onClick={() => handleDocInfoClick(id_dokumen, id_signers, id_karyawan)}
                         >
                             Document Info
                         </Dropdown.Item>
@@ -599,10 +656,7 @@ function ReceiveDocument() {
                         
                         <Dropdown.Item
                             href="#"
-                            onClick={(e) => {
-                            e.preventDefault();
-                            setShowModal(true); 
-                            }}
+                            onClick={() => handleAuditTrail(id_dokumen, id_signers)}
                         >Audit Trail
                         </Dropdown.Item>
                         <div className="divider"></div>
@@ -793,6 +847,24 @@ function ReceiveDocument() {
                                         onSuccess={handleSignatureSuccess}
                                         selectedSigner={selectedSigner}
                                         selectedDocument={selectedDocument}
+                                    />
+
+                                    <DocInfoModal
+                                        showDocInfoModal={showDocInfoModal}
+                                        setShowDocInfoModal={setShowDocInfoModal}
+                                        onSuccess={handleSignatureSuccess}
+                                        selectedSigner={selectedSigner}
+                                        selectedDocument={selectedDocument}
+                                        signerInfo ={getSelectedSignerInfo()}
+                                    />
+
+                                    <AuditTrailModal
+                                        showAuditTrailModal={showAuditTrailModal}
+                                        setShowAuditTrailModal={setShowAuditTrailModal}
+                                        onSuccess={handleSignatureSuccess}
+                                        selectedSigner={selectedSigner}
+                                        selectedDocument={selectedDocument}
+                                        signerInfo ={getSelectedSignerInfo()}
                                     />
                                     
                                 </div>
