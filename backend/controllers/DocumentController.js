@@ -282,7 +282,7 @@ export const sendEmailNotification = async (req, res) => {
 
       const intended_email = validLogsigns[0].Signerr?.Penerima?.email;
       const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList, urutan: urutanList, currentSigner: signer, id_item: itemList, id_karyawan: senderList, intended_email}}, jwtSecret);
-      const signLink = `http://locahost:3000/user/envelope?token=${token}`;
+      const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
       const docName = await LogSign.findOne({
             where: {id_dokumen: id_dokumen}, 
@@ -319,7 +319,7 @@ export const getSignLink = async (req, res) => {
     const jwtSecret = process.env.JWT_SECRET_KEY;
     const token = jwt.sign({ dokumenLogsign: [id_dokumen] }, jwtSecret);
 
-    const signLink = `http://locahost:3000/user/envelope?token=${token}`;
+    const signLink = `http://localhost:3000/user/envelope?token=${token}`;
     res.status(200).json({ signLink });
   } catch (error) {
     console.error("Failed to generate signLink:", error.message);

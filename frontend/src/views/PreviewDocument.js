@@ -22,8 +22,8 @@ function PreviewDocument() {
         const fetchPdf = async () => {
             try {
                 const url = selectedDoc?.id_dokumen
-                    ? `http://locahost:5000/pdf-document/${selectedDoc.id_dokumen}`
-                    : `http://locahost:5000/pdf-document`;
+                    ? `http://localhost:5000/pdf-document/${selectedDoc.id_dokumen}`
+                    : `http://localhost:5000/pdf-document`;
 
                 const response = await fetch(url, {
                     headers: {

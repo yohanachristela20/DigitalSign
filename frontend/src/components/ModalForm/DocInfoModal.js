@@ -40,7 +40,7 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
             if (!token ) return;
 
             try {
-                const res = await axios.get(`http://locahost:5000/receive-document?token=${token}`);
+                const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
@@ -58,7 +58,7 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
 
                 for (const signer of signerArray) {
                     for (const sender of karyawanArray) {
-                        const response = await axios.get(`http://locahost:5000/doc-info/${id_dokumen}/${signer}`);
+                        const response = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
                         // console.log("RESPONSE DOC INFO:", response);
                         const data = response.data;
                         // console.log("DATA DOC INFO:", data);
@@ -77,7 +77,7 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
                             signerData.push(signerInfo);
                         }
 
-                        const resSender = await axios.get(`http://locahost:5000/email-sender/${sender}`);
+                        const resSender = await axios.get(`http://localhost:5000/email-sender/${sender}`);
                         // console.log("RESPONSE SENDER DOC INFO:", resSender);
                         const resSenderData = resSender.data;
                         // console.log("SENDER DATA DOC INFO:", resSenderData);
@@ -129,7 +129,7 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
         // console.log("Data update status:", id_dokumen, signerID);
 
         try {
-            const response = await axios.patch(`http://locahost:5000/update-status/${id_dokumen}/${signerID}`, {
+            const response = await axios.patch(`http://localhost:5000/update-status/${id_dokumen}/${signerID}`, {
                 status: "Decline",
             }); 
 
@@ -152,7 +152,7 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
         // console.log("sendEmailDecline: ", id_dokumen, signerID, reason, token);
 
         try {
-            const responseDecline = await axios.post('http://locahost:5000/send-decline-email', {
+            const responseDecline = await axios.post('http://localhost:5000/send-decline-email', {
                 id_dokumen, 
                 signerID, 
                 reason: [reason],

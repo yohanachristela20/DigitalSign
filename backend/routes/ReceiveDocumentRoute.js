@@ -591,7 +591,7 @@ router.post('/send-decline-email', async(req, res) => {
         let emailResults = [];
 
         // console.log("RECEIVE DECLINE DATA:", "ID Dokumen:", id_dokumen, "signerID:", signerID, "reason:", reason, "token:", token);
-        const declineLink = `http://locahost:3000/user/envelope?token=${token}`;
+        const declineLink = `http://localhost:3000/user/envelope?token=${token}`;
 
         const docName = await LogSign.findOne({
             where: {id_dokumen: id_dokumen}, 

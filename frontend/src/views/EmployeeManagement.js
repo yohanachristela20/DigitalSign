@@ -89,7 +89,7 @@ function EmployeeManagement() {
   }, []); 
   const getEmployee = async () =>{
     try {
-      const response = await axios.get("http://locahost:5000/employee-details", {
+      const response = await axios.get("http://localhost:5000/employee-details", {
         headers: {
           Authorization: `Bearer ${token}`,
       },
@@ -104,7 +104,7 @@ function EmployeeManagement() {
 
   const deleteEmployee = async(id_karyawan) =>{
     try {
-      await axios.delete(`http://locahost:5000/employee/${id_karyawan}` , {
+      await axios.delete(`http://localhost:5000/employee/${id_karyawan}` , {
         headers: {
           Authorization: `Bearer ${token}`,
       },
@@ -127,7 +127,7 @@ function EmployeeManagement() {
 
   //   try {
   //     const response = await axios.get(
-  //       `http://locahost:5000/karyawan-details/${email}`,
+  //       `http://localhost:5000/karyawan-details/${email}`,
   //       {
   //         headers: { Authorization: `Bearer ${token}` },
   //       }

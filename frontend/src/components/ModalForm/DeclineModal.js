@@ -36,7 +36,7 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
             if (!token ) return;
 
             try {
-                const res = await axios.get(`http://locahost:5000/receive-document?token=${token}`);
+                const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
@@ -47,7 +47,7 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
                 const allSigners = [];
 
                 for (const signer of signerArray) {
-                    const response = await axios.get(`http://locahost:5000/decline/${id_dokumen}/${signer}`);
+                    const response = await axios.get(`http://localhost:5000/decline/${id_dokumen}/${signer}`);
                     const data = response.data;
 
                     if (data.length > 0 && data[0].Signerr) {
@@ -89,7 +89,7 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
         // console.log("Data update status:", id_dokumen, signerID);
 
         try {
-            const response = await axios.patch(`http://locahost:5000/update-status/${id_dokumen}/${signerID}`, {
+            const response = await axios.patch(`http://localhost:5000/update-status/${id_dokumen}/${signerID}`, {
                 status: "Decline",
             }); 
 
@@ -112,7 +112,7 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
         // console.log("sendEmailDecline: ", id_dokumen, signerID, reason, token);
 
         try {
-            const responseDecline = await axios.post('http://locahost:5000/send-decline-email', {
+            const responseDecline = await axios.post('http://localhost:5000/send-decline-email', {
                 id_dokumen, 
                 signerID, 
                 reason: [reason],
