@@ -42,7 +42,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
             if (!token ) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+                const res = await axios.get(`http://locahost:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
@@ -57,7 +57,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
 
                 for (const selectedSigner of signerArray) {
                     for (const itemID of itemArray) {
-                        const response = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${selectedSigner}/${itemID}`);
+                        const response = await axios.get(`http://locahost:5000/axis-field/${id_dokumen}/${selectedSigner}/${itemID}`);
                         const data = response.data;
 
                         if (data.length > 0 && data[0].Signerr) {
@@ -172,7 +172,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
                 return;
             }
 
-            const response = await axios.patch(`http://localhost:5000/initialsign/${id_dokumen}/${id_item}/${id_signers}`, {
+            const response = await axios.patch(`http://locahost:5000/initialsign/${id_dokumen}/${id_item}/${id_signers}`, {
                 sign_base64,
                 status: "Completed", 
                 tgl_tt: today,

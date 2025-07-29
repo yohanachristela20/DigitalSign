@@ -3,7 +3,7 @@ import jwt, { decode } from 'jsonwebtoken';
 import Document from "../models/DokumenModel.js";
 import path from "path";
 import multer from "multer";
-import fs from "fs";
+import fs, { access } from "fs";
 import LogSign from "../models/LogSignModel.js";
 import Item from "../models/ItemModel.js";
 import Karyawan from "../models/KaryawanModel.js";
@@ -11,6 +11,9 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import User from "../models/UserModel.js";
 import Dokumen from "../models/DokumenModel.js";
+import LinkAccessLog from "../models/linkAccessModel.js";
+import bcrypt from 'bcrypt';
+import { where } from "sequelize";
 
 dotenv.config();
 
@@ -19,7 +22,6 @@ const router = express.Router();
 
 router.get('/receive-document', async(req, res, next) => {
     const token = req.query.token;
-    // const receiver = req.query.receiver;
     const jwtSecret = process.env.JWT_SECRET_KEY;
 
     if (!token) {
@@ -28,32 +30,232 @@ router.get('/receive-document', async(req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, jwtSecret);
-        // console.log("Decoded token(receive document):", decoded);
 
         const dokumenLogsign = decoded.dokumenLogsign?.id_dokumen;
-        // console.log("Dokumen logsign:", dokumenLogsign);
-
         const idSignerLogsign = decoded.dokumenLogsign?.id_signers;
-        // const idSignerLogsign = receiver;
-        // console.log("Id signer logsign:", idSignerLogsign);
-
         const urutanLogsign = decoded.dokumenLogsign?.urutan;
-        // console.log("Urutan logsign:", urutanLogsign);
-
         const currentSigner = decoded.dokumenLogsign?.currentSigner;
-        // console.log("Current signer:", currentSigner);
-
         const itemLogsign = decoded.dokumenLogsign?.id_item;
-        // console.log("Id Item logsign:", itemLogsign);
-
         const idSenderLogsign = decoded.dokumenLogsign?.id_karyawan;
-        // console.log("Id karyawan logsign:", idSenderLogsign);
 
-        res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign, urutan: urutanLogsign, currentSigner, id_item: itemLogsign, id_karyawan: idSenderLogsign});
+        const logsignRecord = await LogSign.findOne({
+            where: {
+                id_dokumen: dokumenLogsign,
+                id_signers: idSignerLogsign, 
+                id_item: itemLogsign,
+            }, 
+            attributes: ['id_logsign']
+        });
+
+        const id_logsign = logsignRecord? logsignRecord.id_logsign : null;
+        console.log("LogSign Record:", logsignRecord);
+        console.log("Id logsign:", id_logsign);
+
+        res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign, urutan: urutanLogsign, currentSigner, id_item: itemLogsign, id_karyawan: idSenderLogsign, id_logsign});
     } catch (error) {
         return res.status(403).json({message: 'Invalid or expired token'});
     }
 });
+
+router.post('/link-access-log', async (req, res) => {
+  const { token, real_email, password, is_accessed } = req.body;
+  const jwtSecret = process.env.JWT_SECRET_KEY;
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+    const { dokumenLogsign } = decoded;
+    const { currentSigner, id_dokumen } = dokumenLogsign;
+
+    // console.log("Decoded token for link access log:", decoded);
+    // console.log("Current signer for link access log:", currentSigner);
+    // console.log("Id dokumen for link access log:", id_dokumen);
+    // console.log("Dokumen logsign for link access log:", dokumenLogsign);
+
+    const logsign = await LogSign.findOne({
+        where: { id_dokumen, id_signers: currentSigner },
+        include: [{
+            model: Karyawan,
+            as: 'Signerr',
+            include: [{
+                model: User,
+                as: 'Penerima',
+                attributes: ['email', 'password']
+            }]
+        }]
+    });
+
+    const intended_email = logsign?.Signerr?.Penerima?.email;
+    const intended_password = logsign?.Signerr?.Penerima?.password;
+
+    const isPasswordValid = await bcrypt.compare(password, intended_password);
+    if (!isPasswordValid) {
+        return res.status(400).json({ message: 'Incorrect password.' });
+    }
+
+
+    if (real_email !== intended_email && isPasswordValid) {
+        return res.status(403).json({ message: "Unauthorized email" });
+    }
+
+    // console.log("Intended email:", intended_email);
+    if (!intended_email && isPasswordValid) {
+        return res.status(404).json({ message: "Intended email not found for the current signer." });
+    }
+
+    const [accessLog, created] = await LinkAccessLog.findOrCreate({
+        where: { id_logsign: logsign.id_logsign, id_karyawan: currentSigner },
+        defaults: {
+            intended_email,
+            real_email,
+            accessed_at: new Date(),
+            is_accessed: is_accessed || "",
+        }
+    });
+
+
+    if (!created) {
+        await accessLog.update({
+            real_email, 
+            accessed_at: new Date(),
+        });
+    }
+
+    res.status(200).json({ message: "Link access recorded" });
+
+  } catch (err) {
+    
+    res.status(400).json({ message: "Invalid or expired token" });
+  }
+});
+
+// router.get('/access-status', async(req, res) => {
+//     const {id_logsign, id_karyawan} = req.query;
+//     console.log("Id LogSign:", id_logsign);
+//     console.log("Id Karyawan:", id_karyawan);
+
+//     // const clientIp = req.ip;
+
+//     const clientIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+//     // const ipOnly = clientIP.replace("::ffff:", "");
+//     console.log("CLIENT IP:", clientIP);
+//     // console.log("IP ONLY:", ipOnly);
+
+
+//     try {
+//         const accesslog = await LinkAccessLog.findOne({
+//             where: {id_logsign, id_karyawan}, 
+//             attributes: ['is_accessed'],
+//         });
+
+//         console.log("LogSign for access status:", accesslog);
+
+//         if (!accesslog) {
+//             return res.status(200).json({ is_accessed: null });
+//         }
+
+//         res.status(200).json({ is_accessed: accesslog.is_accessed });
+
+//     } catch (error) {
+//         res.status(500).json({ message: "Error fetching access status.", is_accessed: false});
+//     }
+// });
+
+
+//last
+// router.get('/access-status', async(req, res) => {
+//     const {id_dokumen, id_karyawan, id_signers, token} = req.query;
+//     // console.log("Id LogSign:", id_logsign);
+//     // console.log("Id Karyawan:", id_karyawan);
+
+//     console.log("ID dokumen:", id_dokumen);
+
+//     // const clientIp = req.ip;
+
+//     const clientIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+//     // const ipOnly = clientIP.replace("::ffff:", "");
+//     console.log("CLIENT IP:", clientIP);
+//     // console.log("IP ONLY:", ipOnly);
+
+//     try {
+//         const decoded = jwt.verify(token, jwtSecret);
+//         const { dokumenLogsign } = decoded;
+//         const { currentSigner, id_dokumen } = dokumenLogsign;
+
+//         const logsign = await LogSign.findOne({
+//             where: {id_dokumen, id_signers: currentSigner},
+//             attributes: ['id_logsign'],
+//         });
+
+//         console.log("LOGSIGNNN:", logsign)
+
+//         // const logsignIds = allLogsigns.map(log => log.id_logsign);
+//         // let whereClause = { id_logsign: logsignIds };
+
+//         // if (id_signers) {
+//         //     whereClause.id_karyawan = id_signers;
+//         // }
+//         if (!logsign) {
+//             return res.status(404).json({ message: "LogSign not found", is_accessed: false });
+//         }
+
+//         const accessLogs = await LinkAccessLog.findOne({
+//             where: {id_logsign: logsign.id_logsign, id_karyawan: logsign.id_signers}, 
+//             attributes: ['is_accessed'], 
+//         });
+
+//         console.log("ACCESS LOG:", accessLogs);
+
+//         const isAccessed = accessLogs?.is_accessed;
+//         console.log("IS ACCESSED:", isAccessed);
+
+//         res.status(200).json({is_accessed: isAccessed});
+//     } catch (error) {
+//         console.error("Error checking access:", error);
+//         res.status(500).json({message: "Error fetching access status.", is_accessed: false});
+//     }
+// });
+
+router.get('/access-status', async(req, res) => {
+    const {token} = req.query;
+    const jwtSecret = process.env.JWT_SECRET_KEY;
+
+    const clientIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    // const ipOnly = clientIP.replace("::ffff:", "");
+    console.log("CLIENT IP:", clientIP);
+    // console.log("IP ONLY:", ipOnly);
+
+    try {
+        const decoded = jwt.verify(token, jwtSecret);
+        const { dokumenLogsign } = decoded;
+        const { currentSigner, id_dokumen } = dokumenLogsign;
+
+        const logsign = await LogSign.findOne({
+            where: {id_dokumen, id_signers: currentSigner},
+            attributes: ['id_logsign', 'id_signers'],
+        });
+
+        if (!logsign) {
+            return res.status(404).json({ message: "LogSign not found", is_accessed: false });
+        }
+
+        const accessLogs = await LinkAccessLog.findOne({
+            where: {id_logsign: logsign.id_logsign, id_karyawan: logsign.id_signers}, 
+            attributes: ['is_accessed'], 
+        });
+
+        const isAccessed = accessLogs?.is_accessed === true;
+        res.status(200).json({is_accessed: isAccessed});
+
+    } catch (error) {
+        console.error("Error checking access:", error);
+        res.status(500).json({message: "Error fetching access status.", is_accessed: false});
+    }
+});
+
+
+
+
+
 
 
 router.get('/pdf-document/:id_dokumen?', async (req, res) => {
@@ -176,7 +378,7 @@ router.get('/doc-info/:id_dokumen/:id_signers', async(req, res) => {
     try {
         const response = await LogSign.findAll({
             where: {id_dokumen, id_signers}, 
-            attributes: ["id_signers", "id_dokumen", "createdAt", "id_karyawan", "status", "tgl_tt"],
+            attributes: ["id_signers", "id_dokumen", "createdAt", "id_karyawan", "status", "tgl_tt", "is_submitted"],
             include: [
                 {
                     model: Karyawan, 
@@ -191,7 +393,12 @@ router.get('/doc-info/:id_dokumen/:id_signers', async(req, res) => {
                 {
                     model: Dokumen, 
                     as: 'DocName',
-                    attributes: ["nama_dokumen"]
+                    attributes: ["nama_dokumen"],
+                }, 
+                {
+                    model: LinkAccessLog, 
+                    as: 'LinkAccess', 
+                    attributes: ['accessed_at', 'real_email'], 
                 }
             ],
         });
@@ -384,7 +591,7 @@ router.post('/send-decline-email', async(req, res) => {
         let emailResults = [];
 
         // console.log("RECEIVE DECLINE DATA:", "ID Dokumen:", id_dokumen, "signerID:", signerID, "reason:", reason, "token:", token);
-        const declineLink = `http://localhost:3000/user/envelope?token=${token}`;
+        const declineLink = `http://locahost:3000/user/envelope?token=${token}`;
 
         const docName = await LogSign.findOne({
             where: {id_dokumen: id_dokumen}, 

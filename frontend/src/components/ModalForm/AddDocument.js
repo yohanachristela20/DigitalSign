@@ -13,7 +13,7 @@ const AddDocument = ({showAddDoc, setShowAddDoc, onSuccess}) => {
     const token = localStorage.getItem("token");
 
     const lastIdDokumen = async(e) => {
-        const response = await axios.get('http://localhost:5000/getLastDocumentId', {
+        const response = await axios.get('http://locahost:5000/getLastDocumentId', {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -30,7 +30,7 @@ const AddDocument = ({showAddDoc, setShowAddDoc, onSuccess}) => {
 
     const categoryDoc = async() => {
         try {
-            const response = await axios.get('http://localhost:5000/category', {
+            const response = await axios.get('http://locahost:5000/category', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -65,7 +65,7 @@ const AddDocument = ({showAddDoc, setShowAddDoc, onSuccess}) => {
             formData.append("nama_dokumen", nama_dokumen);
             formData.append("id_kategoridok", id_kategoridok);
         try {
-            const response = await axios.post('http://localhost:5000/document', formData,
+            const response = await axios.post('http://locahost:5000/document', formData,
                {
                 headers: {
                     Authorization: `Bearer ${token}`,

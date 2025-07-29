@@ -46,8 +46,8 @@ function Document() {
   const getDocument = async (selectedCategory) =>{
     try {
       const url = selectedCategory 
-      ? `http://localhost:5000/document/category/${selectedCategory}`
-      : `http://localhost:5000/document`;
+      ? `http://locahost:5000/document/category/${selectedCategory}`
+      : `http://locahost:5000/document`;
 
       const response = await axios.get(url, {
         headers: {
@@ -121,7 +121,7 @@ function Document() {
 
 //   const getDocument = async () =>{
 //     try {
-//       const response = await axios.get("http://localhost:5000/document", {
+//       const response = await axios.get("http://locahost:5000/document", {
 //         headers: {
 //           Authorization: `Bearer ${token}`,
 //       },
@@ -140,7 +140,7 @@ function Document() {
 
   const deleteDocument = async(id_dokumen) =>{
     try {
-      await axios.delete(`http://localhost:5000/document/${id_dokumen}` , {
+      await axios.delete(`http://locahost:5000/document/${id_dokumen}` , {
         headers: {
           Authorization: `Bearer ${token}`,
       },

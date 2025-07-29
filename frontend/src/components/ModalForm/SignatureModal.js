@@ -35,7 +35,7 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
             if (!token ) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+                const res = await axios.get(`http://locahost:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
@@ -54,7 +54,7 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
 
                 for (const selectedSigner of signerArray) {
                     for (const itemId of itemArray) {
-                        const response = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${selectedSigner}/${itemId}`);
+                        const response = await axios.get(`http://locahost:5000/axis-field/${id_dokumen}/${selectedSigner}/${itemId}`);
                         const data = response.data;
 
                         if (data.length > 0 && data[0].Signerr) {
@@ -111,7 +111,7 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
 
         try {
             const response = await axios.patch(
-                `http://localhost:5000/initialsign/${id_dokumen}/${id_item}/${id_signers}`,
+                `http://locahost:5000/initialsign/${id_dokumen}/${id_item}/${id_signers}`,
                 {
                     sign_base64,
                     status: "Completed",

@@ -6,9 +6,12 @@ import Item from "./ItemModel.js";
 import LogSign from "./LogSignModel.js";
 import Sign from "./SignModel.js";
 import Signers from "./SignersModel.js";
+import LinkAccessLog from "./linkAccessModel.js";
 
 User.belongsTo(Karyawan, { foreignKey: 'id_karyawan', as: 'Pengguna' });
 User.belongsTo(Karyawan, {foreignKey: 'id_karyawan', as: 'Penerima'});
+LinkAccessLog.belongsTo(LogSign, {foreignKey: 'id_logsign', as: 'LinkAccess'});
+LinkAccessLog.belongsTo(Karyawan, {foreignKey: 'id_karyawan', as: 'RealKaryawan'});
 
 // LogSign.belongsTo(Signers, {foreignKey: 'id_parent_signers', as:'Signer'});
 Dokumen.belongsTo(KategoriDokumen, {foreignKey: 'id_kategoridok', as: 'Kategori'});
@@ -36,6 +39,9 @@ Item.hasOne(LogSign, {foreignKey: 'id_item', as:'ItemField'});
 Karyawan.hasMany(Signers, {foreignKey:'id_karyawan', as:'Penandatangan'});
 
 Karyawan.hasMany(User, { foreignKey: 'id_karyawan', as:'Pengguna'});
-
 Karyawan.hasOne(User, {foreignKey: 'id_karyawan', as: 'Penerima'});
+
+LogSign.hasOne(LinkAccessLog, {foreignKey: 'id_logsign', as: 'LinkAccess'});
+Karyawan.hasMany(LinkAccessLog, {foreignKey: 'id_karyawan', as: 'RealKaryawan'});
+
 // Signers.hasMany(LogSign, {foreignKey: 'id_parent_signers', as: 'Signer'});

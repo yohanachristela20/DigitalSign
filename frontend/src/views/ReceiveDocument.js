@@ -8,7 +8,7 @@ import { Rnd } from 'react-rnd';
 import { Document, Page, pdfjs } from "react-pdf";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-import { Container, Spinner, Alert, Row, Col, Card, Navbar, Nav, Dropdown, Button, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Container, Spinner, Alert, Row, Col, Card, Navbar, Nav, Dropdown, Button, Modal, OverlayTrigger, Tooltip, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 
 import SignatureModal from 'components/ModalForm/SignatureModal.js';
@@ -23,7 +23,7 @@ import { get } from "jquery";
 
 function ReceiveDocument() {
     const [pdfUrl, setPdfUrl] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
     const [x_axis, setXAxis] = useState(0);
     const [y_axis, setYAxis] = useState(0);
@@ -91,6 +91,13 @@ function ReceiveDocument() {
     const [submitted_list, setSubmittedList] = useState([]);
     const [jenisItem_list, setJenisItemList] = useState([]);
 
+    const [verified, setVerified] = useState(false);
+    const [inputEmail, setInputEmail] = useState("");
+    const [emailVerified, setEmailVerified] = useState(false);
+
+    const [inputPassword, setInputPassword] = useState("");
+    const [isAccessed, setIsAccessed] = useState(false);
+
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] 
@@ -99,7 +106,7 @@ function ReceiveDocument() {
 
     const currentDate = `${day} ${month} ${year}`;
 
-    console.log("Current date:", currentDate);
+    // console.log("Current date:", currentDate);
 
     const mobileSidebarToggle = (e) => {
         e.preventDefault();
@@ -132,7 +139,7 @@ function ReceiveDocument() {
 
     const handleSignatureClick = (id_item, show, editable) => {
         const signer = signatures.find(i => i.id_item === id_item);
-        console.log("Signer from signature click:", signer);
+        // console.log("Signer from signature click:", signer);
         if (signer) {
             setSelectedIdItem(id_item);
             setSelectedSigner(signer);
@@ -140,7 +147,7 @@ function ReceiveDocument() {
             setShow(show);
             setEditable(editable);
 
-            console.log("Data from signature click:", "id_item:", id_item, "show:", show, "editable:", editable);
+            // console.log("Data from signature click:", "id_item:", id_item, "show:", show, "editable:", editable);
         }
     };
 
@@ -163,17 +170,17 @@ function ReceiveDocument() {
 
         // console.log("Selected signer:", selectedSigner);
 
-        console.log("Initial clicked:", {
-            id_item, 
-            signer: clickedField?.id_signers, 
-            show,
-            editable,
-        });
+        // console.log("Initial clicked:", {
+        //     id_item, 
+        //     signer: clickedField?.id_signers, 
+        //     show,
+        //     editable,
+        // });
     };
 
     const handleDeclineClick = (id_dokumen, id_signers) => {
-        console.log("ID Dokumen from decline:", id_dokumen);
-        console.log("ID Signers from decline:", id_signers);
+        // console.log("ID Dokumen from decline:", id_dokumen);
+        // console.log("ID Signers from decline:", id_signers);
         if (!id_dokumen || !id_signers) {
             console.warn("id_dokumen or id_signers not found.");
             return;
@@ -185,9 +192,9 @@ function ReceiveDocument() {
     };
 
     const handleDocInfoClick = (id_dokumen, id_signers, id_karyawan) => {
-        console.log("ID Dokumen from docInfo:", id_dokumen);
-        console.log("ID Signers from docInfo:", id_signers);
-        console.log("ID Karyawan from docInfo:", id_karyawan);
+        // console.log("ID Dokumen from docInfo:", id_dokumen);
+        // console.log("ID Signers from docInfo:", id_signers);
+        // console.log("ID Karyawan from docInfo:", id_karyawan);
         if (!id_dokumen || !id_signers) {
             console.warn("id_dokumen or id_signers not found.");
             return;
@@ -200,8 +207,8 @@ function ReceiveDocument() {
     };
 
     const handleAuditTrail = (id_dokumen, id_signers) => {
-        console.log("ID Dokumen from docInfo:", id_dokumen);
-        console.log("ID Signers from docInfo:", id_signers);
+        // console.log("ID Dokumen from docInfo:", id_dokumen);
+        // console.log("ID Signers from docInfo:", id_signers);
         // console.log("ID Karyawan from docInfo:", id_karyawan);
         if (!id_dokumen || !id_signers) {
             console.warn("id_dokumen or id_signers not found.");
@@ -221,6 +228,142 @@ function ReceiveDocument() {
             hideProgressBar: true,
         });
     };
+
+    // useEffect(() => {
+    //     const storedEmailVerified = localStorage.getItem("emailVerified") === "true";
+    //     const storedIsAccessed = localStorage.getItem("is_accessed") === "true";  
+        
+    //     if (storedEmailVerified) setEmailVerified(true);
+    //     if (storedIsAccessed) setIsAccessed(true);
+    // }, []);
+
+    // useEffect(() => {
+    //     const checkAccessStatus = async() => {
+    //         if (!token) return;
+
+    //         try {
+    //             const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+    //             const { id_dokumen, id_signers, id_logsign } = docRes.data;
+    //             let accessed = false;
+
+    //             const logsignRes = await axios.get(`http://localhost:5000/access-status?id_logsign=${id_logsign}&id_karyawan=${id_signers}`);
+    //             accessed = logsignRes.data.is_accessed;
+    //             setIsAccessed(accessed);
+
+    //             if (accessed === true) {
+    //                 setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
+    //                 setEmailVerified(true);
+    //                 setVerified(true);
+    //                 setLoading(false);
+    //             }
+
+    //         } catch (error) {
+    //             setIsAccessed(false);
+    //             setEmailVerified(false);
+    //             setPdfUrl("");
+    //         }
+    //     };
+    //     checkAccessStatus();
+    // }, [token]);
+
+
+    useEffect(() => {
+        const checkAccessStatus = async() => {
+            if (!token) return;
+
+            try {
+                const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+                const { id_dokumen, id_signers } = docRes.data;
+
+                setIdDokumen(id_dokumen);
+                setIdSigner(id_signers);
+
+                const logsignRes = await axios.get(`http://localhost:5000/access-status?token=${token}`);
+                const accessed = logsignRes.data.is_accessed;
+                setIsAccessed(accessed);
+
+                if (accessed === true) {
+                    setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
+                    setEmailVerified(true);
+                    setVerified(true);
+                } else {
+                    setEmailVerified(false);
+                    setVerified(false);
+                    setPdfUrl("");
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                setIsAccessed(false);
+                setEmailVerified(false);
+                setPdfUrl("");
+            }
+        };
+        checkAccessStatus();
+    }, [token]);
+
+    const handleEmailVerify = async (e) => { 
+        e.preventDefault();
+        // setLoading(true);
+        setErrorMsg("");
+
+        try {
+            const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+            const { id_dokumen, id_signers, id_logsign, id_karyawan } = docRes.data;
+            // let accessed = false;
+            // try {
+            //     const logsignRes = await axios.get(`http://localhost:5000/access-status?id_logsign=${id_logsign}&id_karyawan=${id_signers}`);
+            //     accessed = logsignRes.data.is_accessed;
+            //     setIsAccessed(accessed);
+            // } catch (error) {
+            //     if (err.response && err.response.status === 404) {
+            //         accessed = false;
+            //         setIsAccessed(accessed);
+            //         console.log("Access status: not found, will verify email.");
+            //     } else {
+            //         throw err;
+            //     }
+            // }
+
+            
+            // console.log("Id Karyawan:", id_karyawan);
+            // console.log("Id Logsign:", id_logsign);
+
+            // if (accessed === true) {
+            //     setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
+            //     setEmailVerified(true);
+            //     setVerified(true);
+            //     // setIsAccessed(true);
+            //     setLoading(false);
+            //     return;
+            // }
+
+            await axios.post("http://localhost:5000/link-access-log", { token, real_email: inputEmail, password: inputPassword, is_accessed: true });
+            setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
+            setEmailVerified(true);
+            setVerified(true);
+            setIsAccessed(true);
+            
+
+            // localStorage.setItem("emailVerified", "true");
+            // localStorage.setItem("is_accessed", "true");
+
+        } catch (error) {
+            setErrorMsg("Access Denied: Token doesn't valid or email not found.");
+            setEmailVerified(false);
+            setPdfUrl("");
+            setIsAccessed(false);
+
+            // localStorage.setItem("emailVerified", "false");
+            // localStorage.setItem("is_accessed", "false");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+
+    console.log("isAccessed from db:", isAccessed);
+    console.log("Email verified:", emailVerified);
 
     const getSelectedSignerInfo = () => {
         return signerData.find(signer => signer.id_signers === selectedSigner && signer.id_karyawan === selectedKaryawan);
@@ -249,12 +392,11 @@ function ReceiveDocument() {
             setAllItems(allItems);
             setIdKaryawan(idKaryawan);
 
-            console.log("Current signer:", currentSigner);
-            console.log("All ID signer:", allSigners);
-            console.log("All Id item:", allItems);
-            console.log("ID Karyawan:", idKaryawan);
+            // console.log("Current signer:", currentSigner);
+            // console.log("All ID signer:", allSigners);
+            // console.log("All Id item:", allItems);
+            // console.log("ID Karyawan:", idKaryawan);
             
-
             const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
             if (!fileRes.ok) {
                 throw new Error("Failed to get PDF Document.");
@@ -280,9 +422,9 @@ function ReceiveDocument() {
 
             for (const signer of signerArray) {
                 const resSignerInfo = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
-                    console.log("RESPONSE DOC INFO:", resSignerInfo);
+                    // console.log("RESPONSE DOC INFO:", resSignerInfo);
                     const dataSignerInfo = resSignerInfo.data;
-                    console.log("DATA DOC INFO:", dataSignerInfo);
+                    // console.log("DATA DOC INFO:", dataSignerInfo);
 
                     if (dataSignerInfo.length > 0 && dataSignerInfo[0]?.Signerr && dataSignerInfo[0]?.DocName) {
                         const signerInfo = {
@@ -292,7 +434,7 @@ function ReceiveDocument() {
                             doc_name: dataSignerInfo[0].DocName.nama_dokumen,
                             email: dataSignerInfo[0].Signerr.Penerima?.email,
                         };
-                        console.log("SIGNER INFO DOC INFO:", signerInfo);
+                        // console.log("SIGNER INFO DOC INFO:", signerInfo);
                         signerData.push(signerInfo);
                     }
 
@@ -366,7 +508,7 @@ function ReceiveDocument() {
                 }
             }
 
-            console.log("SIGNER DATA FROM RECEIVE:", allSigner);
+            // console.log("SIGNER DATA FROM RECEIVE:", allSigner);
             setSignerData(allSigner);
 
             setSignatures(localSignatureFields);
@@ -391,10 +533,28 @@ function ReceiveDocument() {
         fetchData();
     }, [token]);
 
+    // useEffect(() => {
+    // const verifyAccess = async () => {
+    //     try {
+    //     await axios.post("http://localhost:5000/link-access-log", { token });
+    //     const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+    //     const { id_dokumen } = docRes.data;
+    //     setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
+    //     setVerified(true);
+    //     } catch (err) {
+    //     setErrorMsg("Please enter the email to verify access.");
+    //     setVerified(false);
+    //     }
+    // };
+    // verifyAccess();
+    // }, [token]);
+    
+
+
     useEffect(() => {
         if (signerData.length === 0) return;
         const foundSigner = signerData.find(s => s.id_signers === id_signers); 
-        console.log("FOUND SIGNER FROM RECEIVE:", foundSigner);
+        // console.log("FOUND SIGNER FROM RECEIVE:", foundSigner);
 
         if (foundSigner) {
             setNama(foundSigner.nama);
@@ -402,8 +562,8 @@ function ReceiveDocument() {
     }, [id_signers, signerData]);
 
     const updateSubmitted = async(id_dokumen, id_signers) => {
-        console.log("Id Dokumen:", id_dokumen);
-        console.log("Id Signers:", id_signers);
+        // console.log("Id Dokumen:", id_dokumen);
+        // console.log("Id Signers:", id_signers);
 
         try {
             const response = await axios.patch(`http://localhost:5000/update-submitted/${id_dokumen}/${id_signers}`, {
@@ -411,7 +571,7 @@ function ReceiveDocument() {
                 status: "Completed",
             });
 
-            console.log("Document signed submitted:", response);
+            // console.log("Document signed submitted:", response);
             toast.success("Document signed successfully.", {
                 position: "top-right", 
                 autoClose: 5000, 
@@ -420,7 +580,7 @@ function ReceiveDocument() {
 
             window.location.reload();
         } catch (error) {
-            console.log("Failed to save signed document:", error.message);
+            // console.log("Failed to save signed document:", error.message);
             toast.error("Failed to save signed document.", {
                 position: "top-right",
                 autoClose: 5000,
@@ -440,15 +600,15 @@ function ReceiveDocument() {
         const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
         const initialsData = initialsRes.data;
         
-        console.log("Signer array:", signerArray);
-        console.log("Signer array length:", signerArray.length);
+        // console.log("Signer array:", signerArray);
+        // console.log("Signer array length:", signerArray.length);
 
         const allFields = [];
 
         for (const signer of signerArray) {
             for (const itemId of itemArray) {
             const currentUrutan = Number(urutanMap[itemId]);
-            console.log("currentUrutan allFields:", currentUrutan);
+            // console.log("currentUrutan allFields:", currentUrutan);
             const currentSubmitted = submittedMap[signer];
 
             const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
@@ -459,23 +619,23 @@ function ReceiveDocument() {
             const prevSigner = Object.keys(urutanMap).find(
             key => Number(urutanMap[key]) === currentUrutan - 1
             );
-            console.log("prevSigner:", prevSigner);
+            // console.log("prevSigner:", prevSigner);
 
-            console.log("initialsData:", initialsData);
+            // console.log("initialsData:", initialsData);
             const initialsForPrevSigner = initialsData.filter(init => init.id_item === prevSigner);
-            console.log("initialsForPrevSigner:", initialsForPrevSigner);
+            // console.log("initialsForPrevSigner:", initialsForPrevSigner);
 
 
             const prevFields = allFields.filter(
                 field => field.id_item === prevSigner
             );
 
-            console.log("prevField:", prevFields);
+            // console.log("prevField:", prevFields);
 
             const prevStatusList = prevFields.map(field => field.status);
-            console.log("prevStatusList:", prevStatusList);
+            // console.log("prevStatusList:", prevStatusList);
             const prevSubmittedList = prevFields.map(field => field.is_submitted);
-            console.log("prevSubmittedList:", prevSubmittedList);
+            // console.log("prevSubmittedList:", prevSubmittedList);
 
             const allCompleted =
             prevStatusList.length > 0 &&
@@ -557,7 +717,7 @@ function ReceiveDocument() {
 
         setSignedInitials(allFields); 
         setSignedSignatures(allFields);
-        console.log("All Mapped Fields:", allFields);
+        // console.log("All Mapped Fields:", allFields);
 
         const filteredFields = allFields.filter(field => field.id_signers === id_signers);
         setInitial(filteredFields);
@@ -573,7 +733,7 @@ function ReceiveDocument() {
         const jenisItemList = filteredFields.map(field => field.jenis_item);
         setJenisItemList(jenisItemList);
 
-        console.log("Jenis item list:", jenisItemList);
+        // console.log("Jenis item list:", jenisItemList);
 
         const nextSignCompletedList = allFields
             .filter(field => field.prevSigner === id_signers)
@@ -589,9 +749,9 @@ function ReceiveDocument() {
     fetchAllFields();
     }, [id_dokumen, id_signers, urutanMap, allSigners]);
 
-    useEffect(() => {
-        console.log("All sign STATUS:", signStatus);
-    }, [signStatus]);
+    // useEffect(() => {
+    //     console.log("All sign STATUS:", signStatus);
+    // }, [signStatus]);
 
     // const isJenisItemList = jenisItem_list.every(jenis_item => jenis_item !== "Date");
 
@@ -690,186 +850,213 @@ function ReceiveDocument() {
                     <Container fluid className="mt-3 px-0">
                             {loading && <Spinner animation="border" variant="primary" />}
                             {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
-                            {!loading && !errorMsg && pdfUrl && (
-                            <>
-                                <div className="vertical-center">
-                                    <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
-                                      <FaExclamationTriangle className="mb-1 mr-2"/>  {nama} has declined to sign this document.
-                                    </Alert>
-                                    <PDFCanvas pdfUrl={pdfUrl} />
-                                    
-                                    {/* image -- setelah di ttd */}
-                                    {signedInitials.map((sig) => {
-                                        if (!sig || !sig.id_item || sig.show !== true) return null;
+                            {console.log("IS ACCESSED:", isAccessed)}
+                            {isAccessed !== true && (
+                                <Form onSubmit={handleEmailVerify} className="mb-3">
+                                    <Form.Group> 
+                                        <Form.Label>
+                                            Email:
+                                        </Form.Label>
+                                        <Form.Control
+                                            type="email"
+                                            value={inputEmail}
+                                            onChange={(e) => setInputEmail(e.target.value)}
+                                            required />
+                                    </Form.Group>
+                                    <Form.Group> 
+                                        <Form.Label>
+                                            Password:
+                                        </Form.Label>
+                                        <Form.Control
+                                            type="password"
+                                            value={inputPassword}
+                                            onChange={(e) => setInputPassword(e.target.value)}
+                                            required />
+                                    </Form.Group>
+                                    <Button type="submit" variant="primary" className="mt-3" disabled={loading}>{loading ? "Verifying..." : "Verify Email"}</Button>
+                                </Form>
+                            )}
+                            {isAccessed === true && pdfUrl && (
+                                <>
+                                    <div className="vertical-center">
+                                        <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
+                                        <FaExclamationTriangle className="mb-1 mr-2"/>  {nama} has declined to sign this document.
+                                        </Alert>
+                                        <PDFCanvas pdfUrl={pdfUrl} />
+                                        
+                                        {/* image -- setelah di ttd */}
+                                        {signedInitials.map((sig) => {
+                                            if (!sig || !sig.id_item || sig.show !== true) return null;
 
-                                        const isCompleted = sig.status === "Completed";
-                                        const completedNext = sig.is_submitted === true;
-                                        const isDatefield = sig.jenis_item === "Date"
+                                            const isCompleted = sig.status === "Completed";
+                                            const completedNext = sig.is_submitted === true;
+                                            const isDatefield = sig.jenis_item === "Date"
 
-                                        return (
-                                            <Rnd
-                                                key={`${sig.id_signers}-${sig.id_item}`}
-                                                position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
-                                                size={{ width: Number(sig.height), height: Number(sig.width) }}
-                                                enableResizing={sig.enableResizing}
-                                                disableDragging={sig.disableDragging}
-                                                style={{
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                
-                                                }}
-                                            >
-                                                {isCompleted && completedNext && sig.sign_base64 ? (
-                                                    <img
-                                                        src={sig.sign_base64}
-                                                        alt="Initial"
-                                                        style={{ width: "100%", height: "100%" }}
-                                                        // hidden={nextSignCompleted === false}
-                                                    />
-                                                ) : (
-                                                    <></>
-                                                )}
-                                                {isCompleted && completedNext && isDatefield ? (
-                                                    currentDate
-                                                ) : (
-                                                    <></>
-                                                )}
-                                            </Rnd>
-                                        );
-                                    })}
-
-
-                                    {/* field sign */}
-                                    {initial.map((sig) => {
-                                        if (!sig || !sig.id_item || sig.show !== true) return null;
-
-                                        const isCompleted = sig.status === "Completed";
-                                        const isSubmitted = sig.is_submitted === true;
-                                        const isInitialpad = sig.jenis_item === "Initialpad";
-                                        const isSignpad = sig.jenis_item === "Signpad";
-                                        const isDatefield = sig.jenis_item === "Date"
-
-                                        return (
-                                            <Rnd
-                                                key={`${sig.id_signers}-${sig.id_item}`}
-                                                position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
-                                                size={{ width: Number(sig.height), height: Number(sig.width) }}
-                                                enableResizing={sig.enableResizing}
-                                                disableDragging={sig.disableDragging}
-                                                style={{
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    backgroundColor: isCompleted
-                                                        ? "transparent"
-                                                        : "rgba(25, 230, 25, 0.5)",
-                                                    border: isSubmitted ? "none" : "solid 3px rgba(10, 193, 10, 0.5)", 
-                                                    cursor: sig.editable && !isSubmitted ? "pointer" : "default",
-                                                    zIndex: isCompleted? 1 : 2
-                                                }}
-                                                hidden={initial_status.every(status => status === "Decline")}
-                                                onClick={() => {
-                                                    if (sig.editable && !isSubmitted) {
-                                                        if (isInitialpad) {
-                                                            handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                        } else if (isSignpad) {
-                                                            handleSignatureClick(sig.id_item, sig.editable, sig.show);
-                                                        }
-                                                    }
-                                                }}
-                                            >
-                                                {!isSubmitted ? (
-                                                <OverlayTrigger
-                                                    placement="bottom"
-                                                    overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
+                                            return (
+                                                <Rnd
+                                                    key={`${sig.id_signers}-${sig.id_item}`}
+                                                    position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
+                                                    size={{ width: Number(sig.height), height: Number(sig.width) }}
+                                                    enableResizing={sig.enableResizing}
+                                                    disableDragging={sig.disableDragging}
+                                                    style={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                    
+                                                    }}
                                                 >
-                                                    {({ ref, ...triggerHandler }) => (
+                                                    {isCompleted && completedNext && sig.sign_base64 ? (
+                                                        <img
+                                                            src={sig.sign_base64}
+                                                            alt="Initial"
+                                                            style={{ width: "100%", height: "100%" }}
+                                                            // hidden={nextSignCompleted === false}
+                                                        />
+                                                    ) : (
+                                                        <></>
+                                                    )}
+                                                    {isCompleted && completedNext && isDatefield ? (
+                                                        currentDate
+                                                    ) : (
+                                                        <></>
+                                                    )}
+                                                </Rnd>
+                                            );
+                                        })}
+
+
+                                        {/* field sign */}
+                                        {initial.map((sig) => {
+                                            if (!sig || !sig.id_item || sig.show !== true) return null;
+
+                                            const isCompleted = sig.status === "Completed";
+                                            const isSubmitted = sig.is_submitted === true;
+                                            const isInitialpad = sig.jenis_item === "Initialpad";
+                                            const isSignpad = sig.jenis_item === "Signpad";
+                                            const isDatefield = sig.jenis_item === "Date"
+
+                                            return (
+                                                <Rnd
+                                                    key={`${sig.id_signers}-${sig.id_item}`}
+                                                    position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
+                                                    size={{ width: Number(sig.height), height: Number(sig.width) }}
+                                                    enableResizing={sig.enableResizing}
+                                                    disableDragging={sig.disableDragging}
+                                                    style={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        backgroundColor: isCompleted
+                                                            ? "transparent"
+                                                            : "rgba(25, 230, 25, 0.5)",
+                                                        border: isSubmitted ? "none" : "solid 3px rgba(10, 193, 10, 0.5)", 
+                                                        cursor: sig.editable && !isSubmitted ? "pointer" : "default",
+                                                        zIndex: isCompleted? 1 : 2
+                                                    }}
+                                                    hidden={initial_status.every(status => status === "Decline")}
+                                                    onClick={() => {
+                                                        if (sig.editable && !isSubmitted) {
+                                                            if (isInitialpad) {
+                                                                handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                            } else if (isSignpad) {
+                                                                handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                            }
+                                                        }
+                                                    }}
+                                                >
+                                                    {!isSubmitted ? (
+                                                    <OverlayTrigger
+                                                        placement="bottom"
+                                                        overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
+                                                    >
+                                                        {({ ref, ...triggerHandler }) => (
+                                                        <>
+                                                            {isCompleted && sig.sign_base64 ? (
+                                                            <img
+                                                                {...triggerHandler}
+                                                                ref={ref}
+                                                                src={sig.sign_base64}
+                                                                alt="Initial"
+                                                                style={{ width: "100%", height: "100%" }}
+                                                            />
+                                                            ) : (
+                                                                isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> :  <></>
+                                                            )}
+
+                                                            {isCompleted && isDatefield ? (
+                                                                currentDate
+                                                            ) : (
+                                                                isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
+                                                            )}
+                                                        </>
+                                                        )}
+                                                    </OverlayTrigger>
+                                                    ) : (
                                                     <>
                                                         {isCompleted && sig.sign_base64 ? (
                                                         <img
-                                                            {...triggerHandler}
-                                                            ref={ref}
                                                             src={sig.sign_base64}
                                                             alt="Initial"
                                                             style={{ width: "100%", height: "100%" }}
                                                         />
                                                         ) : (
-                                                            isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> :  <></>
+                                                            isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : <></>
                                                         )}
 
                                                         {isCompleted && isDatefield ? (
                                                             currentDate
                                                         ) : (
-                                                            isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
+                                                            isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }}/> : <></>
                                                         )}
                                                     </>
                                                     )}
-                                                </OverlayTrigger>
-                                                ) : (
-                                                <>
-                                                    {isCompleted && sig.sign_base64 ? (
-                                                    <img
-                                                        src={sig.sign_base64}
-                                                        alt="Initial"
-                                                        style={{ width: "100%", height: "100%" }}
-                                                    />
-                                                    ) : (
-                                                        isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : <></>
-                                                    )}
-
-                                                    {isCompleted && isDatefield ? (
-                                                        currentDate
-                                                    ) : (
-                                                        isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }}/> : <></>
-                                                    )}
-                                                </>
-                                                )}
 
 
-                                            </Rnd>
-                                        );
-                                    })}
+                                                </Rnd>
+                                            );
+                                        })}
 
-                                    <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} selectedIdItem={selectedIdItem} selectedSigner={selectedSigner} />
+                                        <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} selectedIdItem={selectedIdItem} selectedSigner={selectedSigner} />
 
-                                    <InitialModal
-                                        showInitialModal={showInitialModal}
-                                        setShowInitialModal={setShowInitialModal}
-                                        onSuccess={handleSignatureSuccess}
-                                        selectedIdItem={selectedIdItem}
-                                        selectedSigner={selectedSigner}
-                                    />
+                                        <InitialModal
+                                            showInitialModal={showInitialModal}
+                                            setShowInitialModal={setShowInitialModal}
+                                            onSuccess={handleSignatureSuccess}
+                                            selectedIdItem={selectedIdItem}
+                                            selectedSigner={selectedSigner}
+                                        />
 
-                                    <DeclineModal
-                                        showDeclineModal={showDeclineModal}
-                                        setShowDeclineModal={setShowDeclineModal}
-                                        onSuccess={handleSignatureSuccess}
-                                        selectedSigner={selectedSigner}
-                                        selectedDocument={selectedDocument}
-                                    />
+                                        <DeclineModal
+                                            showDeclineModal={showDeclineModal}
+                                            setShowDeclineModal={setShowDeclineModal}
+                                            onSuccess={handleSignatureSuccess}
+                                            selectedSigner={selectedSigner}
+                                            selectedDocument={selectedDocument}
+                                        />
 
-                                    <DocInfoModal
-                                        showDocInfoModal={showDocInfoModal}
-                                        setShowDocInfoModal={setShowDocInfoModal}
-                                        onSuccess={handleSignatureSuccess}
-                                        selectedSigner={selectedSigner}
-                                        selectedDocument={selectedDocument}
-                                        signerInfo ={getSelectedSignerInfo()}
-                                    />
+                                        <DocInfoModal
+                                            showDocInfoModal={showDocInfoModal}
+                                            setShowDocInfoModal={setShowDocInfoModal}
+                                            onSuccess={handleSignatureSuccess}
+                                            selectedSigner={selectedSigner}
+                                            selectedDocument={selectedDocument}
+                                            signerInfo ={getSelectedSignerInfo()}
+                                        />
 
-                                    <AuditTrailModal
-                                        showAuditTrailModal={showAuditTrailModal}
-                                        setShowAuditTrailModal={setShowAuditTrailModal}
-                                        onSuccess={handleSignatureSuccess}
-                                        selectedSigner={selectedSigner}
-                                        selectedDocument={selectedDocument}
-                                        signerInfo ={getSelectedSignerInfo()}
-                                    />
-                                    
-                                </div>
-                            </>
+                                        <AuditTrailModal
+                                            showAuditTrailModal={showAuditTrailModal}
+                                            setShowAuditTrailModal={setShowAuditTrailModal}
+                                            onSuccess={handleSignatureSuccess}
+                                            selectedSigner={selectedSigner}
+                                            selectedDocument={selectedDocument}
+                                            signerInfo ={getSelectedSignerInfo()}
+                                        />
+                                        
+                                    </div>
+                                </>  
                             )}
+
                     </Container>   
                 </div>
             </div>

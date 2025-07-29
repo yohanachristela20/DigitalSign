@@ -17,7 +17,7 @@ const AddUser = ({showAddModal, setShowAddModal, onSuccess}) => {
         try {
             const defaultPassword = "cmpi"; 
 
-            const response = await axios.get('http://localhost:5000/last-id', {
+            const response = await axios.get('http://locahost:5000/last-id', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -30,7 +30,7 @@ const AddUser = ({showAddModal, setShowAddModal, onSuccess}) => {
                 newId = `US${incrementedIdNumber}`;
             }
 
-            await axios.post('http://localhost:5000/user', {
+            await axios.post('http://locahost:5000/user', {
                 id_user: newId,
                 email, 
                 password: defaultPassword,

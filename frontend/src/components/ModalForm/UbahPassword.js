@@ -32,7 +32,7 @@ function UbahPassword({ show, onHide }) {
         }
 
         try {
-            const response = await axios.post("http://localhost:5000/change-password", {
+            const response = await axios.post("http://locahost:5000/change-password", {
                 email,
                 role,
                 oldPassword,
@@ -42,7 +42,7 @@ function UbahPassword({ show, onHide }) {
             alert(response.data.message); 
             
 
-            axios.post("http://localhost:5000/logout", {}, {
+            axios.post("http://locahost:5000/logout", {}, {
                   headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
                 }).finally(() => {
                   stopInactivityTimer();

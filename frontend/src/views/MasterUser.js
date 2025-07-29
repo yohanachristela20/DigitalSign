@@ -87,7 +87,7 @@ function MasterUser() {
 
   const getUser = async () =>{
     try {
-      const response = await axios.get("http://localhost:5000/user", {
+      const response = await axios.get("http://locahost:5000/user", {
         headers: {
           Authorization: `Bearer ${token}`,
       },
@@ -103,7 +103,7 @@ function MasterUser() {
 
   const deleteUser = async(id_user) =>{
     try {
-      await axios.delete(`http://localhost:5000/user/${id_user}` , {
+      await axios.delete(`http://locahost:5000/user/${id_user}` , {
         headers: {
           Authorization: `Bearer ${token}`,
       },
@@ -126,7 +126,7 @@ function MasterUser() {
 
     try {
       const response = await axios.get(
-        `http://localhost:5000/user-details/${email}`,
+        `http://locahost:5000/user-details/${email}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -248,7 +248,7 @@ function MasterUser() {
   const setPassword = async(id_user) => {
     try {
 
-        await axios.put(`http://localhost:5000/user/${id_user}`, {
+        await axios.put(`http://locahost:5000/user/${id_user}`, {
         }, {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -274,7 +274,7 @@ function MasterUser() {
 
   const deleteSession = async (id_user, user_active) => {
     try {
-        await axios.post(`http://localhost:5000/logout-user/${id_user}`, {
+        await axios.post(`http://locahost:5000/logout-user/${id_user}`, {
             id_user,
             user_active
         }, {
