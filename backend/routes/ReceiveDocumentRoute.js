@@ -424,7 +424,7 @@ router.get('/doc-info/:id_dokumen/:id_signers', async(req, res) => {
 router.get('/email-sender/:id_karyawan', async(req, res) => {
     const {id_karyawan} = req.params;
 
-    // console.log("ID SENDER:", id_karyawan);
+    console.log("ID SENDER:", id_karyawan);
 
     try {
         const response = await LogSign.findAll({
@@ -433,7 +433,7 @@ router.get('/email-sender/:id_karyawan', async(req, res) => {
             include: [
                 {
                     model: Karyawan, 
-                    as: "Signerr",
+                    as: "Pemohon",
                     attributes: ["id_karyawan", "nama", "organisasi"],
                     include: [{
                         model: User,
@@ -452,11 +452,11 @@ router.get('/email-sender/:id_karyawan', async(req, res) => {
 
         // console.dir(response, { depth: null });
 
-        // const email = response[0]?.Signerr?.Penerima?.email || null;
-        // console.log("SENDER EMAIL:", email);
+        const email = response[0]?.Signerr?.Penerima?.email || null;
+        console.log("SENDER EMAIL:", email);
 
         res.status(200).json(response);
-        // console.log("response:", response); 
+        console.log("RESPONSE EMAIL SENDER:", response); 
     } catch (error) {
         console.log("error:", error.message);
     }

@@ -2,6 +2,10 @@
   background-color: #e8eeff;
 }
 
+.user-bg{
+  background-color: #fa7a6d;
+}
+
 .login-card{
   background-color: #f1faff;
   //#f1faff
@@ -30,8 +34,23 @@
   margin: 0;
 }
 
+.login-user {
+  width: 100%;
+  max-width: 500px;
+  // height: 100%;
+  min-height: 100px;
+  border-radius: 15px;
+  overflow: hidden;
+  background: #ffffff;
+  margin: 0;
+}
+
 .element {
   box-shadow: 4px 4px 10px rgba(73,76,243,0.3); 
+}
+
+.user-element {
+  box-shadow: 4px 4px 10px rgba(73,76,243,0.5); 
 }
 
 .element2 {
@@ -82,8 +101,23 @@
   font-weight: 700;
 }
 
-.font-footer{
+.user-form{
+  color: #2c26ae;
+  font-weight: 700;
+}
+
+.font-footer{ 
   color: #f6735c;
+  font-weight: 400;
+}
+
+.user-font{ 
+  color: red;
+  font-weight: 400;
+}
+
+.user-footer{
+  color: #2c26ae;
   font-weight: 400;
 }
 
@@ -100,6 +134,20 @@
   position: relative;
 }
 
+.sign-in__user {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  // width: 100vw;
+  // height: 100vh;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: relative;
+}
+
+
 .sign-in__backdrop {
   position: absolute;
   inset: 0;
@@ -108,6 +156,12 @@
 
 .sign-in__wrapper .container-fluid {
   max-width: 90%;
+  z-index: 1;
+  animation: showSignInForm 1s;
+}
+
+.sign-in__user {
+  max-width: 100%;
   z-index: 1;
   animation: showSignInForm 1s;
 }

@@ -82,12 +82,12 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
                         const resSenderData = resSender.data;
                         // console.log("SENDER DATA DOC INFO:", resSenderData);
 
-                        if (resSenderData.length > 0 && resSenderData[0]?.Signerr) {
+                        if (resSenderData.length > 0 && resSenderData[0]?.Pemohon && resSenderData[0]?.Pemohon?.Penerima) {
                             const senderInfo = {
                                 id_sender: resSenderData[0].id_karyawan,
-                                nama: resSenderData[0].Signerr.nama,
-                                organisasi: resSenderData[0].Signerr.organisasi,
-                                email_sender: resSenderData[0].Signerr.Penerima?.email,
+                                nama: resSenderData[0].Pemohon.nama,
+                                organisasi: resSenderData[0].Pemohon.organisasi,
+                                email_sender: resSenderData[0].Pemohon.Penerima.email,
                             };
                             // console.log("SENDER INFO DOC INFO:", senderInfo);
                             setSenderData(senderInfo);
