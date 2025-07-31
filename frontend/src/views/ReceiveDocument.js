@@ -99,6 +99,9 @@ function ReceiveDocument() {
     const [inputPassword, setInputPassword] = useState("");
     const [isAccessed, setIsAccessed] = useState(false);
     let [prevFields, setPrevFields] = useState("");
+    let [nextFields, setNextFields] = useState("");
+    const [isPrevFieldForNextSigner, setIsPrevFieldForNextSigner] = useState("");
+    const [isNextField, setIsNextField] = useState("");
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -169,20 +172,9 @@ function ReceiveDocument() {
         setShowInitialModal(true);
         setShow(show);
         setEditable(editable);
-
-        // console.log("Selected signer:", selectedSigner);
-
-        // console.log("Initial clicked:", {
-        //     id_item, 
-        //     signer: clickedField?.id_signers, 
-        //     show,
-        //     editable,
-        // });
     };
 
     const handleDeclineClick = (id_dokumen, id_signers) => {
-        // console.log("ID Dokumen from decline:", id_dokumen);
-        // console.log("ID Signers from decline:", id_signers);
         if (!id_dokumen || !id_signers) {
             console.warn("id_dokumen or id_signers not found.");
             return;
@@ -194,9 +186,6 @@ function ReceiveDocument() {
     };
 
     const handleDocInfoClick = (id_dokumen, id_signers, id_karyawan) => {
-        // console.log("ID Dokumen from docInfo:", id_dokumen);
-        // console.log("ID Signers from docInfo:", id_signers);
-        // console.log("ID Karyawan from docInfo:", id_karyawan);
         if (!id_dokumen || !id_signers) {
             console.warn("id_dokumen or id_signers not found.");
             return;
@@ -209,9 +198,6 @@ function ReceiveDocument() {
     };
 
     const handleAuditTrail = (id_dokumen, id_signers) => {
-        // console.log("ID Dokumen from docInfo:", id_dokumen);
-        // console.log("ID Signers from docInfo:", id_signers);
-        // console.log("ID Karyawan from docInfo:", id_karyawan);
         if (!id_dokumen || !id_signers) {
             console.warn("id_dokumen or id_signers not found.");
             return;
@@ -230,44 +216,6 @@ function ReceiveDocument() {
             hideProgressBar: true,
         });
     };
-
-    // useEffect(() => {
-    //     const storedEmailVerified = localStorage.getItem("emailVerified") === "true";
-    //     const storedIsAccessed = localStorage.getItem("is_accessed") === "true";  
-        
-    //     if (storedEmailVerified) setEmailVerified(true);
-    //     if (storedIsAccessed) setIsAccessed(true);
-    // }, []);
-
-    // useEffect(() => {
-    //     const checkAccessStatus = async() => {
-    //         if (!token) return;
-
-    //         try {
-    //             const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
-    //             const { id_dokumen, id_signers, id_logsign } = docRes.data;
-    //             let accessed = false;
-
-    //             const logsignRes = await axios.get(`http://localhost:5000/access-status?id_logsign=${id_logsign}&id_karyawan=${id_signers}`);
-    //             accessed = logsignRes.data.is_accessed;
-    //             setIsAccessed(accessed);
-
-    //             if (accessed === true) {
-    //                 setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
-    //                 setEmailVerified(true);
-    //                 setVerified(true);
-    //                 setLoading(false);
-    //             }
-
-    //         } catch (error) {
-    //             setIsAccessed(false);
-    //             setEmailVerified(false);
-    //             setPdfUrl("");
-    //         }
-    //     };
-    //     checkAccessStatus();
-    // }, [token]);
-
 
     useEffect(() => {
         const checkAccessStatus = async() => {
@@ -312,60 +260,24 @@ function ReceiveDocument() {
         try {
             const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
             const { id_dokumen, id_signers, id_logsign, id_karyawan } = docRes.data;
-            // let accessed = false;
-            // try {
-            //     const logsignRes = await axios.get(`http://localhost:5000/access-status?id_logsign=${id_logsign}&id_karyawan=${id_signers}`);
-            //     accessed = logsignRes.data.is_accessed;
-            //     setIsAccessed(accessed);
-            // } catch (error) {
-            //     if (err.response && err.response.status === 404) {
-            //         accessed = false;
-            //         setIsAccessed(accessed);
-            //         console.log("Access status: not found, will verify email.");
-            //     } else {
-            //         throw err;
-            //     }
-            // }
-
-            
-            // console.log("Id Karyawan:", id_karyawan);
-            // console.log("Id Logsign:", id_logsign);
-
-            // if (accessed === true) {
-            //     setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
-            //     setEmailVerified(true);
-            //     setVerified(true);
-            //     // setIsAccessed(true);
-            //     setLoading(false);
-            //     return;
-            // }
 
             await axios.post("http://localhost:5000/link-access-log", { token, real_email: inputEmail, password: inputPassword, is_accessed: true });
             setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
             setEmailVerified(true);
             setVerified(true);
             setIsAccessed(true);
-            
-
-            // localStorage.setItem("emailVerified", "true");
-            // localStorage.setItem("is_accessed", "true");
-
+ 
         } catch (error) {
             setErrorMsg("Access Denied: Token doesn't valid or email not found.");
             setEmailVerified(false);
             setPdfUrl("");
             setIsAccessed(false);
 
-            // localStorage.setItem("emailVerified", "false");
-            // localStorage.setItem("is_accessed", "false");
         } finally {
             setLoading(false);
         }
     }
 
-
-    // console.log("isAccessed from db:", isAccessed);
-    // console.log("Email verified:", emailVerified);
 
     const getSelectedSignerInfo = () => {
         return signerData.find(signer => signer.id_signers === selectedSigner && signer.id_karyawan === selectedKaryawan);
@@ -393,11 +305,6 @@ function ReceiveDocument() {
             setAllSigners(allSigners);
             setAllItems(allItems);
             setIdKaryawan(idKaryawan);
-
-            // console.log("Current signer:", currentSigner);
-            // console.log("All ID signer:", allSigners);
-            // console.log("All Id item:", allItems);
-            // console.log("ID Karyawan:", idKaryawan);
             
             const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
             if (!fileRes.ok) {
@@ -413,7 +320,6 @@ function ReceiveDocument() {
             const localDateFields = [];
             const allStatus = [];
             const allSigner = [];
-            // const allSenders = [];
 
             const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
             const itemArray = Array.isArray(allItems) ? allItems : [allItems];
@@ -424,9 +330,8 @@ function ReceiveDocument() {
 
             for (const signer of signerArray) {
                 const resSignerInfo = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
-                    // console.log("RESPONSE DOC INFO:", resSignerInfo);
                     const dataSignerInfo = resSignerInfo.data;
-                    // console.log("DATA DOC INFO:", dataSignerInfo);
+
 
                     if (dataSignerInfo.length > 0 && dataSignerInfo[0]?.Signerr && dataSignerInfo[0]?.DocName) {
                         const signerInfo = {
@@ -436,7 +341,6 @@ function ReceiveDocument() {
                             doc_name: dataSignerInfo[0].DocName.nama_dokumen,
                             email: dataSignerInfo[0].Signerr.Penerima?.email,
                         };
-                        // console.log("SIGNER INFO DOC INFO:", signerInfo);
                         signerData.push(signerInfo);
                     }
 
@@ -510,7 +414,6 @@ function ReceiveDocument() {
                 }
             }
 
-            // console.log("SIGNER DATA FROM RECEIVE:", allSigner);
             setSignerData(allSigner);
 
             setSignatures(localSignatureFields);
@@ -520,9 +423,6 @@ function ReceiveDocument() {
             setUrutanMap(urutanMapping);
             setSubmittedMap(submittedMapping);
 
-            // console.log("UrutanMap:", urutanMapping);
-            // console.log("SubmittedMap:", submittedMap); 
-            
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
             setErrorMsg(error.message);
@@ -535,28 +435,11 @@ function ReceiveDocument() {
         fetchData();
     }, [token]);
 
-    // useEffect(() => {
-    // const verifyAccess = async () => {
-    //     try {
-    //     await axios.post("http://localhost:5000/link-access-log", { token });
-    //     const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
-    //     const { id_dokumen } = docRes.data;
-    //     setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
-    //     setVerified(true);
-    //     } catch (err) {
-    //     setErrorMsg("Please enter the email to verify access.");
-    //     setVerified(false);
-    //     }
-    // };
-    // verifyAccess();
-    // }, [token]);
-    
 
 
     useEffect(() => {
         if (signerData.length === 0) return;
         const foundSigner = signerData.find(s => s.id_signers === id_signers); 
-        // console.log("FOUND SIGNER FROM RECEIVE:", foundSigner);
 
         if (foundSigner) {
             setNama(foundSigner.nama);
@@ -564,8 +447,6 @@ function ReceiveDocument() {
     }, [id_signers, signerData]);
 
     const updateSubmitted = async(id_dokumen, id_signers) => {
-        // console.log("Id Dokumen:", id_dokumen);
-        // console.log("Id Signers:", id_signers);
 
         try {
             const response = await axios.patch(`http://localhost:5000/update-submitted/${id_dokumen}/${id_signers}`, {
@@ -573,7 +454,6 @@ function ReceiveDocument() {
                 status: "Completed",
             });
 
-            // console.log("Document signed submitted:", response);
             toast.success("Document signed successfully.", {
                 position: "top-right", 
                 autoClose: 5000, 
@@ -582,7 +462,6 @@ function ReceiveDocument() {
 
             window.location.reload();
         } catch (error) {
-            // console.log("Failed to save signed document:", error.message);
             toast.error("Failed to save signed document.", {
                 position: "top-right",
                 autoClose: 5000,
@@ -601,16 +480,11 @@ function ReceiveDocument() {
         const signerParam = signerArray.join(",");
         const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
         const initialsData = initialsRes.data;
-        
-        // console.log("Signer array:", signerArray);
-        // console.log("Signer array length:", signerArray.length);
-
         const allFields = [];
 
         for (const signer of signerArray) {
             for (const itemId of itemArray) {
             const currentUrutan = Number(urutanMap[itemId]);
-            // console.log("currentUrutan allFields:", currentUrutan);
             const currentSubmitted = submittedMap[signer];
 
             const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
@@ -621,23 +495,27 @@ function ReceiveDocument() {
             const prevSigner = Object.keys(urutanMap).find(
             key => Number(urutanMap[key]) === currentUrutan - 1
             );
-            // console.log("prevSigner:", prevSigner);
 
-            // console.log("initialsData:", initialsData);
+            const nextSigner = Object.keys(urutanMap).find(
+            key => Number(urutanMap[key]) === currentUrutan + 1
+            );
+
             const initialsForPrevSigner = initialsData.filter(init => init.id_item === prevSigner);
-            // console.log("initialsForPrevSigner:", initialsForPrevSigner);
 
 
             prevFields = allFields.filter(
                 field => field.id_item === prevSigner
             );
 
+            nextFields = allFields.filter(
+                field => field.id_item === nextSigner
+            );
+
             console.log("prevField:", prevFields);
+            console.log("nextField:", nextFields);
 
             const prevStatusList = prevFields.map(field => field.status);
-            // console.log("prevStatusList:", prevStatusList);
             const prevSubmittedList = prevFields.map(field => field.is_submitted);
-            // console.log("prevSubmittedList:", prevSubmittedList);
 
             const allCompleted =
             prevStatusList.length > 0 &&
@@ -694,6 +572,7 @@ function ReceiveDocument() {
                 signer !== id_signers && 
                 !matchInitial?.sign_base64;
             console.log("isPrevFieldForNextSigner:", isPrevFieldForNextSigner);
+            setIsPrevFieldForNextSigner(isPrevFieldForNextSigner);
         
 
             return {
@@ -710,6 +589,7 @@ function ReceiveDocument() {
                 disableDragging: true,
                 show,
                 editable,
+                displayable: true,
                 urutan: currentUrutan,
                 id_dokumen,
                 is_submitted: currentSubmitted,
@@ -743,8 +623,6 @@ function ReceiveDocument() {
         const jenisItemList = filteredFields.map(field => field.jenis_item);
         setJenisItemList(jenisItemList);
 
-        // console.log("Jenis item list:", jenisItemList);
-
         const nextSignCompletedList = allFields
             .filter(field => field.prevSigner === id_signers)
             .map(field => field.is_submitted);
@@ -758,12 +636,6 @@ function ReceiveDocument() {
 
     fetchAllFields();
     }, [id_dokumen, id_signers, urutanMap, allSigners]);
-
-    // useEffect(() => {
-    //     console.log("All sign STATUS:", signStatus);
-    // }, [signStatus]);
-
-    // const isJenisItemList = jenisItem_list.every(jenis_item => jenis_item !== "Date");
 
     const nonDateItems = jenisItem_list
     .map((jenis_item, index) => ({jenis_item, status: initial_status[index]}))
@@ -1051,7 +923,7 @@ function ReceiveDocument() {
                                     })} */}
 
 
-                                     {signedInitials.map((sig) => {
+                                    {signedInitials.map((sig) => {
                                         if (!sig || !sig.id_item || sig.show !== true) return null;
 
                                         const isCompleted = sig.status === "Completed";
@@ -1062,31 +934,83 @@ function ReceiveDocument() {
                                         const isPrevField = sig.prevFieldDisplay === true;
                                         const completedNext = sig.is_submitted === true;
                                         const urutan = sig.urutan;
+                                        const prevSigner = sig.prevSigner; //item field
+                                        const currentSigner = sig.id_signers;
+                                        const currentItem = sig.id_item;
+                                        const nextSigner = sig.nextSigner;
 
-                                        console.log("URUTAN:", urutan);
+                                        console.log("prevFieldForNextSigner signedInitial:", isPrevFieldForNextSigner);
 
                                         const isFirstSigner = urutan === 1;
 
-                                        const showImage = isCompleted && completedNext && sig.sign_base64;
+                                        const showImage = sig.sign_base64;
                                         const showDate = isCompleted && completedNext && isDatefield;
 
-                                         const backgroundColor = isCompleted
-                                            ? "transparent"
-                                            : isCompleted && isPrevField && !isFirstSigner && !isSubmitted
-                                            ? " rgba(25, 230, 25, 0.5)"
-                                            : "rgba(86, 90, 90, 0.5)";
+                                        const prevField = signedInitials.find(field => field.id_item === prevSigner);
+                                        const prevNotSubmitted = prevField && (
+                                            prevField.status !== "Completed" || prevField.is_submitted !== true
+                                        );
+                                     
 
-                                        const borderStyle = isPrevField
-                                            ? "solid 5px rgba(86, 90, 90, 0.5)"
-                                            : "solid 5px rgba(25, 230, 25, 0.5)";
+                                        const bgFirst = 
+                                        isPrevFieldForNextSigner 
+                                        ? "transparent"
+                                        : !isSubmitted 
+                                        ? "rgba(86, 90, 90, 0.5)"
+                                        : isFirstSigner && !isCompleted
+                                        ? "rgba(86, 90, 90, 0.5)"
+                                        : isSubmitted 
+                                        ? "transparent"
+                                        : "transparent";
+
+                                        const bgOthers = 
+                                        !isPrevFieldForNextSigner 
+                                        ? "transparent"
+                                        : !isSubmitted 
+                                        ? "rgba(86, 90, 90, 0.5)"
+                                        : isFirstSigner && !isCompleted
+                                        ? "rgba(86, 90, 90, 0.5)"
+                                        : isSubmitted 
+                                        ? "transparent"
+                                        : "transparent";
+
+                                        const firstBorderStyle = 
+                                        isPrevFieldForNextSigner
+                                        ? "transparent"
+                                        : !isSubmitted 
+                                        ? "solid 5px rgba(86, 90, 90, 0.5)"
+                                        : isFirstSigner && !isCompleted 
+                                        ? "solid 5px rgba(86, 90, 90, 0.5)"
+                                        : isSubmitted
+                                        ? "transparent"
+                                        : "transparent";
+
+                                        const otherBorderStyle = 
+                                        !isPrevFieldForNextSigner && isFirstSigner
+                                        ? "transparent"
+                                        : !isSubmitted  
+                                        ? "solid 5px rgba(86, 90, 90, 0.5)"
+                                        // : isFirstSigner 
+                                        // ? "solid 5px rgba(86, 90, 90, 0.5)"
+                                        : isSubmitted && !isFirstSigner
+                                        ? "transparent"
+                                        : "transparent";
+
+                                        const firstSignerMessage = 
+                                        !isSubmitted && !isPrevFieldForNextSigner
+                                        ? <p className="text-center">Previous sign didn't complete</p>
+                                        : "";
+
+                                        const otherSignerMessage = 
+                                        isPrevFieldForNextSigner
+                                        ? <p className="text-center">Previous sign didn't complete</p>
+                                        : "";
 
                                         const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
 
-
                                         return (
                                             <>
-                                                {!isPrevField ? (
-                                                    <Rnd
+                                                 <Rnd
                                                         key={`${sig.id_signers}-${sig.id_item}`}
                                                         position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
                                                         size={{ width: Number(sig.height), height: Number(sig.width) }}
@@ -1096,10 +1020,24 @@ function ReceiveDocument() {
                                                             display: "flex",
                                                             alignItems: "center",
                                                             justifyContent: "center",
-                                                            backgroundColor,
-                                                            border: borderStyle,
+                                                            backgroundColor: isFirstSigner? bgFirst : bgOthers,
+                                                            border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
                                                             zIndex: zIndexStyle,
-                                                        
+                                                            cursor: isFirstSigner ? 
+                                                            sig.editable && !isSubmitted && isPrevFieldForNextSigner ? "pointer" : "default"
+                                                            : !isFirstSigner ? 
+                                                            sig.editable && !isSubmitted && !isPrevFieldForNextSigner ? "pointer" : "default"
+                                                            : "",
+                                                        }}
+                                                        onClick={() => {
+                                                            if (sig.prevFieldDisplay) return;
+                                                            if (sig.editable && !isSubmitted && isPrevFieldForNextSigner) {
+                                                                if (isInitialpad) {
+                                                                    handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                                } else if (isSignpad) {
+                                                                    handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                                }
+                                                            }
                                                         }}
                                                     >
                                                         {isCompleted && completedNext && sig.sign_base64 ? (
@@ -1107,8 +1045,11 @@ function ReceiveDocument() {
                                                                 src={sig.sign_base64}
                                                                 alt="Initial"
                                                                 style={{ width: "100%", height: "100%" }}
-                                                                // hidden={completeSubmitted === false}
                                                             />
+                                                        ) : isFirstSigner ? (
+                                                            firstSignerMessage
+                                                        ) : !isFirstSigner ? (
+                                                            otherSignerMessage
                                                         ) : (
                                                             <></>
                                                         )}
@@ -1118,75 +1059,6 @@ function ReceiveDocument() {
                                                         <></>
                                                         )}
                                                     </Rnd>
-                                                ) : (
-                                                    <Rnd
-                                                        key={`${sig.id_signers}-${sig.id_item}`}
-                                                        position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
-                                                        size={{ width: Number(sig.height), height: Number(sig.width) }}
-                                                        enableResizing={sig.enableResizing}
-                                                        disableDragging={sig.disableDragging}
-                                                        style={{
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                            backgroundColor,
-                                                            border: borderStyle,
-                                                            zIndex: zIndexStyle,
-                                                        }}
-                                                        hidden={initial_status.every(status => status === "Decline")}
-                                                        >
-                                                        {!completedNext ? (
-                                                            <OverlayTrigger
-                                                            placement="bottom"
-                                                            overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
-                                                            >
-                                                            {({ ref, ...triggerHandler }) => (
-                                                                <>
-                                                                {!isPrevField ? (
-                                                                    <img
-                                                                    {...triggerHandler}
-                                                                    ref={ref}
-                                                                    src={sig.sign_base64}
-                                                                    alt="Signature"
-                                                                    style={{ width: "100%", height: "100%" }}
-                                                                    />
-                                                                ) : isInitialpad ? (
-                                                                    <p className="text-center">Previous sign didn't complete</p>
-                                                                ) : isSignpad && !isFirstSigner && !showImage? (
-                                                                    <p className="text-center">Previous sign didn't complete</p>
-                                                                ) : null}
-
-                                                                {showDate ? (
-                                                                    currentDate
-                                                                ) : isDatefield ? (
-                                                                    <p className="text-center">Previous sign didn't complete</p>
-                                                                ) : null}
-                                                                </>
-                                                            )}
-                                                            </OverlayTrigger>
-                                                        ) : (
-                                                            <>
-                                                            {showImage ? (
-                                                                <img
-                                                                src={sig.sign_base64}
-                                                                alt="Signature"
-                                                                style={{ width: "100%", height: "100%" }}
-                                                                />
-                                                            ) : isInitialpad ? (
-                                                                <p className="text-center">Previous sign didn't complete</p>
-                                                            ) : isSignpad && !isFirstSigner && !showImage ? (
-                                                                <p className="text-center">Previous sign didn't complete</p>
-                                                            ) : null}
-
-                                                            {showDate ? (
-                                                                currentDate
-                                                            ) : isDatefield ? (
-                                                                <p className="text-center">Previous sign didn't complete</p>
-                                                            ) : null}
-                                                            </>
-                                                        )}
-                                                    </Rnd>
-                                                )}
                                             </>
                                         );
                                     })}
@@ -1200,7 +1072,40 @@ function ReceiveDocument() {
                                         const isInitialpad = sig.jenis_item === "Initialpad";
                                         const isSignpad = sig.jenis_item === "Signpad";
                                         const isDatefield = sig.jenis_item === "Date";
+                                        const isPrevField = sig.prevFieldDisplay === true;
+                                        const prevSigner = sig.prevSigner; //item field
+                                        const urutan = sig.urutan;
+                                        const isFirstSigner = urutan === 1;
+                                        const currentSigner = sig.id_signers;
+                                        const currentItem = sig.id_item;
+                                        const nextSigner = sig.nextSigner;
+
+                                        console.log("prevFieldForNextSigner initial:", isPrevFieldForNextSigner);
+
+                                        const prevField = signedInitials.find(field => field.id_item === prevSigner);
+                                        const prevNotSubmitted = prevField && (
+                                            prevField.status !== "Completed" || prevField.is_submitted !== true
+                                        );
                                         
+
+                                        //FIX PLISSS JGN DIUBAH!!!
+                                        const borderStyle = !isSubmitted
+                                        ? "solid 5px rgba(25, 230, 25, 0.5)"
+                                        : isFirstSigner && !isCompleted 
+                                        ? "solid 5px rgba(25, 230, 25, 0.5)"
+                                        : isSubmitted
+                                        ? "transparent"
+                                        : "transparent";
+
+                                        const backgroundColor = isPrevField 
+                                        ? "rgba(86, 90, 90, 0.5)"
+                                        : prevNotSubmitted 
+                                        ? "rgba(86, 90, 90, 0.5)"
+                                        : isFirstSigner && isCompleted && !isPrevFieldForNextSigner
+                                        ? "solid 5px rgba(86, 90, 90, 0.5)"
+                                        : !isPrevFieldForNextSigner
+                                        ? "solid 5px rgba(86, 90, 90, 0.5)"
+                                        : "solid 5px rgba(86, 90, 90, 0.5)";
 
                                         return (
                                             <Rnd
@@ -1213,11 +1118,20 @@ function ReceiveDocument() {
                                                     display: "flex",
                                                     alignItems: "center",
                                                     justifyContent: "center",
-                                                    backgroundColor: isCompleted
+                                                    backgroundColor: 
+                                                        !isCompleted
+                                                        ? "rgba(25, 230, 25, 0.5)"
+                                                        : isFirstSigner && !isCompleted
+                                                        ? "rgba(25, 230, 25, 0.5)"
+                                                        : isSubmitted 
                                                         ? "transparent"
-                                                        : "rgba(25, 230, 25, 0.5)",
-                                                    border: isSubmitted ? "none" : "solid 3px rgba(10, 193, 10, 0.5)", 
-                                                    cursor: sig.editable && !isSubmitted ? "pointer" : "default",
+                                                        : "transparent",
+                                                    border: borderStyle, 
+                                                    cursor: isFirstSigner ? 
+                                                    sig.editable && !isSubmitted && isPrevFieldForNextSigner ? "pointer" : "default"
+                                                    : !isFirstSigner ? 
+                                                    sig.editable && !isSubmitted && !isPrevFieldForNextSigner ? "pointer" : "default"
+                                                    : "",
                                                     zIndex: isCompleted? 1 : 2
                                                 }}
                                                 hidden={initial_status.every(status => status === "Decline")}
