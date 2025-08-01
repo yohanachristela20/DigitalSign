@@ -34,11 +34,11 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
     const token = queryParams.get("token");
 
     useEffect(() => {
-        console.log("AuditTrailModal receive id_signers:", selectedSigner);
-        console.log("AuditTrailModal show AuditTrailModal:", showAuditTrailModal);
-        console.log("AuditTrailModal receive id_dokumen:", selectedDocument);
-        console.log("AuditTrailModal receive id_karyawan:", selectedKaryawan);
-        console.log("AuditTrailModal signerInfo:", signerInfo);
+        // console.log("AuditTrailModal receive id_signers:", selectedSigner);
+        // console.log("AuditTrailModal show AuditTrailModal:", showAuditTrailModal);
+        // console.log("AuditTrailModal receive id_dokumen:", selectedDocument);
+        // console.log("AuditTrailModal receive id_karyawan:", selectedKaryawan);
+        // console.log("AuditTrailModal signerInfo:", signerInfo);
     }, [selectedSigner, showAuditTrailModal, selectedDocument, selectedKaryawan, signerInfo]);
 
 
@@ -52,14 +52,14 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
                 setIdSigner(id_signers);
-                console.log("ID SIGNERS:", id_signers); 
+                // console.log("ID SIGNERS:", id_signers); 
 
                 const idKaryawan = res.data.id_karyawan;
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
                 const karyawanArray = Array.isArray(idKaryawan) ? idKaryawan : [idKaryawan];
 
-                console.log("signerArray:", signerArray);
-                console.log("Karyawan Array:", karyawanArray);
+                // console.log("signerArray:", signerArray);
+                // console.log("Karyawan Array:", karyawanArray);
 
                 const signerData = [];
 
@@ -87,18 +87,18 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                         }
 
                         const filteredSigner = signerData.filter(s => s.id_signers === signer);
-                        console.log("Filtered Signer Data:", filteredSigner);
+                        // console.log("Filtered Signer Data:", filteredSigner);
 
                         const status_list = filteredSigner.map(s => s.status);
                         setStatusList(status_list);
 
                         // console.log("Status List:", status_list);
 
-                        console.log("Sender:", sender);
+                        // console.log("Sender:", sender);
 
                         const resSender = await axios.get(`http://localhost:5000/email-sender/${sender}`);
                         const resSenderData = resSender.data;
-                        console.log("Res Sender Data:", resSenderData);
+                        // console.log("Res Sender Data:", resSenderData);
 
                         if (resSenderData.length > 0 && resSenderData[0]?.Pemohon && resSenderData[0]?.Pemohon?.Penerima) {
                             const senderInfo = {
@@ -113,7 +113,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                 }
 
                 setSignerData(signerData);
-                console.log("AUDIT TRAIL:", signerData);
+                // console.log("AUDIT TRAIL:", signerData);
 
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
@@ -151,7 +151,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
     }
 
     const updateStatus = async(id_dokumen, signerID) => {
-        console.log("Data update status:", id_dokumen, signerID);
+        // console.log("Data update status:", id_dokumen, signerID);
 
         try {
             const response = await axios.patch(`http://localhost:5000/update-status/${id_dokumen}/${signerID}`, {
@@ -160,7 +160,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
 
             sendEmailDecline(id_dokumen, signerID, reason, token);
 
-            console.log("Signer status updated:", response.data);
+            // console.log("Signer status updated:", response.data);
             toast.success("Decline document successful.", {
                 position: "top-right", 
                 autoClose: 5000,
@@ -174,7 +174,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
     };
 
     const sendEmailDecline = async(id_dokumen, signerID, reason) => {
-        console.log("sendEmailDecline: ", id_dokumen, signerID, reason, token);
+        // console.log("sendEmailDecline: ", id_dokumen, signerID, reason, token);
 
         try {
             const responseDecline = await axios.post('http://localhost:5000/send-decline-email', {
@@ -190,7 +190,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                 hideProgressBar: true,
             });
 
-            console.log("Decline sign document successfully.", responseDecline);
+            // console.log("Decline sign document successfully.", responseDecline);
         } catch (error) {
             console.error("Failed to send decline email:", error.message);
             toast.error("Failed to send decline email.");

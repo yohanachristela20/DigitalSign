@@ -16,6 +16,7 @@ import InitialModal from "components/ModalForm/InitialModal.js";
 import DeclineModal from "components/ModalForm/DeclineModal.js";
 import DocInfoModal from "components/ModalForm/DocInfoModal.js";
 import AuditTrailModal from "components/ModalForm/AuditTrailModal.js";
+import DelegateModal from "components/ModalForm/DelegateModal.js";
 
 import "../assets/scss/lbd/_receivedoc.scss";
 import "../assets/scss/lbd/_usernavbar.scss";
@@ -45,6 +46,7 @@ function ReceiveDocument() {
     const [showDeclineModal, setShowDeclineModal] = useState(false);
     const [showDocInfoModal, setShowDocInfoModal] = useState(false);
     const [showAuditTrailModal, setShowAuditTrailModal] = useState(false);
+    const [showDelegateModal, setShowDelegateModal] = useState(false);
 
     const [selectedIdItem, setSelectedIdItem] = useState([]);
     
@@ -176,6 +178,17 @@ function ReceiveDocument() {
         setSelectedSigner(id_signers);
         setSelectedDocument(id_dokumen);
         setShowDeclineModal(true);
+    };
+
+     const handleDelegateClick = (id_dokumen, id_signers) => {
+        if (!id_dokumen || !id_signers) {
+            console.warn("id_dokumen or id_signers not found.");
+            return;
+        }
+
+        setSelectedSigner(id_signers);
+        setSelectedDocument(id_dokumen);
+        setShowDelegateModal(true);
     };
 
     const handleDocInfoClick = (id_dokumen, id_signers, id_karyawan) => {
@@ -662,6 +675,14 @@ function ReceiveDocument() {
                         <div className="divider" hidden={initial_status.every(status => status === "Decline" || status === "Completed")}></div>
                         <Dropdown.Item
                             href="#"
+                            onClick={() => handleDelegateClick(id_dokumen, id_signers)}
+                            hidden={initial_status.every(status => status === "Decline" || status === "Completed")}
+                        >
+                            Delegate
+                        </Dropdown.Item>
+                        <div className="divider" hidden={initial_status.every(status => status === "Decline" || status === "Completed")}></div>
+                        <Dropdown.Item
+                            href="#"
                             onClick={() => handleDocInfoClick(id_dokumen, id_signers, id_karyawan)}
                         >
                             Document Info
@@ -1013,6 +1034,14 @@ function ReceiveDocument() {
                                     <DeclineModal
                                         showDeclineModal={showDeclineModal}
                                         setShowDeclineModal={setShowDeclineModal}
+                                        onSuccess={handleSignatureSuccess}
+                                        selectedSigner={selectedSigner}
+                                        selectedDocument={selectedDocument}
+                                    />
+
+                                    <DelegateModal 
+                                        showDelegateModal={showDelegateModal}
+                                        setShowDelegateModal={setShowDelegateModal}
                                         onSuccess={handleSignatureSuccess}
                                         selectedSigner={selectedSigner}
                                         selectedDocument={selectedDocument}

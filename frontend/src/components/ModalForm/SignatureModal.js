@@ -23,11 +23,11 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
     const token = queryParams.get("token");
 
     useEffect(() => {
-        console.log("SignatureModal receive id_item:", selectedIdItem);
-        console.log("show SignatureModal:", showSignatureModal);
-        console.log("Selected signer:", selectedSigner);
-        console.log("Show from initial modal:", show);
-        console.log("Editable from initial modal:", editable);
+        // console.log("SignatureModal receive id_item:", selectedIdItem);
+        // console.log("show SignatureModal:", showSignatureModal);
+        // console.log("Selected signer:", selectedSigner);
+        // console.log("Show from initial modal:", show);
+        // console.log("Editable from initial modal:", editable);
     }, [selectedIdItem, showSignatureModal, selectedSigner, show, editable]);
 
     useEffect(() => {
@@ -43,9 +43,9 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
                 const id_item = res.data.id_item;
                 setIdItem(id_item);
 
-                console.log("ID Dokumen:", id_dokumen);
-                console.log("ID Signers:", id_signers);
-                console.log("ID Item: ", id_item);
+                // console.log("ID Dokumen:", id_dokumen);
+                // console.log("ID Signers:", id_signers);
+                // console.log("ID Item: ", id_item);
 
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
                 const itemArray = Array.isArray(id_item) ? id_item : [id_item];
@@ -73,7 +73,7 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
                     }
                 }
                 setSignerData(allSignerData);
-                console.log("Signer data:", signerData);
+                // console.log("Signer data:", signerData);
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
             } 
@@ -90,7 +90,7 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
     }
 
     const updateSignature = async (id_dokumen, id_item, id_signers, selectedSigner) => {
-        console.log("Data update signature:", "id_dokumen:", id_dokumen, "id_item:",id_item, "id_signers:", id_signers, "selectedSigner:", selectedSigner);
+        // console.log("Data update signature:", "id_dokumen:", id_dokumen, "id_item:",id_item, "id_signers:", id_signers, "selectedSigner:", selectedSigner);
 
         const today = new Date(); 
         if (!id_dokumen || !id_item || !id_signers) {
@@ -100,9 +100,9 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
 
         const sign_base64 = getSignatureImageBase64();
 
-        console.log("Signbase64:", sign_base64);
-        console.log("sign_base64 type:", typeof sign_base64);
-        console.log("sign_base64 size:", sign_base64?.length);
+        // console.log("Signbase64:", sign_base64);
+        // console.log("sign_base64 type:", typeof sign_base64);
+        // console.log("sign_base64 size:", sign_base64?.length);
 
         if (!sign_base64 || typeof sign_base64 !== 'string') {
             toast.error("Signature is empty.");
@@ -124,7 +124,7 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
                 }
             );
 
-            console.log("Signer logsign updated:", response.data);
+            // console.log("Signer logsign updated:", response.data);
             setShowSignatureModal(false);
 
             if (onSuccess) {
@@ -145,8 +145,8 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
             return;
         }
 
-        console.log("type of base64Signature:", typeof base64Signature);
-        console.log("base64Signature size:", base64Signature.length);
+        // console.log("type of base64Signature:", typeof base64Signature);
+        // console.log("base64Signature size:", base64Signature.length);
         setShowSignatureModal(false);
 
         await updateSignature(id_dokumen, selectedSigner.id_item, selectedSigner.id_signers, selectedSigner);
@@ -160,8 +160,8 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
     };
 
     if (!selectedSigner || !selectedSigner.id_item) return null;
-    console.log("Selected signer:", selectedSigner);
-    console.log("Selected id item:", selectedSigner.id_item);
+    // console.log("Selected signer:", selectedSigner);
+    // console.log("Selected id item:", selectedSigner.id_item);
 
     return(
         <>

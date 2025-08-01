@@ -22,6 +22,7 @@ const LogSign = db.define('log_sign', {
     repeat_freq: DataTypes.STRING, 
     is_download: DataTypes.BOOLEAN,
     is_submitted: DataTypes.BOOLEAN,
+    is_delegated: DataTypes.BOOLEAN,
     sign_base64: DataTypes.TEXT('long'),
     urutan: DataTypes.INTEGER,
     id_dokumen: {
@@ -41,6 +42,14 @@ const LogSign = db.define('log_sign', {
         }
     }, 
     id_signers: {
+        type: DataTypes.STRING,
+        allowNull:true,
+        references: {
+            model: Karyawan,
+            key: 'id_karyawan'
+        }
+    }, 
+    delegated_signers: {
         type: DataTypes.STRING,
         allowNull:true,
         references: {

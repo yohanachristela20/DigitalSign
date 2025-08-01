@@ -27,11 +27,11 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
     // console.log("TOKEN FROM DOCINFO MODAL:", token);
 
     useEffect(() => {
-        console.log("DocInfoModal receive id_signers:", selectedSigner);
-        console.log("DocInfoModal show DocInfoModal:", showDocInfoModal);
-        console.log("DocInfoModal receive id_dokumen:", selectedDocument);
-        console.log("DocInfoModal receive id_karyawan:", selectedKaryawan);
-        console.log("DocInfoModal signerInfo:", signerInfo);
+        // console.log("DocInfoModal receive id_signers:", selectedSigner);
+        // console.log("DocInfoModal show DocInfoModal:", showDocInfoModal);
+        // console.log("DocInfoModal receive id_dokumen:", selectedDocument);
+        // console.log("DocInfoModal receive id_karyawan:", selectedKaryawan);
+        // console.log("DocInfoModal signerInfo:", signerInfo);
     }, [selectedSigner, showDocInfoModal, selectedDocument, selectedKaryawan, signerInfo]);
 
 

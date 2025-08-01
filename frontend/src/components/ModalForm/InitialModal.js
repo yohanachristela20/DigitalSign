@@ -30,10 +30,10 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     const token = queryParams.get("token");
 
     useEffect(() => {
-        console.log("InitialModal receive id_item:", selectedIdItem);
-        console.log("InitialModal show initialmodal:", showInitialModal);
-        console.log("Show from initial modal:", show);
-        console.log("Editable from initial modal:", editable);
+        // console.log("InitialModal receive id_item:", selectedIdItem);
+        // console.log("InitialModal show initialmodal:", showInitialModal);
+        // console.log("Show from initial modal:", show);
+        // console.log("Editable from initial modal:", editable);
     }, [selectedIdItem, showInitialModal, show, editable]);
 
 
@@ -87,7 +87,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     const handleRadioChange = (e, id_item) => {
         const value = e.target.value;
         setSelectedValues(prev => ({ ...prev, [id_item]: value }));
-        console.log(`Selected value ${id_item}:`, value);
+        // console.log(`Selected value ${id_item}:`, value);
     };
 
     const handleInitialChange = (id_item, value) => {
@@ -158,14 +158,14 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     };
 
     const updateInitialSign = async (id_dokumen, id_item, id_signers, selectedSigner) => {
-    console.log("Data dokumen:", id_dokumen, id_item, id_signers);
+    // console.log("Data dokumen:", id_dokumen, id_item, id_signers);
     const fontKey = selectedValues[id_item];
     const font = fontMap[fontKey] || "Arial";
     const today = new Date();
 
         try {
             const sign_base64 = await generateImageBase64(selectedSigner.nama, font);
-            console.log("Hasil Base64:", sign_base64?.substring(0, 100));
+            // console.log("Hasil Base64:", sign_base64?.substring(0, 100));
 
             if (!sign_base64) {
                 toast.error("Failed to generate initial sign.");
@@ -182,7 +182,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
                 },
             });
 
-            console.log("Signer logsign updated: ", response.data);
+            // console.log("Signer logsign updated: ", response.data);
             toast.success("InitialSign uploaded successfully.", {
                 position: "top-right",
                 autoClose: 5000,

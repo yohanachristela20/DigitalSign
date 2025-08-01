@@ -584,6 +584,27 @@ router.patch('/update-status/:id_dokumen/:id_signers', async(req, res) => {
     }
 });
 
+
+router.patch('/delegate-doc/:id_dokumen/:id_signers', async(req, res) => {
+    const {id_dokumen, id_signers} = req.params;
+    const {is_delegated, delegated_signers} = req.body;
+
+    try {
+        const response = await LogSign.update(
+            {is_delegated, delegated_signers},
+            {
+                where: {id_dokumen, id_signers},
+            }
+        );
+
+        res.status(200).json(response);
+    } catch (error) {
+        console.error("Failed to delegate document.", error.message);
+        res.status(500).json({message: error.message});
+    }
+});
+
+
 router.post('/send-decline-email', async(req, res) => {
     try {
         const {id_dokumen, signerID, reason, token} = req.body;
@@ -619,12 +640,42 @@ router.post('/send-decline-email', async(req, res) => {
     }
 });
 
-const sendEmailDeclineInternal = async(declineLink, reason, id_dokumen, signerID, documentName) => {
-    // console.log("declineLink", declineLink);
-    // console.log("reason:", reason);
-    // console.log("id_dokumen:", id_dokumen);
-    // console.log("signerID:", signerID);
+router.post('/send-delegate-email', async(req, res) => {
+    try {
+        const {id_dokumen, delegated_signers, token} = req.body;
 
+        let emailResults = [];
+
+        // console.log("RECEIVE DECLINE DATA:", "ID Dokumen:", id_dokumen, "signerID:", signerID, "reason:", reason, "token:", token);
+        const delegateLink = `http://localhost:3000/user/envelope?token=${token}`;
+
+        const docName = await LogSign.findOne({
+            where: {id_dokumen: id_dokumen}, 
+            include: [{
+                model: Dokumen, 
+                as: "DocName",
+                attributes: ["nama_dokumen"]
+            }], 
+            attributes: ["id_dokumen"]
+        });
+
+        const documentName = docName?.DocName?.nama_dokumen;
+        // console.log("DOC NAME:", documentName);
+
+        await sendEmailDelegateInternal(delegateLink, id_dokumen, delegated_signers, documentName);
+        emailResults.push({delegated_signers, message: 'Delegate email sent successfully.'});
+
+        res.status(200).json({
+            message: 'Delegate email processed.',
+            results: emailResults,
+        });
+    } catch (error) {
+        console.log("Failed to send delegate email:", error.message);
+        res.status(500).json({ message: "Failed to send delegate email." });
+    }
+});
+
+const sendEmailDeclineInternal = async(declineLink, reason, id_dokumen, signerID, documentName) => {
     try {
         const transporter = nodemailer.createTransport({
             service: "gmail", 
@@ -681,6 +732,66 @@ const sendEmailDeclineInternal = async(declineLink, reason, id_dokumen, signerID
 
     } catch (error) {
         console.error("Failed to send decline email:", error.message);
+        throw error;
+    }
+};
+
+const sendEmailDelegateInternal = async(delegateLink, id_dokumen, delegated_signers, documentName) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            service: "gmail", 
+            auth: {
+                user: process.env.EMAIL_ADMIN, 
+                pass: process.env.EMAIL_PASS_ADMIN, 
+            }
+        });
+
+        const existingLog = await LogSign.findOne({
+            where: {id_dokumen: id_dokumen, delegated_signers}, 
+        });
+
+        if (!existingLog) {
+            console.warn(`Document ${id_dokumen} already deleted, skipping email.`);
+            return;
+        }
+
+        const receiver = await Karyawan.findOne({
+            where: {id_karyawan: delegated_signers}, 
+            include: [{
+                model: User, 
+                as: "Penerima", 
+                attributes: ["email"]
+            }], 
+            attributes: ["id_karyawan"]
+        }); 
+
+        if (!receiver?.Penerima?.email) {
+            console.warn(`Email not found for signer ${delegated_signers}`);
+            return;
+        }
+
+        const receiverEmail = receiver.Penerima.email;
+        // const senderName = await Karyawan.findOne({where: {id_karyawan: id_karyawan}});
+        const receiverName = await Karyawan.findOne({where: {id_karyawan: delegated_signers}});
+
+        const mailOptions = {
+        from: process.env.EMAIL_ADMIN,
+        to: receiverEmail,
+        subject: `You need to sign: ${documentName}`,
+        // html: <a href={declineLink}>Click link</a>, 
+        text: `${receiverName?.nama || "Signer"}, You are delegated to sign a document ${documentName}}.\n
+          Please review and check the document before signing it.\n
+          Click link to sign the document ${signLink}\n\n
+          Please do not share this email and the link attached with others.\n
+          Regards, \n
+          Campina Sign.`
+        };
+
+        await transporter.sendMail(mailOptions);
+        // console.log(`Email sent to ${receiverEmail} for signer ${signerID}`);
+
+    } catch (error) {
+        console.error("Failed to send delegate email:", error.message);
         throw error;
     }
 }

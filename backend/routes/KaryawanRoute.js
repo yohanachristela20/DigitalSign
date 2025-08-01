@@ -13,7 +13,8 @@ import {getKaryawan,
         updateKaryawan, 
         deleteKaryawan,
         getLastKaryawanId, 
-        getKaryawanDetails
+        getKaryawanDetails,
+        karyawanDetails
 } from "../controllers/KaryawanController.js"; 
 
 const router = express.Router(); 
@@ -42,6 +43,7 @@ router.patch('/employee/:id_karyawan', updateKaryawan);
 router.delete('/employee/:id_karyawan', deleteKaryawan);
 router.get('/getLastKaryawanId', getLastKaryawanId);
 router.get('/employee-details', getKaryawanDetails);
+router.get('/detailKaryawan', karyawanDetails);
 
 router.post('/employee/import-csv', upload.single("csvfile"), (req,res) => {
         if (!req.file) {
