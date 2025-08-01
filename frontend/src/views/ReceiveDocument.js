@@ -20,7 +20,6 @@ import AuditTrailModal from "components/ModalForm/AuditTrailModal.js";
 import "../assets/scss/lbd/_receivedoc.scss";
 import "../assets/scss/lbd/_usernavbar.scss";
 import "../assets/scss/lbd/_login.scss";
-import { get } from "jquery";
 
 function ReceiveDocument() {
     const [pdfUrl, setPdfUrl] = useState(null);
@@ -111,8 +110,6 @@ function ReceiveDocument() {
 
     const currentDate = `${day} ${month} ${year}`;
 
-    // console.log("Current date:", currentDate);
-
     const mobileSidebarToggle = (e) => {
         e.preventDefault();
         document.documentElement.classList.toggle("nav-open");
@@ -144,7 +141,6 @@ function ReceiveDocument() {
 
     const handleSignatureClick = (id_item, show, editable) => {
         const signer = signatures.find(i => i.id_item === id_item);
-        // console.log("Signer from signature click:", signer);
         if (signer) {
             setSelectedIdItem(id_item);
             setSelectedSigner(signer);
@@ -152,15 +148,12 @@ function ReceiveDocument() {
             setShow(show);
             setEditable(editable);
 
-            // console.log("Data from signature click:", "id_item:", id_item, "show:", show, "editable:", editable);
         }
     };
 
     const handleInitialClick = (id_item, show, editable) => {
-        // console.log("Id Item initial click:", id_item);
         
         const clickedField = initials.find(i => i.id_item === id_item);
-        // console.log("Signer from initial click:", clickedField);
         
         if (!clickedField) {
             console.warn(`handleInitialClick: No initial field found for id_item: ${id_item}`);
@@ -480,53 +473,64 @@ function ReceiveDocument() {
         const signerParam = signerArray.join(",");
         const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
         const initialsData = initialsRes.data;
-        const allFields = [];
+        const fieldBuffer = [];
 
         for (const signer of signerArray) {
             for (const itemId of itemArray) {
-            const currentUrutan = Number(urutanMap[itemId]);
-            const currentSubmitted = submittedMap[signer];
+                const currentUrutan = Number(urutanMap[itemId]);
+                const currentSubmitted = submittedMap[signer];
 
-            const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
-            const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
+                const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
+                const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
+                const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
 
-            const signerInitials = initialsData.filter(init => init.id_signers === signer);
+                for (const field of signerFields) {
+                    const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
+                    const base64 = matchInitial?.sign_base64;
+                    const formattedBase64 = base64?.startsWith("data:image")? base64 : base64 ? `data:image/png;base64,${base64}` : null;
 
-            const prevSigner = Object.keys(urutanMap).find(
-            key => Number(urutanMap[key]) === currentUrutan - 1
-            );
+                    fieldBuffer.push({
+                        id_item: field.id_item,
+                        id_signers: signer,
+                        sign_base64: formattedBase64,
+                        status: matchInitial?.status || "Pending", 
+                        nama: matchInitial?.Signerr?.nama || "-", 
+                        x_axis: field.ItemField?.x_axis || 0,
+                        y_axis: field.ItemField?.y_axis || 0,
+                        width: field.ItemField?.width || 0,
+                        height: field.ItemField?.height || 0,
+                        enableResizing: false,
+                        disableDragging: true,
+                        jenis_item: field.ItemField?.jenis_item || "", 
+                        urutan: currentUrutan, 
+                        id_dokumen, 
+                        is_submitted: currentSubmitted,
+                        rawField: field,
+                    });
+                }
+            }
+        }
 
-            const nextSigner = Object.keys(urutanMap).find(
-            key => Number(urutanMap[key]) === currentUrutan + 1
-            );
+        const allFields = fieldBuffer.map(field => {
+            const {urutan: currentUrutan, id_item, id_signers} = field;
+            const prevSignerItem = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan - 1);
+            setPrevFields(prevSignerItem);
 
-            const initialsForPrevSigner = initialsData.filter(init => init.id_item === prevSigner);
+            const nextSignerItem = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan + 1);
+            setNextFields(nextSignerItem);
 
+            const prevFields = fieldBuffer.filter(f => f.id_item === prevSignerItem);
+            const nextFields = fieldBuffer.filter(f => f.id_item === nextSignerItem);
 
-            prevFields = allFields.filter(
-                field => field.id_item === prevSigner
-            );
+            const prevStatusList = prevFields.map(f => f.status);
+            const prevSubmittedList = prevFields.map(f => f.is_submitted);
 
-            nextFields = allFields.filter(
-                field => field.id_item === nextSigner
-            );
-
-            console.log("prevField:", prevFields);
-            console.log("nextField:", nextFields);
-
-            const prevStatusList = prevFields.map(field => field.status);
-            const prevSubmittedList = prevFields.map(field => field.is_submitted);
-
-            const allCompleted =
-            prevStatusList.length > 0 &&
-            prevStatusList.every(status => status === "Completed") &&
-            prevSubmittedList.every(is_submitted => is_submitted === true);
-
-            setCompleteSubmitted(allCompleted);
+            const allCompleted = prevStatusList.length > 0 && 
+            prevStatusList.every(s => s === "Completed") && 
+            prevSubmittedList.every(s => s === true);
 
             let show = true;
             let editable = true;
-            
 
             if (signerArray.length > 1) {
                 if (currentUrutan === 1) {
@@ -535,10 +539,10 @@ function ReceiveDocument() {
                 } else if (prevStatusList.length === 0) {
                     show = false;
                     editable = false;
-                } else if (prevStatusList.every(status => status === "Completed") && prevSubmittedList.every(is_submitted => is_submitted === true)) {
+                } else if (allCompleted) {
                     show = true;
                     editable = true;
-                } else if (prevStatusList.every(status => status === "Pending") || prevSubmittedList.every(is_submitted => is_submitted !== true)) {
+                } else if (prevSubmittedList.every(s => s !== true)) {
                     show = false;
                     editable = false;
                 } else {
@@ -547,67 +551,33 @@ function ReceiveDocument() {
                 }
             }
 
-            const nextSign = Object.keys(urutanMap).find(
-            key => Number(urutanMap[key]) === currentUrutan + 1
-            );
+            if (field.jenis_item === "Date") {
+                show = true;
+                editable = false;
+            }
 
-            const nextSignerInitials = initialsData.filter(init => init.id_signers === nextSign);
-            const nextSignerSubmitted = submittedMap[nextSign];
+            const nextSignerInitials = initialsData.filter(init => init.id_signers === nextSignerItem);
+            const nextSignerSubmitted = submittedMap[nextSignerItem];
             const nextSignCompleted = nextSignerInitials.length > 0 && nextSignerSubmitted === true;
 
-            const mappedFields = signerFields.map(field => {
-            const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
-            const base64 = matchInitial?.sign_base64;
-            const formattedBase64 = base64?.startsWith("data:image")
-                ? base64
-                : base64 ? `data:image/png;base64,${base64}` : null;
+            const isPrevFieldForNextSigner = nextSignerItem && field.id_signers !== id_signers && !field.sign_base64;
 
-            if (field.ItemField?.jenis_item === "Date") {
-                show = true;
-                editable = false; 
-            }
-
-            const isPrevFieldForNextSigner = 
-                nextSign === nextSign &&
-                signer !== id_signers && 
-                !matchInitial?.sign_base64;
-            console.log("isPrevFieldForNextSigner:", isPrevFieldForNextSigner);
             setIsPrevFieldForNextSigner(isPrevFieldForNextSigner);
-        
+            setCompleteSubmitted(allCompleted);
 
             return {
-                id_item: field.id_item,
-                id_signers: signer,
-                sign_base64: formattedBase64,
-                status: matchInitial?.status || "Pending",
-                nama: matchInitial?.Signerr?.nama || "-",
-                x_axis: field.ItemField?.x_axis || 0,
-                y_axis: field.ItemField?.y_axis || 0,
-                width: field.ItemField?.width || 50,
-                height: field.ItemField?.height || 50,
-                enableResizing: false,
-                disableDragging: true,
-                show,
+                ...field,
+                show, 
                 editable,
-                displayable: true,
-                urutan: currentUrutan,
-                id_dokumen,
-                is_submitted: currentSubmitted,
-                nextSigner: nextSign,
-                prevSigner,
-                nextSignCompleted,
-                jenis_item: field.ItemField?.jenis_item || "",
+                prevSigner: prevSignerItem,
+                nextSigner: nextSignerItem, 
+                nextSignCompleted, 
                 prevFieldDisplay: isPrevFieldForNextSigner,
             };
-            });
-
-            allFields.push(...mappedFields);
-            }
-        }
+        });
 
         setSignedInitials(allFields); 
         setSignedSignatures(allFields);
-        console.log("All Mapped Fields:", allFields);
 
         const filteredFields = allFields.filter(field => field.id_signers === id_signers);
         setInitial(filteredFields);
@@ -642,6 +612,7 @@ function ReceiveDocument() {
     .filter(item => item.jenis_item !== "Date");
 
     const isNonDateCompleted = nonDateItems.every(item => item.status === "Completed");
+    const currentItemId = initial.find(sig => sig.show && !sig.is_submitted)?.id_item;
 
     return (
         <>
@@ -787,141 +758,7 @@ function ReceiveDocument() {
                                     <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
                                     <FaExclamationTriangle className="mb-1 mr-2"/>  {nama} has declined to sign this document.
                                     </Alert>
-                                    <PDFCanvas pdfUrl={pdfUrl} />
-                                    
-                                    {/* image -- setelah di ttd */}
-                                    {/* {signedInitials.map((sig) => {
-                                        if (!sig || !sig.id_item || sig.show !== true) return null;
-
-                                        const isCompleted = sig.status === "Completed";
-                                        const isSubmitted = sig.is_submitted === true;
-                                        const isDatefield = sig.jenis_item === "Date";
-                                        const isInitialpad = sig.jenis_item === "Initialpad";
-                                        const isSignpad = sig.jenis_item === "Signpad";
-                                        const isPrevField = sig.prevFieldDisplay === true;
-                                        const completedNext = sig.is_submitted === true;
-
-                                        const showImage = isCompleted && completedNext && sig.sign_base64;
-                                        const showDate = isCompleted && completedNext && isDatefield;
-
-                                         const backgroundColor = isSubmitted
-                                            ? "transparent"
-                                            : isPrevField && !isFirstSigner && !isSubmitted
-                                            ? " rgba(25, 230, 25, 0.5)"
-                                            : "rgba(86, 90, 90, 0.5)";
-
-                                        const borderStyle = isPrevField
-                                            ? "solid 5px rgba(86, 90, 90, 0.5)"
-                                            : "solid 5px rgba(25, 230, 25, 0.5)";
-
-                                        const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
-
-
-                                        return (
-                                            <>
-                                                {!isPrevField ? (
-                                                    <Rnd
-                                                        key={`${sig.id_signers}-${sig.id_item}`}
-                                                        position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
-                                                        size={{ width: Number(sig.height), height: Number(sig.width) }}
-                                                        enableResizing={sig.enableResizing}
-                                                        disableDragging={sig.disableDragging}
-                                                        style={{
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                        
-                                                        }}
-                                                    >
-                                                        {isCompleted && completedNext && sig.sign_base64 ? (
-                                                            <img
-                                                                src={sig.sign_base64}
-                                                                alt="Initial"
-                                                                style={{ width: "100%", height: "100%" }}
-                                                                // hidden={completeSubmitted === false}
-                                                            />
-                                                        ) : (
-                                                            <></>
-                                                        )}
-                                                        {isCompleted && completedNext && isDatefield ? (
-                                                            currentDate
-                                                        ) : (
-                                                        <></>
-                                                        )}
-                                                    </Rnd>
-                                                ) : (
-                                                    <Rnd
-                                                        key={`${sig.id_signers}-${sig.id_item}`}
-                                                        position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
-                                                        size={{ width: Number(sig.height), height: Number(sig.width) }}
-                                                        enableResizing={sig.enableResizing}
-                                                        disableDragging={sig.disableDragging}
-                                                        style={{
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                            backgroundColor,
-                                                            border: borderStyle,
-                                                            zIndex: zIndexStyle,
-                                                        }}
-                                                        hidden={initial_status.every(status => status === "Decline")}
-                                                        >
-                                                        {!completedNext ? (
-                                                            <OverlayTrigger
-                                                            placement="bottom"
-                                                            overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
-                                                            >
-                                                            {({ ref, ...triggerHandler }) => (
-                                                                <>
-                                                                {!isPrevField ? (
-                                                                    <img
-                                                                    {...triggerHandler}
-                                                                    ref={ref}
-                                                                    src={sig.sign_base64}
-                                                                    alt="Initial"
-                                                                    style={{ width: "100%", height: "100%" }}
-                                                                    />
-                                                                ) : isInitialpad ? (
-                                                                    <p className="text-center">Previous sign didn't complete</p>
-                                                                ) : isSignpad ? (
-                                                                    <p className="text-center">Previous sign didn't complete</p>
-                                                                ) : null}
-
-                                                                {showDate ? (
-                                                                    currentDate
-                                                                ) : isDatefield ? (
-                                                                    <p className="text-center">Previous sign didn't complete</p>
-                                                                ) : null}
-                                                                </>
-                                                            )}
-                                                            </OverlayTrigger>
-                                                        ) : (
-                                                            <>
-                                                            {showImage ? (
-                                                                <img
-                                                                src={sig.sign_base64}
-                                                                alt="Initial"
-                                                                style={{ width: "100%", height: "100%" }}
-                                                                />
-                                                            ) : isInitialpad ? (
-                                                                <p className="text-center">Previous sign didn't complete</p>
-                                                            ) : isSignpad ? (
-                                                                <p className="text-center">Previous sign didn't complete</p>
-                                                            ) : null}
-
-                                                            {showDate ? (
-                                                                currentDate
-                                                            ) : isDatefield ? (
-                                                                <p className="text-center">Previous sign didn't complete</p>
-                                                            ) : null}
-                                                            </>
-                                                        )}
-                                                    </Rnd>
-                                                )}
-                                            </>
-                                        );
-                                    })} */}
-
+                                    <PDFCanvas pdfUrl={pdfUrl} />                           
 
                                     {signedInitials.map((sig) => {
                                         if (!sig || !sig.id_item || sig.show !== true) return null;
@@ -936,74 +773,49 @@ function ReceiveDocument() {
                                         const urutan = sig.urutan;
                                         const prevSigner = sig.prevSigner; //item field
                                         const currentSigner = sig.id_signers;
-                                        const currentItem = sig.id_item;
+                                        const currentItem = sig.id_item === currentItemId;
                                         const nextSigner = sig.nextSigner;
 
-                                        console.log("prevFieldForNextSigner signedInitial:", isPrevFieldForNextSigner);
-
+                                        
                                         const isFirstSigner = urutan === 1;
 
                                         const showImage = sig.sign_base64;
                                         const showDate = isCompleted && completedNext && isDatefield;
 
-                                        const prevField = signedInitials.find(field => field.id_item === prevSigner);
-                                        const prevNotSubmitted = prevField && (
-                                            prevField.status !== "Completed" || prevField.is_submitted !== true
-                                        );
-                                     
-
-                                        const bgFirst = 
-                                        isPrevFieldForNextSigner 
-                                        ? "transparent"
-                                        : !isSubmitted 
-                                        ? "rgba(86, 90, 90, 0.5)"
-                                        : isFirstSigner && !isCompleted
-                                        ? "rgba(86, 90, 90, 0.5)"
+                                        
+                                        // FIX UNTUK FIRST SIGNER
+                                        const bgFirst = currentItem 
+                                        ? "transparent" 
                                         : isSubmitted 
                                         ? "transparent"
-                                        : "transparent";
+                                        : "rgba(86, 90, 90, 0.2)";
 
-                                        const bgOthers = 
-                                        !isPrevFieldForNextSigner 
-                                        ? "transparent"
-                                        : !isSubmitted 
-                                        ? "rgba(86, 90, 90, 0.5)"
-                                        : isFirstSigner && !isCompleted
-                                        ? "rgba(86, 90, 90, 0.5)"
+                                        const bgOthers = currentItem 
+                                        ? "transparent" 
                                         : isSubmitted 
                                         ? "transparent"
-                                        : "transparent";
+                                        : "rgba(86, 90, 90, 0.2)";
 
-                                        const firstBorderStyle = 
-                                        isPrevFieldForNextSigner
+                                        const firstBorderStyle = currentItem
                                         ? "transparent"
-                                        : !isSubmitted 
-                                        ? "solid 5px rgba(86, 90, 90, 0.5)"
-                                        : isFirstSigner && !isCompleted 
-                                        ? "solid 5px rgba(86, 90, 90, 0.5)"
                                         : isSubmitted
                                         ? "transparent"
-                                        : "transparent";
+                                        : "solid 5px rgba(86, 90, 90, 0.3)";
 
-                                        const otherBorderStyle = 
-                                        !isPrevFieldForNextSigner && isFirstSigner
+                                        const otherBorderStyle = currentItem 
                                         ? "transparent"
-                                        : !isSubmitted  
-                                        ? "solid 5px rgba(86, 90, 90, 0.5)"
-                                        // : isFirstSigner 
-                                        // ? "solid 5px rgba(86, 90, 90, 0.5)"
-                                        : isSubmitted && !isFirstSigner
+                                        : isSubmitted
                                         ? "transparent"
-                                        : "transparent";
+                                        : "solid 5px rgba(86, 90, 90, 0.3)";
 
                                         const firstSignerMessage = 
-                                        !isSubmitted && !isPrevFieldForNextSigner
-                                        ? <p className="text-center">Previous sign didn't complete</p>
+                                        !isSubmitted && !currentItem
+                                        ? <p className="text-center">Another sign didn't complete</p>
                                         : "";
 
                                         const otherSignerMessage = 
-                                        isPrevFieldForNextSigner
-                                        ? <p className="text-center">Previous sign didn't complete</p>
+                                        !currentItem
+                                        ? <p className="text-center">Another sign didn't complete</p>
                                         : "";
 
                                         const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
@@ -1020,18 +832,14 @@ function ReceiveDocument() {
                                                             display: "flex",
                                                             alignItems: "center",
                                                             justifyContent: "center",
-                                                            backgroundColor: isFirstSigner? bgFirst : bgOthers,
+                                                            backgroundColor: isFirstSigner ? bgFirst : bgOthers,
                                                             border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
                                                             zIndex: zIndexStyle,
-                                                            cursor: isFirstSigner ? 
-                                                            sig.editable && !isSubmitted && isPrevFieldForNextSigner ? "pointer" : "default"
-                                                            : !isFirstSigner ? 
-                                                            sig.editable && !isSubmitted && !isPrevFieldForNextSigner ? "pointer" : "default"
-                                                            : "",
+                                                            cursor: sig.editable && !isSubmitted && currentItem ? "pointer" : "default",
                                                         }}
                                                         onClick={() => {
                                                             if (sig.prevFieldDisplay) return;
-                                                            if (sig.editable && !isSubmitted && isPrevFieldForNextSigner) {
+                                                            if (sig.editable && !isSubmitted && currentItem) {
                                                                 if (isInitialpad) {
                                                                     handleInitialClick(sig.id_item, sig.show, sig.editable);
                                                                 } else if (isSignpad) {
@@ -1080,8 +888,6 @@ function ReceiveDocument() {
                                         const currentItem = sig.id_item;
                                         const nextSigner = sig.nextSigner;
 
-                                        console.log("prevFieldForNextSigner initial:", isPrevFieldForNextSigner);
-
                                         const prevField = signedInitials.find(field => field.id_item === prevSigner);
                                         const prevNotSubmitted = prevField && (
                                             prevField.status !== "Completed" || prevField.is_submitted !== true
@@ -1127,11 +933,7 @@ function ReceiveDocument() {
                                                         ? "transparent"
                                                         : "transparent",
                                                     border: borderStyle, 
-                                                    cursor: isFirstSigner ? 
-                                                    sig.editable && !isSubmitted && isPrevFieldForNextSigner ? "pointer" : "default"
-                                                    : !isFirstSigner ? 
-                                                    sig.editable && !isSubmitted && !isPrevFieldForNextSigner ? "pointer" : "default"
-                                                    : "",
+                                                    cursor: sig.editable && !isSubmitted && currentItem ? "pointer" : "default",
                                                     zIndex: isCompleted? 1 : 2
                                                 }}
                                                 hidden={initial_status.every(status => status === "Decline")}
