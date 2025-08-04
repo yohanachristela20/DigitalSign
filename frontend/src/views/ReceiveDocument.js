@@ -34,12 +34,14 @@ function ReceiveDocument() {
     const [fields, setFields] = useState([]);
     const [id_dokumen, setIdDokumen] = useState("");
     const [id_signers, setIdSigner] = useState("");
+    const [delegated_signers, setDelegatedSigners] = useState("");
     const [id_karyawan, setIdKaryawan] = useState("");
     const [id_item, setIdItem] = useState("");
     const [sign_base64, setSignBase64] = useState("");
     const [status, setStatus] = useState([]);
     const [signStatus, setSignStatus] = useState([]);
     const [nama, setNama] = useState("");
+    const [main_signer, setMainSigner] = useState("");
 
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
     const [showInitialModal, setShowInitialModal] = useState(false);
@@ -77,6 +79,8 @@ function ReceiveDocument() {
     const [allSigners, setAllSigners] = useState("");
     // const [is_submitted, setIsSubmitted] = useState("");
     const [submittedMap, setSubmittedMap] = useState({});
+    const [delegatedMap, setDelegatedMap] = useState({});
+
     const [completeSubmitted, setCompleteSubmitted] = useState("");
     const [nextSigner, setNextSigner] = useState("");
     const [nextSignCompleted, setNextSignCompleted] = useState("");
@@ -92,6 +96,7 @@ function ReceiveDocument() {
     const [initial_status, setInitialStatus] = useState([]);
     const [submitted_list, setSubmittedList] = useState([]);
     const [jenisItem_list, setJenisItemList] = useState([]);
+    const [delegate_status, setDelegateStatus] = useState([]);
 
     const [verified, setVerified] = useState(false);
     const [inputEmail, setInputEmail] = useState("");
@@ -103,6 +108,7 @@ function ReceiveDocument() {
     let [nextFields, setNextFields] = useState("");
     const [isPrevFieldForNextSigner, setIsPrevFieldForNextSigner] = useState("");
     const [isNextField, setIsNextField] = useState("");
+    const [finalSignerId, setFinalSignerId] = useState("");
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -301,6 +307,21 @@ function ReceiveDocument() {
             const currentSigner = res.data.currentSigner;
             const allItems = res.data.id_item;
             const idKaryawan = res.data.id_karyawan;
+            const delegated_signers = res.data.delegated_signers || null;
+            const is_delegated = res.data.is_delegated;
+
+            // console.log("allSigners:", allSigners);
+            // console.log("currentSigner:", currentSigner);
+            console.log("isDelegated:", is_delegated);
+
+            const finalSignerId = allSigners || currentSigner || delegated_signers;
+            setDelegatedSigners(delegated_signers);
+            // setDelegatedMap({ [finalSignerId] : is_delegated });
+
+            // if (!delegatedMap[signer]) {
+            //     delegatedMap[signer] = is_delegated; 
+            // }
+
 
             if (!id_dokumen || !allSigners || !urutan || !allItems || !idKaryawan) {
                 throw new Error("Missing id_dokumen, id_signers, id_item, id_karyawan or urutan from token.");
@@ -311,6 +332,12 @@ function ReceiveDocument() {
             setAllSigners(allSigners);
             setAllItems(allItems);
             setIdKaryawan(idKaryawan);
+            setFinalSignerId(finalSignerId);
+
+
+            console.log("set finalSignerId:", finalSignerId);
+            console.log("Delegated:", delegated_signers);
+
             
             const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
             if (!fileRes.ok) {
@@ -327,12 +354,20 @@ function ReceiveDocument() {
             const allStatus = [];
             const allSigner = [];
 
-            const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
+            
+            console.log("finalSignerId:", finalSignerId);
+
+            const signerArray = Array.isArray(finalSignerId) ? finalSignerId : [finalSignerId];
             const itemArray = Array.isArray(allItems) ? allItems : [allItems];
             const karyawanArray = Array.isArray(idKaryawan) ? idKaryawan : [idKaryawan];
 
+            console.log("Signer Array:", signerArray);
+
             const urutanMapping = {};
             const submittedMapping = {};
+            const delegateMapping = {};
+
+
 
             for (const signer of signerArray) {
                 const resSignerInfo = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
@@ -350,6 +385,8 @@ function ReceiveDocument() {
                         signerData.push(signerInfo);
                     }
 
+                    
+
                 const response = await axios.get(`http://localhost:5000/decline/${id_dokumen}/${signer}`);
                 const data = response.data;
 
@@ -359,11 +396,22 @@ function ReceiveDocument() {
                         nama: data[0].Signerr.nama,
                     });
                 }
+
+                setSignerData(allSigner);
+                console.log("Signer Data:", signerData);
+                // console.log("id_signers Signer Data:", signerData[0]?.id_signers);
+
+                const mainSignerInfo = signerData.find(s => s.is_delegated === true) || signerData[0];
+                console.log("mainSignerInfo:", mainSignerInfo);
+                const mainSigner = mainSignerInfo?.id_signers;
+                setMainSigner(mainSigner);
                 
                 for (const itemID of itemArray) {
-                    const fieldRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemID}`);
+                    console.log("Axis Field:", id_dokumen, mainSigner, itemID)
+                    const fieldRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${mainSigner}/${itemID}`);
 
                     const validFields = fieldRes.data.filter(item => item.ItemField);
+                    console.log("validFields:", validFields);
 
                     for (let idx = 0; idx < validFields.length; idx++) {
                         const item = validFields[idx];
@@ -379,6 +427,7 @@ function ReceiveDocument() {
                         const status = item.status || "Pending";
                         const urutan = item.urutan;
                         const is_submitted = item.is_submitted;
+                        // const is_delegated = item.is_delegated;
 
                         if (!urutanMapping[fieldItemId]) {
                             urutanMapping[fieldItemId] = urutan;
@@ -388,8 +437,12 @@ function ReceiveDocument() {
                             submittedMapping[signer] = is_submitted;
                         }
 
+                        // if (!delegateMapping[signer]) {
+                        //     delegateMapping[signer] = is_delegated;
+                        // }
+
                         const fieldObj = {
-                            id: `field-${signer}-${idx}`,
+                            id: `field-${mainSigner}-${idx}`,
                             x_axis,
                             y_axis,
                             width,
@@ -404,7 +457,9 @@ function ReceiveDocument() {
                             is_submitted, 
                             show,
                             editable,
-                            id_signers: currentSigner, 
+                            id_signers: mainSigner, 
+                            is_delegated,
+                            delegated_signers,
                         }; 
 
                         allStatus.push({id_item: fieldItemId, status});
@@ -420,14 +475,13 @@ function ReceiveDocument() {
                 }
             }
 
-            setSignerData(allSigner);
-
             setSignatures(localSignatureFields);
             setInitials(localInitialFields);
             setDateField(localDateFields);
             setSignStatus(allStatus);
             setUrutanMap(urutanMapping);
             setSubmittedMap(submittedMapping);
+            setDelegatedMap(delegateMapping);
 
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
@@ -441,6 +495,7 @@ function ReceiveDocument() {
         fetchData();
     }, [token]);
 
+    console.log("Initials:", initials);
 
 
     useEffect(() => {
@@ -484,18 +539,65 @@ function ReceiveDocument() {
         const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
         const itemArray = Array.isArray(allItems) ? allItems : [allItems];
         const signerParam = signerArray.join(",");
+
         const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
         const initialsData = initialsRes.data;
         const fieldBuffer = [];
+
+        // for (const signer of signerArray) {
+        //     for (const itemId of itemArray) {
+        //         const currentUrutan = Number(urutanMap[itemId]);
+        //         const currentSubmitted = submittedMap[signer];
+        //         const currentDelegated = delegatedMap[signer] || false;
+
+        //         const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
+        //         const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
+        //         const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
+
+        //         for (const field of signerFields) {
+        //             const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
+        //             const base64 = matchInitial?.sign_base64;
+        //             const formattedBase64 = base64?.startsWith("data:image")? base64 : base64 ? `data:image/png;base64,${base64}` : null;
+
+        //             fieldBuffer.push({
+        //                 id_item: field.id_item,
+        //                 id_signers: signer,
+        //                 sign_base64: formattedBase64,
+        //                 status: matchInitial?.status || "Pending", 
+        //                 nama: matchInitial?.Signerr?.nama || "-", 
+        //                 x_axis: field.ItemField?.x_axis || 0,
+        //                 y_axis: field.ItemField?.y_axis || 0,
+        //                 width: field.ItemField?.width || 0,
+        //                 height: field.ItemField?.height || 0,
+        //                 enableResizing: false,
+        //                 disableDragging: true,
+        //                 jenis_item: field.ItemField?.jenis_item || "", 
+        //                 urutan: currentUrutan, 
+        //                 id_dokumen, 
+        //                 is_submitted: currentSubmitted,
+        //                 rawField: field,
+        //                 is_delegated: currentDelegated,
+        //                 nowSigner: finalSignerId,
+        //                 delegated_signers,
+        //             });
+        //         }
+        //     }
+        // }
 
         for (const signer of signerArray) {
             for (const itemId of itemArray) {
                 const currentUrutan = Number(urutanMap[itemId]);
                 const currentSubmitted = submittedMap[signer];
+                const currentDelegated = delegatedMap[signer] || false;
 
-                const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
+                let querySigner = signer;
+                if (currentDelegated === true) {
+                    querySigner = id_signers;
+                }
+
+                const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${querySigner}/${itemId}`);
                 const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
-                const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
+                const signerInitials = initialsData.filter(init => init.id_signers === querySigner && init.id_item === itemId);
 
                 for (const field of signerFields) {
                     const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
@@ -504,7 +606,7 @@ function ReceiveDocument() {
 
                     fieldBuffer.push({
                         id_item: field.id_item,
-                        id_signers: signer,
+                        id_signers: querySigner,
                         sign_base64: formattedBase64,
                         status: matchInitial?.status || "Pending", 
                         nama: matchInitial?.Signerr?.nama || "-", 
@@ -519,6 +621,9 @@ function ReceiveDocument() {
                         id_dokumen, 
                         is_submitted: currentSubmitted,
                         rawField: field,
+                        is_delegated: currentDelegated,
+                        nowSigner: finalSignerId,
+                        delegated_signers,
                     });
                 }
             }
@@ -592,13 +697,22 @@ function ReceiveDocument() {
         setSignedInitials(allFields); 
         setSignedSignatures(allFields);
 
+        console.log("All fields:", allFields);
+
+
         const filteredFields = allFields.filter(field => field.id_signers === id_signers);
         setInitial(filteredFields);
         setSignature(filteredFields);
         setDateField(filteredFields);
 
+        console.log("Initials data:", initial);
+        console.log("Signature data:", signature);
+
         const statusList = filteredFields.map(field => field.status);
         setInitialStatus(statusList);
+
+        const delegateList = filteredFields.map(field => field.is_delegated);
+        setDelegateStatus(delegateList);
 
         const submittedList = filteredFields.map(field => field.is_submitted);
         setSubmittedList(submittedList);
@@ -776,9 +890,9 @@ function ReceiveDocument() {
                         {isAccessed === true && pdfUrl && (
                             <div className="center-object">
                                 <div className="vertical-center">
-                                    <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
+                                    {/* <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
                                     <FaExclamationTriangle className="mb-1 mr-2"/>  {nama} has declined to sign this document.
-                                    </Alert>
+                                    </Alert> */}
                                     <PDFCanvas pdfUrl={pdfUrl} />                           
 
                                     {signedInitials.map((sig) => {

@@ -462,9 +462,10 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     const urutan = JSON.parse(localStorage.getItem("urutan") || "[]");
     const id_item = JSON.parse(localStorage.getItem("id_item") || "[]");
     const id_karyawan = JSON.parse(localStorage.getItem("id_karyawan") || "[]");
+    const delegated_signers = JSON.parse(localStorage.getItem("delegated_signers") || "[]");
 
     if (logsigns.length > 0) {
-      await sendEmailNotification(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan);
+      await sendEmailNotification(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers);
     } else {
       console.warn("No logsigns found.");
     }
@@ -481,7 +482,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
-  const sendEmailNotification = async(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan) => {
+  const sendEmailNotification = async(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers) => {
     console.log("Urutan dari sendemail:", urutan);
     try {
         const response = await axios.get(`http://localhost:5000/logsign-link/${id_dokumen}`, {
@@ -496,7 +497,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         messagee: [message],
         urutan: logsigns.map(log=> log.urutan),
         id_item: logsigns.map(log => log.id_item),
-        id_karyawan:  logsigns.map(log => log.id_karyawan),
+        id_karyawan: logsigns.map(log => log.id_karyawan),
+        delegated_signers: logsigns.map(log => log.delegated_signers),
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -754,7 +756,10 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       
       const logsigns = createdItems.map((item, index) => {
       const signerId = items[index].id_karyawan;
+      const delegateSignerId = items[index].delegated_signers;
       const cardData = documentCards.find(card => card.id_karyawan === signerId);
+
+      console.log("delegateSignerId:", delegateSignerId);
 
           return {
             action: "Created", 
@@ -765,6 +770,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             id_item: item.id_item,
             subject,
             message,
+            delegated_signers: delegateSignerId,
             // urutan: cardData?.urutan?? index + 1,
             urutan: Number(cardData?.urutan) || index + 1,
             };
@@ -775,6 +781,9 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
       const signerIds = logsigns.map(log => log.id_signers);
       localStorage.setItem("id_signers", JSON.stringify(signerIds));
+
+      const delegateIds = logsigns.map(log => log.delegated_signers);
+      localStorage.setItem("delegated_signers:", delegateIds);
 
       const urutanList = logsigns.map(log => log.urutan);
       localStorage.setItem("urutan", JSON.stringify(urutanList));

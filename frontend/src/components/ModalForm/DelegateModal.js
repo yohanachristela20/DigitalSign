@@ -27,14 +27,6 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
 
-    // console.log("TOKEN FROM DECLINE MODAL:", token);
-
-    useEffect(() => {
-        // console.log("DelegateModal receive id_signers:", selectedSigner);
-        // console.log("DelegateModal show DelegateModal:", showDelegateModal);
-        // console.log("DelegateModal receive id_dokumen:", selectedDocument);
-    }, [selectedSigner, showDelegateModal, selectedDocument]);
-
     useEffect(() => {
         const fetchData = async () => {
             if (!token ) return;
@@ -45,7 +37,7 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
                 setIdSigner(id_signers);
-                console.log("ID SIGNERS:", id_signers);
+                // console.log("ID SIGNERS:", id_signers);
 
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
 
@@ -63,7 +55,7 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                     }
                 }
 
-                console.log("SIGNER DATA:", allSigners);
+                // console.log("SIGNER DATA:", allSigners);
                 setSignerData(allSigners);
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
@@ -76,7 +68,6 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
     useEffect(() => {
         if (!selectedSigner || signerData.length === 0) return;
         const found = signerData.find(s => s.id_signers === selectedSigner);
-        // console.log("FOUND SIGNER:", found);
         if (found) {
             setNama(found.nama);
             setSignerID(found.id_signers)
@@ -86,8 +77,12 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
 
     const handleSubmit = async(e, signerID) => {
         e.preventDefault();
+
+        if (!selectedEmployee?.value){
+            toast.error("Please choose a delegate signer.");
+            return;
+        }
         await updateDelegate(id_dokumen, signerID);
-        // window.location.reload();
     }
 
     const getName = async() => {
@@ -98,7 +93,7 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                 }
             });
 
-            console.log("Response employee data:", response.data);
+            // console.log("Response employee data:", response.data);
             const uniqueMap = new Map();
 
             response.data.forEach(item => {
@@ -115,42 +110,39 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
 
             const uniqueEmployees = Array.from(uniqueMap.values());
 
-            console.log("UNIQUE EMPLOYEE DATA:", uniqueEmployees);
+            // console.log("UNIQUE EMPLOYEE DATA:", uniqueEmployees);
             setEmployeeName(uniqueEmployees);
         } catch (error) {
             console.error("Error fetching data:", error.message);
         }
     }
 
-    const updateDelegate = async(id_dokumen, signerID, delegated_signers) => {
-        console.log("Data update status:", id_dokumen, signerID, delegated_signers);
+    const updateDelegate = async(id_dokumen, signerID) => {
+        const delegateId = selectedEmployee?.value;
+
+        // console.log("Data update status:", id_dokumen, signerID, delegateId);
 
         try {
             const response = await axios.patch(`http://localhost:5000/delegate-doc/${id_dokumen}/${signerID}`, {
                 is_delegated: true,
-                delegated_signers: selectedEmployee?.value,
+                delegated_signers: delegateId,
             }); 
 
-            // setDelegatedSigners(response.delegated_signers);
-            // console.log("Response delegated signers:", delegated_signers);
+            sendEmailDelegate(id_dokumen, delegateId, token);
 
-            sendEmailDelegate(id_dokumen, delegated_signers, token);
-
-            // console.log("Signer status updated:", response.data);
             toast.success("Delegate document successful.", {
                 position: "top-right", 
                 autoClose: 5000,
                 hideProgressBar: true, 
             }); 
             setShowDelegateModal(false);
-            // window.location.reload();
         } catch (error) {
             console.error("Failed to update status document.", error.message);
         }
     };
 
     const sendEmailDelegate = async(id_dokumen, delegated_signers) => {
-        console.log("sendEmailDelegate: ", id_dokumen, delegated_signers, token);
+        // console.log("sendEmailDelegate: ", id_dokumen, delegated_signers, token);
 
         try {
             const responseDecline = await axios.post('http://localhost:5000/send-delegate-email', {
@@ -192,17 +184,11 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
         setEmail(selectedEmployee.email || "");
     }, [ selectedEmployee]);
 
-    // console.log("EmployeeList:", employeeList);
-    // console.log("EmployeeName:", employeeName);
-
-    // console.log("Selected employee:", selectedEmployee);
-    // console.log("Selected employee_id:", selectedEmployee?.value);
     const selectedDelegateSigner = selectedEmployee?.value;
 
-    console.log("selectedDelegateSigner:", selectedDelegateSigner);
-    // setDelegatedSigners(selectedDelegateSigner);
+    // console.log("selectedDelegateSigner:", selectedDelegateSigner);
 
-    console.log("delegated signers:", delegated_signers);
+    // console.log("delegated signers:", delegated_signers);
 
 
     return (
@@ -230,9 +216,8 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                                 onChange={(e) => 
                                     {const selected = employeeName.find(emp => emp.value === e.target.value);
                                     setselectedEmployee(selected || null)
-                                    console.log("Selected employee:", selected.value)
+                                    // console.log("Selected employee:", selected.value)
                                     setDelegatedSigners(selected.value)
-                                    // console.log("Delegated signers:", selected.value)
                                 }
                                 }
                                 >
@@ -256,7 +241,6 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                                     type="text"
                                     readOnly
                                     value={email}
-                                    // onChange={(e) => handleNamaChange(e.target.value.toUpperCase())}
                                 ></Form.Control>
                             </Form.Group>
                         </Col>
