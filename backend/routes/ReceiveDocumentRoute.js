@@ -20,44 +20,6 @@ dotenv.config();
 
 const router = express.Router();
 
-
-// router.get('/receive-document', async(req, res, next) => {
-//     const token = req.query.token;
-//     const jwtSecret = process.env.JWT_SECRET_KEY;
-
-//     if (!token) {
-//         return res.status(401).json({message: 'Token is required!'});
-//     }
-
-//     try {
-//         const decoded = jwt.verify(token, jwtSecret);
-
-//         const dokumenLogsign = decoded.dokumenLogsign?.id_dokumen;
-//         const idSignerLogsign = decoded.dokumenLogsign?.id_signers;
-//         const urutanLogsign = decoded.dokumenLogsign?.urutan;
-//         const currentSigner = decoded.dokumenLogsign?.currentSigner;
-//         const itemLogsign = decoded.dokumenLogsign?.id_item;
-//         const idSenderLogsign = decoded.dokumenLogsign?.id_karyawan;
-
-//         const logsignRecord = await LogSign.findOne({
-//             where: {
-//                 id_dokumen: dokumenLogsign,
-//                 id_signers: idSignerLogsign, 
-//                 id_item: itemLogsign,
-//             }, 
-//             attributes: ['id_logsign']
-//         });
-
-//         const id_logsign = logsignRecord? logsignRecord.id_logsign : null;
-//         console.log("LogSign Record:", logsignRecord);
-//         console.log("Id logsign:", id_logsign);
-
-//         res.status(200).json({id_dokumen: dokumenLogsign, id_signers: idSignerLogsign, urutan: urutanLogsign, currentSigner, id_item: itemLogsign, id_karyawan: idSenderLogsign, id_logsign});
-//     } catch (error) {
-//         return res.status(403).json({message: 'Invalid or expired token'});
-//     }
-// });
-
 router.get('/receive-document', async(req, res) => {
     const token = req.query.token;
     const jwtSecret = process.env.JWT_SECRET_KEY;
@@ -86,10 +48,6 @@ router.get('/receive-document', async(req, res) => {
             });
         }
 
-        // console.log("FinalSignerId:", finalSignerId);
-        // console.log("MAIN SIGNER ID:", id_signers);
-
-
         let logsignRecord;
         if (is_delegated) {
             logsignRecord = await LogSign.findOne({
@@ -112,8 +70,6 @@ router.get('/receive-document', async(req, res) => {
         }
 
         const id_logsign = logsignRecord? logsignRecord.id_logsign : null;
-        // console.log("LogSign Record:", logsignRecord);
-        // console.log("Id logsign:", id_logsign);
 
         res.status(200).json({
             id_dokumen, 
@@ -127,8 +83,6 @@ router.get('/receive-document', async(req, res) => {
             is_delegated,
             delegated_signers: delegated_signers || null
         });
-
-        // console.log("RECEIVE DOCUMENTTTT:", receiveData);
         
     } catch (error) {
         console.error("Receive document error:", error.message);
@@ -224,7 +178,6 @@ router.get('/access-status', async(req, res) => {
     const jwtSecret = process.env.JWT_SECRET_KEY;
 
     const clientIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    // console.log("CLIENT IP:", clientIP);
 
     try {
         const decoded = jwt.verify(token, jwtSecret);
@@ -264,12 +217,6 @@ router.get('/access-status', async(req, res) => {
     }
 });
 
-
-
-
-
-
-
 router.get('/pdf-document/:id_dokumen?', async (req, res) => {
     try {
         let { id_dokumen } = req.params;
@@ -297,65 +244,26 @@ router.get('/pdf-document/:id_dokumen?', async (req, res) => {
     }
 });
 
-// untuk menampilkan field item (kotak hijau)
-// router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async(req, res) => {
-//     const {id_dokumen, id_signers, id_item} = req.params;
-//     console.log("Axis field data:", id_dokumen, id_signers, id_item);
-
-//     try {
-        
-//         const response = await LogSign.findAll({
-//             where: {id_dokumen, id_signers, id_item}, 
-//             attributes: ["id_item", "id_signers", "status", "urutan", "is_submitted"],
-//             include: [
-//                 {
-//                     model: Item,
-//                     as: "ItemField",
-//                     attributes: ["jenis_item", "x_axis", "y_axis", "width", "height", "id_item"]
-//                 },
-//                 {
-//                     model: Karyawan, 
-//                     as: "Signerr",
-//                     attributes: ["nama"]
-//                 }
-//             ],
-//         });
-
-//         // const namaSigner = response[0]?.Signerr?.nama || null;
-
-//         res.status(200).json(response);
-//     } catch (error) {
-//         console.log("error:", error.message);
-//     }
-// });
-
 router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async (req, res) => {
     const { id_dokumen, id_signers, id_item } = req.params;
-    console.log("Axis field data:", id_dokumen, id_signers, id_item);
-
     try {
-        const signerInfo = await LogSign.findOne({
-            where: { id_dokumen, id_signers },
-            attributes: ["is_delegated"]
+        const logsignRecord = await LogSign.findOne({
+            where: {
+                id_dokumen, 
+                [Op.or]: [
+                    {id_signers}, 
+                    {delegated_signers: id_signers}
+                ]
+            }, 
+            attributes: ["id_signers", "delegated_signers", "is_delegated"]
         });
 
-        let targetSigner = id_signers;
+        const mainSignerId = logsignRecord.id_signers;
 
-        if (signerInfo?.is_delegated) {
-            const mainSignerRow = await LogSign.findOne({
-                where: { id_dokumen, is_delegated: true },
-                attributes: ["id_signers"]
-            });
-            if (mainSignerRow) {
-                targetSigner = mainSignerRow.id_signers;
-                console.log(`Delegated signer detected → using main signer ID: ${targetSigner}`);
-            }
-        }
 
-        // Get axis-field for the main or current signer
         const response = await LogSign.findAll({
-            where: { id_dokumen, id_signers: targetSigner, id_item },
-            attributes: ["id_item", "id_signers", "status", "urutan", "is_submitted"],
+            where: { id_dokumen, id_signers: mainSignerId, id_item },
+            attributes: ["id_item", "id_signers", "status", "urutan", "is_submitted", "is_delegated"],
             include: [
                 {
                     model: Item,
@@ -376,9 +284,6 @@ router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
-
-
 
 
 router.get('/decline/:id_dokumen/:finalSignerId', async(req, res) => {
@@ -419,106 +324,8 @@ router.get('/decline/:id_dokumen/:finalSignerId', async(req, res) => {
     }
 });
 
-// router.get('/doc-info/:id_dokumen/:id_signers', async(req, res) => {
-//     const {id_dokumen, id_signers} = req.params;
-//     console.log("Id Dokumen:", id_dokumen);
-//     console.log("Id Signers:", id_signers);
-
-//     try {
-//         const response = await LogSign.findAll({
-//             where: {id_dokumen, id_signers}, 
-//             attributes: ["id_signers", "id_dokumen", "createdAt", "id_karyawan", "status", "tgl_tt", "is_submitted"],
-//             include: [
-//                 {
-//                     model: Karyawan, 
-//                     as: "Signerr",
-//                     attributes: ["nama", "organisasi", "id_karyawan"],
-//                     include: [{
-//                         model: User,
-//                         as: 'Penerima', 
-//                         attributes: ["email"],
-//                     }]
-//                 },
-//                 {
-//                     model: Dokumen, 
-//                     as: 'DocName',
-//                     attributes: ["nama_dokumen"],
-//                 }, 
-//                 {
-//                     model: LinkAccessLog, 
-//                     as: 'LinkAccess', 
-//                     attributes: ['accessed_at', 'real_email'], 
-//                 }
-//             ],
-//         });
-
-//         if(!response || response.length === 0) {
-//             return res.status(404).json({message: "Data not found"});
-//         }
-
-
-//         const email = response?.Signerr?.Penerima?.email || null;
-
-//         res.status(200).json(response);
-//     } catch (error) {
-//         console.log("error:", error.message);
-//     }
-// });
-
-
-
-//Draft
-// router.get('/doc-info/:id_dokumen/:delegated_signers', async(req, res) => {
-//     const {id_dokumen, delegated_signers} = req.params;
-//     console.log("Id Dokumen:", id_dokumen);
-//     console.log("Delegated Signers:", delegated_signers);
-
-//     try {
-//         const response = await LogSign.findAll({
-//             where: {id_dokumen, delegated_signers}, 
-//             attributes: ["id_signers", "delegated_signers", "id_dokumen", "createdAt", "id_karyawan", "status", "tgl_tt", "is_submitted"],
-//             include: [
-//                 {
-//                     model: Karyawan, 
-//                     as: "Signerr",
-//                     attributes: ["nama", "organisasi", "id_karyawan"],
-//                     include: [{
-//                         model: User,
-//                         as: 'Penerima', 
-//                         attributes: ["email"],
-//                     }]
-//                 },
-//                 {
-//                     model: Dokumen, 
-//                     as: 'DocName',
-//                     attributes: ["nama_dokumen"],
-//                 }, 
-//                 {
-//                     model: LinkAccessLog, 
-//                     as: 'LinkAccess', 
-//                     attributes: ['accessed_at', 'real_email'], 
-//                 }
-//             ],
-//         });
-
-//         if(!response || response.length === 0) {
-//             return res.status(404).json({message: "Data not found"});
-//         }
-
-
-//         // const email = response?.Signerr?.Penerima?.email || null;
-
-//         res.status(200).json(response);
-//     } catch (error) {
-//         console.log("Error doc-info:", error.message);
-//         res.status(500).json({message: "Error fetching doc-info"});
-//     }
-// });
-
 router.get('/doc-info/:id_dokumen/:finalSignerId', async(req, res) => {
     const {id_dokumen, finalSignerId} = req.params;
-    // console.log("Id Dokumen:", id_dokumen);
-    // console.log("Final Signers:", finalSignerId);
 
     try {
         const response = await LogSign.findAll({
@@ -565,8 +372,6 @@ router.get('/doc-info/:id_dokumen/:finalSignerId', async(req, res) => {
 router.get('/email-sender/:id_karyawan', async(req, res) => {
     const {id_karyawan} = req.params;
 
-    // console.log("ID SENDER:", id_karyawan);
-
     try {
         const response = await LogSign.findAll({
             where: {id_karyawan}, 
@@ -590,10 +395,7 @@ router.get('/email-sender/:id_karyawan', async(req, res) => {
         }
 
         const email = response[0]?.Signerr?.Penerima?.email || null;
-        // console.log("SENDER EMAIL:", email);
-
         res.status(200).json(response);
-        // console.log("RESPONSE EMAIL SENDER:", response); 
     } catch (error) {
         console.log("error:", error.message);
     }
@@ -602,9 +404,6 @@ router.get('/email-sender/:id_karyawan', async(req, res) => {
 router.get('/initials/:id_dokumen/:id_signers', async(req, res) => {
     const {id_dokumen, id_signers} = req.params;
     const idSignerList = id_signers.split(',');
-
-    // console.log("Id Dokumen:", id_dokumen);
-    // console.log("Id Signers:", idSignerList);
 
     try {
         const response = await LogSign.findAll({
@@ -618,7 +417,6 @@ router.get('/initials/:id_dokumen/:id_signers', async(req, res) => {
                 }
             ]
         }); 
-        // console.log("Response:", response);
         res.status(200).json(response);
         
     } catch (error) {
@@ -653,10 +451,8 @@ router.patch('/update-submitted/:id_dokumen/:id_signers', async(req, res) => {
 router.patch('/update-status/:id_dokumen/:id_signers', async(req, res) => {
     const {id_dokumen, id_signers} = req.params;
     const {status} = req.body;
-    // const currentTime = new Date().toISOString().split("T")[0];
     const currentTime = new Date();
 
-    // console.log("CURRENT TIME:", currentTime);
 
     try {
         const response = await LogSign.update(
@@ -700,7 +496,6 @@ router.post('/send-decline-email', async(req, res) => {
 
         let emailResults = [];
 
-        // console.log("RECEIVE DECLINE DATA:", "ID Dokumen:", id_dokumen, "signerID:", signerID, "reason:", reason, "token:", token);
         const declineLink = `http://localhost:3000/user/envelope?token=${token}`;
 
         const docName = await LogSign.findOne({
@@ -714,7 +509,6 @@ router.post('/send-decline-email', async(req, res) => {
         });
 
         const documentName = docName?.DocName?.nama_dokumen;
-        // console.log("DOC NAME:", documentName);
 
         await sendEmailDeclineInternal(declineLink, reason, id_dokumen, signerID, documentName);
         emailResults.push({signerID, message: 'Decline email sent successfully.'});
@@ -765,14 +559,12 @@ const sendEmailDeclineInternal = async(declineLink, reason, id_dokumen, signerID
         }
 
         const receiverEmail = receiver.Penerima.email;
-        // const senderName = await Karyawan.findOne({where: {id_karyawan: id_karyawan}});
         const receiverName = await Karyawan.findOne({where: {id_karyawan: signerID}});
 
         const mailOptions = {
         from: process.env.EMAIL_ADMIN,
         to: receiverEmail,
         subject: `Declined document: ${documentName}`,
-        // html: <a href={declineLink}>Click link</a>, 
         text: `The Document was declined. \n
             ${receiverName?.nama || "Signer"} was declined to sign this document.\n
             As a result, the documents can not be completed for the following reasons: ${reason}. \n
@@ -783,7 +575,6 @@ const sendEmailDeclineInternal = async(declineLink, reason, id_dokumen, signerID
         };
 
         await transporter.sendMail(mailOptions);
-        // console.log(`Email sent to ${receiverEmail} for signer ${signerID}`);
 
     } catch (error) {
         console.error("Failed to send decline email:", error.message);
@@ -809,7 +600,6 @@ router.post('/send-delegate-email', async(req, res) => {
 
         const finalDocId = id_dokumen || docFromToken;
 
-        // console.log("Main signer id send email:", id_signers);
 
         const delegateList = [...new Set(Array.isArray(delegated_signers) ? delegated_signers : [delegated_signers])];
         let emailResults = [];
@@ -845,7 +635,6 @@ router.post('/send-delegate-email', async(req, res) => {
 
             const intended_email = receiver.Penerima.email;
 
-            //new token for delegated signer
             const newToken = jwt.sign({
                 dokumenLogsign: {
                     id_dokumen: finalDocId, 
@@ -890,7 +679,6 @@ const sendEmailDelegateInternal = async(delegateLink, documentName, receiverName
         from: process.env.EMAIL_ADMIN,
         to: receiverEmail,
         subject: `You are delegated to sign: ${documentName}`,
-        // html: <a href={declineLink}>Click link</a>, 
         text: `${receiverName?.nama || "Signer"}, You are delegated to sign a document ${documentName}}.\n
           Please review and check the document before signing it.\n
           Click link to sign the document ${delegateLink}\n\n

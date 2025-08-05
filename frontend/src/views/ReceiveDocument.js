@@ -74,10 +74,8 @@ function ReceiveDocument() {
 
     const [urutan, setUrutan] = useState("");
     const [urutanMap, setUrutanMap] = useState({});
-    // const [signerUrutan, setSignerUrutan] = useState(null);
 
     const [allSigners, setAllSigners] = useState("");
-    // const [is_submitted, setIsSubmitted] = useState("");
     const [submittedMap, setSubmittedMap] = useState({});
     const [delegatedMap, setDelegatedMap] = useState({});
 
@@ -266,7 +264,6 @@ function ReceiveDocument() {
 
     const handleEmailVerify = async (e) => { 
         e.preventDefault();
-        // setLoading(true);
         setErrorMsg("");
 
         try {
@@ -309,19 +306,10 @@ function ReceiveDocument() {
             const idKaryawan = res.data.id_karyawan;
             const delegated_signers = res.data.delegated_signers || null;
             const is_delegated = res.data.is_delegated;
-
-            // console.log("allSigners:", allSigners);
-            // console.log("currentSigner:", currentSigner);
             console.log("isDelegated:", is_delegated);
 
             const finalSignerId = allSigners || currentSigner || delegated_signers;
             setDelegatedSigners(delegated_signers);
-            // setDelegatedMap({ [finalSignerId] : is_delegated });
-
-            // if (!delegatedMap[signer]) {
-            //     delegatedMap[signer] = is_delegated; 
-            // }
-
 
             if (!id_dokumen || !allSigners || !urutan || !allItems || !idKaryawan) {
                 throw new Error("Missing id_dokumen, id_signers, id_item, id_karyawan or urutan from token.");
@@ -399,11 +387,12 @@ function ReceiveDocument() {
 
                 setSignerData(allSigner);
                 console.log("Signer Data:", signerData);
-                // console.log("id_signers Signer Data:", signerData[0]?.id_signers);
 
-                const mainSignerInfo = signerData.find(s => s.is_delegated === true) || signerData[0];
-                console.log("mainSignerInfo:", mainSignerInfo);
-                const mainSigner = mainSignerInfo?.id_signers;
+                let mainSigner = allSigners;
+                if (is_delegated) {
+                    mainSigner = res.data.id_signers;
+                }
+
                 setMainSigner(mainSigner);
                 
                 for (const itemID of itemArray) {
@@ -427,7 +416,6 @@ function ReceiveDocument() {
                         const status = item.status || "Pending";
                         const urutan = item.urutan;
                         const is_submitted = item.is_submitted;
-                        // const is_delegated = item.is_delegated;
 
                         if (!urutanMapping[fieldItemId]) {
                             urutanMapping[fieldItemId] = urutan;
@@ -436,10 +424,6 @@ function ReceiveDocument() {
                         if (!submittedMapping[signer]) {
                             submittedMapping[signer] = is_submitted;
                         }
-
-                        // if (!delegateMapping[signer]) {
-                        //     delegateMapping[signer] = is_delegated;
-                        // }
 
                         const fieldObj = {
                             id: `field-${mainSigner}-${idx}`,
@@ -543,46 +527,6 @@ function ReceiveDocument() {
         const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
         const initialsData = initialsRes.data;
         const fieldBuffer = [];
-
-        // for (const signer of signerArray) {
-        //     for (const itemId of itemArray) {
-        //         const currentUrutan = Number(urutanMap[itemId]);
-        //         const currentSubmitted = submittedMap[signer];
-        //         const currentDelegated = delegatedMap[signer] || false;
-
-        //         const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
-        //         const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
-        //         const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
-
-        //         for (const field of signerFields) {
-        //             const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
-        //             const base64 = matchInitial?.sign_base64;
-        //             const formattedBase64 = base64?.startsWith("data:image")? base64 : base64 ? `data:image/png;base64,${base64}` : null;
-
-        //             fieldBuffer.push({
-        //                 id_item: field.id_item,
-        //                 id_signers: signer,
-        //                 sign_base64: formattedBase64,
-        //                 status: matchInitial?.status || "Pending", 
-        //                 nama: matchInitial?.Signerr?.nama || "-", 
-        //                 x_axis: field.ItemField?.x_axis || 0,
-        //                 y_axis: field.ItemField?.y_axis || 0,
-        //                 width: field.ItemField?.width || 0,
-        //                 height: field.ItemField?.height || 0,
-        //                 enableResizing: false,
-        //                 disableDragging: true,
-        //                 jenis_item: field.ItemField?.jenis_item || "", 
-        //                 urutan: currentUrutan, 
-        //                 id_dokumen, 
-        //                 is_submitted: currentSubmitted,
-        //                 rawField: field,
-        //                 is_delegated: currentDelegated,
-        //                 nowSigner: finalSignerId,
-        //                 delegated_signers,
-        //             });
-        //         }
-        //     }
-        // }
 
         for (const signer of signerArray) {
             for (const itemId of itemArray) {
@@ -918,7 +862,6 @@ function ReceiveDocument() {
                                         const showDate = isCompleted && completedNext && isDatefield;
 
                                         
-                                        // FIX UNTUK FIRST SIGNER
                                         const bgFirst = currentItem 
                                         ? "transparent" 
                                         : isSubmitted 
