@@ -80,6 +80,109 @@ router.get('/receive-document', async(req, res) => {
 
 
 // untuk login 
+// router.post('/link-access-log', async (req, res) => {
+//   const { token, real_email, password, is_accessed, currentSigner } = req.body;
+//   const jwtSecret = process.env.JWT_SECRET_KEY;
+
+//   console.log("currentSigner:", currentSigner);
+
+//   try {
+//     const decoded = jwt.verify(token, jwtSecret);
+//     const {
+//         id_dokumen,
+//         id_signers,
+//         urutan, 
+//         id_item, 
+//         id_karyawan, 
+//         is_delegated, 
+//         delegated_signers
+//     } = decoded.dokumenLogsign || {};
+
+//     console.log("Id Signers:", id_signers);
+//     console.log("Delegated signers:", delegated_signers);
+
+//     if (!id_dokumen || !id_item || !id_karyawan || !urutan || !currentSigner) {
+//         return res.status(400).json({
+//             message: 'Missing token data.',
+//             details: {id_dokumen, id_item, id_karyawan, urutan, currentSigner}
+//         });
+//     }
+
+//     const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+//     const delegatedArray = Array.isArray(delegated_signers) ? delegated_signers : [delegated_signers];
+
+//     const isAuthorizedSigner = signerArray.includes(currentSigner) || delegatedArray.includes(currentSigner);
+
+//     if (!isAuthorizedSigner) {
+//         return res.status(403).json({message: 'Unauthorized signer access'});
+//     }
+
+//     const logsign = await LogSign.findOne({
+//         where: { id_dokumen, id_signers: currentSigner},
+//     });
+
+//     if (!logsign) {
+//       return res.status(404).json({ message: `LogSign not found for signer: ${currentSigner}` });
+//     }
+
+//     const userToVerify = await Karyawan.findOne({
+//         where: { id_karyawan: currentSigner }, 
+//         include: [{
+//             model: User,
+//             as: 'Penerima', 
+//             attributes: ['email', 'password']
+//         }]
+//     });
+//     console.log("userToVerify:", userToVerify);
+
+//     // if (signerId !== verifyId) {
+//     //     return res.status(404).json({ message: "Signer Id and Karyawan Id doesn't match" });
+//     // }
+
+//     if (!userToVerify || !userToVerify.Penerima) {
+//         return res.status(404).json({message: "User data not found"});
+//     }
+
+//     const intended_email = userToVerify.Penerima.email;
+//     const intended_password = userToVerify.Penerima.password;
+
+//     const isPasswordValid = await bcrypt.compare(password, intended_password);
+//     if (!isPasswordValid) {
+//         return res.status(400).json({ message: 'Incorrect password.' });
+//     }
+
+//     if (real_email !== intended_email) {
+//         return res.status(403).json({ message: "Unauthorized email" });
+//     }
+
+//     const [accessLog, created] = await LinkAccessLog.findOrCreate({
+//         where: { id_logsign: logsign.id_logsign, id_karyawan: currentSigner },
+//         defaults: {
+//             intended_email,
+//             real_email,
+//             accessed_at: new Date(),
+//             is_accessed: is_accessed || "",
+//         }
+//     });
+
+
+//     if (!created) {
+//         await accessLog.update({
+//             real_email, 
+//             accessed_at: new Date(),
+//         });
+//     }
+
+//     res.status(200).json({ message: `Link access recorded for signer: ${currentSigner}` });
+
+//   } catch (err) {
+    
+//     res.status(400).json({ message: "Invalid or expired token" });
+//   }
+// });
+
+
+
 router.post('/link-access-log', async (req, res) => {
   const { token, real_email, password, is_accessed, currentSigner } = req.body;
   const jwtSecret = process.env.JWT_SECRET_KEY;
@@ -88,7 +191,7 @@ router.post('/link-access-log', async (req, res) => {
     const decoded = jwt.verify(token, jwtSecret);
     const {
         id_dokumen,
-        // id_signers,
+        id_signers,
         urutan, 
         id_item, 
         id_karyawan, 
@@ -96,43 +199,49 @@ router.post('/link-access-log', async (req, res) => {
         delegated_signers
     } = decoded.dokumenLogsign || {};
 
-    // console.log("Id Signers:", id_signers);
-
     if (!id_dokumen || !id_item || !id_karyawan || !urutan || !currentSigner) {
         return res.status(400).json({
             message: 'Missing token data.',
-            details: {id_dokumen, id_item, id_karyawan, urutan, currentSigner}
+            details: { id_dokumen, id_item, id_karyawan, urutan, currentSigner }
         });
     }
 
-    const signerId = currentSigner;
-    console.log("signerId:", signerId);
+    const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+    const delegatedArray = Array.isArray(delegated_signers) ? delegated_signers : [delegated_signers];
 
-    const verifyId = is_delegated ? delegated_signers : signerId;
+    const isAuthorizedSigner = signerArray.includes(currentSigner) || delegatedArray.includes(currentSigner);
+    console.log("isAuthorizedSigner: ", isAuthorizedSigner);
 
-    const logsign = await LogSign.findOne({
-        where: { id_dokumen, id_signers: signerId},
-    });
-
-    if (!logsign) {
-      return res.status(404).json({ message: `LogSign not found for signer: ${signerId}` });
+    if (!isAuthorizedSigner) {
+        return res.status(403).json({ message: 'Unauthorized signer access' });
     }
 
+    const logsign = await LogSign.findOne({
+        where: { 
+            id_dokumen,
+            [Op.or]: [
+                {id_signers: currentSigner}, 
+                {delegated_signers: currentSigner}
+            ]},
+    });
+    console.log("logsign:", logsign);
+
+    if (!logsign) {
+      return res.status(404).json({ message: `LogSign not found for signer: ${currentSigner}` });
+    }
+
+    // Cari user yang akan diverifikasi
     const userToVerify = await Karyawan.findOne({
-        where: { id_karyawan: verifyId }, 
+        where: { id_karyawan: currentSigner },
         include: [{
             model: User,
-            as: 'Penerima', 
+            as: 'Penerima',
             attributes: ['email', 'password']
         }]
     });
 
-    if (signerId !== verifyId) {
-        return res.status(404).json({ message: "Signer Id and Karyawan Id doesn't match" });
-    }
-
     if (!userToVerify || !userToVerify.Penerima) {
-        return res.status(404).json({message: "User data not found"});
+        return res.status(404).json({ message: "User data not found" });
     }
 
     const intended_email = userToVerify.Penerima.email;
@@ -148,7 +257,7 @@ router.post('/link-access-log', async (req, res) => {
     }
 
     const [accessLog, created] = await LinkAccessLog.findOrCreate({
-        where: { id_logsign: logsign.id_logsign, id_karyawan: verifyId },
+        where: { id_logsign: logsign.id_logsign, id_karyawan: currentSigner },
         defaults: {
             intended_email,
             real_email,
@@ -157,21 +266,21 @@ router.post('/link-access-log', async (req, res) => {
         }
     });
 
-
     if (!created) {
         await accessLog.update({
-            real_email, 
+            real_email,
             accessed_at: new Date(),
         });
     }
 
-    res.status(200).json({ message: `Link access recorded for signer: ${verifyId}` });
+    res.status(200).json({ message: `Link access recorded for signer: ${currentSigner}` });
 
   } catch (err) {
-    
+    console.error("Error verifying link access log:", err);
     res.status(400).json({ message: "Invalid or expired token" });
   }
 });
+
 
 
 router.get('/access-status', async(req, res) => {
@@ -425,15 +534,22 @@ router.get('/initials/:id_dokumen/:id_signers', async(req, res) => {
     }
 });
 
-router.patch('/update-submitted/:id_dokumen/:id_signers', async(req, res) => {
-    const {id_dokumen, id_signers} = req.params;
+router.patch('/update-submitted/:id_dokumen/:currentSigner', async(req, res) => {
+    const {id_dokumen, currentSigner} = req.params;
     const {is_submitted, status} = req.body;
+
+    console.log("currentSigner submitted:", currentSigner);
 
     try {
         const submitted = await LogSign.update(
             {is_submitted, status},
             {
-                where: {id_dokumen, id_signers},
+                where: {
+                    id_dokumen,
+                    [Op.or]: [
+                        {id_signers: currentSigner},
+                        {delegated_signers: currentSigner}
+                    ]},
             }
         );
 

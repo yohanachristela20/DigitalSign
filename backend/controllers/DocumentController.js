@@ -403,7 +403,7 @@ export const updateInitialSign = async(req, res) => {
       if (prevLog) {
         const prevJenisItem = prevLog.ItemField?.jenis_item;
 
-        if (prevJenisItem === jenis_item) {
+        if (prevJenisItem === jenis_item && prevLog.id_signers === id_signers) {
           finalSignBase64 = prevLog.sign_base64;
         }
       }
@@ -411,8 +411,8 @@ export const updateInitialSign = async(req, res) => {
 
     const relatedLogs = await LogSign.findAll({
       where: {
-        id_dokumen,
-        id_signers
+        id_dokumen: id_dokumen,
+        id_signers: id_signers
       },
       include: {
         model: Item, 

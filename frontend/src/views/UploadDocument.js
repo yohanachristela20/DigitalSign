@@ -771,13 +771,13 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             subject,
             message,
             delegated_signers: delegateSignerId,
-            // urutan: cardData?.urutan?? index + 1,
             urutan: Number(cardData?.urutan) || index + 1,
+            // urutan: Number(cardData?.urutan) || index + 1,
             };
         });
 
       localStorage.setItem("logsigns", JSON.stringify(logsigns));
-      // localStorage.setItem("urutan", JSON.stringify(urutan));
+      localStorage.setItem("urutan", JSON.stringify(urutan));
 
       const signerIds = logsigns.map(log => log.id_signers);
       localStorage.setItem("id_signers", JSON.stringify(signerIds));
@@ -785,8 +785,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       const delegateIds = logsigns.map(log => log.delegated_signers);
       localStorage.setItem("delegated_signers:", delegateIds);
 
-      const urutanList = logsigns.map(log => log.urutan);
-      localStorage.setItem("urutan", JSON.stringify(urutanList));
+      // const urutanList = logsigns.map(log => log.urutan);
+      // localStorage.setItem("urutan", JSON.stringify(urutanList));
 
       const idItemList = logsigns.map(log => log.id_item);
       localStorage.setItem("id_item", JSON.stringify(idItemList));

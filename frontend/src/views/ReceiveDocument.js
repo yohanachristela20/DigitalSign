@@ -109,6 +109,7 @@ function ReceiveDocument() {
     const [finalSignerId, setFinalSignerId] = useState("");
     const [isDelegated, setIsDelegated] = useState("");
     const [actualSigner, setActualSigner] = useState("");
+    const [current_signer, setCurrentSigner] = useState("");
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -272,11 +273,14 @@ function ReceiveDocument() {
             const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
             const { id_dokumen, id_signers, currentSigner} = docRes.data;
 
+            // console.log("currentSigner:", currentSigner);
+
             await axios.post("http://localhost:5000/link-access-log", { token, real_email: inputEmail, password: inputPassword, is_accessed: true, currentSigner });
             setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
             setEmailVerified(true);
             setVerified(true);
             setIsAccessed(true);
+            // setCurrentSigner(currentSigner);
             // verifiedSuccessfully = true;
         } catch (error) {
             setErrorMsg("Access Denied: Token doesn't valid or email not found.");
@@ -314,6 +318,9 @@ function ReceiveDocument() {
 
             const finalSignerId = allSigners || currentSigner || delegated_signers;
             setDelegatedSigners(delegated_signers);
+            setCurrentSigner(currentSigner);
+
+            console.log("currentSigner fetchData:", currentSigner);
 
             if (!id_dokumen || !allSigners || !urutan || !allItems || !idKaryawan) {
                 throw new Error("Missing id_dokumen, id_signers, id_item, id_karyawan or urutan from token.");
@@ -500,10 +507,10 @@ function ReceiveDocument() {
         }
     }, [id_signers, signerData]);
 
-    const updateSubmitted = async(id_dokumen, id_signers) => {
-
+    const updateSubmitted = async(id_dokumen, current_signer) => {
+        console.log("currentSigner update:", current_signer);
         try {
-            const response = await axios.patch(`http://localhost:5000/update-submitted/${id_dokumen}/${id_signers}`, {
+            const response = await axios.patch(`http://localhost:5000/update-submitted/${id_dokumen}/${current_signer}`, {
                 is_submitted: true,
                 status: "Completed",
             });
@@ -786,7 +793,7 @@ function ReceiveDocument() {
                     <Button
                         className="submit-btn w-100 mt-3 fs-6"
                         type="submit"
-                        onClick={() => updateSubmitted(id_dokumen, id_signers)}
+                        onClick={() => updateSubmitted(id_dokumen, current_signer)}
                         disabled={!isNonDateCompleted}
                         hidden={submitted_list.every(is_completed => is_completed === true) || initial_status.every(status => status === "Decline" || isAccessed !== true)}
                     >
