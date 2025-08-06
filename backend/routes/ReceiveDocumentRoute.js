@@ -41,39 +41,27 @@ router.get('/receive-document', async(req, res) => {
             delegated_signers
         } = decoded.dokumenLogsign || {};
 
-        const finalSignerId = currentSigner || delegated_signers || id_signers ;
+        const finalSignerId = is_delegated ? delegated_signers : id_signers ;
         if (!id_dokumen || !id_item || !id_karyawan || !urutan || !finalSignerId) {
             return res.status(400).json({
                 message: 'Missing id_dokumen, id_signers or delegated_signers, id_item, id_karyawan, or urutan from token.'
             });
         }
 
-        let logsignRecord;
-        if (is_delegated) {
-            logsignRecord = await LogSign.findOne({
-                where: {
-                    id_dokumen, 
-                    id_signers,
-                    id_item
-                },
-                attributes: ['id_logsign']
-            });
-        } else {
-            logsignRecord = await LogSign.findOne({
-                where: {
-                    id_dokumen, 
-                    id_signers: finalSignerId,
-                    id_item
-                },
-                attributes: ['id_logsign']
-            });
-        }
+        const logsignRecord = await LogSign.findOne({
+            where: {
+                id_dokumen,
+                id_signers, 
+                id_item
+            }, 
+            attributes: ['id_logsign']
+        });
 
         const id_logsign = logsignRecord? logsignRecord.id_logsign : null;
 
         res.status(200).json({
             id_dokumen, 
-            id_signers: finalSignerId, 
+            id_signers: id_signers, 
             main_signer: id_signers,
             urutan,
             currentSigner, 
@@ -81,7 +69,7 @@ router.get('/receive-document', async(req, res) => {
             id_karyawan, 
             id_logsign, 
             is_delegated,
-            delegated_signers: delegated_signers || null
+            delegated_signers: is_delegated ? delegated_signers : null
         });
         
     } catch (error) {
@@ -90,64 +78,77 @@ router.get('/receive-document', async(req, res) => {
     }
 });
 
+
+// untuk login 
 router.post('/link-access-log', async (req, res) => {
-  const { token, real_email, password, is_accessed } = req.body;
+  const { token, real_email, password, is_accessed, currentSigner } = req.body;
   const jwtSecret = process.env.JWT_SECRET_KEY;
 
   try {
     const decoded = jwt.verify(token, jwtSecret);
     const {
         id_dokumen,
-        id_signers,
+        // id_signers,
         urutan, 
-        currentSigner,
         id_item, 
         id_karyawan, 
         is_delegated, 
         delegated_signers
     } = decoded.dokumenLogsign || {};
 
-    const finalSignerId = currentSigner || delegated_signers || id_signers ;
-    if (!id_dokumen || !id_item || !id_karyawan || !urutan || !finalSignerId) {
+    // console.log("Id Signers:", id_signers);
+
+    if (!id_dokumen || !id_item || !id_karyawan || !urutan || !currentSigner) {
         return res.status(400).json({
-            message: 'Missing id_dokumen, id_signers or delegated_signers, id_item, id_karyawan, or urutan from token.'
+            message: 'Missing token data.',
+            details: {id_dokumen, id_item, id_karyawan, urutan, currentSigner}
         });
     }
 
-    const signerId = currentSigner || delegated_signers || id_signers;
+    const signerId = currentSigner;
     console.log("signerId:", signerId);
 
+    const verifyId = is_delegated ? delegated_signers : signerId;
+
     const logsign = await LogSign.findOne({
-        where: { id_dokumen, [!is_delegated ? "id_signers" : "delegated_signers"] : signerId},
+        where: { id_dokumen, id_signers: signerId},
+    });
+
+    if (!logsign) {
+      return res.status(404).json({ message: `LogSign not found for signer: ${signerId}` });
+    }
+
+    const userToVerify = await Karyawan.findOne({
+        where: { id_karyawan: verifyId }, 
         include: [{
-            model: Karyawan,
-            as: 'Signerr',
-            include: [{
-                model: User,
-                as: 'Penerima',
-                attributes: ['email', 'password']
-            }]
+            model: User,
+            as: 'Penerima', 
+            attributes: ['email', 'password']
         }]
     });
 
-    const intended_email = logsign?.Signerr?.Penerima?.email;
-    const intended_password = logsign?.Signerr?.Penerima?.password;
+    if (signerId !== verifyId) {
+        return res.status(404).json({ message: "Signer Id and Karyawan Id doesn't match" });
+    }
+
+    if (!userToVerify || !userToVerify.Penerima) {
+        return res.status(404).json({message: "User data not found"});
+    }
+
+    const intended_email = userToVerify.Penerima.email;
+    const intended_password = userToVerify.Penerima.password;
 
     const isPasswordValid = await bcrypt.compare(password, intended_password);
     if (!isPasswordValid) {
         return res.status(400).json({ message: 'Incorrect password.' });
     }
 
-    if (real_email !== intended_email && isPasswordValid) {
+    if (real_email !== intended_email) {
         return res.status(403).json({ message: "Unauthorized email" });
     }
 
-    if (!intended_email && isPasswordValid) {
-        return res.status(404).json({ message: "Intended email not found for the current signer." });
-    }
-
     const [accessLog, created] = await LinkAccessLog.findOrCreate({
-        where: { id_logsign: logsign.id_logsign, id_karyawan: signerId },
+        where: { id_logsign: logsign.id_logsign, id_karyawan: verifyId },
         defaults: {
             intended_email,
             real_email,
@@ -164,7 +165,7 @@ router.post('/link-access-log', async (req, res) => {
         });
     }
 
-    res.status(200).json({ message: "Link access recorded" });
+    res.status(200).json({ message: `Link access recorded for signer: ${verifyId}` });
 
   } catch (err) {
     
@@ -634,6 +635,7 @@ router.post('/send-delegate-email', async(req, res) => {
             }
 
             const intended_email = receiver.Penerima.email;
+            const receiverName = receiver.nama;
 
             const newToken = jwt.sign({
                 dokumenLogsign: {
@@ -650,7 +652,7 @@ router.post('/send-delegate-email', async(req, res) => {
             }, jwtSecret);
 
             const delegateLink = `http://localhost:3000/user/envelope?token=${newToken}`;
-            await sendEmailDelegateInternal(delegateLink, documentName, receiver.nama, intended_email);
+            await sendEmailDelegateInternal(delegateLink, documentName, receiverName, intended_email);
             emailResults.push({delegateId, message: 'Delegate email sent successfully.'});
         }
 
@@ -679,7 +681,7 @@ const sendEmailDelegateInternal = async(delegateLink, documentName, receiverName
         from: process.env.EMAIL_ADMIN,
         to: receiverEmail,
         subject: `You are delegated to sign: ${documentName}`,
-        text: `${receiverName?.nama || "Signer"}, You are delegated to sign a document ${documentName}}.\n
+        text: `${receiverName || "Signer"}, You are delegated to sign a document ${documentName}.\n
           Please review and check the document before signing it.\n
           Click link to sign the document ${delegateLink}\n\n
           Please do not share this email and the link attached with others.\n
@@ -688,7 +690,7 @@ const sendEmailDelegateInternal = async(delegateLink, documentName, receiverName
         };
 
         await transporter.sendMail(mailOptions);
-        console.log(`Delegate email sent to ${receiverName?.nama }`);
+        console.log(`Delegate email sent to ${receiverName}`);
 
     } catch (error) {
         console.error("Failed to send delegate email:", error.message);

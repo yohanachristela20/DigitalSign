@@ -243,6 +243,7 @@ const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, 
 };
 
 
+// CEK GENERATE LINK 
 export const sendEmailNotification = async (req, res) => {
   try {
     const {subjectt, messagee, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers } = req.body;
@@ -327,6 +328,7 @@ export const getSignLink = async (req, res) => {
     res.status(500).json({ message: "Failed to generate signLink" });
   }
 };
+
 
 export const updateReminder = async(req,res) => {
     const {id_dokumen} = req.params;

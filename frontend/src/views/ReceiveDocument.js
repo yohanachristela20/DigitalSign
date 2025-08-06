@@ -41,7 +41,7 @@ function ReceiveDocument() {
     const [status, setStatus] = useState([]);
     const [signStatus, setSignStatus] = useState([]);
     const [nama, setNama] = useState("");
-    const [main_signer, setMainSigner] = useState("");
+    const [mainSigner, setMainSigner] = useState("");
 
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
     const [showInitialModal, setShowInitialModal] = useState(false);
@@ -107,6 +107,8 @@ function ReceiveDocument() {
     const [isPrevFieldForNextSigner, setIsPrevFieldForNextSigner] = useState("");
     const [isNextField, setIsNextField] = useState("");
     const [finalSignerId, setFinalSignerId] = useState("");
+    const [isDelegated, setIsDelegated] = useState("");
+    const [actualSigner, setActualSigner] = useState("");
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -268,14 +270,14 @@ function ReceiveDocument() {
 
         try {
             const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
-            const { id_dokumen, id_signers, id_logsign, id_karyawan } = docRes.data;
+            const { id_dokumen, id_signers, currentSigner} = docRes.data;
 
-            await axios.post("http://localhost:5000/link-access-log", { token, real_email: inputEmail, password: inputPassword, is_accessed: true });
+            await axios.post("http://localhost:5000/link-access-log", { token, real_email: inputEmail, password: inputPassword, is_accessed: true, currentSigner });
             setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
             setEmailVerified(true);
             setVerified(true);
             setIsAccessed(true);
- 
+            // verifiedSuccessfully = true;
         } catch (error) {
             setErrorMsg("Access Denied: Token doesn't valid or email not found.");
             setEmailVerified(false);
@@ -306,7 +308,9 @@ function ReceiveDocument() {
             const idKaryawan = res.data.id_karyawan;
             const delegated_signers = res.data.delegated_signers || null;
             const is_delegated = res.data.is_delegated;
-            console.log("isDelegated:", is_delegated);
+
+            setIsDelegated(is_delegated);
+            console.log("isDelegated:", isDelegated);
 
             const finalSignerId = allSigners || currentSigner || delegated_signers;
             setDelegatedSigners(delegated_signers);
@@ -394,10 +398,15 @@ function ReceiveDocument() {
                 }
 
                 setMainSigner(mainSigner);
+                console.log("mainSigner:", mainSigner);
+
+                let querySigner = signer;
+                setActualSigner(querySigner);
+                console.log("querySigner: ", actualSigner);
                 
                 for (const itemID of itemArray) {
                     console.log("Axis Field:", id_dokumen, mainSigner, itemID)
-                    const fieldRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${mainSigner}/${itemID}`);
+                    const fieldRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${querySigner}/${itemID}`);
 
                     const validFields = fieldRes.data.filter(item => item.ItemField);
                     console.log("validFields:", validFields);
@@ -426,7 +435,7 @@ function ReceiveDocument() {
                         }
 
                         const fieldObj = {
-                            id: `field-${mainSigner}-${idx}`,
+                            id: `field-${querySigner}-${idx}`,
                             x_axis,
                             y_axis,
                             width,
@@ -441,7 +450,7 @@ function ReceiveDocument() {
                             is_submitted, 
                             show,
                             editable,
-                            id_signers: mainSigner, 
+                            id_signers: querySigner, 
                             is_delegated,
                             delegated_signers,
                         }; 
@@ -479,7 +488,7 @@ function ReceiveDocument() {
         fetchData();
     }, [token]);
 
-    console.log("Initials:", initials);
+    // console.log("Initials:", initials);
 
 
     useEffect(() => {
@@ -535,9 +544,8 @@ function ReceiveDocument() {
                 const currentDelegated = delegatedMap[signer] || false;
 
                 let querySigner = signer;
-                if (currentDelegated === true) {
-                    querySigner = id_signers;
-                }
+                setActualSigner(querySigner);
+                console.log("querySigner: ", actualSigner);
 
                 const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${querySigner}/${itemId}`);
                 const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
@@ -643,8 +651,19 @@ function ReceiveDocument() {
 
         console.log("All fields:", allFields);
 
+        const filteredFields = allFields.filter(field => {
+            if (isDelegated) {
+                return field.delegated_signers === id_signers;
+            }
+            return field.id_signers === id_signers;
+        });
 
-        const filteredFields = allFields.filter(field => field.id_signers === id_signers);
+        console.log("filteredFields for render:", filteredFields.map(f => ({
+            id_signers: f.id_signers,
+            delegated_signers: f.delegated_signers,
+            jenis_item: f.jenis_item,
+        })));
+
         setInitial(filteredFields);
         setSignature(filteredFields);
         setDateField(filteredFields);
@@ -854,6 +873,7 @@ function ReceiveDocument() {
                                         const currentSigner = sig.id_signers;
                                         const currentItem = sig.id_item === currentItemId;
                                         const nextSigner = sig.nextSigner;
+                                        const is_delegated = sig.is_delegated;
 
                                         
                                         const isFirstSigner = urutan === 1;
@@ -866,13 +886,13 @@ function ReceiveDocument() {
                                         ? "transparent" 
                                         : isSubmitted 
                                         ? "transparent"
-                                        : "rgba(86, 90, 90, 0.2)";
+                                        : "rgba(86, 90, 90, 0.5)";
 
                                         const bgOthers = currentItem 
                                         ? "transparent" 
                                         : isSubmitted 
                                         ? "transparent"
-                                        : "rgba(86, 90, 90, 0.2)";
+                                        : "rgba(86, 90, 90, 0.5)";
 
                                         const firstBorderStyle = currentItem
                                         ? "transparent"
@@ -926,15 +946,15 @@ function ReceiveDocument() {
                                                             }
                                                         }}
                                                     >
-                                                        {isCompleted && completedNext && sig.sign_base64 ? (
+                                                        {is_delegated || isCompleted && completedNext && sig.sign_base64 ? (
                                                             <img
                                                                 src={sig.sign_base64}
                                                                 alt="Initial"
                                                                 style={{ width: "100%", height: "100%" }}
                                                             />
-                                                        ) : isFirstSigner ? (
+                                                        ) : is_delegated || isFirstSigner && isCompleted && completedNext && sig.sign_base64 || isSignpad || isInitialpad ? (
                                                             firstSignerMessage
-                                                        ) : !isFirstSigner ? (
+                                                        ) : is_delegated || !isFirstSigner && isCompleted && completedNext && sig.sign_base64 || isSignpad || isInitialpad ? (
                                                             otherSignerMessage
                                                         ) : (
                                                             <></>
