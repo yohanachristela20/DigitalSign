@@ -315,6 +315,7 @@ function ReceiveDocument() {
 
             setIsDelegated(is_delegated);
             console.log("isDelegated:", isDelegated);
+            console.log("Delegated signers:", delegated_signers);
 
             const finalSignerId = allSigners || currentSigner || delegated_signers;
             setDelegatedSigners(delegated_signers);
@@ -550,13 +551,14 @@ function ReceiveDocument() {
                 const currentSubmitted = submittedMap[signer];
                 const currentDelegated = delegatedMap[signer] || false;
 
-                let querySigner = signer;
-                setActualSigner(querySigner);
-                console.log("querySigner: ", actualSigner);
+                // let querySigner = signer;
+                // setActualSigner(querySigner);
+                // console.log("querySigner: ", actualSigner);
 
-                const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${querySigner}/${itemId}`);
+                const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
                 const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
-                const signerInitials = initialsData.filter(init => init.id_signers === querySigner && init.id_item === itemId);
+                const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
+                console.log("signerInitials:", signerInitials);
 
                 for (const field of signerFields) {
                     const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
@@ -565,7 +567,7 @@ function ReceiveDocument() {
 
                     fieldBuffer.push({
                         id_item: field.id_item,
-                        id_signers: querySigner,
+                        id_signers: signer,
                         sign_base64: formattedBase64,
                         status: matchInitial?.status || "Pending", 
                         nama: matchInitial?.Signerr?.nama || "-", 
@@ -589,7 +591,7 @@ function ReceiveDocument() {
         }
 
         const allFields = fieldBuffer.map(field => {
-            const {urutan: currentUrutan, id_item, id_signers} = field;
+            const {urutan: currentUrutan, id_item, id_signers, current_signer} = field;
             const prevSignerItem = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan - 1);
             setPrevFields(prevSignerItem);
 
@@ -633,7 +635,15 @@ function ReceiveDocument() {
                 editable = false;
             }
 
-            const nextSignerInitials = initialsData.filter(init => init.id_signers === nextSignerItem);
+            const nextSignerInitials = initialsData.filter(init => 
+                {
+                    if (isDelegated === true) {
+                        return init.delegated_signers === nextSignerItem
+                    } else {
+                         return init.id_signers === nextSignerItem
+                    }
+                }
+            );
             const nextSignerSubmitted = submittedMap[nextSignerItem];
             const nextSignCompleted = nextSignerInitials.length > 0 && nextSignerSubmitted === true;
 
@@ -658,12 +668,20 @@ function ReceiveDocument() {
 
         console.log("All fields:", allFields);
 
+        // const filteredFields = allFields.filter(field => {
+        //     if (isDelegated === true) {
+        //         return field.delegated_signers === current_signer && field.id_signers !== current_signer;
+        //     } else {
+        //         return field.id_signers === id_signers;
+        //     }
+        // });
+
         const filteredFields = allFields.filter(field => {
-            if (isDelegated) {
-                return field.delegated_signers === id_signers;
-            }
-            return field.id_signers === id_signers;
-        });
+            return(
+                field.id_signers === current_signer ||
+                field.delegated_signers === current_signer
+            )
+        })
 
         console.log("filteredFields for render:", filteredFields.map(f => ({
             id_signers: f.id_signers,
@@ -702,7 +720,7 @@ function ReceiveDocument() {
     };
 
     fetchAllFields();
-    }, [id_dokumen, id_signers, urutanMap, allSigners]);
+    }, [id_dokumen, id_signers, urutanMap, allSigners, current_signer]);
 
     const nonDateItems = jenisItem_list
     .map((jenis_item, index) => ({jenis_item, status: initial_status[index]}))
@@ -710,6 +728,8 @@ function ReceiveDocument() {
 
     const isNonDateCompleted = nonDateItems.every(item => item.status === "Completed");
     const currentItemId = initial.find(sig => sig.show && !sig.is_submitted)?.id_item;
+    const isSignerDelegated = delegated_signers === current_signer;
+    const isSignerOwner = id_signers === id_signers;
 
     return (
         <>
@@ -794,8 +814,8 @@ function ReceiveDocument() {
                         className="submit-btn w-100 mt-3 fs-6"
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, current_signer)}
-                        disabled={!isNonDateCompleted}
-                        hidden={submitted_list.every(is_completed => is_completed === true) || initial_status.every(status => status === "Decline" || isAccessed !== true)}
+                        disabled={isDelegated ? initial_status.every(status => status !== "Completed") : !isNonDateCompleted}
+                        hidden={submitted_list.every(is_completed => is_completed === true) || initial_status.every(status => status === "Decline" || isAccessed !== true) || isDelegated ? isSignerDelegated && !isSignerOwner  : !isSignerDelegated}
                     >
                         Finish
                     </Button>
@@ -809,53 +829,53 @@ function ReceiveDocument() {
                         {loading && <Spinner animation="border" variant="primary" />}
                         {errorMsg && <Alert variant="danger" className="m-4">{errorMsg}</Alert>}
                         <div className="sign-in__user d-flex align-items-center justify-content-center pt-5 ">
-                            {isAccessed !== true && (
-                            <Row className="login-user user-element mt-2">
-                                <Card className="login-card shadow mb-0">
-                                    <div className="d-flex align-items-center justify-content-center">
-                                        <img src={require("assets/img/login2.png")} alt="login-img" style={{width:450}} />
-                                    </div>
-                                    <Card.Body>
-                                        <h3 className="text-center font-form mt-0">Campina Sign</h3>
-                                        <Alert variant="info"><FaInfoCircle className="mr-2"/>Please verify your email</Alert>
-                                        <Form onSubmit={handleEmailVerify} className="mb-3">
-                                            <Form.Group className="mb-2"> 
-                                                <span class="input-group-text bg-transparent  border-0" id="basic-addon1">
-                                                    <FaUser style={{ marginRight: '8px' }} />
-                                                    <Form.Control
-                                                        type="email"
-                                                        placeholder="Email"
-                                                        value={inputEmail}
-                                                        onChange={(e) => setInputEmail(e.target.value)}
-                                                        required
-                                                        style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}
-                                                    />
-                                                </span>
-                                            </Form.Group>
-                                            <Form.Group className="mb-3">
-                                                <span class="input-group-text bg-transparent  border-0" id="basic-addon1">
-                                                    <FaKey style={{ marginRight: '8px' }} />
-                                                    <Form.Control
-                                                        type="password"
-                                                        placeholder="Password"
-                                                        value={inputPassword}
-                                                        onChange={(e) => setInputPassword(e.target.value)}
-                                                        required 
-                                                        style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}   
-                                                    />
-                                                </span> 
-                                            </Form.Group>
-                                            <Button type="submit" className="w-100 mt-3" disabled={loading} 
-                                                style={{ backgroundColor: "#4c4ef9", border: "none", color: "white", marginBottom:'15px'}}
-                                                >
-                                                {loading ? "Verifying..." : "Verify Email"}
-                                            </Button>
-                                            <p className="text-center font-footer" style={{fontSize:15}}>Forget Password? Please contact Super Admin.</p>
-                                        </Form>
-                                    </Card.Body>
-                                </Card>
-                            </Row>
-                            )}
+                        {isAccessed !== true && (
+                        <Row className="login-user user-element mt-2">
+                            <Card className="login-card shadow mb-0">
+                                <div className="d-flex align-items-center justify-content-center">
+                                    <img src={require("assets/img/login2.png")} alt="login-img" style={{width:450}} />
+                                </div>
+                                <Card.Body>
+                                    <h3 className="text-center font-form mt-0">Campina Sign</h3>
+                                    <Alert variant="info"><FaInfoCircle className="mr-2"/>Please verify your email</Alert>
+                                    <Form onSubmit={handleEmailVerify} className="mb-3">
+                                        <Form.Group className="mb-2"> 
+                                            <span class="input-group-text bg-transparent  border-0" id="basic-addon1">
+                                                <FaUser style={{ marginRight: '8px' }} />
+                                                <Form.Control
+                                                    type="email"
+                                                    placeholder="Email"
+                                                    value={inputEmail}
+                                                    onChange={(e) => setInputEmail(e.target.value)}
+                                                    required
+                                                    style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}
+                                                />
+                                            </span>
+                                        </Form.Group>
+                                        <Form.Group className="mb-3">
+                                            <span class="input-group-text bg-transparent  border-0" id="basic-addon1">
+                                                <FaKey style={{ marginRight: '8px' }} />
+                                                <Form.Control
+                                                    type="password"
+                                                    placeholder="Password"
+                                                    value={inputPassword}
+                                                    onChange={(e) => setInputPassword(e.target.value)}
+                                                    required 
+                                                    style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}   
+                                                />
+                                            </span> 
+                                        </Form.Group>
+                                        <Button type="submit" className="w-100 mt-3" disabled={loading} 
+                                            style={{ backgroundColor: "#4c4ef9", border: "none", color: "white", marginBottom:'15px'}}
+                                            >
+                                            {loading ? "Verifying..." : "Verify Email"}
+                                        </Button>
+                                        <p className="text-center font-footer" style={{fontSize:15}}>Forget Password? Please contact Super Admin.</p>
+                                    </Form>
+                                </Card.Body>
+                            </Card>
+                        </Row>
+                        )}
                         </div>
                         {isAccessed === true && pdfUrl && (
                             <div className="center-object">
@@ -881,25 +901,47 @@ function ReceiveDocument() {
                                         const currentItem = sig.id_item === currentItemId;
                                         const nextSigner = sig.nextSigner;
                                         const is_delegated = sig.is_delegated;
+                                        const delegated_signers = sig.delegated_signers;
 
-                                        
+                                        const isSignerOwner = sig.id_signers === id_signers;
+                                        const isSignerDelegated = delegated_signers === id_signers;
+
                                         const isFirstSigner = urutan === 1;
 
                                         const showImage = sig.sign_base64;
                                         const showDate = isCompleted && completedNext && isDatefield;
 
-                                        
-                                        const bgFirst = currentItem 
-                                        ? "transparent" 
-                                        : isSubmitted 
-                                        ? "transparent"
-                                        : "rgba(86, 90, 90, 0.5)";
+                                        let bgFirst = "transparent";
+                                        let bgOthers = "transparent";
 
-                                        const bgOthers = currentItem 
-                                        ? "transparent" 
-                                        : isSubmitted 
-                                        ? "transparent"
-                                        : "rgba(86, 90, 90, 0.5)";
+                                        if (isSubmitted){
+                                            bgFirst = "transparent"
+                                        }
+                                        else if (isSignerDelegated && is_delegated && !isSubmitted) {
+                                            bgFirst = "rgba(25, 230, 25, 0.5)";
+                                        } else if (!isSignerDelegated && !isSignerOwner && !is_delegated) {
+                                            bgFirst = "rgba(86, 90, 90, 0.5)";
+                                        } else if (!isSignerOwner && !isSignerDelegated) {
+                                            bgFirst = "rgba(86, 90, 90, 0.5)";
+                                        }
+
+
+                                        // const bgOthers = currentItem 
+                                        // ? "transparent" 
+                                        // : isSubmitted 
+                                        // ? "transparent"
+                                        // : "rgba(86, 90, 90, 0.5)";
+
+                                        if (isSubmitted){
+                                            bgOthers = "transparent"
+                                        }
+                                        else if (isSignerDelegated && is_delegated && !isSubmitted) {
+                                            bgOthers = "rgba(25, 230, 25, 0.5)";
+                                        } else if (!isSignerDelegated && !isSignerOwner && !is_delegated) {
+                                            bgOthers = "rgba(86, 90, 90, 0.5)";
+                                        } else if (!isSignerOwner && !isSignerDelegated) {
+                                            bgOthers = "rgba(86, 90, 90, 0.5)";
+                                        }
 
                                         const firstBorderStyle = currentItem
                                         ? "transparent"
@@ -914,7 +956,7 @@ function ReceiveDocument() {
                                         : "solid 5px rgba(86, 90, 90, 0.3)";
 
                                         const firstSignerMessage = 
-                                        !isSubmitted && !currentItem
+                                        !isSubmitted && !currentItem 
                                         ? <p className="text-center">Another sign didn't complete</p>
                                         : "";
 
@@ -944,7 +986,7 @@ function ReceiveDocument() {
                                                         }}
                                                         onClick={() => {
                                                             if (sig.prevFieldDisplay) return;
-                                                            if (sig.editable && !isSubmitted && currentItem) {
+                                                            if ((sig.editable && !isSubmitted && currentItem) || isSignerDelegated) {
                                                                 if (isInitialpad) {
                                                                     handleInitialClick(sig.id_item, sig.show, sig.editable);
                                                                 } else if (isSignpad) {
@@ -992,6 +1034,13 @@ function ReceiveDocument() {
                                         const currentSigner = sig.id_signers;
                                         const currentItem = sig.id_item;
                                         const nextSigner = sig.nextSigner;
+                                        const isDelegated = sig.is_delegated;
+                                        const is_delegated = sig.is_delegated;
+
+                                        const isSignerOwner = sig.id_signers === id_signers;
+                                        const isSignerDelegated = delegated_signers === id_signers;
+
+                                        console.log("isDelegate initial:", isDelegated);
 
                                         const prevField = signedInitials.find(field => field.id_item === prevSigner);
                                         const prevNotSubmitted = prevField && (
@@ -1000,12 +1049,17 @@ function ReceiveDocument() {
                                         
 
                                         //FIX PLISSS JGN DIUBAH!!!
-                                        const borderStyle = !isSubmitted
+                                        const borderStyle = 
+                                        isSubmitted 
+                                        ? "transparent"
+                                        : !isSignerDelegated && !isSignerOwner && !is_delegated
+                                        ? "solid 5px rgba(86, 90, 90, 0.5)"
+                                        : !isSignerOwner && !isSignerDelegated
+                                        ? "solid 5px rgba(86, 90, 90, 0.5)"
+                                        : !isSubmitted
                                         ? "solid 5px rgba(25, 230, 25, 0.5)"
                                         : isFirstSigner && !isCompleted 
-                                        ? "solid 5px rgba(25, 230, 25, 0.5)"
-                                        : isSubmitted
-                                        ? "transparent"
+                                        ? "solid 5px rgba(25, 230, 25, 0.5)" 
                                         : "transparent";
 
                                         const backgroundColor = isPrevField 
@@ -1017,6 +1071,49 @@ function ReceiveDocument() {
                                         : !isPrevFieldForNextSigner
                                         ? "solid 5px rgba(86, 90, 90, 0.5)"
                                         : "solid 5px rgba(86, 90, 90, 0.5)";
+
+                                        let bgFirst = "transparent";
+                                        let bgOthers = "transparent";
+
+                                        if (isSubmitted) {
+                                            bgFirst
+                                        }
+                                        if (!isCompleted){
+                                            bgFirst = "rgba(25, 230, 25, 0.5)";
+                                        }
+                                        if (!isSignerDelegated && is_delegated && !isSubmitted && !isCompleted) {
+                                            bgFirst = "rgba(25, 230, 25, 0.5)";
+                                        } else if (!isSignerDelegated && !isSignerOwner && !is_delegated) {
+                                            bgFirst = "rgba(86, 90, 90, 0.5)";
+                                        } else if (!isSignerOwner && !isSignerDelegated) {
+                                            bgFirst = "rgba(86, 90, 90, 0.5)";
+                                        } 
+
+
+                                        if (isSubmitted){
+                                            bgOthers
+                                        }
+                                        if (!isCompleted){
+                                            bgOthers = "rgba(25, 230, 25, 0.5)";
+                                        }
+                                        if (isSignerDelegated && is_delegated && !isSubmitted && !isCompleted) {
+                                            bgOthers = "rgba(25, 230, 25, 0.5)";
+                                        } else if (!isSignerDelegated && !isSignerOwner && !is_delegated) {
+                                            bgOthers = "rgba(86, 90, 90, 0.5)";
+                                        } else if (!isSignerOwner && !isSignerDelegated) {
+                                            bgOthers = "rgba(86, 90, 90, 0.5)";
+                                        // } else if (isSubmitted) {
+                                        //     bgOthers
+                                        }
+
+                                        // let borderOthers = "transparent";
+
+                                        // if (isSignerDelegated && !isSignerOwner && !is_delegated) {
+                                        //     borderOthers = "solid 5px rgba(86, 90, 90, 0.5)";
+                                        // } else if (!isSignerOwner && !isSignerDelegated) {
+                                        //     borderOthers = "solid 5px rgba(86, 90, 90, 0.5)";
+                                        // }
+
 
                                         return (
                                             <Rnd
@@ -1030,13 +1127,16 @@ function ReceiveDocument() {
                                                     alignItems: "center",
                                                     justifyContent: "center",
                                                     backgroundColor: 
-                                                        !isCompleted
-                                                        ? "rgba(25, 230, 25, 0.5)"
-                                                        : isFirstSigner && !isCompleted
-                                                        ? "rgba(25, 230, 25, 0.5)"
-                                                        : isSubmitted 
-                                                        ? "transparent"
-                                                        : "transparent",
+                                                        // !isCompleted
+                                                        // ? "rgba(25, 230, 25, 0.5)"
+                                                        // : isFirstSigner && !isCompleted
+                                                        // ? "rgba(25, 230, 25, 0.5)"
+                                                        // ? !currentSigner
+                                                        // : "rgba(86, 90, 90, 0.5)"
+                                                        // : isSubmitted 
+                                                        // ? "transparent"
+                                                        // : "transparent",
+                                                        isFirstSigner ? bgFirst : bgOthers,
                                                     border: borderStyle, 
                                                     cursor: sig.editable && !isSubmitted && currentItem ? "pointer" : "default",
                                                     zIndex: isCompleted? 1 : 2
@@ -1044,7 +1144,7 @@ function ReceiveDocument() {
                                                 hidden={initial_status.every(status => status === "Decline")}
                                                 onClick={() => {
                                                     if (sig.prevFieldDisplay) return;
-                                                    if (sig.editable && !isSubmitted) {
+                                                    if (sig.editable && !isSubmitted || isSignerDelegated) {
                                                         if (isInitialpad) {
                                                             handleInitialClick(sig.id_item, sig.show, sig.editable);
                                                         } else if (isSignpad) {
