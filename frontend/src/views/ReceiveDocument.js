@@ -107,9 +107,11 @@ function ReceiveDocument() {
     const [isPrevFieldForNextSigner, setIsPrevFieldForNextSigner] = useState("");
     const [isNextField, setIsNextField] = useState("");
     const [finalSignerId, setFinalSignerId] = useState("");
-    const [isDelegated, setIsDelegated] = useState("");
+    const [is_delegated, setIsDelegated] = useState("");
     const [actualSigner, setActualSigner] = useState("");
     const [current_signer, setCurrentSigner] = useState("");
+    const [filteredFields, setFilterFields] = useState ("");
+    const [normalizedDelegated, setNormalizedDelegated] = useState("");
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -314,7 +316,7 @@ function ReceiveDocument() {
             const is_delegated = res.data.is_delegated;
 
             setIsDelegated(is_delegated);
-            console.log("isDelegated:", isDelegated);
+            console.log("isDelegated:", is_delegated);
             console.log("Delegated signers:", delegated_signers);
 
             const finalSignerId = allSigners || currentSigner || delegated_signers;
@@ -550,10 +552,12 @@ function ReceiveDocument() {
                 const currentUrutan = Number(urutanMap[itemId]);
                 const currentSubmitted = submittedMap[signer];
                 const currentDelegated = delegatedMap[signer] || false;
+                console.log("currentDelegated: ", currentDelegated);
 
                 // let querySigner = signer;
                 // setActualSigner(querySigner);
                 // console.log("querySigner: ", actualSigner);
+
 
                 const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
                 const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
@@ -564,6 +568,10 @@ function ReceiveDocument() {
                     const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
                     const base64 = matchInitial?.sign_base64;
                     const formattedBase64 = base64?.startsWith("data:image")? base64 : base64 ? `data:image/png;base64,${base64}` : null;
+
+                    const delegatedForThisSigner = matchInitial?.delegated_signers || null;
+                    console.log("delegatedForThisSigner:", delegatedForThisSigner);
+
 
                     fieldBuffer.push({
                         id_item: field.id_item,
@@ -584,14 +592,25 @@ function ReceiveDocument() {
                         rawField: field,
                         is_delegated: currentDelegated,
                         nowSigner: finalSignerId,
-                        delegated_signers,
+                        delegated_signers: delegatedForThisSigner,
                     });
                 }
             }
         }
 
         const allFields = fieldBuffer.map(field => {
-            const {urutan: currentUrutan, id_item, id_signers, current_signer} = field;
+            const {urutan: currentUrutan, id_item, id_signers, current_signer, delegated_signers} = field;
+            
+            let normalizedDelegated = null;
+            if (delegated_signers && !Array.isArray(delegated_signers)) {
+                normalizedDelegated = [String(delegated_signers)];
+            } else if (Array.isArray(delegated_signers)) {
+                normalizedDelegated = delegated_signers.map(String);
+            }
+
+            setNormalizedDelegated(normalizedDelegated);
+            console.log("normalizedDelegated:", normalizedDelegated);
+
             const prevSignerItem = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan - 1);
             setPrevFields(prevSignerItem);
 
@@ -637,7 +656,7 @@ function ReceiveDocument() {
 
             const nextSignerInitials = initialsData.filter(init => 
                 {
-                    if (isDelegated === true) {
+                    if (is_delegated === true) {
                         return init.delegated_signers === nextSignerItem
                     } else {
                          return init.id_signers === nextSignerItem
@@ -654,6 +673,7 @@ function ReceiveDocument() {
 
             return {
                 ...field,
+                delegated_signers: normalizedDelegated,
                 show, 
                 editable,
                 prevSigner: prevSignerItem,
@@ -668,24 +688,42 @@ function ReceiveDocument() {
 
         console.log("All fields:", allFields);
 
-        // const filteredFields = allFields.filter(field => {
-        //     if (isDelegated === true) {
-        //         return field.delegated_signers === current_signer && field.id_signers !== current_signer;
-        //     } else {
-        //         return field.id_signers === id_signers;
-        //     }
-        // });
+        console.log("current_signer:", current_signer);
+        console.log("all Signers:", allFields);
+
+
+        const ownerSigner = allFields.find(s => {
+            console.log("Checking signer:", s.id_signers, "delegated_signers:", s.delegated_signers);
+
+            if (!s.delegated_signers) return false;
+            if (Array.isArray(s.delegated_signers)) {
+                return s.delegated_signers.map(String).includes(String(current_signer));
+            }
+            return String(s.delegated_signers) === String(current_signer);
+        });
+        console.log("ownerSigner:", ownerSigner);
+
+
+        const ownerSignerId = ownerSigner ? String(ownerSigner.id_signers) : null;
+        console.log("ownerSignerId :", ownerSignerId);
+
 
         const filteredFields = allFields.filter(field => {
-            return(
-                field.id_signers === current_signer ||
-                field.delegated_signers === current_signer
-            )
-        })
+            const fieldOwner = String(field.id_signers) || "";
+            
+            if (ownerSignerId) {
+                return fieldOwner === ownerSignerId; 
+            }
 
+            return fieldOwner === String(current_signer);
+        });
+        setFilterFields(filteredFields);
+
+        
         console.log("filteredFields for render:", filteredFields.map(f => ({
             id_signers: f.id_signers,
             delegated_signers: f.delegated_signers,
+            id_item: f.id_item,
             jenis_item: f.jenis_item,
         })));
 
@@ -722,14 +760,26 @@ function ReceiveDocument() {
     fetchAllFields();
     }, [id_dokumen, id_signers, urutanMap, allSigners, current_signer]);
 
-    const nonDateItems = jenisItem_list
-    .map((jenis_item, index) => ({jenis_item, status: initial_status[index]}))
-    .filter(item => item.jenis_item !== "Date");
+    const nonDateItems = initial
+    .filter(item => item.jenis_item !== "Date")
+    .map(item => ({
+        jenis_item: item.jenis_item,
+        is_delegated: item.is_delegated,
+        status: item.status,
+        is_submitted: item.is_submitted
+    }));
 
     const isNonDateCompleted = nonDateItems.every(item => item.status === "Completed");
+    const isNonDateNotCompleted = nonDateItems.every(item => item.status !== "Completed");
+    const isNonDateSubmitted =  nonDateItems.every(item => item.is_submitted === true);
+
+    const isDelegatedSigner = is_delegated && delegated_signers === current_signer;
+
+    const isFinishDisabled = isDelegatedSigner ? isNonDateNotCompleted : isNonDateNotCompleted;
+    const isFinishHidden = isDelegatedSigner ? (isNonDateCompleted && isNonDateSubmitted) : (isNonDateCompleted && isNonDateSubmitted);
+
     const currentItemId = initial.find(sig => sig.show && !sig.is_submitted)?.id_item;
-    const isSignerDelegated = delegated_signers === current_signer;
-    const isSignerOwner = id_signers === id_signers;
+
 
     return (
         <>
@@ -814,8 +864,9 @@ function ReceiveDocument() {
                         className="submit-btn w-100 mt-3 fs-6"
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, current_signer)}
-                        disabled={isDelegated ? initial_status.every(status => status !== "Completed") : !isNonDateCompleted}
-                        hidden={submitted_list.every(is_completed => is_completed === true) || initial_status.every(status => status === "Decline" || isAccessed !== true) || isDelegated ? isSignerDelegated && !isSignerOwner  : !isSignerDelegated}
+                        disabled={isFinishDisabled}
+                        hidden={isFinishHidden}
+                     
                     >
                         Finish
                     </Button>
@@ -911,37 +962,52 @@ function ReceiveDocument() {
                                         const showImage = sig.sign_base64;
                                         const showDate = isCompleted && completedNext && isDatefield;
 
-                                        let bgFirst = "transparent";
-                                        let bgOthers = "transparent";
+                                        // let bgFirst = "transparent";
+                                        // let bgOthers = "transparent";
 
-                                        if (isSubmitted){
-                                            bgFirst = "transparent"
-                                        }
-                                        else if (isSignerDelegated && is_delegated && !isSubmitted) {
-                                            bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        } else if (!isSignerDelegated && !isSignerOwner && !is_delegated) {
-                                            bgFirst = "rgba(86, 90, 90, 0.5)";
-                                        } else if (!isSignerOwner && !isSignerDelegated) {
-                                            bgFirst = "rgba(86, 90, 90, 0.5)";
-                                        }
-
-
-                                        // const bgOthers = currentItem 
+                                        const bgFirst = currentItem || isDelegatedSigner || is_delegated
+                                        ? "transparent" 
+                                        // : isCompleted
                                         // ? "transparent" 
-                                        // : isSubmitted 
-                                        // ? "transparent"
-                                        // : "rgba(86, 90, 90, 0.5)";
+                                        : !isCompleted || !currentItem 
+                                        ? "rgba(86, 90, 90, 0.5)"
+                                        : "rgba(86, 90, 90, 0.5)";
 
-                                        if (isSubmitted){
-                                            bgOthers = "transparent"
-                                        }
-                                        else if (isSignerDelegated && is_delegated && !isSubmitted) {
-                                            bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        } else if (!isSignerDelegated && !isSignerOwner && !is_delegated) {
-                                            bgOthers = "rgba(86, 90, 90, 0.5)";
-                                        } else if (!isSignerOwner && !isSignerDelegated) {
-                                            bgOthers = "rgba(86, 90, 90, 0.5)";
-                                        }
+                            
+                                        // if (isSubmitted || isDelegatedSigner) {
+                                        //     bgFirst
+                                        // }
+                                        // if (!isCompleted){
+                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
+                                        // }
+                                        // if (!isSignerDelegated && is_delegated && !isSubmitted && !isCompleted) {
+                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
+                                        // } else if (isSignerDelegated && !isSignerOwner && is_delegated) {
+                                        //     bgFirst = "rgba(86, 90, 90, 0.5)";
+                                        // } else if (!isSignerOwner && !isSignerDelegated) {
+                                        //     bgFirst = "rgba(86, 90, 90, 0.5)";
+                                        // } 
+
+                                        // if (isSubmitted || isCompleted)  {
+                                        //     bgOthers
+                                        // }
+                                        // if (!isCompleted){
+                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
+                                        // }
+                                        // if (!isSignerDelegated && is_delegated && !isSubmitted && !isCompleted) {
+                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
+                                        // } else if (!isSignerDelegated && !isSignerOwner && !is_delegated) {
+                                        //     bgOthers = "rgba(86, 90, 90, 0.5)";
+                                        // } else if (!isSignerOwner && !isSignerDelegated) {
+                                        //     bgOthers = "rgba(86, 90, 90, 0.5)";
+                                        // } 
+
+
+                                        const bgOthers = currentItem 
+                                        ? "transparent" 
+                                        : isSubmitted 
+                                        ? "transparent"
+                                        : "rgba(86, 90, 90, 0.5)";
 
                                         const firstBorderStyle = currentItem
                                         ? "transparent"
@@ -986,7 +1052,7 @@ function ReceiveDocument() {
                                                         }}
                                                         onClick={() => {
                                                             if (sig.prevFieldDisplay) return;
-                                                            if ((sig.editable && !isSubmitted && currentItem) || isSignerDelegated) {
+                                                            if (sig.editable && !isSubmitted && currentItem || normalizedDelegated === delegated_signers ) {
                                                                 if (isInitialpad) {
                                                                     handleInitialClick(sig.id_item, sig.show, sig.editable);
                                                                 } else if (isSignpad) {
@@ -1034,13 +1100,13 @@ function ReceiveDocument() {
                                         const currentSigner = sig.id_signers;
                                         const currentItem = sig.id_item;
                                         const nextSigner = sig.nextSigner;
-                                        const isDelegated = sig.is_delegated;
+                                        // const isDelegated = sig.is_delegated;
                                         const is_delegated = sig.is_delegated;
 
                                         const isSignerOwner = sig.id_signers === id_signers;
                                         const isSignerDelegated = delegated_signers === id_signers;
 
-                                        console.log("isDelegate initial:", isDelegated);
+                                        // console.log("isDelegate initial:", is_delegated);
 
                                         const prevField = signedInitials.find(field => field.id_item === prevSigner);
                                         const prevNotSubmitted = prevField && (
@@ -1144,7 +1210,7 @@ function ReceiveDocument() {
                                                 hidden={initial_status.every(status => status === "Decline")}
                                                 onClick={() => {
                                                     if (sig.prevFieldDisplay) return;
-                                                    if (sig.editable && !isSubmitted || isSignerDelegated) {
+                                                    if (sig.editable && !isSubmitted && currentItem || normalizedDelegated === delegated_signers ) {
                                                         if (isInitialpad) {
                                                             handleInitialClick(sig.id_item, sig.show, sig.editable);
                                                         } else if (isSignpad) {

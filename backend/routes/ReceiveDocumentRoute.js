@@ -518,7 +518,7 @@ router.get('/initials/:id_dokumen/:id_signers', async(req, res) => {
     try {
         const response = await LogSign.findAll({
             where: {id_dokumen, id_signers: idSignerList},
-            attributes: ["sign_base64", "status", "id_item", "id_signers"],
+            attributes: ["sign_base64", "status", "id_item", "id_signers", "delegated_signers"],
             include: [
                 {
                     model: Karyawan,
