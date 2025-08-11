@@ -962,52 +962,38 @@ function ReceiveDocument() {
                                         const showImage = sig.sign_base64;
                                         const showDate = isCompleted && completedNext && isDatefield;
 
-                                        // let bgFirst = "transparent";
-                                        // let bgOthers = "transparent";
-
-                                        const bgFirst = currentItem || isDelegatedSigner || is_delegated
-                                        ? "transparent" 
-                                        // : isCompleted
+                                        // const bgFirst = currentItem || isDelegatedSigner || is_delegated
                                         // ? "transparent" 
-                                        : !isCompleted || !currentItem 
-                                        ? "rgba(86, 90, 90, 0.5)"
-                                        : "rgba(86, 90, 90, 0.5)";
+                                        // : !isCompleted || !currentItem 
+                                        // ? "rgba(86, 90, 90, 0.5)"
+                                        // : "rgba(86, 90, 90, 0.5)";
 
-                            
-                                        // if (isSubmitted || isDelegatedSigner) {
-                                        //     bgFirst
-                                        // }
-                                        // if (!isCompleted){
-                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        // }
-                                        // if (!isSignerDelegated && is_delegated && !isSubmitted && !isCompleted) {
-                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        // } else if (isSignerDelegated && !isSignerOwner && is_delegated) {
-                                        //     bgFirst = "rgba(86, 90, 90, 0.5)";
-                                        // } else if (!isSignerOwner && !isSignerDelegated) {
-                                        //     bgFirst = "rgba(86, 90, 90, 0.5)";
-                                        // } 
+                                        // const bgOthers = currentItem 
+                                        // ? "transparent" 
+                                        // : isSubmitted 
+                                        // ? "transparent"
+                                        // : "rgba(86, 90, 90, 0.5)";
 
-                                        // if (isSubmitted || isCompleted)  {
-                                        //     bgOthers
-                                        // }
-                                        // if (!isCompleted){
-                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        // }
-                                        // if (!isSignerDelegated && is_delegated && !isSubmitted && !isCompleted) {
-                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        // } else if (!isSignerDelegated && !isSignerOwner && !is_delegated) {
-                                        //     bgOthers = "rgba(86, 90, 90, 0.5)";
-                                        // } else if (!isSignerOwner && !isSignerDelegated) {
-                                        //     bgOthers = "rgba(86, 90, 90, 0.5)";
-                                        // } 
+                                        const delegatedArray = Array.isArray(delegated_signers)
+                                        ? delegated_signers.map(String)
+                                        : delegated_signers ? [String(delegated_signers)] : [];
 
+                                        const normalizedArray = Array.isArray(normalizedDelegated)
+                                        ? normalizedDelegated.map(String)
+                                        : normalizedDelegated ? [String(normalizedDelegated)] : [];
 
-                                        const bgOthers = currentItem 
-                                        ? "transparent" 
-                                        : isSubmitted 
-                                        ? "transparent"
-                                        : "rgba(86, 90, 90, 0.5)";
+                                        let bgFirst = currentItem || isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
+                                        let bgOthers = currentItem || isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
+
+                                        if ((delegatedArray.length > 1 || normalizedArray.length > 1) && isCompleted !== true) {
+                                            bgFirst = "rgba(86, 90, 90, 0.3)";
+                                            bgOthers = "rgba(86, 90, 90, 0.3)";
+                                        }
+
+                                        if (isCompleted === true) {
+                                            bgFirst = "transparent";
+                                            bgOthers = "transparent";
+                                        }
 
                                         const firstBorderStyle = currentItem
                                         ? "transparent"
@@ -1021,17 +1007,82 @@ function ReceiveDocument() {
                                         ? "transparent"
                                         : "solid 5px rgba(86, 90, 90, 0.3)";
 
-                                        const firstSignerMessage = 
-                                        !isSubmitted && !currentItem 
-                                        ? <p className="text-center">Another sign didn't complete</p>
-                                        : "";
+                                        // const firstSignerMessage = 
+                                        // !isSubmitted && !currentItem 
+                                        // ? <p className="text-center">Another sign didn't complete</p>
+                                        // : "";
 
-                                        const otherSignerMessage = 
-                                        !currentItem
-                                        ? <p className="text-center">Another sign didn't complete</p>
-                                        : "";
+                                        // const otherSignerMessage = 
+                                        // !currentItem
+                                        // ? <p className="text-center">Another sign didn't complete</p>
+                                        // : "";
 
                                         const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
+
+                                        const groupByUrutan = signedInitials.reduce((acc, field) => {
+                                            if (!acc[field.urutan]) acc[field.urutan] = [];
+                                            acc[field.urutan].push(field);
+                                            return acc;
+                                        }, {});
+
+                                        const getMessageForUrutan = (urutan) => {
+                                            const fields = groupByUrutan[urutan] || [];
+                                            const currentSignerStr = String(id_signers);
+
+                                            const relatedSigners = new Set();
+
+                                            fields.forEach(f => {
+                                                //cek id_signers yg punya delegated_signers ke current signer
+                                                if (Array.isArray(f.delegated_signers) 
+                                                ? f.delegated_signers.map(String).includes(currentSignerStr)
+                                                : String(f.delegated_signers) === currentSignerStr) {
+                                                    relatedSigners.add(String(f.id_signers));
+                                                }
+
+                                                // cek id_signers yg ada di normalizedDelegated ke current signer
+                                                if (Array.isArray(f.normalizedDelegated) 
+                                                ? f.normalizedDelegated.map(String).includes(currentSignerStr)
+                                                : String(f.normalizedDelegated) === currentSignerStr) {
+                                                    relatedSigners.add(String(f.id_signers));
+                                                }
+
+                                                if (String(f.id_signers) === currentSignerStr) {
+                                                    relatedSigners.add(currentSignerStr);
+                                                }
+                                            });
+
+                                            const isOtherSignerGroup = fields.some(f => !relatedSigners.has(String(f.id_signers)));
+
+                                            if (!isOtherSignerGroup) return "";
+
+                                            const relatedCompleted = fields
+                                                .filter(f => relatedSigners.has(String(f.id_signers)))
+                                                .every(f => f.status === "Completed");
+
+                                            if (relatedCompleted) {
+                                                return <p className="text-center">Another sign didn't complete</p>;
+                                            }
+
+                                            return <p className="text-center">Another sign didn't complete</p>;
+                                        };
+
+                                        const message = getMessageForUrutan(sig.urutan);
+
+
+                                        // const delegatedArray = Array.isArray(delegated_signers)
+                                        // ? delegated_signers.map(String)
+                                        // : delegated_signers
+                                        // ? [String(delegated_signers)]
+                                        // : [];
+
+                                        // const normalizedArray = Array.isArray(normalizedDelegated)
+                                        // ? normalizedDelegated.map(String)
+                                        // : normalizedDelegated
+                                        // ? [String(normalizedDelegated)]
+                                        // : [];
+
+                                        const currentSignerStr = String(id_signers);
+
 
                                         return (
                                             <>
@@ -1048,29 +1099,122 @@ function ReceiveDocument() {
                                                             backgroundColor: isFirstSigner ? bgFirst : bgOthers,
                                                             border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
                                                             zIndex: zIndexStyle,
-                                                            cursor: sig.editable && !isSubmitted && currentItem ? "pointer" : "default",
+                                                            // cursor: sig.editable && !isSubmitted && currentItem ? "pointer" : "default",
+                                                           
+                                                            cursor: !isSubmitted && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
+                                                            
                                                         }}
+                                                        // onClick={() => {
+                                                        //    let canClick = false;
+
+                                                        //    const delegatedArray = Array.isArray(delegated_signers)
+                                                        //    ? delegated_signers.map(String)
+                                                        //    : delegated_signers
+                                                        //    ? [String(delegated_signers)]
+                                                        //    : [];
+
+                                                        //    const normalizedArray = Array.isArray(normalizedDelegated)
+                                                        //    ? normalizedDelegated.map(String)
+                                                        //    : normalizedDelegated
+                                                        //    ? [String(normalizedDelegated)]
+                                                        //    : [];
+
+                                                        //    const currentSignerStr = String(id_signers);
+
+                                                        //    if (delegatedArray.length > 1 || normalizedArray.length > 1) {
+                                                        //         if (delegatedArray.includes(currentSignerStr) || normalizedArray.includes(currentSignerStr)) {
+                                                        //             canClick = true;
+                                                        //         } 
+                                                        //    } else {
+                                                        //         if (
+                                                        //             currentSignerStr === String(sig.id_signers) || 
+                                                        //             delegatedArray.includes(currentSignerStr) ||
+                                                        //             normalizedArray.includes(currentSignerStr)
+                                                        //         ) {
+                                                        //             canClick = true;
+                                                        //         }
+                                                        //    } 
+
+                                                        //    if (sig.editable && !isSubmitted && canClick) {
+                                                        //         if (isInitialpad) {
+                                                        //             handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                        //         } else if(isSignpad){
+                                                        //             handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                        //         }
+                                                        //    }
+                                                        // }}
+                                                        disabled ={isSubmitted === true}
+                                                        // onClick={() => {
+                                                        //     if (!isSubmitted && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
+                                                        //         if (isInitialpad) {
+                                                        //             handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                        //         } else if (isSignpad) {
+                                                        //             handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                        //         }
+                                                        //     }
+                                                        // }}
+
                                                         onClick={() => {
-                                                            if (sig.prevFieldDisplay) return;
-                                                            if (sig.editable && !isSubmitted && currentItem || normalizedDelegated === delegated_signers ) {
-                                                                if (isInitialpad) {
-                                                                    handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                                } else if (isSignpad) {
-                                                                    handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                            let canClick = false;
+
+                                                            const delegatedArray = Array.isArray(delegated_signers)
+                                                            ? delegated_signers.map(String)
+                                                            : delegated_signers
+                                                            ? [String(delegated_signers)]
+                                                            : [];
+
+                                                            const normalizedArray = Array.isArray(normalizedDelegated)
+                                                            ? normalizedDelegated.map(String)
+                                                            : normalizedDelegated
+                                                            ? [String(normalizedDelegated)]
+                                                            : [];
+
+                                                            const currentSignerStr = String(id_signers);
+                                                        
+                                                            if (isFirstSigner){
+                                                                if (delegatedArray.length > 1 || normalizedArray.length > 1) {
+                                                                if (delegatedArray.includes(currentSignerStr) || normalizedArray.includes(currentSignerStr)) {
+                                                                    canClick = true;
+                                                                } 
+                                                                } else {
+                                                                    if (
+                                                                        currentSignerStr === String(sig.id_signers) || 
+                                                                        delegatedArray.includes(currentSignerStr) ||
+                                                                        normalizedArray.includes(currentSignerStr)
+                                                                    ) {
+                                                                        canClick = true;
+                                                                    }
+                                                                } 
+
+                                                                if (!isSubmitted && canClick == true && currentSignerStr === String(sig.id_signers) && (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
+                                                                    if (isInitialpad) {
+                                                                        handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                                    } else if(isSignpad){
+                                                                        handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                                    }
                                                                 }
-                                                            }
+                                                            } else if (!isFirstSigner) {
+                                                                if (!isSubmitted && canClick == true && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
+                                                                        if (isInitialpad) {
+                                                                            handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                                        } else if (isSignpad) {
+                                                                            handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                                        }
+                                                                    }
+                                                                }    
                                                         }}
+
                                                     >
-                                                        {is_delegated || isCompleted && completedNext && sig.sign_base64 ? (
+                                                        {is_delegated || (isCompleted && completedNext && sig.sign_base64) ? (
                                                             <img
                                                                 src={sig.sign_base64}
                                                                 alt="Initial"
                                                                 style={{ width: "100%", height: "100%" }}
                                                             />
-                                                        ) : is_delegated || isFirstSigner && isCompleted && completedNext && sig.sign_base64 || isSignpad || isInitialpad ? (
-                                                            firstSignerMessage
-                                                        ) : is_delegated || !isFirstSigner && isCompleted && completedNext && sig.sign_base64 || isSignpad || isInitialpad ? (
-                                                            otherSignerMessage
+                                                        ) : isFirstSigner ? (
+                                                            message
+                                                        ) : !isFirstSigner ? (
+                                                            message
                                                         ) : (
                                                             <></>
                                                         )}
@@ -1138,48 +1282,52 @@ function ReceiveDocument() {
                                         ? "solid 5px rgba(86, 90, 90, 0.5)"
                                         : "solid 5px rgba(86, 90, 90, 0.5)";
 
+                                        const delegatedArray = Array.isArray(delegated_signers)
+                                        ? delegated_signers.map(String)
+                                        : delegated_signers ? [String(delegated_signers)] : [];
+
+                                        const normalizedArray = Array.isArray(normalizedDelegated)
+                                        ? normalizedDelegated.map(String)
+                                        : normalizedDelegated ? [String(normalizedDelegated)] : [];
+
                                         let bgFirst = "transparent";
                                         let bgOthers = "transparent";
 
                                         if (isSubmitted) {
-                                            bgFirst
+                                            bgFirst = "transparent";
                                         }
-                                        if (!isCompleted){
+                                        else if (!isCompleted){
                                             bgFirst = "rgba(25, 230, 25, 0.5)";
                                         }
                                         if (!isSignerDelegated && is_delegated && !isSubmitted && !isCompleted) {
                                             bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        } else if (!isSignerDelegated && !isSignerOwner && !is_delegated) {
-                                            bgFirst = "rgba(86, 90, 90, 0.5)";
                                         } else if (!isSignerOwner && !isSignerDelegated) {
-                                            bgFirst = "rgba(86, 90, 90, 0.5)";
+                                            bgFirst = "rgba(25, 230, 25, 0.5)";
                                         } 
 
-
-                                        if (isSubmitted){
-                                            bgOthers
+                                        if (isSubmitted) {
+                                            bgOthers = "transparent";
                                         }
-                                        if (!isCompleted){
+                                        else if (!isCompleted){
                                             bgOthers = "rgba(25, 230, 25, 0.5)";
                                         }
-                                        if (isSignerDelegated && is_delegated && !isSubmitted && !isCompleted) {
+                                        if (!isSignerDelegated && is_delegated && !isSubmitted && !isCompleted) {
                                             bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        } else if (!isSignerDelegated && !isSignerOwner && !is_delegated) {
-                                            bgOthers = "rgba(86, 90, 90, 0.5)";
                                         } else if (!isSignerOwner && !isSignerDelegated) {
-                                            bgOthers = "rgba(86, 90, 90, 0.5)";
-                                        // } else if (isSubmitted) {
-                                        //     bgOthers
+                                            bgOthers = "rgba(25, 230, 25, 0.5)";
+                                        } 
+
+                                        if ((delegatedArray.length > 1 || normalizedArray.length > 1) && isCompleted !== true) {
+                                            bgFirst = "rgba(25, 230, 25, 0.5)";
+                                            bgOthers = "rgba(25, 230, 25, 0.5)";
                                         }
 
-                                        // let borderOthers = "transparent";
+                                        if (isCompleted === true) {
+                                            bgFirst = "transparent"
+                                            bgOthers = "transparent"
+                                        }
 
-                                        // if (isSignerDelegated && !isSignerOwner && !is_delegated) {
-                                        //     borderOthers = "solid 5px rgba(86, 90, 90, 0.5)";
-                                        // } else if (!isSignerOwner && !isSignerDelegated) {
-                                        //     borderOthers = "solid 5px rgba(86, 90, 90, 0.5)";
-                                        // }
-
+                                        const currentSignerStr = String(id_signers);
 
                                         return (
                                             <Rnd
@@ -1193,31 +1341,75 @@ function ReceiveDocument() {
                                                     alignItems: "center",
                                                     justifyContent: "center",
                                                     backgroundColor: 
-                                                        // !isCompleted
-                                                        // ? "rgba(25, 230, 25, 0.5)"
-                                                        // : isFirstSigner && !isCompleted
-                                                        // ? "rgba(25, 230, 25, 0.5)"
-                                                        // ? !currentSigner
-                                                        // : "rgba(86, 90, 90, 0.5)"
-                                                        // : isSubmitted 
-                                                        // ? "transparent"
-                                                        // : "transparent",
                                                         isFirstSigner ? bgFirst : bgOthers,
                                                     border: borderStyle, 
-                                                    cursor: sig.editable && !isSubmitted && currentItem ? "pointer" : "default",
-                                                    zIndex: isCompleted? 1 : 2
+                                                    // cursor: sig.editable && !isSubmitted && currentItem ? "pointer" : "default",
+                                                    // cursor: !isSubmitted && currentSignerStr === String(sig.id_signers) ? "pointer" : "default",
+                                                    cursor: !isSubmitted && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
+
+                                                    zIndex: isCompleted? 1 : 2,
                                                 }}
                                                 hidden={initial_status.every(status => status === "Decline")}
                                                 onClick={() => {
-                                                    if (sig.prevFieldDisplay) return;
-                                                    if (sig.editable && !isSubmitted && currentItem || normalizedDelegated === delegated_signers ) {
-                                                        if (isInitialpad) {
-                                                            handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                        } else if (isSignpad) {
-                                                            handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                    let canClick = false;
+
+                                                    const delegatedArray = Array.isArray(delegated_signers)
+                                                    ? delegated_signers.map(String)
+                                                    : delegated_signers
+                                                    ? [String(delegated_signers)]
+                                                    : [];
+
+                                                    const normalizedArray = Array.isArray(normalizedDelegated)
+                                                    ? normalizedDelegated.map(String)
+                                                    : normalizedDelegated
+                                                    ? [String(normalizedDelegated)]
+                                                    : [];
+
+                                                    const currentSignerStr = String(id_signers);
+                                                 
+                                                    if (isFirstSigner){
+                                                        if (delegatedArray.length > 1 || normalizedArray.length > 1) {
+                                                        if (delegatedArray.includes(currentSignerStr) || normalizedArray.includes(currentSignerStr)) {
+                                                            canClick = true;
+                                                        } 
+                                                        } else {
+                                                            if (
+                                                                currentSignerStr === String(sig.id_signers) || 
+                                                                delegatedArray.includes(currentSignerStr) ||
+                                                                normalizedArray.includes(currentSignerStr)
+                                                            ) {
+                                                                canClick = true;
+                                                            }
+                                                        } 
+
+                                                        if (!isSubmitted && canClick == true && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) || (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
+                                                            if (isInitialpad) {
+                                                                handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                            } else if(isSignpad){
+                                                                handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                            }
                                                         }
-                                                    }
+                                                    } else if (!isFirstSigner) {
+                                                        if (!isSubmitted && canClick == true && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) || (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
+                                                            if (isInitialpad) {
+                                                                handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                            } else if (isSignpad) {
+                                                                handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                            }
+                                                        }
+                                                    }    
                                                 }}
+
+                                                // onClick={() => {
+                                                //     if (!isSubmitted && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
+                                                //         if (isInitialpad) {
+                                                //             handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                //         } else if (isSignpad) {
+                                                //             handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                //         }
+                                                //     }
+                                                // }}
+                                                disabled ={isSubmitted === true}
                                             >
                                                 {!isSubmitted ? (
                                                 <OverlayTrigger

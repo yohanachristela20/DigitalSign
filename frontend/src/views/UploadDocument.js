@@ -753,6 +753,15 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       const orderedSigners = JSON.parse(localStorage.getItem("signers")) || [];
 
       // localStorage.setItem("id_signers", JSON.stringify(logsigns.map(log => log.id_signers)));
+
+      const signerOrderMap = {};
+      let urutanCounter = 1;
+
+      for (const card of documentCards) {
+          if (!signerOrderMap[card.id_karyawan]) {
+            signerOrderMap[card.id_karyawan] = urutanCounter++;
+          }
+      }
       
       const logsigns = createdItems.map((item, index) => {
       const signerId = items[index].id_karyawan;
@@ -771,7 +780,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             subject,
             message,
             delegated_signers: delegateSignerId,
-            urutan: Number(cardData?.urutan) || index + 1,
+            urutan: signerOrderMap[signerId] || Number(cardData?.urutan) || urutanCounter++,
             // urutan: Number(cardData?.urutan) || index + 1,
             };
         });
