@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import axios from "axios";
 import { FaCalendar, FaExclamationTriangle, FaFont, FaInfo, FaInfoCircle, FaKey, FaSignature, FaUser } from 'react-icons/fa';
@@ -112,6 +112,7 @@ function ReceiveDocument() {
     const [current_signer, setCurrentSigner] = useState("");
     const [filteredFields, setFilterFields] = useState ("");
     const [normalizedDelegated, setNormalizedDelegated] = useState("");
+    const [currentItemId, setCurrentItemId] = useState([]);
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -274,16 +275,11 @@ function ReceiveDocument() {
         try {
             const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
             const { id_dokumen, id_signers, currentSigner} = docRes.data;
-
-            // console.log("currentSigner:", currentSigner);
-
             await axios.post("http://localhost:5000/link-access-log", { token, real_email: inputEmail, password: inputPassword, is_accessed: true, currentSigner });
             setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
             setEmailVerified(true);
             setVerified(true);
             setIsAccessed(true);
-            // setCurrentSigner(currentSigner);
-            // verifiedSuccessfully = true;
         } catch (error) {
             setErrorMsg("Access Denied: Token doesn't valid or email not found.");
             setEmailVerified(false);
@@ -316,14 +312,9 @@ function ReceiveDocument() {
             const is_delegated = res.data.is_delegated;
 
             setIsDelegated(is_delegated);
-            console.log("isDelegated:", is_delegated);
-            console.log("Delegated signers:", delegated_signers);
-
             const finalSignerId = allSigners || currentSigner || delegated_signers;
             setDelegatedSigners(delegated_signers);
             setCurrentSigner(currentSigner);
-
-            console.log("currentSigner fetchData:", currentSigner);
 
             if (!id_dokumen || !allSigners || !urutan || !allItems || !idKaryawan) {
                 throw new Error("Missing id_dokumen, id_signers, id_item, id_karyawan or urutan from token.");
@@ -336,11 +327,6 @@ function ReceiveDocument() {
             setIdKaryawan(idKaryawan);
             setFinalSignerId(finalSignerId);
 
-
-            console.log("set finalSignerId:", finalSignerId);
-            console.log("Delegated:", delegated_signers);
-
-            
             const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
             if (!fileRes.ok) {
                 throw new Error("Failed to get PDF Document.");
@@ -356,26 +342,17 @@ function ReceiveDocument() {
             const allStatus = [];
             const allSigner = [];
 
-            
-            console.log("finalSignerId:", finalSignerId);
-
             const signerArray = Array.isArray(finalSignerId) ? finalSignerId : [finalSignerId];
             const itemArray = Array.isArray(allItems) ? allItems : [allItems];
             const karyawanArray = Array.isArray(idKaryawan) ? idKaryawan : [idKaryawan];
-
-            console.log("Signer Array:", signerArray);
 
             const urutanMapping = {};
             const submittedMapping = {};
             const delegateMapping = {};
 
-
-
             for (const signer of signerArray) {
                 const resSignerInfo = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
                     const dataSignerInfo = resSignerInfo.data;
-
-
                     if (dataSignerInfo.length > 0 && dataSignerInfo[0]?.Signerr && dataSignerInfo[0]?.DocName) {
                         const signerInfo = {
                             id_signers: dataSignerInfo[0].id_signers,
@@ -386,8 +363,6 @@ function ReceiveDocument() {
                         };
                         signerData.push(signerInfo);
                     }
-
-                    
 
                 const response = await axios.get(`http://localhost:5000/decline/${id_dokumen}/${signer}`);
                 const data = response.data;
@@ -400,7 +375,6 @@ function ReceiveDocument() {
                 }
 
                 setSignerData(allSigner);
-                console.log("Signer Data:", signerData);
 
                 let mainSigner = allSigners;
                 if (is_delegated) {
@@ -408,18 +382,14 @@ function ReceiveDocument() {
                 }
 
                 setMainSigner(mainSigner);
-                console.log("mainSigner:", mainSigner);
 
                 let querySigner = signer;
                 setActualSigner(querySigner);
-                console.log("querySigner: ", actualSigner);
                 
                 for (const itemID of itemArray) {
-                    console.log("Axis Field:", id_dokumen, mainSigner, itemID)
                     const fieldRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${querySigner}/${itemID}`);
 
                     const validFields = fieldRes.data.filter(item => item.ItemField);
-                    console.log("validFields:", validFields);
 
                     for (let idx = 0; idx < validFields.length; idx++) {
                         const item = validFields[idx];
@@ -497,10 +467,7 @@ function ReceiveDocument() {
 
         fetchData();
     }, [token]);
-
-    // console.log("Initials:", initials);
-
-
+    
     useEffect(() => {
         if (signerData.length === 0) return;
         const foundSigner = signerData.find(s => s.id_signers === id_signers); 
@@ -511,7 +478,6 @@ function ReceiveDocument() {
     }, [id_signers, signerData]);
 
     const updateSubmitted = async(id_dokumen, current_signer) => {
-        console.log("currentSigner update:", current_signer);
         try {
             const response = await axios.patch(`http://localhost:5000/update-submitted/${id_dokumen}/${current_signer}`, {
                 is_submitted: true,
@@ -552,17 +518,9 @@ function ReceiveDocument() {
                 const currentUrutan = Number(urutanMap[itemId]);
                 const currentSubmitted = submittedMap[signer];
                 const currentDelegated = delegatedMap[signer] || false;
-                console.log("currentDelegated: ", currentDelegated);
-
-                // let querySigner = signer;
-                // setActualSigner(querySigner);
-                // console.log("querySigner: ", actualSigner);
-
-
                 const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
                 const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
                 const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
-                console.log("signerInitials:", signerInitials);
 
                 for (const field of signerFields) {
                     const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
@@ -570,7 +528,6 @@ function ReceiveDocument() {
                     const formattedBase64 = base64?.startsWith("data:image")? base64 : base64 ? `data:image/png;base64,${base64}` : null;
 
                     const delegatedForThisSigner = matchInitial?.delegated_signers || null;
-                    console.log("delegatedForThisSigner:", delegatedForThisSigner);
 
 
                     fieldBuffer.push({
@@ -609,7 +566,6 @@ function ReceiveDocument() {
             }
 
             setNormalizedDelegated(normalizedDelegated);
-            console.log("normalizedDelegated:", normalizedDelegated);
 
             const prevSignerItem = Object.keys(urutanMap).find(key => Number(urutanMap[key]) === currentUrutan - 1);
             setPrevFields(prevSignerItem);
@@ -686,14 +642,7 @@ function ReceiveDocument() {
         setSignedInitials(allFields); 
         setSignedSignatures(allFields);
 
-        console.log("All fields:", allFields);
-
-        console.log("current_signer:", current_signer);
-        console.log("all Signers:", allFields);
-
-
         const ownerSigner = allFields.find(s => {
-            console.log("Checking signer:", s.id_signers, "delegated_signers:", s.delegated_signers);
 
             if (!s.delegated_signers) return false;
             if (Array.isArray(s.delegated_signers)) {
@@ -701,11 +650,9 @@ function ReceiveDocument() {
             }
             return String(s.delegated_signers) === String(current_signer);
         });
-        console.log("ownerSigner:", ownerSigner);
 
 
         const ownerSignerId = ownerSigner ? String(ownerSigner.id_signers) : null;
-        console.log("ownerSignerId :", ownerSignerId);
 
 
         const filteredFields = allFields.filter(field => {
@@ -730,9 +677,6 @@ function ReceiveDocument() {
         setInitial(filteredFields);
         setSignature(filteredFields);
         setDateField(filteredFields);
-
-        console.log("Initials data:", initial);
-        console.log("Signature data:", signature);
 
         const statusList = filteredFields.map(field => field.status);
         setInitialStatus(statusList);
@@ -778,7 +722,45 @@ function ReceiveDocument() {
     const isFinishDisabled = isDelegatedSigner ? isNonDateNotCompleted : isNonDateNotCompleted;
     const isFinishHidden = isDelegatedSigner ? (isNonDateCompleted && isNonDateSubmitted) : (isNonDateCompleted && isNonDateSubmitted);
 
-    const currentItemId = initial.find(sig => sig.show && !sig.is_submitted)?.id_item;
+    const itemArray = Array.isArray(allItems) ? allItems : [allItems];
+    const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
+
+    const stableItemArray = useMemo(() => (
+        Array.isArray(allItems) ? allItems : [allItems]
+    ), [allItems]);
+
+    const stableSignerArray = useMemo(() => (
+        Array.isArray(signerArray) ? signerArray : [signerArray]
+    ), [signerArray]);
+    
+    useEffect(() => {
+        let allCurrentItemIds = [];
+        for (const signer of signerArray) {
+            for (const item of itemArray) {
+
+            const activeItems = initial.filter(sig => sig.id_signers === signer && sig.show && !sig.is_submitted);
+            const currentItemIds = activeItems.map(activeItem => activeItem.id_item);
+            allCurrentItemIds = [...new Set([...allCurrentItemIds, ...currentItemIds])];
+            
+                for (const activeItem of activeItems){
+                    const currentItemId = activeItem.id_item;
+                    const isCurrentItem = currentItemId === item;
+
+                    console.log(`Item ${item} → is current: ${isCurrentItem}`);
+                }
+            }
+        }
+
+        setCurrentItemId(prev => {
+            const prevArray = Array.isArray(prev) ? prev : [];
+            const isSame = 
+            prevArray.length === allCurrentItemIds.length && 
+            prevArray.every(id => allCurrentItemIds.includes(id));
+            return isSame ? prevArray : allCurrentItemIds;
+        });
+        console.log("Final currentItemIds:", allCurrentItemIds);
+    }, [signerArray, itemArray, initial]);
+    
 
 
     return (
@@ -962,18 +944,6 @@ function ReceiveDocument() {
                                         const showImage = sig.sign_base64;
                                         const showDate = isCompleted && completedNext && isDatefield;
 
-                                        // const bgFirst = currentItem || isDelegatedSigner || is_delegated
-                                        // ? "transparent" 
-                                        // : !isCompleted || !currentItem 
-                                        // ? "rgba(86, 90, 90, 0.5)"
-                                        // : "rgba(86, 90, 90, 0.5)";
-
-                                        // const bgOthers = currentItem 
-                                        // ? "transparent" 
-                                        // : isSubmitted 
-                                        // ? "transparent"
-                                        // : "rgba(86, 90, 90, 0.5)";
-
                                         const delegatedArray = Array.isArray(delegated_signers)
                                         ? delegated_signers.map(String)
                                         : delegated_signers ? [String(delegated_signers)] : [];
@@ -1006,16 +976,6 @@ function ReceiveDocument() {
                                         : isSubmitted
                                         ? "transparent"
                                         : "solid 5px rgba(86, 90, 90, 0.3)";
-
-                                        // const firstSignerMessage = 
-                                        // !isSubmitted && !currentItem 
-                                        // ? <p className="text-center">Another sign didn't complete</p>
-                                        // : "";
-
-                                        // const otherSignerMessage = 
-                                        // !currentItem
-                                        // ? <p className="text-center">Another sign didn't complete</p>
-                                        // : "";
 
                                         const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
 
@@ -1059,29 +1019,27 @@ function ReceiveDocument() {
                                                 .filter(f => relatedSigners.has(String(f.id_signers)))
                                                 .every(f => f.status === "Completed");
 
-                                            if (relatedCompleted) {
+                                            if (relatedCompleted && !isSubmitted) {
                                                 return <p className="text-center">Another sign didn't complete</p>;
                                             }
 
-                                            return <p className="text-center">Another sign didn't complete</p>;
+                                            // return <p className="text-center">Another sign didn't complete</p>;
                                         };
 
                                         const message = getMessageForUrutan(sig.urutan);
 
+                                        const currentSignerStr = String(current_signer);
+                                        const isCurrentItem = currentItemId.includes(sig.id_item);
 
-                                        // const delegatedArray = Array.isArray(delegated_signers)
-                                        // ? delegated_signers.map(String)
-                                        // : delegated_signers
-                                        // ? [String(delegated_signers)]
-                                        // : [];
+                                        const signerItemCount = initial.filter(item => 
+                                            currentItemId.includes(item.id_item) && (
+                                                String(item.id_signers) === currentSignerStr ||
+                                                delegatedArray.includes(currentSignerStr) || 
+                                                normalizedArray.includes(currentSignerStr)
+                                            )
+                                        ).length;
 
-                                        // const normalizedArray = Array.isArray(normalizedDelegated)
-                                        // ? normalizedDelegated.map(String)
-                                        // : normalizedDelegated
-                                        // ? [String(normalizedDelegated)]
-                                        // : [];
-
-                                        const currentSignerStr = String(id_signers);
+                                        console.log("current item count:", signerItemCount);
 
 
                                         return (
@@ -1104,105 +1062,24 @@ function ReceiveDocument() {
                                                             cursor: !isSubmitted && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
                                                             
                                                         }}
-                                                        // onClick={() => {
-                                                        //    let canClick = false;
-
-                                                        //    const delegatedArray = Array.isArray(delegated_signers)
-                                                        //    ? delegated_signers.map(String)
-                                                        //    : delegated_signers
-                                                        //    ? [String(delegated_signers)]
-                                                        //    : [];
-
-                                                        //    const normalizedArray = Array.isArray(normalizedDelegated)
-                                                        //    ? normalizedDelegated.map(String)
-                                                        //    : normalizedDelegated
-                                                        //    ? [String(normalizedDelegated)]
-                                                        //    : [];
-
-                                                        //    const currentSignerStr = String(id_signers);
-
-                                                        //    if (delegatedArray.length > 1 || normalizedArray.length > 1) {
-                                                        //         if (delegatedArray.includes(currentSignerStr) || normalizedArray.includes(currentSignerStr)) {
-                                                        //             canClick = true;
-                                                        //         } 
-                                                        //    } else {
-                                                        //         if (
-                                                        //             currentSignerStr === String(sig.id_signers) || 
-                                                        //             delegatedArray.includes(currentSignerStr) ||
-                                                        //             normalizedArray.includes(currentSignerStr)
-                                                        //         ) {
-                                                        //             canClick = true;
-                                                        //         }
-                                                        //    } 
-
-                                                        //    if (sig.editable && !isSubmitted && canClick) {
-                                                        //         if (isInitialpad) {
-                                                        //             handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                        //         } else if(isSignpad){
-                                                        //             handleSignatureClick(sig.id_item, sig.editable, sig.show);
-                                                        //         }
-                                                        //    }
-                                                        // }}
-                                                        disabled ={isSubmitted === true}
-                                                        // onClick={() => {
-                                                        //     if (!isSubmitted && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
-                                                        //         if (isInitialpad) {
-                                                        //             handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                        //         } else if (isSignpad) {
-                                                        //             handleSignatureClick(sig.id_item, sig.editable, sig.show);
-                                                        //         }
-                                                        //     }
-                                                        // }}
-
                                                         onClick={() => {
-                                                            let canClick = false;
+                                                            const currentSignerStr = String(current_signer);
+                                                            const isCurrentSigner = 
+                                                            String(sig.id_signers) === currentSignerStr ||
+                                                            delegatedArray.includes(currentSignerStr) ||
+                                                            normalizedArray.includes(currentSignerStr);
 
-                                                            const delegatedArray = Array.isArray(delegated_signers)
-                                                            ? delegated_signers.map(String)
-                                                            : delegated_signers
-                                                            ? [String(delegated_signers)]
-                                                            : [];
+                                                            const canClick = isCurrentSigner && isCurrentItem && !isSubmitted;
 
-                                                            const normalizedArray = Array.isArray(normalizedDelegated)
-                                                            ? normalizedDelegated.map(String)
-                                                            : normalizedDelegated
-                                                            ? [String(normalizedDelegated)]
-                                                            : [];
-
-                                                            const currentSignerStr = String(id_signers);
-                                                        
-                                                            if (isFirstSigner){
-                                                                if (delegatedArray.length > 1 || normalizedArray.length > 1) {
-                                                                if (delegatedArray.includes(currentSignerStr) || normalizedArray.includes(currentSignerStr)) {
-                                                                    canClick = true;
-                                                                } 
-                                                                } else {
-                                                                    if (
-                                                                        currentSignerStr === String(sig.id_signers) || 
-                                                                        delegatedArray.includes(currentSignerStr) ||
-                                                                        normalizedArray.includes(currentSignerStr)
-                                                                    ) {
-                                                                        canClick = true;
-                                                                    }
-                                                                } 
-
-                                                                if (!isSubmitted && canClick == true && currentSignerStr === String(sig.id_signers) && (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
-                                                                    if (isInitialpad) {
-                                                                        handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                                    } else if(isSignpad){
-                                                                        handleSignatureClick(sig.id_item, sig.editable, sig.show);
-                                                                    }
+                                                            if (canClick) {
+                                                                if (isInitialpad){
+                                                                    handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                                } else if (isSignpad) {
+                                                                    handleSignatureClick(sig.id_item, sig.editable, sig.show);
                                                                 }
-                                                            } else if (!isFirstSigner) {
-                                                                if (!isSubmitted && canClick == true && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
-                                                                        if (isInitialpad) {
-                                                                            handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                                        } else if (isSignpad) {
-                                                                            handleSignatureClick(sig.id_item, sig.editable, sig.show);
-                                                                        }
-                                                                    }
-                                                                }    
+                                                            }
                                                         }}
+                                                        disabled ={isSubmitted === true}
 
                                                     >
                                                         {is_delegated || (isCompleted && completedNext && sig.sign_base64) ? (
@@ -1242,7 +1119,7 @@ function ReceiveDocument() {
                                         const urutan = sig.urutan;
                                         const isFirstSigner = urutan === 1;
                                         const currentSigner = sig.id_signers;
-                                        const currentItem = sig.id_item;
+                                        const currentItem = sig.id_item === currentItemId;
                                         const nextSigner = sig.nextSigner;
                                         // const isDelegated = sig.is_delegated;
                                         const is_delegated = sig.is_delegated;
@@ -1250,13 +1127,12 @@ function ReceiveDocument() {
                                         const isSignerOwner = sig.id_signers === id_signers;
                                         const isSignerDelegated = delegated_signers === id_signers;
 
-                                        // console.log("isDelegate initial:", is_delegated);
-
                                         const prevField = signedInitials.find(field => field.id_item === prevSigner);
                                         const prevNotSubmitted = prevField && (
                                             prevField.status !== "Completed" || prevField.is_submitted !== true
                                         );
                                         
+                                        console.log("current item id:", currentItemId);
 
                                         //FIX PLISSS JGN DIUBAH!!!
                                         const borderStyle = 
@@ -1327,7 +1203,20 @@ function ReceiveDocument() {
                                             bgOthers = "transparent"
                                         }
 
-                                        const currentSignerStr = String(id_signers);
+                                        const currentSignerStr = String(current_signer);
+
+                                       
+                                        const isCurrentItem = currentItemId.includes(sig.id_item);
+
+                                        const signerItemCount = initial.filter(item => 
+                                            currentItemId.includes(item.id_item) && (
+                                                String(item.id_signers) === currentSignerStr ||
+                                                delegatedArray.includes(currentSignerStr) || 
+                                                normalizedArray.includes(currentSignerStr)
+                                            )
+                                        ).length;
+
+                                        console.log("current item count:", signerItemCount);
 
                                         return (
                                             <Rnd
@@ -1343,72 +1232,28 @@ function ReceiveDocument() {
                                                     backgroundColor: 
                                                         isFirstSigner ? bgFirst : bgOthers,
                                                     border: borderStyle, 
-                                                    // cursor: sig.editable && !isSubmitted && currentItem ? "pointer" : "default",
-                                                    // cursor: !isSubmitted && currentSignerStr === String(sig.id_signers) ? "pointer" : "default",
                                                     cursor: !isSubmitted && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
 
                                                     zIndex: isCompleted? 1 : 2,
                                                 }}
                                                 hidden={initial_status.every(status => status === "Decline")}
                                                 onClick={() => {
-                                                    let canClick = false;
+                                                    const currentSignerStr = String(current_signer);
+                                                    const isCurrentSigner = 
+                                                    String(sig.id_signers) === currentSignerStr ||
+                                                    delegatedArray.includes(currentSignerStr) ||
+                                                    normalizedArray.includes(currentSignerStr);
 
-                                                    const delegatedArray = Array.isArray(delegated_signers)
-                                                    ? delegated_signers.map(String)
-                                                    : delegated_signers
-                                                    ? [String(delegated_signers)]
-                                                    : [];
+                                                    const canClick = isCurrentSigner && isCurrentItem && !isSubmitted;
 
-                                                    const normalizedArray = Array.isArray(normalizedDelegated)
-                                                    ? normalizedDelegated.map(String)
-                                                    : normalizedDelegated
-                                                    ? [String(normalizedDelegated)]
-                                                    : [];
-
-                                                    const currentSignerStr = String(id_signers);
-                                                 
-                                                    if (isFirstSigner){
-                                                        if (delegatedArray.length > 1 || normalizedArray.length > 1) {
-                                                        if (delegatedArray.includes(currentSignerStr) || normalizedArray.includes(currentSignerStr)) {
-                                                            canClick = true;
-                                                        } 
-                                                        } else {
-                                                            if (
-                                                                currentSignerStr === String(sig.id_signers) || 
-                                                                delegatedArray.includes(currentSignerStr) ||
-                                                                normalizedArray.includes(currentSignerStr)
-                                                            ) {
-                                                                canClick = true;
-                                                            }
-                                                        } 
-
-                                                        if (!isSubmitted && canClick == true && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) || (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
-                                                            if (isInitialpad) {
-                                                                handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                            } else if(isSignpad){
-                                                                handleSignatureClick(sig.id_item, sig.editable, sig.show);
-                                                            }
+                                                    if (canClick) {
+                                                        if (isInitialpad){
+                                                            handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                        } else if (isSignpad) {
+                                                            handleSignatureClick(sig.id_item, sig.editable, sig.show);
                                                         }
-                                                    } else if (!isFirstSigner) {
-                                                        if (!isSubmitted && canClick == true && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) || (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
-                                                            if (isInitialpad) {
-                                                                handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                            } else if (isSignpad) {
-                                                                handleSignatureClick(sig.id_item, sig.editable, sig.show);
-                                                            }
-                                                        }
-                                                    }    
+                                                    }
                                                 }}
-
-                                                // onClick={() => {
-                                                //     if (!isSubmitted && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)) {
-                                                //         if (isInitialpad) {
-                                                //             handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                //         } else if (isSignpad) {
-                                                //             handleSignatureClick(sig.id_item, sig.editable, sig.show);
-                                                //         }
-                                                //     }
-                                                // }}
                                                 disabled ={isSubmitted === true}
                                             >
                                                 {!isSubmitted ? (
