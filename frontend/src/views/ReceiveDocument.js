@@ -122,6 +122,12 @@ function ReceiveDocument() {
 
     const currentDate = `${day} ${month} ${year}`;
 
+    const isdelegated = localStorage.getItem("is_delegated");
+    const delegatedDoc = localStorage.getItem("id_dokumen");
+
+    console.log("isDelegated from modal:", isdelegated);
+    console.log("delegatedDoc:", delegatedDoc);
+
     const mobileSidebarToggle = (e) => {
         e.preventDefault();
         document.documentElement.classList.toggle("nav-open");
@@ -311,7 +317,9 @@ function ReceiveDocument() {
             const delegated_signers = res.data.delegated_signers || null;
             const is_delegated = res.data.is_delegated;
 
-            setIsDelegated(is_delegated);
+            
+            console.log("is_delegated:", is_delegated);
+
             const finalSignerId = allSigners || currentSigner || delegated_signers;
             setDelegatedSigners(delegated_signers);
             setCurrentSigner(currentSigner);
@@ -326,6 +334,7 @@ function ReceiveDocument() {
             setAllItems(allItems);
             setIdKaryawan(idKaryawan);
             setFinalSignerId(finalSignerId);
+            setIsDelegated(is_delegated);
 
             const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
             if (!fileRes.ok) {
@@ -467,6 +476,10 @@ function ReceiveDocument() {
 
         fetchData();
     }, [token]);
+
+    console.log("id_dokumen real:", id_dokumen);
+
+
     
     useEffect(() => {
         if (signerData.length === 0) return;
@@ -609,6 +622,8 @@ function ReceiveDocument() {
                 show = true;
                 editable = false;
             }
+
+            // console.log("is_delegated fetchall:", is_delegated);
 
             const nextSignerInitials = initialsData.filter(init => 
                 {
@@ -796,7 +811,8 @@ function ReceiveDocument() {
                         id="navbarDropdownMenuLink"
                         variant="default"
                         className="mr-5 mt-2"
-                        hidden={isAccessed !== true}
+                        hidden={isAccessed !== true || (delegatedDoc === id_dokumen && isdelegated)}
+                        // /delegatedDoc !== id_dokumen || (initial_status.every(status => status === "Completed") ? delegated_signers === id_signers : !isdelegated)
                         >
                         <span className="fs-6">Actions</span>
                         </Dropdown.Toggle>
@@ -812,11 +828,11 @@ function ReceiveDocument() {
                         <Dropdown.Item
                             href="#"
                             onClick={() => handleDelegateClick(id_dokumen, id_signers)}
-                            hidden={initial_status.every(status => status === "Decline" || status === "Completed")}
+                            hidden={initial_status.every(status => status === "Decline" || status === "Completed") || delegated_signers}
                         >
                             Delegate
                         </Dropdown.Item>
-                        <div className="divider" hidden={initial_status.every(status => status === "Decline" || status === "Completed")}></div>
+                        <div className="divider" hidden={initial_status.every(status => status === "Decline" || status === "Completed") || delegated_signers}></div>
                         <Dropdown.Item
                             href="#"
                             onClick={() => handleDocInfoClick(id_dokumen, id_signers, id_karyawan)}
@@ -847,7 +863,7 @@ function ReceiveDocument() {
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, current_signer)}
                         disabled={isFinishDisabled}
-                        hidden={isFinishHidden}
+                        hidden={isFinishHidden || delegatedDoc === id_dokumen && isdelegated || initial_status.every(status => status === "Decline")}
                      
                     >
                         Finish
@@ -860,11 +876,19 @@ function ReceiveDocument() {
             <div>
                 <Container fluid className="px-0">
                         {loading && <Spinner animation="border" variant="primary" />}
-                        {errorMsg && <Alert variant="danger" className="m-4">{errorMsg}</Alert>}
                         <div className="sign-in__user d-flex align-items-center justify-content-center pt-5 ">
+                        <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
+                            <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
+                        </Alert>
+                        <Alert variant="warning" hidden={delegatedDoc !== id_dokumen || (initial_status.every(status => status === "Completed") ? delegated_signers === id_signers : !isdelegated)}>
+                            <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has delegate this document to other signer.
+                        </Alert>
                         {isAccessed !== true && (
+                    
                         <Row className="login-user user-element mt-2">
+                            
                             <Card className="login-card shadow mb-0">
+                                <>{errorMsg && <Alert variant="danger" className="m-4">{errorMsg}</Alert>}</>
                                 <div className="d-flex align-items-center justify-content-center">
                                     <img src={require("assets/img/login2.png")} alt="login-img" style={{width:450}} />
                                 </div>
@@ -914,7 +938,7 @@ function ReceiveDocument() {
                             <div className="center-object">
                                 <div className="vertical-center">
                                     {/* <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
-                                    <FaExclamationTriangle className="mb-1 mr-2"/>  {nama} has declined to sign this document.
+                                    <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
                                     </Alert> */}
                                     <PDFCanvas pdfUrl={pdfUrl} />                           
 
@@ -926,6 +950,7 @@ function ReceiveDocument() {
                                         const isDatefield = sig.jenis_item === "Date";
                                         const isInitialpad = sig.jenis_item === "Initialpad";
                                         const isSignpad = sig.jenis_item === "Signpad";
+                                        const isDecline = sig.status === "Decline";
                                         const isPrevField = sig.prevFieldDisplay === true;
                                         const completedNext = sig.is_submitted === true;
                                         const urutan = sig.urutan;
@@ -1059,9 +1084,10 @@ function ReceiveDocument() {
                                                             zIndex: zIndexStyle,
                                                             // cursor: sig.editable && !isSubmitted && currentItem ? "pointer" : "default",
                                                            
-                                                            cursor: !isSubmitted && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
+                                                            cursor: !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
                                                             
                                                         }}
+                                                        hidden={isDecline}
                                                         onClick={() => {
                                                             const currentSignerStr = String(current_signer);
                                                             const isCurrentSigner = 
@@ -1069,7 +1095,7 @@ function ReceiveDocument() {
                                                             delegatedArray.includes(currentSignerStr) ||
                                                             normalizedArray.includes(currentSignerStr);
 
-                                                            const canClick = isCurrentSigner && isCurrentItem && !isSubmitted;
+                                                            const canClick = isCurrentSigner && isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated);
 
                                                             if (canClick) {
                                                                 if (isInitialpad){
@@ -1111,6 +1137,7 @@ function ReceiveDocument() {
 
                                         const isCompleted = sig.status === "Completed";
                                         const isSubmitted = sig.is_submitted === true;
+                                        const isDecline = sig.status === "Decline";
                                         const isInitialpad = sig.jenis_item === "Initialpad";
                                         const isSignpad = sig.jenis_item === "Signpad";
                                         const isDatefield = sig.jenis_item === "Date";
@@ -1232,11 +1259,11 @@ function ReceiveDocument() {
                                                     backgroundColor: 
                                                         isFirstSigner ? bgFirst : bgOthers,
                                                     border: borderStyle, 
-                                                    cursor: !isSubmitted && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
+                                                    cursor: !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
 
                                                     zIndex: isCompleted? 1 : 2,
                                                 }}
-                                                hidden={initial_status.every(status => status === "Decline")}
+                                                hidden={isDecline}
                                                 onClick={() => {
                                                     const currentSignerStr = String(current_signer);
                                                     const isCurrentSigner = 
@@ -1244,7 +1271,7 @@ function ReceiveDocument() {
                                                     delegatedArray.includes(currentSignerStr) ||
                                                     normalizedArray.includes(currentSignerStr);
 
-                                                    const canClick = isCurrentSigner && isCurrentItem && !isSubmitted;
+                                                    const canClick = isCurrentSigner && isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated);
 
                                                     if (canClick) {
                                                         if (isInitialpad){

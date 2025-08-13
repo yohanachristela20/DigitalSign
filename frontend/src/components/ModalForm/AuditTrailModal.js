@@ -28,19 +28,13 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
 
     const [real_email, setRealEmail] = useState("");
     const [accessed_at, setAccessedAt] = useState("");
+    const [delegated_signers, setDelegatedSigners] = useState("");
+    const [finalSignerId, setFinalSignerId] = useState("");
+    const [current_signer, setCurrentSigner] = useState("");
 
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
-
-    useEffect(() => {
-        // console.log("AuditTrailModal receive id_signers:", selectedSigner);
-        // console.log("AuditTrailModal show AuditTrailModal:", showAuditTrailModal);
-        // console.log("AuditTrailModal receive id_dokumen:", selectedDocument);
-        // console.log("AuditTrailModal receive id_karyawan:", selectedKaryawan);
-        // console.log("AuditTrailModal signerInfo:", signerInfo);
-    }, [selectedSigner, showAuditTrailModal, selectedDocument, selectedKaryawan, signerInfo]);
-
 
     useEffect(() => {
         const fetchData = async () => {
@@ -52,10 +46,17 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
                 setIdSigner(id_signers);
-                // console.log("ID SIGNERS:", id_signers); 
+                const delegated_signers = res.data.delegated_signers;
+                setDelegatedSigners(delegated_signers);
+                console.log("Delegated signers:", delegated_signers);
+                const currentSigner = res.data.currentSigner; 
+                setCurrentSigner(currentSigner);
+
+                const finalSignerId = delegated_signers || id_signers;
+                setFinalSignerId(finalSignerId);
 
                 const idKaryawan = res.data.id_karyawan;
-                const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
+                const signerArray = Array.isArray(finalSignerId) ? finalSignerId : [finalSignerId];
                 const karyawanArray = Array.isArray(idKaryawan) ? idKaryawan : [idKaryawan];
 
                 // console.log("signerArray:", signerArray);
@@ -82,6 +83,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                                 is_submitted: data[0].is_submitted,
                                 accessed_at: data[0].LinkAccess.accessed_at,
                                 real_email: data[0].LinkAccess.real_email,
+                                delegated_signers: data[0].delegated_signers,
                             };
                             signerData.push(signerInfo);
                         }
@@ -131,7 +133,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
 
     useEffect(() => {
         if (!selectedSigner || signerData.length === 0) return;
-        const found = signerData.find(s => s.id_signers === selectedSigner);
+        const found = signerData.find(s => s.id_signers === selectedSigner || s.delegated_signers === selectedSigner);
         // console.log("FOUND SIGNER:", found);
         if (found) {
             setNama(found.nama);
@@ -262,6 +264,8 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                             <p>{email}</p>
                         </Col>
                     </Row> */}
+
+                    
                     <Row className="mt-2">
                             {completedSigners.length > 0 ? (
                                 [...completedSigners]
@@ -332,7 +336,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                                             <div key={signer.id_signers}> 
                                                 <p className="mb-1">Signed by: {signer.nama}</p>
                                                 <p className="mb-1">{signer.email_signer}</p>
-                                                <p>{signer.real_email}</p>
+                                                {/* <p>{signer.real_email}</p> */}
                                                 {/* {idx !== arr.length - 1 && <hr />} */}
                                             </div>
                                         </Col>
@@ -346,7 +350,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                                         <Col md="6">
                                             <p className="mb-1">Signed by: {nama}</p>
                                             <p>{email}</p>
-                                            <p>{real_email}</p>
+                                            {/* <p>{real_email}</p> */}
                                         </Col>
                                     </>
                             )}

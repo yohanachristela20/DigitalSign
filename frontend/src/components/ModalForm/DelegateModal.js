@@ -55,7 +55,6 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                     }
                 }
 
-                // console.log("SIGNER DATA:", allSigners);
                 setSignerData(allSigners);
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
@@ -127,6 +126,9 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                 is_delegated: true,
                 delegated_signers: delegateId,
             }); 
+
+            localStorage.setItem("id_dokumen", id_dokumen);
+            localStorage.setItem("is_delegated", "true");
 
             sendEmailDelegate(id_dokumen, delegateId, token);
 
@@ -225,7 +227,7 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                                     Choose Signer
                                 </option>
                                 {employeeName.map(option => (
-                                    <option key={option.value} value={option.value} hidden={option.value == id_signers}>
+                                    <option key={option.value} value={option.value} hidden={option.value == signerID}>
                                         {option.label}
                                     </option>
                                 ))}

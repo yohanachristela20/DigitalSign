@@ -8,8 +8,9 @@ import Sign from "./SignModel.js";
 import Signers from "./SignersModel.js";
 import LinkAccessLog from "./linkAccessModel.js";
 
-User.belongsTo(Karyawan, { foreignKey: 'id_karyawan', as: 'Pengguna' });
+User.belongsTo(Karyawan, {foreignKey: 'id_karyawan', as: 'Pengguna' });
 User.belongsTo(Karyawan, {foreignKey: 'id_karyawan', as: 'Penerima'});
+User.belongsTo(Karyawan, {foreignKey: 'id_karyawan', as: 'Pengirim'});
 LinkAccessLog.belongsTo(LogSign, {foreignKey: 'id_logsign', as: 'LinkAccess'});
 LinkAccessLog.belongsTo(Karyawan, {foreignKey: 'id_karyawan', as: 'RealKaryawan'});
 
@@ -40,6 +41,7 @@ Karyawan.hasMany(Signers, {foreignKey:'id_karyawan', as:'Penandatangan'});
 
 Karyawan.hasMany(User, { foreignKey: 'id_karyawan', as:'Pengguna'});
 Karyawan.hasOne(User, {foreignKey: 'id_karyawan', as: 'Penerima'});
+Karyawan.hasOne(User, {foreignKey: 'id_karyawan', as: 'Pengirim'});
 
 LogSign.hasOne(LinkAccessLog, {foreignKey: 'id_logsign', as: 'LinkAccess'});
 Karyawan.hasMany(LinkAccessLog, {foreignKey: 'id_karyawan', as: 'RealKaryawan'});

@@ -443,7 +443,7 @@ router.get('/doc-info/:id_dokumen/:finalSignerId', async(req, res) => {
                 {id_signers: finalSignerId},
                 {delegated_signers: finalSignerId}
             ]}, 
-            attributes: ["id_signers", "delegated_signers", "id_dokumen", "createdAt", "id_karyawan", "status", "tgl_tt", "is_submitted"],
+            attributes: ["id_logsign","id_signers", "delegated_signers", "id_dokumen", "createdAt", "id_karyawan", "status", "tgl_tt", "is_submitted"],
             include: [
                 {
                     model: Karyawan, 
@@ -463,7 +463,11 @@ router.get('/doc-info/:id_dokumen/:finalSignerId', async(req, res) => {
                 {
                     model: LinkAccessLog, 
                     as: 'LinkAccess', 
-                    attributes: ['accessed_at', 'real_email'], 
+                    attributes: ['accessed_at', 'real_email', 'id_logsign'], 
+                    where: {
+                        id_karyawan: finalSignerId
+                    },
+                    required: false
                 }
             ],
         });
@@ -719,6 +723,7 @@ router.post('/send-delegate-email', async(req, res) => {
 
 
         const delegateList = [...new Set(Array.isArray(delegated_signers) ? delegated_signers : [delegated_signers])];
+        // const mainSignerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
         let emailResults = [];
 
         const docName = await LogSign.findOne({
@@ -753,6 +758,20 @@ router.post('/send-delegate-email', async(req, res) => {
             const intended_email = receiver.Penerima.email;
             const receiverName = receiver.nama;
 
+            const sender = await Karyawan.findOne({
+                where: {id_karyawan: id_signers},
+                include: [{
+                    model: User,
+                    as: "Pengirim",
+                    attributes: ["email"]
+                }],
+                attributes: ["id_karyawan", "nama"]
+            });
+
+            const senderName = sender.nama;
+
+            console.log("Pengirim:", sender, "Email:", senderName);
+
             const newToken = jwt.sign({
                 dokumenLogsign: {
                     id_dokumen: finalDocId, 
@@ -768,7 +787,7 @@ router.post('/send-delegate-email', async(req, res) => {
             }, jwtSecret);
 
             const delegateLink = `http://localhost:3000/user/envelope?token=${newToken}`;
-            await sendEmailDelegateInternal(delegateLink, documentName, receiverName, intended_email);
+            await sendEmailDelegateInternal(delegateLink, documentName, receiverName, intended_email, senderName);
             emailResults.push({delegateId, message: 'Delegate email sent successfully.'});
         }
 
@@ -782,8 +801,7 @@ router.post('/send-delegate-email', async(req, res) => {
     }
 });
 
-
-const sendEmailDelegateInternal = async(delegateLink, documentName, receiverName, receiverEmail) => {
+const sendEmailDelegateInternal = async(delegateLink, documentName, receiverName, receiverEmail, senderName) => {
     try {
         const transporter = nodemailer.createTransport({
             service: "gmail", 
@@ -792,12 +810,13 @@ const sendEmailDelegateInternal = async(delegateLink, documentName, receiverName
                 pass: process.env.EMAIL_PASS_ADMIN, 
             }
         });
+        
 
         const mailOptions = {
         from: process.env.EMAIL_ADMIN,
         to: receiverEmail,
         subject: `You are delegated to sign: ${documentName}`,
-        text: `${receiverName || "Signer"}, You are delegated to sign a document ${documentName}.\n
+        text: `${receiverName || "Signer"}, You are delegated to sign a document ${documentName} from ${senderName}.\n
           Please review and check the document before signing it.\n
           Click link to sign the document ${delegateLink}\n\n
           Please do not share this email and the link attached with others.\n
@@ -813,5 +832,104 @@ const sendEmailDelegateInternal = async(delegateLink, documentName, receiverName
         throw error;
     }
 }
+
+// samakan dengan send-delegate
+router.post('/signed-delegate-email', async(req, res) => {
+    try {
+        const {id_dokumen, token, delegated_signers} = req.body;
+
+        let emailResults = [];
+
+        const signedDelegateLink = `http://localhost:3000/user/envelope?token=${token}`;
+
+        const mainSigner = await LogSign.findOne({
+            where: {id_dokumen, delegated_signers: delegated_signers}
+        });
+
+        if (!mainSigner) {
+            return res.status(404).json({ message: "Main signer not found for this delegate." });
+        }
+
+        const mainSignerID = mainSigner.id_signers;
+
+        const docName = await LogSign.findOne({
+            where: {id_dokumen}, 
+            include: [{
+                model: Dokumen, 
+                as: "DocName",
+                attributes: ["nama_dokumen"]
+            }], 
+            attributes: ["id_dokumen"]
+        });
+
+        const documentName = docName?.DocName?.nama_dokumen;
+
+        await sendEmailSignedDelegate(signedDelegateLink, id_dokumen, documentName, mainSignerID, delegated_signers);
+        emailResults.push({mainSignerID, message: 'Signed delegate email sent successfully.'});
+
+        res.status(200).json({
+            message: 'Signed delegate email processed.',
+            results: emailResults,
+        });
+    } catch (error) {
+        console.error("Failed to send signed delegate email:", error.message);
+        res.status(500).json({ message: "Failed to send signed delegate email." });
+    }
+});
+
+const sendEmailSignedDelegate = async(signedDelegateLink, id_dokumen, documentName, mainSignerID, delegated_signers) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            service: "gmail", 
+            auth: {
+                user: process.env.EMAIL_ADMIN, 
+                pass: process.env.EMAIL_PASS_ADMIN, 
+            }
+        });
+
+        const receiver = await Karyawan.findOne({
+            where: {id_karyawan: mainSignerID}, 
+            include: [{
+                model: User, 
+                as: "Penerima", 
+                attributes: ["email"]
+            }], 
+            attributes: ["id_karyawan", "nama"]
+        }); 
+
+        if (!receiver?.Penerima?.email) {
+            console.warn(`Email not found for signer ${mainSignerID}`);
+            return;
+        }
+
+        const receiverEmail = receiver.Penerima.email;
+        const receiverName = await Karyawan.findOne({where: {id_karyawan: mainSignerID}});
+
+        const delegatedSignerName = await Karyawan.findOne({
+            where: {id_karyawan: delegated_signers},
+            attributes: ["nama"]
+        });
+
+        const delegatedName = delegatedSignerName?.nama || "Delegated Signer";
+
+        const mailOptions = {
+        from: process.env.EMAIL_ADMIN,
+        to: receiverEmail,
+        subject: `Delegated signed document: ${documentName}`,
+        text: `The document was signed by ${delegatedName}. \n
+            ${receiverName?.nama || "Signer"}, your document has been signed by ${delegatedName}.\n
+            Click link to review the document ${signedDelegateLink}\n
+            Please do not share this email and the link attached with others.\n\n
+            Regards, \n
+            Campina Sign.`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+    } catch (error) {
+        console.error("Failed to send decline email:", error.message);
+        throw error;
+    }
+};
 
 export default router;

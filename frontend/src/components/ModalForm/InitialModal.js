@@ -22,6 +22,9 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     const [signerData, setSignerData] = useState([]);
     const [activeIdItem, setActiveIdItem] = useState(null);
     const [currentReceiver, setCurrentReceiver] = useState(null);
+    const [delegated_signers, setDelegatedSigners] = useState("");
+    const [is_delegated, setIsDelegated] = useState("");
+    const [signerID, setSignerID] = useState("");
 
     const previewRef = useRef(null);
 
@@ -30,25 +33,22 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     const token = queryParams.get("token");
 
     useEffect(() => {
-        // console.log("InitialModal receive id_item:", selectedIdItem);
-        // console.log("InitialModal show initialmodal:", showInitialModal);
-        // console.log("Show from initial modal:", show);
-        // console.log("Editable from initial modal:", editable);
-    }, [selectedIdItem, showInitialModal, show, editable]);
-
-
-    useEffect(() => {
         const fetchData = async () => {
             if (!token ) return;
 
             try {
                 const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
-                setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
-                setIdSigner(id_signers);
                 const id_item = res.data.id_item;
+                const is_delegated = res.data.is_delegated;
+                const delegated_signers = res.data.delegated_signers || null;
+
+                setIdDokumen(id_dokumen);
+                setIdSigner(id_signers);
                 setIdItem(id_item);
+                setIsDelegated(is_delegated);
+                setDelegatedSigners(delegated_signers);
 
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
                 const itemArray = Array.isArray(id_item) ? id_item : [id_item];
@@ -84,6 +84,10 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
         fetchData();
     }, [token]);
 
+    // console.log("is_delegated initial modal:", is_delegated);
+    // console.log("delegated_signers initial modal:", delegated_signers);
+    // console.log("main signer:", id_signers);
+
     const handleRadioChange = (e, id_item) => {
         const value = e.target.value;
         setSelectedValues(prev => ({ ...prev, [id_item]: value }));
@@ -100,10 +104,15 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     useEffect(() => {
         if (!id_item || signerData.length === 0) return;
         const found = signerData.find(s => s.id_item === id_item);
+        const signerFound = signerData.find(s => s.id_signers === selectedSigner);
         if (found) {
             setInitialName(found.nama);
         }
-    }, [id_item, signerData]);
+
+        if (signerFound) {
+            setSignerID(signerFound.id_signers)
+        } 
+    }, [id_item, signerData, id_signers, selectedSigner]);
 
 
 
@@ -182,6 +191,10 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
                 },
             });
 
+            if (is_delegated && id_signers !== delegated_signers) {
+                sendSignedDelegate(id_dokumen, delegated_signers, token);
+            }
+
             // console.log("Signer logsign updated: ", response.data);
             toast.success("InitialSign uploaded successfully.", {
                 position: "top-right",
@@ -201,6 +214,33 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
             }
         });
     }, [initialName, selectedValue, fontColor, fontSize]);
+
+
+    const sendSignedDelegate = async(id_dokumen, delegated_signers, token) => {
+        // console.log("sendEmailDelegate: ", id_dokumen, delegated_signers, token);
+        console.log("token signed delegated:", token);
+
+        try {
+            const signedDelegate = await axios.post('http://localhost:5000/signed-delegate-email', {
+                id_dokumen, 
+                delegated_signers,
+                token
+            });
+
+            // localStorage.setItem("token", token);
+
+            toast.success("Signed delegate email sent!", {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: true,
+            });
+
+            
+        } catch (error) {
+            console.error("Failed to send signed delegate email:", error.message);
+            toast.error("Failed to send signed delegate email.");
+        }
+    }
 
 
     const handleSubmit = async(e, selectedSigner) => {
