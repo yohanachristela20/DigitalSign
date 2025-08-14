@@ -43,17 +43,16 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
             try {
                 const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
-                setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
-                setIdSigner(id_signers);
-                const delegated_signers = res.data.delegated_signers;
-                setDelegatedSigners(delegated_signers);
-                console.log("Delegated signers:", delegated_signers);
+                const delegated_signers = res.data.delegated_signers;     
                 const currentSigner = res.data.currentSigner; 
-                setCurrentSigner(currentSigner);
-
                 const finalSignerId = delegated_signers || id_signers;
+
                 setFinalSignerId(finalSignerId);
+                setIdDokumen(id_dokumen);
+                setIdSigner(id_signers);
+                setDelegatedSigners(delegated_signers);
+                setCurrentSigner(currentSigner);
 
                 const idKaryawan = res.data.id_karyawan;
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
@@ -311,7 +310,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                         </Col>
                     </Row>
 
-                    <Row className="mt-3">
+                    <Row className="mt-2">
                         <Col md="6">
                             <FaCheckCircle className="mr-3 mt-1" style={{ width: '40', height: '40' }} /> 
                             {selectedSigner?.createdAt ? moment(selectedSigner.createdAt).format('DD-MM-YYYY HH:mm:ss') : '-'}
@@ -324,7 +323,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
 
                     <Row
                         className="mt-2"
-                        hidden={!statusList.every(status => status === "Completed")}
+                        hidden={selectedSigner.status !== "Completed"}
                     >
                         {groupedSignersArray.length > 0 ? (
                             groupedSignersArray

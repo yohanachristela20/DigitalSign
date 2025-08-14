@@ -319,7 +319,6 @@ function ReceiveDocument() {
             const delegated_signers = res.data.delegated_signers || null;
             const is_delegated = res.data.is_delegated;
 
-            
             console.log("is_delegated:", is_delegated);
 
             const finalSignerId = allSigners || currentSigner || delegated_signers;

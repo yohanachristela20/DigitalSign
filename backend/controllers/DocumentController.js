@@ -243,11 +243,78 @@ const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, 
 };
 
 
+const sendReminderEmail = async (validLogsigns, signLink, subjectt, messagee, documentName, day_after_reminder) => {
+  console.log("day_after_reminder:", day_after_reminder);
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_ADMIN,
+        pass: process.env.EMAIL_PASS_ADMIN,
+      }
+    });
+
+    if (validLogsigns.length === 0) return;
+
+    const log = validLogsigns[0];
+
+    const existingLog = await LogSign.findOne({
+      where: {id_logsign: log.id_logsign},
+    });
+
+    if (!existingLog) {
+      console.warn(`Logsign ${log.id_logsign} already deleted, skipping email.`);
+      return;
+    }
+
+    const receiver = await Karyawan.findOne({
+      where: {id_karyawan: log.id_signers},
+      include: [{
+        model: User,
+        as: "Penerima", 
+        attributes: ["email"]
+      }],
+      attributes: ["id_karyawan"]
+    }); 
+
+    if (!receiver?.Penerima?.email) {
+      console.warn(`Email not found for signer ${log.id_signers}`);
+      return;
+    }
+
+    const receiverEmail = receiver.Penerima.email;
+    const senderName = await Karyawan.findOne({where: {id_karyawan: log.id_karyawan}});
+    const receiverName = await Karyawan.findOne({where: {id_karyawan: log.id_signers}});
+
+    const mailOptions = {
+      from: process.env.EMAIL_ADMIN,
+      to: receiverEmail,
+      subject: subjectt.join(', ') || `Reminder to sign ${documentName}`,
+      text: `${receiverName?.nama || "Signer"}, You are requested to sign a document ${documentName} from ${senderName?.nama || "Sender"}.\n
+          ${messagee.join(', ') || "Please review and check the document before signing it."}\n
+          Click link to sign the document ${signLink}\n\n
+          Please do not share this email and the link attached with others.\n
+          Regards, \n
+          Campina Sign.`
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${receiverEmail} for signer ${log.id_signers}`);
+
+  } catch (err) {
+    console.error("Email sending error:", err.message);
+    throw err;
+  }
+};
+
+
 // CEK GENERATE LINK 
 export const sendEmailNotification = async (req, res) => {
   try {
-    const {subjectt, messagee, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers } = req.body;
+    const {subjectt, messagee, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers, day_after_reminder} = req.body;
     const jwtSecret = process.env.JWT_SECRET_KEY;
+
+    console.log("day after reminder:", day_after_reminder);
 
     const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
     const urutanList = [...new Set(Array.isArray(urutan) ? urutan : [urutan])];
@@ -300,6 +367,17 @@ export const sendEmailNotification = async (req, res) => {
       console.log("DOC NAME:", documentName);
 
       await sendEmailNotificationInternal(validLogsigns, signLink, subjectt, messagee, documentName);
+      
+      if (day_after_reminder && !isNaN(day_after_reminder)) {
+        const reminderDate = new Date();
+        reminderDate.setDate(reminderDate.getDate() + Number(day_after_reminder));
+
+        await LogSign.update(
+          { reminder_date: reminderDate},
+          { where: {id_signers: signer, id_dokumen, status: 'Pending'}}
+        )
+      }
+
       emailResults.push({ signer, message: 'Email sent.' });
     }
 

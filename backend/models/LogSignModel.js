@@ -19,6 +19,7 @@ const LogSign = db.define('log_sign', {
     is_deadline: DataTypes.BOOLEAN, 
     deadline: DataTypes.DATEONLY, 
     day_after_reminder: DataTypes.INTEGER, 
+    reminder_date: DataTypes.DATEONLY,
     repeat_freq: DataTypes.STRING, 
     is_download: DataTypes.BOOLEAN,
     is_submitted: DataTypes.BOOLEAN,

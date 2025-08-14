@@ -16,19 +16,16 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
     const [signerData, setSignerData] = useState([]);
     const [width, setWidth] = useState(0);
     const [height, setHeight] = useState(0);
+
+    const [delegated_signers, setDelegatedSigners] = useState("");
+    const [is_delegated, setIsDelegated] = useState("");
+    const [signerID, setSignerID] = useState("");
+
     const previewRef = useRef(null);
 
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
-
-    useEffect(() => {
-        // console.log("SignatureModal receive id_item:", selectedIdItem);
-        // console.log("show SignatureModal:", showSignatureModal);
-        // console.log("Selected signer:", selectedSigner);
-        // console.log("Show from initial modal:", show);
-        // console.log("Editable from initial modal:", editable);
-    }, [selectedIdItem, showSignatureModal, selectedSigner, show, editable]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -37,15 +34,16 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
             try {
                 const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
-                setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
-                setIdSigner(id_signers);
                 const id_item = res.data.id_item;
-                setIdItem(id_item);
+                const is_delegated = res.data.is_delegated;
+                const delegated_signers = res.data.delegated_signers || null;
 
-                // console.log("ID Dokumen:", id_dokumen);
-                // console.log("ID Signers:", id_signers);
-                // console.log("ID Item: ", id_item);
+                setIdDokumen(id_dokumen);
+                setIdSigner(id_signers);
+                setIdItem(id_item);
+                setIsDelegated(is_delegated);
+                setDelegatedSigners(delegated_signers);
 
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
                 const itemArray = Array.isArray(id_item) ? id_item : [id_item];
@@ -73,7 +71,6 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
                     }
                 }
                 setSignerData(allSignerData);
-                // console.log("Signer data:", signerData);
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
             } 
@@ -90,8 +87,6 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
     }
 
     const updateSignature = async (id_dokumen, id_item, id_signers, selectedSigner) => {
-        // console.log("Data update signature:", "id_dokumen:", id_dokumen, "id_item:",id_item, "id_signers:", id_signers, "selectedSigner:", selectedSigner);
-
         const today = new Date(); 
         if (!id_dokumen || !id_item || !id_signers) {
             toast.error("Missing document, item, or signer ID.");
@@ -99,10 +94,6 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
         }
 
         const sign_base64 = getSignatureImageBase64();
-
-        // console.log("Signbase64:", sign_base64);
-        // console.log("sign_base64 type:", typeof sign_base64);
-        // console.log("sign_base64 size:", sign_base64?.length);
 
         if (!sign_base64 || typeof sign_base64 !== 'string') {
             toast.error("Signature is empty.");
@@ -124,7 +115,6 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
                 }
             );
 
-            // console.log("Signer logsign updated:", response.data);
             setShowSignatureModal(false);
 
             if (onSuccess) {
@@ -145,8 +135,6 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
             return;
         }
 
-        // console.log("type of base64Signature:", typeof base64Signature);
-        // console.log("base64Signature size:", base64Signature.length);
         setShowSignatureModal(false);
 
         await updateSignature(id_dokumen, selectedSigner.id_item, selectedSigner.id_signers, selectedSigner);
@@ -160,8 +148,6 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
     };
 
     if (!selectedSigner || !selectedSigner.id_item) return null;
-    // console.log("Selected signer:", selectedSigner);
-    // console.log("Selected id item:", selectedSigner.id_item);
 
     return(
         <>
