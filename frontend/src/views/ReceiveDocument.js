@@ -113,6 +113,8 @@ function ReceiveDocument() {
     const [filteredFields, setFilterFields] = useState ("");
     const [normalizedDelegated, setNormalizedDelegated] = useState("");
     const [currentItemId, setCurrentItemId] = useState([]);
+    const [showDelegatedAlert, setShowDelegatedAlert] = useState(false);
+    const [delegateEmailSent, setDelegateEmailSent] = useState(false);
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -503,6 +505,11 @@ function ReceiveDocument() {
                 hideProgressBar: true,
             });
 
+            if (isdelegated && id_signers === delegated_signers && !delegateEmailSent) {
+                await sendSignedDelegate(id_dokumen, delegated_signers, token);
+                setDelegateEmailSent(true);
+            }
+
             window.location.reload();
         } catch (error) {
             toast.error("Failed to save signed document.", {
@@ -510,6 +517,28 @@ function ReceiveDocument() {
                 autoClose: 5000,
                 hideProgressBar: true,
             });
+        }
+    };
+
+    const sendSignedDelegate = async(id_dokumen, delegated_signers, token) => {
+        console.log("token signed delegated:", token);
+
+        try {
+            const signedDelegate = await axios.post('http://localhost:5000/signed-delegate-email', {
+                id_dokumen, 
+                delegated_signers,
+                token
+            });
+
+            toast.success("Signed delegate email sent!", {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: true,
+            });
+
+        } catch (error) {
+            console.error("Failed to send signed delegate email:", error.message);
+            toast.error("Failed to send signed delegate email.");
         }
     }
 
@@ -622,8 +651,6 @@ function ReceiveDocument() {
                 show = true;
                 editable = false;
             }
-
-            // console.log("is_delegated fetchall:", is_delegated);
 
             const nextSignerInitials = initialsData.filter(init => 
                 {
@@ -777,6 +804,11 @@ function ReceiveDocument() {
     }, [signerArray, itemArray, initial]);
     
 
+    const isDelegatedAlertVisible = delegatedDoc === id_dokumen && (
+        initial_status.every(status => status === "Completed")
+        ? delegated_signers !== id_signers
+        : isdelegated
+    );
 
     return (
         <>
@@ -811,8 +843,7 @@ function ReceiveDocument() {
                         id="navbarDropdownMenuLink"
                         variant="default"
                         className="mr-5 mt-2"
-                        hidden={isAccessed !== true || (delegatedDoc === id_dokumen && isdelegated)}
-                        // /delegatedDoc !== id_dokumen || (initial_status.every(status => status === "Completed") ? delegated_signers === id_signers : !isdelegated)
+                        hidden={isAccessed !== true || isDelegatedAlertVisible}
                         >
                         <span className="fs-6">Actions</span>
                         </Dropdown.Toggle>
@@ -820,7 +851,6 @@ function ReceiveDocument() {
                         <Dropdown.Item
                             onClick={() => handleDeclineClick(id_dokumen, id_signers)}
                             hidden={initial_status.every(status => status === "Decline" || status === "Completed")}
-
                         >
                         Decline
                         </Dropdown.Item>
@@ -864,7 +894,6 @@ function ReceiveDocument() {
                         onClick={() => updateSubmitted(id_dokumen, current_signer)}
                         disabled={isFinishDisabled}
                         hidden={isFinishHidden || delegatedDoc === id_dokumen && isdelegated || initial_status.every(status => status === "Decline")}
-                     
                     >
                         Finish
                     </Button>
@@ -880,7 +909,7 @@ function ReceiveDocument() {
                         <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
                         </Alert>
-                        <Alert variant="warning" hidden={delegatedDoc !== id_dokumen || (initial_status.every(status => status === "Completed") ? delegated_signers === id_signers : !isdelegated)}>
+                        <Alert variant="warning" hidden={!isDelegatedAlertVisible}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has delegate this document to other signer.
                         </Alert>
                         {isAccessed !== true && (
@@ -1048,7 +1077,6 @@ function ReceiveDocument() {
                                                 return <p className="text-center">Another sign didn't complete</p>;
                                             }
 
-                                            // return <p className="text-center">Another sign didn't complete</p>;
                                         };
 
                                         const message = getMessageForUrutan(sig.urutan);
@@ -1082,8 +1110,6 @@ function ReceiveDocument() {
                                                             backgroundColor: isFirstSigner ? bgFirst : bgOthers,
                                                             border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
                                                             zIndex: zIndexStyle,
-                                                            // cursor: sig.editable && !isSubmitted && currentItem ? "pointer" : "default",
-                                                           
                                                             cursor: !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
                                                             
                                                         }}

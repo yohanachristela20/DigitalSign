@@ -25,6 +25,7 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     const [delegated_signers, setDelegatedSigners] = useState("");
     const [is_delegated, setIsDelegated] = useState("");
     const [signerID, setSignerID] = useState("");
+    const [delegateEmailSent, setDelegateEmailSent] = useState(false);
 
     const previewRef = useRef(null);
 
@@ -84,14 +85,9 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
         fetchData();
     }, [token]);
 
-    // console.log("is_delegated initial modal:", is_delegated);
-    // console.log("delegated_signers initial modal:", delegated_signers);
-    // console.log("main signer:", id_signers);
-
     const handleRadioChange = (e, id_item) => {
         const value = e.target.value;
         setSelectedValues(prev => ({ ...prev, [id_item]: value }));
-        // console.log(`Selected value ${id_item}:`, value);
     };
 
     const handleInitialChange = (id_item, value) => {
@@ -167,14 +163,12 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
     };
 
     const updateInitialSign = async (id_dokumen, id_item, id_signers, selectedSigner) => {
-    // console.log("Data dokumen:", id_dokumen, id_item, id_signers);
     const fontKey = selectedValues[id_item];
     const font = fontMap[fontKey] || "Arial";
     const today = new Date();
 
         try {
             const sign_base64 = await generateImageBase64(selectedSigner.nama, font);
-            // console.log("Hasil Base64:", sign_base64?.substring(0, 100));
 
             if (!sign_base64) {
                 toast.error("Failed to generate initial sign.");
@@ -191,11 +185,6 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
                 },
             });
 
-            if (is_delegated && id_signers !== delegated_signers) {
-                sendSignedDelegate(id_dokumen, delegated_signers, token);
-            }
-
-            // console.log("Signer logsign updated: ", response.data);
             toast.success("InitialSign uploaded successfully.", {
                 position: "top-right",
                 autoClose: 5000,
@@ -214,34 +203,6 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
             }
         });
     }, [initialName, selectedValue, fontColor, fontSize]);
-
-
-    const sendSignedDelegate = async(id_dokumen, delegated_signers, token) => {
-        // console.log("sendEmailDelegate: ", id_dokumen, delegated_signers, token);
-        console.log("token signed delegated:", token);
-
-        try {
-            const signedDelegate = await axios.post('http://localhost:5000/signed-delegate-email', {
-                id_dokumen, 
-                delegated_signers,
-                token
-            });
-
-            // localStorage.setItem("token", token);
-
-            toast.success("Signed delegate email sent!", {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: true,
-            });
-
-            
-        } catch (error) {
-            console.error("Failed to send signed delegate email:", error.message);
-            toast.error("Failed to send signed delegate email.");
-        }
-    }
-
 
     const handleSubmit = async(e, selectedSigner) => {
         e.preventDefault();

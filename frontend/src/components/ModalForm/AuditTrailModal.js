@@ -1,5 +1,5 @@
 import { Badge, Button, Navbar, Nav, Container, Row, Col, Card, Table, Alert, Modal, Form } from "react-bootstrap";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { toast } from 'react-toastify';
@@ -56,52 +56,38 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                 setFinalSignerId(finalSignerId);
 
                 const idKaryawan = res.data.id_karyawan;
-                const signerArray = Array.isArray(finalSignerId) ? finalSignerId : [finalSignerId];
+                const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
                 const karyawanArray = Array.isArray(idKaryawan) ? idKaryawan : [idKaryawan];
-
-                // console.log("signerArray:", signerArray);
-                // console.log("Karyawan Array:", karyawanArray);
-
                 const signerData = [];
 
                 for (const signer of signerArray) {
-                    for (const sender of karyawanArray) {
-                        const response = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
-                        const data = response.data;
+                    const response = await axios.get(`http://localhost:5000/audit-info/${id_dokumen}/${signer}`);
+                    const data = response.data;
 
-                        if (data.length > 0 && data[0]?.Signerr && data[0]?.DocName && data[0]?.LinkAccess) {
-                            const signerInfo = {
-                                id_signers: data[0].id_signers,
-                                nama: data[0].Signerr.nama,
-                                organisasi: data[0].Signerr.organisasi,
-                                doc_name: data[0].DocName.nama_dokumen,
-                                email_signer: data[0].Signerr.Penerima?.email,
-                                createdAt: data[0].createdAt,
-                                status: data[0].status,
-                                id_dokumen: data[0].id_dokumen,
-                                tgl_tt: data[0].tgl_tt,
-                                is_submitted: data[0].is_submitted,
-                                accessed_at: data[0].LinkAccess.accessed_at,
-                                real_email: data[0].LinkAccess.real_email,
-                                delegated_signers: data[0].delegated_signers,
-                            };
-                            signerData.push(signerInfo);
-                        }
+                    if (data.length > 0) {
+                        data.forEach(d => {
+                            signerData.push({
+                                id_signers: d.id_signers,
+                                delegated_signers: d.delegated_signers,
+                                nama: d.Signerr?.nama,
+                                organisasi: d.Signerr?.organisasi,
+                                doc_name: d.DocName?.nama_dokumen,
+                                email_signer: d.Signerr?.Penerima?.email,
+                                createdAt: d.createdAt,
+                                status: d.status,
+                                id_dokumen: d.id_dokumen,
+                                tgl_tt: d.tgl_tt,
+                                is_submitted: d.is_submitted,
+                                accessed_at: d.LinkAccess?.accessed_at,
+                                real_email: d.LinkAccess?.real_email
+                            });
+                        });
+                    }
+                }
 
-                        const filteredSigner = signerData.filter(s => s.id_signers === signer);
-                        // console.log("Filtered Signer Data:", filteredSigner);
-
-                        const status_list = filteredSigner.map(s => s.status);
-                        setStatusList(status_list);
-
-                        // console.log("Status List:", status_list);
-
-                        // console.log("Sender:", sender);
-
-                        const resSender = await axios.get(`http://localhost:5000/email-sender/${sender}`);
+                for (const sender of karyawanArray) {
+                    const resSender = await axios.get(`http://localhost:5000/email-sender/${sender}`);
                         const resSenderData = resSender.data;
-                        // console.log("Res Sender Data:", resSenderData);
-
                         if (resSenderData.length > 0 && resSenderData[0]?.Pemohon && resSenderData[0]?.Pemohon?.Penerima) {
                             const senderInfo = {
                                 id_sender: resSenderData[0].id_karyawan,
@@ -111,11 +97,15 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                             };
                             setSenderData(senderInfo);
                         }
-                    }
                 }
 
-                setSignerData(signerData);
-                // console.log("AUDIT TRAIL:", signerData);
+                const uniqueSignerData = signerData.filter(
+                    (v, i, a) =>
+                        a.findIndex(t =>
+                            t.email_signer === v.email_signer && t.real_email === v.real_email
+                        ) === i
+                );
+                setSignerData(uniqueSignerData)
 
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
@@ -125,16 +115,24 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
         fetchData();
     }, [token]);
 
-    // console.log("DOC NAME:", signerData.doc_name);
-
-    const completedSigners = signerData.filter(s => s.status === "Completed" && s.is_submitted === true);
-
-
+    
+    const completedSigners = signerData.filter(
+        s =>
+            (s.status === "Completed" && s.is_submitted === true) ||
+            (s.delegated_signers || s.delegated_signers === selectedSigner)
+    );    
+    
+    const completedSignersUnique = completedSigners.filter(
+        (v, i, a) =>
+            a.findIndex(t =>
+                t.email_signer === v.email_signer &&
+                t.real_email === v.real_email
+            ) === i
+    );
 
     useEffect(() => {
         if (!selectedSigner || signerData.length === 0) return;
         const found = signerData.find(s => s.id_signers === selectedSigner || s.delegated_signers === selectedSigner);
-        // console.log("FOUND SIGNER:", found);
         if (found) {
             setNama(found.nama);
             setSignerID(found.id_signers); 
@@ -143,7 +141,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
             setRealEmail(found.real_email);
             
         }
-    }, [id_signers, selectedSigner, signerData]);
+    }, [selectedSigner, signerData]);
 
 
     const handleSubmit = async(e, signerID) => {
@@ -153,16 +151,12 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
     }
 
     const updateStatus = async(id_dokumen, signerID) => {
-        // console.log("Data update status:", id_dokumen, signerID);
-
         try {
             const response = await axios.patch(`http://localhost:5000/update-status/${id_dokumen}/${signerID}`, {
                 status: "Decline",
             }); 
 
             sendEmailDecline(id_dokumen, signerID, reason, token);
-
-            // console.log("Signer status updated:", response.data);
             toast.success("Decline document successful.", {
                 position: "top-right", 
                 autoClose: 5000,
@@ -176,8 +170,6 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
     };
 
     const sendEmailDecline = async(id_dokumen, signerID, reason) => {
-        // console.log("sendEmailDecline: ", id_dokumen, signerID, reason, token);
-
         try {
             const responseDecline = await axios.post('http://localhost:5000/send-decline-email', {
                 id_dokumen, 
@@ -192,7 +184,6 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                 hideProgressBar: true,
             });
 
-            // console.log("Decline sign document successfully.", responseDecline);
         } catch (error) {
             console.error("Failed to send decline email:", error.message);
             toast.error("Failed to send decline email.");
@@ -204,7 +195,24 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
         setReason("");
         setSelectedValue("");
         setSelectedValues({});
-    }
+    };
+
+    const groupedSigners = completedSignersUnique.reduce((acc, signer) => {
+        const key = signer.nama;
+        if (!acc[key]) {
+            acc[key] = {
+                ...signer,
+                emails: []
+            };
+        }
+
+        if (signer.real_email && !acc[key].emails.includes(signer.real_email)) {
+            acc[key].emails.push(signer.real_email);
+        }
+        return acc;
+    }, {});
+
+    const groupedSignersArray = Object.values(groupedSigners);
 
     return (
        <>
@@ -255,106 +263,104 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                         </Col>
                     </Row>
                     <hr />
-                    {/* <Row className="mt-2">
-                        <Col md="6">
-                            <FaEye className="mr-3" style={{width: '40', height:'40'}}/> 
-                        </Col>
-                        <Col md="6">
-                            <p className="mb-1">Viewed by: {nama}</p>
-                            <p>{email}</p>
-                        </Col>
-                    </Row> */}
 
-                    
                     <Row className="mt-2">
-                            {completedSigners.length > 0 ? (
-                                [...completedSigners]
+                        {groupedSignersArray.length > 0 ? (
+                            groupedSignersArray
                                 .sort((a, b) => new Date(b.tgl_tt) - new Date(a.tgl_tt))
-                                .map((signer, idx, arr) => (
-                                    <>
+                                .map((signer, idx) => (
+                                    <React.Fragment key={`${signer.id_signers}-${idx}`}>
                                         <Col md="6">
-                                            <div key={signer.id_signers}>
-                                                <FaEye className="mr-3" style={{width: '40', height:'40'}} /> {moment(signer.accessed_at).format('DD-MM-YYYY HH:mm:ss')}
-                                                {/* {idx !== arr.length - 1 && <hr />} */}
+                                            <div>
+                                                <FaEye className="mr-3 mt-1" style={{ width: '40', height: '40' }} /> 
+                                                {signer.accessed_at ? moment(signer.accessed_at).format('DD-MM-YYYY HH:mm:ss') : '-'}
                                             </div>
                                         </Col>
                                         <Col md="6">
-                                            <div key={signer.id_signers}> 
-                                                <p className="mb-1">Viewed by: {signer.nama}</p>
-                                                <p className="mb-1">{signer.email}</p>
-                                                <p>{signer.real_email}</p>
-                                                {/* {idx !== arr.length - 1 && <hr />} */}
+                                            <div>
+                                                <p className="mb-1 mt-2">Viewed by: {signer.nama}</p>
+                                                {signer.emails.map((email, i) => (
+                                                    <p key={i} className="mb-1">{email}</p>
+                                                ))}
                                             </div>
                                         </Col>
-                                    </>
-                                )) 
-                                ) : ( 
-                                    <>
-                                        <Col md="6">
-                                            <FaEye className="mr-3" style={{width: '40', height:'40'}} /> {moment(accessed_at).format('DD-MM-YYYY HH:mm:ss')}
-                                        </Col>
-                                        <Col md="6">
-                                            <p className="mb-1">Viewed by: {nama}</p>
-                                            <p className="mb-1">{email}</p>
-                                            <p>{real_email}</p>
-                                            
-                                        </Col>
-                                    </>
-                            )}
+                                    </React.Fragment>
+                                ))
+                        ) : (
+                            <>
+                                <Col md="6">
+                                    <FaEye className="mr-3" style={{ width: '40', height: '40' }} /> 
+                                    {accessed_at ? moment(accessed_at).format('DD-MM-YYYY HH:mm:ss') : '-'}
+                                </Col>
+                                <Col md="6">
+                                    <p className="mb-1 mt-2">Viewed by: {nama}</p>
+                                    <p className="mb-1">{real_email}</p>
+                                </Col>
+                            </>
+                        )}
                     </Row>
+
                     <Row className="mt-2">
                         <Col md="6">
-                            <FaUpload className="mr-3" style={{width: '40', height:'40'}}/> {moment(selectedSigner.createdAt).format('DD-MM-YYYY HH:mm:ss')}
+                            <FaUpload className="mr-3 mt-1" style={{ width: '40', height: '40' }} /> 
+                            {selectedSigner?.createdAt ? moment(selectedSigner.createdAt).format('DD-MM-YYYY HH:mm:ss') : '-'}
                         </Col>
                         <Col md="6">
-                            <p className="mb-1">Sent for signature to {nama} from {senderData.nama}</p>
+                            <p className="mb-1 mt-2">Sent for signature to {nama} from {senderData.nama}</p>
                             <p>{senderData.email_sender}</p>
                         </Col>
                     </Row>
-                    <Row className="mt-2">
+
+                    <Row className="mt-3">
                         <Col md="6">
-                            <FaCheckCircle className="mr-3" style={{width: '40', height:'40'}}/> {moment(selectedSigner.createdAt).format('DD-MM-YYYY HH:mm:ss')}
+                            <FaCheckCircle className="mr-3 mt-1" style={{ width: '40', height: '40' }} /> 
+                            {selectedSigner?.createdAt ? moment(selectedSigner.createdAt).format('DD-MM-YYYY HH:mm:ss') : '-'}
                         </Col>
                         <Col md="6">
-                            <p className="mb-1">Created by: {senderData.nama}</p>
+                            <p className="mb-1 mt-2">Created by: {senderData.nama}</p>
                             <p>{senderData.email_sender}</p>
                         </Col>
                     </Row>
-                    <Row className="mt-2" hidden={!statusList.every(status => status === "Completed")}>
-                            {completedSigners.length > 0 ? (
-                                [...completedSigners]
+
+                    <Row
+                        className="mt-2"
+                        hidden={!statusList.every(status => status === "Completed")}
+                    >
+                        {groupedSignersArray.length > 0 ? (
+                            groupedSignersArray
                                 .sort((a, b) => new Date(b.tgl_tt) - new Date(a.tgl_tt))
-                                .map((signer, idx, arr) => (
-                                    <>
+                                .map((signer, idx) => (
+                                    <React.Fragment key={`signed-${signer.id_signers}-${idx}`}>
                                         <Col md="6">
-                                            <div key={signer.id_signers}>
-                                                <FaSignature className="mr-3" style={{width: '40', height:'40'}} /> {moment(signer.tgl_tt).format('DD-MM-YYYY HH:mm:ss')}
-                                                {/* {idx !== arr.length - 1 && <hr />} */}
+                                            <div>
+                                                <FaSignature className="mr-3 mt-1" style={{ width: '40', height: '40' }} /> 
+                                                {signer.tgl_tt ? moment(signer.tgl_tt).format('DD-MM-YYYY HH:mm:ss') : '-'}
                                             </div>
                                         </Col>
                                         <Col md="6">
-                                            <div key={signer.id_signers}> 
-                                                <p className="mb-1">Signed by: {signer.nama}</p>
-                                                <p className="mb-1">{signer.email_signer}</p>
-                                                {/* <p>{signer.real_email}</p> */}
-                                                {/* {idx !== arr.length - 1 && <hr />} */}
+                                            <div>
+                                                <p className="mb-1 mt-2">Signed by: {signer.nama}</p>
+                                                {signer.emails.map((email, i) => (
+                                                    <p key={i} className="mb-1">{email}</p>
+                                                ))}
                                             </div>
                                         </Col>
-                                    </>
-                                )) 
-                                ) : ( 
-                                    <>
-                                        <Col md="6">
-                                            <FaSignature className="mr-3" style={{width: '40', height:'40'}} /> {moment(selectedSigner.tgl_tt).format('DD-MM-YYYY HH:mm:ss')}
-                                        </Col>
-                                        <Col md="6">
-                                            <p className="mb-1">Signed by: {nama}</p>
-                                            <p>{email}</p>
-                                            {/* <p>{real_email}</p> */}
-                                        </Col>
-                                    </>
-                            )}
+                                    </React.Fragment>
+                                ))
+                        ) : (
+                            <>
+                                <Col md="6">
+                                    <FaSignature className="mr-3 mt-1" style={{ width: '40', height: '40' }} /> 
+                                    {selectedSigner?.tgl_tt ? moment(selectedSigner.tgl_tt).format('DD-MM-YYYY HH:mm:ss') : '-'}
+                                </Col>
+                                <Col md="6">
+                                    <p className="mb-1 mt-2">Signed by: {nama}</p>
+                                    <p className="mt-1">{real_email}</p>
+                                </Col>
+                            </>
+                        )}
                     </Row>
+
                 </Form>
 
             </Modal.Body>
