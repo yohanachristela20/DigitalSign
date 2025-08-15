@@ -14,6 +14,7 @@ import SignerRoute from "./routes/SignerRoute.js";
 import ItemRoute from "./routes/ItemRoute.js";
 import verifyToken from "./middlewares/authMiddleware.js";
 import dotenv from 'dotenv';
+import "./cronjobs.js";
 
 import ReceiveDocumentRoute from "./routes/ReceiveDocumentRoute.js";
 

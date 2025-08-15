@@ -2,7 +2,8 @@ import cron from "node-cron";
 import sendReminderEmail from "./routes/ReminderEmail.js";
 
 cron.schedule('* * * * *', async () => {
-    console.log(`Cron job active on ${new Date().toISOString()}`);
+    const now = new Date();
+    console.log(`Cronjob running on ${now}`);
     await sendReminderEmail();
 }, {
     scheduled: true,

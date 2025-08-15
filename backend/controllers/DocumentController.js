@@ -13,6 +13,8 @@ import User from "../models/UserModel.js";
 import jwt from 'jsonwebtoken';
 import { log } from "console";
 import { Op } from "sequelize";
+// import  { sendEmailToSigner } from "../helpers/sendEmailHelper.js";
+import sendEmailToSigner from "../helpers/sendEmailHelper.js";
 
 dotenv.config();
 
@@ -288,6 +290,11 @@ export const sendEmailNotification = async (req, res) => {
       const token = jwt.sign({dokumenLogsign: {id_dokumen, id_signers: signerList, urutan: urutanList, currentSigner: signer, id_item: itemList, id_karyawan: senderList, intended_email, delegated_signers: delegateList}}, jwtSecret);
       const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
+      await LogSign.update(
+        { token },
+        { where: { id_signers: signer, id_dokumen, status: 'Pending' }}
+      )
+
       const docName = await LogSign.findOne({
             where: {id_dokumen: id_dokumen}, 
             include: [{
@@ -311,6 +318,10 @@ export const sendEmailNotification = async (req, res) => {
           { reminder_date: reminderDate},
           { where: {id_signers: signer, id_dokumen, status: 'Pending'}}
         )
+
+        // for (const log of validLogsigns) {
+        //   await sendEmailToSigner(log, subjectt, messagee);
+        // }
       }
 
       emailResults.push({ signer, message: 'Email sent.' });
@@ -326,6 +337,68 @@ export const sendEmailNotification = async (req, res) => {
     res.status(500).json({ message: "Failed to send email notification." });
   }
 };
+
+// export const sendEmailNotification = async (req, res) => {
+//   try {
+//     const {subjectt, messagee, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers, day_after_reminder} = req.body;
+//     // const jwtSecret = process.env.JWT_SECRET_KEY;
+
+//     console.log("day after reminder:", day_after_reminder);
+
+//     const signerList = Array.isArray(id_signers) ? id_signers : [id_signers];
+
+//     let emailResults = [];
+
+//     for (const signer of signerList) {
+//       const validLogsigns = await LogSign.findAll({
+//         where: {
+//           id_signers: signer,
+//           id_dokumen,
+//           status: 'Pending',
+//         },
+//         include: [{
+//           model: Karyawan,
+//           as: 'Signerr',
+//           include: [{
+//             model: User,
+//             as: 'Penerima',
+//             attributes: ['email']
+//           }],
+//         }, 
+//         {
+//           model: Dokumen, 
+//           as: "DocName", 
+//           attributes: ["nama_dokumen"],
+//         }]
+//       });
+
+//       for (const log of validLogsigns) {
+//         await sendEmailToSigner(log, subjectt, messagee);
+//       }
+
+//       if (day_after_reminder && !isNaN(day_after_reminder)) {
+//         const reminderDate = new Date();
+//         reminderDate.setDate(reminderDate.getDate() + Number(day_after_reminder));
+
+//         await LogSign.update(
+//           { reminder_date: reminderDate},
+//           { where: {id_signers: signer, id_dokumen, status: 'Pending'}}
+//         )
+//       }
+
+//       // emailResults.push({ signer, message: 'Email sent.' });
+//     }
+
+//     res.status(200).json({
+//       message: 'Emails processed.',
+//       // results: emailResults,
+//     });
+
+//   } catch (error) {
+//     console.error("Failed to send email notification:", error.message);
+//     res.status(500).json({ message: "Failed to send email notification." });
+//   }
+// };
 
 export const getSignLink = async (req, res) => {
   try {

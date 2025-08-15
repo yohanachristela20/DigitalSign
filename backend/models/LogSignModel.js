@@ -20,12 +20,17 @@ const LogSign = db.define('log_sign', {
     deadline: DataTypes.DATEONLY, 
     day_after_reminder: DataTypes.INTEGER, 
     reminder_date: DataTypes.DATEONLY,
+    reminder_sent: DataTypes.BOOLEAN,
     repeat_freq: DataTypes.STRING, 
     is_download: DataTypes.BOOLEAN,
     is_submitted: DataTypes.BOOLEAN,
     is_delegated: DataTypes.BOOLEAN,
     sign_base64: DataTypes.TEXT('long'),
     urutan: DataTypes.INTEGER,
+    token: {
+        type: DataTypes.TEXT('long'),
+        allowNull: true
+    },
     id_dokumen: {
         type: DataTypes.STRING,
         allowNull:false,

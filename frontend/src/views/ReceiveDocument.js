@@ -95,6 +95,7 @@ function ReceiveDocument() {
     const [submitted_list, setSubmittedList] = useState([]);
     const [jenisItem_list, setJenisItemList] = useState([]);
     const [delegate_status, setDelegateStatus] = useState([]);
+    const [token_db, setTokenDb] = useState([]);
 
     const [verified, setVerified] = useState(false);
     const [inputEmail, setInputEmail] = useState("");
@@ -146,6 +147,7 @@ function ReceiveDocument() {
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
+    console.log("TOKEN QUERY PARAMS:", token);
 
     const styleRnd = {
         display: "flex",
@@ -443,6 +445,7 @@ function ReceiveDocument() {
                             id_signers: querySigner, 
                             is_delegated,
                             delegated_signers,
+                            token
                         }; 
 
                         allStatus.push({id_item: fieldItemId, status});
@@ -465,6 +468,9 @@ function ReceiveDocument() {
             setUrutanMap(urutanMapping);
             setSubmittedMap(submittedMapping);
             setDelegatedMap(delegateMapping);
+
+            console.log("Token dari DB:", token);
+            console.log("Signatures:", signatures);
 
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
@@ -591,6 +597,8 @@ function ReceiveDocument() {
                         is_delegated: currentDelegated,
                         nowSigner: finalSignerId,
                         delegated_signers: delegatedForThisSigner,
+                        token,
+
                     });
                 }
             }
@@ -683,6 +691,8 @@ function ReceiveDocument() {
         setSignedInitials(allFields); 
         setSignedSignatures(allFields);
 
+        console.log("SignedInitials:", allFields);
+
         const ownerSigner = allFields.find(s => {
 
             if (!s.delegated_signers) return false;
@@ -719,6 +729,8 @@ function ReceiveDocument() {
         setSignature(filteredFields);
         setDateField(filteredFields);
 
+        console.log("filteredFields for Initial:", filteredFields);
+
         const statusList = filteredFields.map(field => field.status);
         setInitialStatus(statusList);
 
@@ -730,6 +742,9 @@ function ReceiveDocument() {
 
         const jenisItemList = filteredFields.map(field => field.jenis_item);
         setJenisItemList(jenisItemList);
+
+        const tokenDbList = filteredFields.map(field => field.token);
+        setTokenDb(tokenDbList);
 
         const nextSignCompletedList = allFields
             .filter(field => field.prevSigner === id_signers)
@@ -809,6 +824,8 @@ function ReceiveDocument() {
         : isdelegated
     );
 
+    console.log("tokenn:", token, "vs", "token_db:", token_db);
+
     return (
         <>
             <Navbar className="bg-navbar nav-padding" expand="lg" hidden={isAccessed !== true}>
@@ -842,7 +859,7 @@ function ReceiveDocument() {
                         id="navbarDropdownMenuLink"
                         variant="default"
                         className="mr-5 mt-2"
-                        hidden={isAccessed !== true || isDelegatedAlertVisible}
+                        hidden={isAccessed !== true || isDelegatedAlertVisible && token_db.every(tokenn => tokenn === token)}
                         >
                         <span className="fs-6">Actions</span>
                         </Dropdown.Toggle>
@@ -851,7 +868,7 @@ function ReceiveDocument() {
                             onClick={() => handleDeclineClick(id_dokumen, id_signers)}
                             hidden={initial_status.every(status => status === "Decline" || status === "Completed")}
                         >
-                        Decline
+                            Decline
                         </Dropdown.Item>
                         <div className="divider" hidden={initial_status.every(status => status === "Decline" || status === "Completed")}></div>
                         <Dropdown.Item
@@ -873,7 +890,7 @@ function ReceiveDocument() {
                         <Dropdown.Item
                             href="#"
                             onClick={() => handleAuditTrail(id_dokumen, id_signers)}
-                        >Audit Trail
+                        >   Audit Trail
                         </Dropdown.Item>
                         <div className="divider"></div>
                         <Dropdown.Item
@@ -882,7 +899,7 @@ function ReceiveDocument() {
                             e.preventDefault();
                             setShowModal(true); 
                             }}
-                        >Download
+                        >   Download
                         </Dropdown.Item>
                         </Dropdown.Menu>
                     </Dropdown>
@@ -892,7 +909,7 @@ function ReceiveDocument() {
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, current_signer)}
                         disabled={isFinishDisabled}
-                        hidden={isFinishHidden || delegatedDoc === id_dokumen && isdelegated || initial_status.every(status => status === "Decline")}
+                        hidden={isFinishHidden || token_db.every(tokenn => tokenn === token) && delegatedDoc === id_dokumen && isdelegated || initial_status.every(status => status === "Decline")}
                     >
                         Finish
                     </Button>
@@ -908,7 +925,7 @@ function ReceiveDocument() {
                         <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
                         </Alert>
-                        <Alert variant="warning" hidden={!isDelegatedAlertVisible}>
+                        <Alert variant="warning" hidden={!isDelegatedAlertVisible && token_db.every(tokenn => tokenn === token)}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has delegate this document to other signer.
                         </Alert>
                         {isAccessed !== true && (
@@ -1109,7 +1126,7 @@ function ReceiveDocument() {
                                                             backgroundColor: isFirstSigner ? bgFirst : bgOthers,
                                                             border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
                                                             zIndex: zIndexStyle,
-                                                            cursor: !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
+                                                            cursor: !isSubmitted || token_db.every(tokenn => tokenn === token) && (delegatedDoc !== id_dokumen || !isdelegated) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
                                                             
                                                         }}
                                                         hidden={isDecline}
@@ -1120,7 +1137,7 @@ function ReceiveDocument() {
                                                             delegatedArray.includes(currentSignerStr) ||
                                                             normalizedArray.includes(currentSignerStr);
 
-                                                            const canClick = isCurrentSigner && isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated);
+                                                            const canClick = isCurrentSigner || token_db.every(tokenn => tokenn === token) && isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated);
 
                                                             if (canClick) {
                                                                 if (isInitialpad){
@@ -1284,7 +1301,7 @@ function ReceiveDocument() {
                                                     backgroundColor: 
                                                         isFirstSigner ? bgFirst : bgOthers,
                                                     border: borderStyle, 
-                                                    cursor: !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
+                                                    cursor: !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated && token_db.every(tokenn => tokenn === token)) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
 
                                                     zIndex: isCompleted? 1 : 2,
                                                 }}
@@ -1296,7 +1313,7 @@ function ReceiveDocument() {
                                                     delegatedArray.includes(currentSignerStr) ||
                                                     normalizedArray.includes(currentSignerStr);
 
-                                                    const canClick = isCurrentSigner && isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated);
+                                                    const canClick = isCurrentSigner && isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated && token_db.every(tokenn => tokenn === token));
 
                                                     if (canClick) {
                                                         if (isInitialpad){
