@@ -291,7 +291,7 @@ export const sendEmailNotification = async (req, res) => {
       const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
       await LogSign.update(
-        { token },
+        { main_token: token },
         { where: { id_signers: signer, id_dokumen, status: 'Pending' }}
       )
 

@@ -27,7 +27,11 @@ const LogSign = db.define('log_sign', {
     is_delegated: DataTypes.BOOLEAN,
     sign_base64: DataTypes.TEXT('long'),
     urutan: DataTypes.INTEGER,
-    token: {
+    main_token: {
+        type: DataTypes.TEXT('long'),
+        allowNull: true
+    },
+    delegate_token: {
         type: DataTypes.TEXT('long'),
         allowNull: true
     },

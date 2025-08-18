@@ -38,7 +38,7 @@ router.get('/receive-document', async(req, res) => {
             id_item, 
             id_karyawan, 
             is_delegated, 
-            delegated_signers
+            delegated_signers, 
         } = decoded.dokumenLogsign || {};
 
         const finalSignerId = is_delegated ? delegated_signers : id_signers ;
@@ -54,10 +54,14 @@ router.get('/receive-document', async(req, res) => {
                 id_signers, 
                 id_item
             }, 
-            attributes: ['id_logsign']
+            attributes: ['id_logsign', 'main_token', 'delegate_token']
         });
 
-        const id_logsign = logsignRecord? logsignRecord.id_logsign : null;
+        console.log("LOGSIGN RECORDDD:", logsignRecord);
+
+        const id_logsign = logsignRecord ? logsignRecord.id_logsign : null;
+        const main_token = logsignRecord ? logsignRecord.main_token : null;
+        const delegate_token = logsignRecord ? logsignRecord.delegate_token : null;
 
         res.status(200).json({
             id_dokumen, 
@@ -69,7 +73,9 @@ router.get('/receive-document', async(req, res) => {
             id_karyawan, 
             id_logsign, 
             is_delegated,
-            delegated_signers: is_delegated ? delegated_signers : null
+            delegated_signers: is_delegated ? delegated_signers : null, 
+            main_token,
+            delegate_token,
         });
         
     } catch (error) {
@@ -260,15 +266,17 @@ router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async (req, res) => {
                     {delegated_signers: id_signers}
                 ]
             }, 
-            attributes: ["id_signers", "delegated_signers", "is_delegated"]
+            attributes: ["id_signers", "delegated_signers", "is_delegated", "main_token", "delegate_token"]
         });
+
+        console.log("LOGSIGN RECORD AXIS FIELD:", logsignRecord);
 
         const mainSignerId = logsignRecord.id_signers;
 
 
         const response = await LogSign.findAll({
             where: { id_dokumen, id_signers: mainSignerId, id_item },
-            attributes: ["id_item", "id_signers", "status", "urutan", "is_submitted", "is_delegated", "token"],
+            attributes: ["id_item", "id_signers", "status", "urutan", "is_submitted", "is_delegated", "main_token", "delegate_token" ],
             include: [
                 {
                     model: Item,
@@ -742,6 +750,12 @@ router.post('/send-delegate-email', async(req, res) => {
 
             const delegateLink = `http://localhost:3000/user/envelope?token=${newToken}`;
             await sendEmailDelegateInternal(delegateLink, documentName, receiverName, intended_email, senderName);
+
+            await LogSign.update(
+                {delegate_token: newToken}, 
+                {where: {id_signers, id_dokumen, status: 'Pending'}}
+            );
+
             emailResults.push({delegateId, message: 'Delegate email sent successfully.'});
         }
 

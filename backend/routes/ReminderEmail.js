@@ -31,7 +31,7 @@ const sendReminderEmail = async () => {
           { reminder_sent: null }
         ]
       }, 
-      attributes: ["id_logsign", "status", "reminder_date", "id_signers", "delegated_signers", "id_dokumen", "id_karyawan", "id_item", "urutan", "token"],
+      attributes: ["id_logsign", "status", "reminder_date", "id_signers", "delegated_signers", "id_dokumen", "id_karyawan", "id_item", "urutan", "main_token", "delegate_token", "is_delegated"],
       include: [
         {
           model: Karyawan,
