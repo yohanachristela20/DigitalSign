@@ -116,6 +116,7 @@ function ReceiveDocument() {
     const [currentItemId, setCurrentItemId] = useState([]);
     const [showDelegatedAlert, setShowDelegatedAlert] = useState(false);
     const [delegateEmailSent, setDelegateEmailSent] = useState(false);
+    const [is_submitted, setIsSubmitted] = useState(false);
 
     const [main_token, setMainToken] = useState("");
     const [delegate_token, setDelegateToken] = useState("");
@@ -831,7 +832,13 @@ function ReceiveDocument() {
         : isdelegated
     );
 
-    console.log("MAIN TOKEN:", main_token, "vs", "DELEGATE TOKEN:", delegate_token);
+    useEffect(() => {
+        const hasSubmitted = initial.some(sig => sig?.is_submitted === true);
+        setIsSubmitted(hasSubmitted);
+    }, [initial]);
+
+    console.log("TOKEN:", token, "vs", "MAIN TOKEN:", main_token);
+    console.log("is_delegated!!:", is_delegated);
 
     return (
         <>
@@ -866,7 +873,9 @@ function ReceiveDocument() {
                         id="navbarDropdownMenuLink"
                         variant="default"
                         className="mr-5 mt-2"
-                        hidden={isDelegatedAlertVisible}
+                        // hidden={is_delegated ? isDelegatedAlertVisible && token === delegate_token : isDelegatedAlertVisible}
+                        hidden={is_delegated || is_submitted ? isDelegatedAlertVisible && token === delegate_token : isDelegatedAlertVisible}
+
                         >
                         <span className="fs-6">Actions</span>
                         </Dropdown.Toggle>
@@ -916,8 +925,11 @@ function ReceiveDocument() {
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, current_signer)}
                         disabled={isFinishDisabled}
-                        hidden={isFinishHidden || isDelegatedAlertVisible && delegatedDoc === id_dokumen && isdelegated || initial_status.every(status => status === "Decline")}
+                        // hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible : is_submitted || isDelegatedAlertVisible}
+                        hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible && token === delegate_token : is_submitted || isDelegatedAlertVisible}
+
                     >
+
                         Finish
                     </Button>
                     </Nav>
@@ -932,7 +944,8 @@ function ReceiveDocument() {
                         <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
                         </Alert>
-                        <Alert variant="warning" hidden={!isDelegatedAlertVisible}>
+                        {/* hidden={!isDelegatedAlertVisible || token !== delegate_token} */}
+                        <Alert variant="warning" hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible || main_token !== delegate_token : is_submitted || isDelegatedAlertVisible}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has delegate this document to other signer.
                         </Alert>
                         {isAccessed !== true && (
@@ -1028,6 +1041,8 @@ function ReceiveDocument() {
                                         const normalizedArray = Array.isArray(normalizedDelegated)
                                         ? normalizedDelegated.map(String)
                                         : normalizedDelegated ? [String(normalizedDelegated)] : [];
+
+                                        // setIsSubmitted(isSubmitted);
 
                                         let bgFirst = currentItem || isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
                                         let bgOthers = currentItem || isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
@@ -1134,7 +1149,7 @@ function ReceiveDocument() {
                                                             border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
                                                             zIndex: zIndexStyle,
                                                             // cursor: !isSubmitted || token_db.every(tokenn => tokenn === token) && (delegatedDoc !== id_dokumen || !isdelegated) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
-                                                            cursor: isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated || !isDelegatedAlertVisible) ? "pointer" : "default",
+                                                            cursor:  isCurrentItem || !is_submitted && token === main_token && (delegatedDoc === id_dokumen) ? "pointer" : "default",
                                                             
                                                         }}
                                                         hidden={isDecline}
@@ -1146,7 +1161,7 @@ function ReceiveDocument() {
                                                             normalizedArray.includes(currentSignerStr);
 
                                                             // const canClick = isCurrentSigner || token_db.every(tokenn => tokenn === token) && isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated);
-                                                            const canClick = isCurrentSigner && isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated || !isDelegatedAlertVisible);
+                                                            const canClick = isCurrentItem && isCurrentSigner || !is_submitted && token === main_token  && (delegatedDoc !== id_dokumen);
 
                                                             if (canClick) {
                                                                 if (isInitialpad){
@@ -1311,7 +1326,7 @@ function ReceiveDocument() {
                                                         isFirstSigner ? bgFirst : bgOthers,
                                                     border: borderStyle, 
                                                     // cursor: !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated && token_db.every(tokenn => tokenn === token)) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
-                                                    cursor: isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated || !isDelegatedAlertVisible) ? "pointer" : "default",
+                                                    cursor: !is_submitted || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
                                                     zIndex: isCompleted? 1 : 2,
                                                 }}
                                                 hidden={isDecline}
@@ -1322,7 +1337,7 @@ function ReceiveDocument() {
                                                     delegatedArray.includes(currentSignerStr) ||
                                                     normalizedArray.includes(currentSignerStr);
 
-                                                    const canClick = isCurrentSigner && isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated || !isDelegatedAlertVisible);
+                                                    const canClick = !is_submitted || isCurrentItem && isCurrentSigner && (delegatedDoc !== id_dokumen);
 
                                                     if (canClick) {
                                                         if (isInitialpad){
