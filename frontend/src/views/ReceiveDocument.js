@@ -129,10 +129,10 @@ function ReceiveDocument() {
 
     const currentDate = `${day} ${month} ${year}`;
 
-    const isdelegated = localStorage.getItem("is_delegated");
+    // const isdelegated = localStorage.getItem("is_delegated");
     const delegatedDoc = localStorage.getItem("id_dokumen");
 
-    console.log("isDelegated from modal:", isdelegated);
+    // console.log("isDelegated from modal:", isdelegated);
     console.log("delegatedDoc:", delegatedDoc);
 
     const mobileSidebarToggle = (e) => {
@@ -518,7 +518,7 @@ function ReceiveDocument() {
                 hideProgressBar: true,
             });
 
-            if (isdelegated && id_signers === delegated_signers && !delegateEmailSent) {
+            if (is_delegated && id_signers === delegated_signers && !delegateEmailSent) {
                 await sendSignedDelegate(id_dokumen, delegated_signers, token);
                 setDelegateEmailSent(true);
             }
@@ -829,7 +829,7 @@ function ReceiveDocument() {
     const isDelegatedAlertVisible = delegatedDoc === id_dokumen && (
         initial_status.every(status => status === "Completed")
         ? delegated_signers !== id_signers
-        : isdelegated
+        : is_delegated
     );
 
     useEffect(() => {
