@@ -21,6 +21,7 @@ import DelegateModal from "components/ModalForm/DelegateModal.js";
 import "../assets/scss/lbd/_receivedoc.scss";
 import "../assets/scss/lbd/_usernavbar.scss";
 import "../assets/scss/lbd/_login.scss";
+import { isDate } from "moment";
 
 function ReceiveDocument() {
     const [pdfUrl, setPdfUrl] = useState(null);
@@ -133,7 +134,7 @@ function ReceiveDocument() {
     const delegatedDoc = localStorage.getItem("id_dokumen");
 
     // console.log("isDelegated from modal:", isdelegated);
-    console.log("delegatedDoc:", delegatedDoc);
+    // console.log("delegatedDoc:", delegatedDoc);
 
     const mobileSidebarToggle = (e) => {
         e.preventDefault();
@@ -151,7 +152,7 @@ function ReceiveDocument() {
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
-    console.log("TOKEN QUERY PARAMS:", token);
+    // console.log("TOKEN QUERY PARAMS:", token);
 
     const styleRnd = {
         display: "flex",
@@ -327,7 +328,7 @@ function ReceiveDocument() {
             const main_token = res.data.main_token;
             const delegate_token = res.data.delegate_token;
 
-            console.log("MAIN TOKEN:", main_token, "DELEGATE TOKEN:", delegate_token);
+            // console.log("MAIN TOKEN:", main_token, "DELEGATE TOKEN:", delegate_token);
 
             const finalSignerId = allSigners || currentSigner || delegated_signers;
             setDelegatedSigners(delegated_signers);
@@ -478,7 +479,7 @@ function ReceiveDocument() {
             setDelegatedMap(delegateMapping);
 
             // console.log("Token dari DB:", token);
-            console.log("Signatures:", signatures);
+            // console.log("Signatures:", signatures);
 
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
@@ -492,7 +493,7 @@ function ReceiveDocument() {
         fetchData();
     }, [token]);
 
-    console.log("id_dokumen real:", id_dokumen);
+    // console.log("id_dokumen real:", id_dokumen);
 
 
     
@@ -534,7 +535,7 @@ function ReceiveDocument() {
     };
 
     const sendSignedDelegate = async(id_dokumen, delegated_signers, token) => {
-        console.log("token signed delegated:", token);
+        // console.log("token signed delegated:", token);
 
         try {
             const signedDelegate = await axios.post('http://localhost:5000/signed-delegate-email', {
@@ -602,7 +603,7 @@ function ReceiveDocument() {
                         id_dokumen, 
                         is_submitted: currentSubmitted,
                         rawField: field,
-                        is_delegated: currentDelegated,
+                        is_delegated,
                         nowSigner: finalSignerId,
                         delegated_signers: delegatedForThisSigner,
                         token,
@@ -726,18 +727,18 @@ function ReceiveDocument() {
         setFilterFields(filteredFields);
 
         
-        console.log("filteredFields for render:", filteredFields.map(f => ({
-            id_signers: f.id_signers,
-            delegated_signers: f.delegated_signers,
-            id_item: f.id_item,
-            jenis_item: f.jenis_item,
-        })));
+        // console.log("filteredFields for render:", filteredFields.map(f => ({
+        //     id_signers: f.id_signers,
+        //     delegated_signers: f.delegated_signers,
+        //     id_item: f.id_item,
+        //     jenis_item: f.jenis_item,
+        // })));
 
         setInitial(filteredFields);
         setSignature(filteredFields);
         setDateField(filteredFields);
 
-        console.log("filteredFields for Initial:", filteredFields);
+        // console.log("filteredFields for Initial:", filteredFields);
 
         const statusList = filteredFields.map(field => field.status);
         setInitialStatus(statusList);
@@ -810,7 +811,7 @@ function ReceiveDocument() {
                     const currentItemId = activeItem.id_item;
                     const isCurrentItem = currentItemId === item;
 
-                    console.log(`Item ${item} → is current: ${isCurrentItem}`);
+                    // console.log(`Item ${item} → is current: ${isCurrentItem}`);
                 }
             }
         }
@@ -822,7 +823,7 @@ function ReceiveDocument() {
             prevArray.every(id => allCurrentItemIds.includes(id));
             return isSame ? prevArray : allCurrentItemIds;
         });
-        console.log("Final currentItemIds:", allCurrentItemIds);
+        // console.log("Final currentItemIds:", allCurrentItemIds);
     }, [signerArray, itemArray, initial]);
     
 
@@ -926,7 +927,11 @@ function ReceiveDocument() {
                         onClick={() => updateSubmitted(id_dokumen, current_signer)}
                         disabled={isFinishDisabled}
                         // hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible : is_submitted || isDelegatedAlertVisible}
-                        hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible && token === delegate_token : is_submitted || isDelegatedAlertVisible}
+
+                        //last
+                        // hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible && token === delegate_token : is_submitted || isDelegatedAlertVisible}
+
+                        hidden={!is_delegated || is_submitted ? isDelegatedAlertVisible : !isDelegatedAlertVisible}
 
                     >
 
@@ -1044,30 +1049,39 @@ function ReceiveDocument() {
 
                                         // setIsSubmitted(isSubmitted);
 
-                                        let bgFirst = currentItem || isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
-                                        let bgOthers = currentItem || isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
+                                        // let bgFirst = currentItem || isSubmitted ? "transparent" : is_delegated ? "rgba(25, 230, 25, 0.5)"  : "rgba(86, 90, 90, 0.3)";
+                                        // let bgOthers = currentItem || isSubmitted ? "transparent" : is_delegated ? "rgba(25, 230, 25, 0.5)" : "rgba(86, 90, 90, 0.3)";
 
-                                        if ((delegatedArray.length > 1 || normalizedArray.length > 1) && isCompleted !== true) {
-                                            bgFirst = "rgba(86, 90, 90, 0.3)";
-                                            bgOthers = "rgba(86, 90, 90, 0.3)";
-                                        }
+                                        // console.log("IS DELEGATED :", is_delegated);
+                                        let bgFirst = is_delegated === true ? "rgba(25, 230, 25, 0.5)" : currentItem || isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
+                                        let bgOthers = is_delegated === true ? "rgba(25, 230, 25, 0.5)" : currentItem || isSubmitted ? "transparent": "rgba(86, 90, 90, 0.3)";
+
+
+                                        // if ((delegatedArray.length > 1 || normalizedArray.length > 1) && isCompleted !== true) {
+                                        //     bgFirst = "rgba(86, 90, 90, 0.3)";
+                                        //     bgOthers = "rgba(86, 90, 90, 0.3)";
+                                        // }
 
                                         if (isCompleted === true) {
                                             bgFirst = "transparent";
                                             bgOthers = "transparent";
                                         }
 
-                                        const firstBorderStyle = currentItem
-                                        ? "transparent"
-                                        : isSubmitted
-                                        ? "transparent"
-                                        : "solid 5px rgba(86, 90, 90, 0.3)";
+                                        // const firstBorderStyle = currentItem
+                                        // ? "transparent"
+                                        // : isSubmitted
+                                        // ? "transparent"
+                                        // : "solid 5px rgba(86, 90, 90, 0.3)";
 
-                                        const otherBorderStyle = currentItem 
-                                        ? "transparent"
-                                        : isSubmitted
-                                        ? "transparent"
-                                        : "solid 5px rgba(86, 90, 90, 0.3)";
+                                        // const otherBorderStyle = currentItem 
+                                        // ? "transparent"
+                                        // : isSubmitted
+                                        // ? "transparent"
+                                        // : "solid 5px rgba(86, 90, 90, 0.3)";
+
+
+                                        let firstBorderStyle = (isSubmitted || currentItem) ? "transparent" : is_delegated ? "solid 5px rgba(25, 230, 25, 0.5)" : "solid 5px rgba(86, 90, 90, 0.3)";
+                                        let otherBorderStyle = (isSubmitted || currentItem) ? "transparent" : is_delegated ? "solid 5px rgba(25, 230, 25, 0.5)" : "solid 5px rgba(86, 90, 90, 0.3)";
 
                                         const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
 
@@ -1130,7 +1144,30 @@ function ReceiveDocument() {
                                             )
                                         ).length;
 
-                                        console.log("current item count:", signerItemCount);
+                                        let content;
+
+                                        if (isCompleted && sig.sign_base64) {
+                                        content = (
+                                            <img
+                                            src={sig.sign_base64}
+                                            alt="Initial"
+                                            style={{ width: "100%", height: "100%" }}
+                                            />
+                                        );
+                                        } else if (!is_delegated && isFirstSigner) {
+                                        content = message;
+                                        } else if (!is_delegated && !isFirstSigner) {
+                                        content = message;
+                                        } else if (is_delegated && isInitialpad) {
+                                        content = <FaFont style={{ width: "100%", height: "100%"}} />;
+                                        } else if (isSignpad) {
+                                        content = <FaSignature style={{ width: "100%", height: "100%"}} />;
+                                        } else {
+                                        content = <></>;
+                                        }
+
+
+                                        // console.log("current item count:", signerItemCount);
 
 
                                         return (
@@ -1149,7 +1186,10 @@ function ReceiveDocument() {
                                                             border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
                                                             zIndex: zIndexStyle,
                                                             // cursor: !isSubmitted || token_db.every(tokenn => tokenn === token) && (delegatedDoc !== id_dokumen || !isdelegated) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
-                                                            cursor:  isCurrentItem || !is_submitted && token === main_token && (delegatedDoc === id_dokumen) ? "pointer" : "default",
+                                                            
+                                                            
+                                                            // cursor:  !isSubmitted || (is_delegated && token !== main_token) || isCurrentItem  && (delegatedDoc === id_dokumen) ? "pointer" : "default",
+                                                            cursor: token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
                                                             
                                                         }}
                                                         hidden={isDecline}
@@ -1161,7 +1201,11 @@ function ReceiveDocument() {
                                                             normalizedArray.includes(currentSignerStr);
 
                                                             // const canClick = isCurrentSigner || token_db.every(tokenn => tokenn === token) && isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated);
-                                                            const canClick = isCurrentItem && isCurrentSigner || !is_submitted && token === main_token  && (delegatedDoc !== id_dokumen);
+                                                            
+                                                            // const canClick = (is_delegated === true && !isSubmitted) || isCurrentItem && isCurrentSigner && token === main_token  && (delegatedDoc !== id_dokumen);
+                                                            
+                                                            const canClick = token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem && isCurrentSigner  && (delegatedDoc !== id_dokumen);
+
 
                                                             if (canClick) {
                                                                 if (isInitialpad){
@@ -1174,23 +1218,97 @@ function ReceiveDocument() {
                                                         disabled ={isSubmitted === true}
 
                                                     >
-                                                        {is_delegated || (isCompleted && completedNext && sig.sign_base64) ? (
+                                                        {console.log("isDELEGATED:", is_delegated)}
+                                                        {/* {(isCompleted && completedNext && sig.sign_base64) || is_delegated? (
                                                             <img
                                                                 src={sig.sign_base64}
                                                                 alt="Initial"
                                                                 style={{ width: "100%", height: "100%" }}
                                                             />
+                                                        ) : is_delegated === true ? (
+                                                            isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : is_delegated === true || isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : <></>
                                                         ) : isFirstSigner ? (
                                                             message
                                                         ) : !isFirstSigner ? (
                                                             message
                                                         ) : (
-                                                            <></>
+                                                           <></>
                                                         )}
                                                         {isCompleted && completedNext && isDatefield ? (
                                                             currentDate
                                                         ) : (
                                                         <></>
+                                                        )} */}
+
+
+                                                         {!isSubmitted && token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? (
+                                                            <OverlayTrigger
+                                                                placement="bottom"
+                                                                overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
+                                                            >
+                                                                {({ ref, ...triggerHandler }) => (
+                                                                <>
+                                                                    <div {...triggerHandler} ref={ref} style={{width: "100%", height: "100%" }}>
+                                                                        {!message && (isInitialpad && !isCompleted) ? (
+                                                                           <div
+                                                                                style={{
+                                                                                    width: "25%",
+                                                                                    height: "25%",
+                                                                                    top: "50%",
+                                                                                    left: "50%",
+                                                                                    position: "absolute",
+                                                                                    transform: "translate(-50%, -50%)",
+                                                                                }}
+                                                                            >
+                                                                                {content}
+                                                                            </div>
+                                                                        ) : message && (isInitialpad && !isCompleted) ? (
+                                                                           <div
+                                                                                style={{
+                                                                                    // width: "25%",
+                                                                                    // height: "25%",
+                                                                                    top: "50%",
+                                                                                    left: "50%",
+                                                                                    position: "absolute",
+                                                                                    transform: "translate(-50%, -50%)",
+                                                                                }}
+                                                                            >
+                                                                                {content}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div
+                                                                                style={{
+                                                                                    width: "100%",
+                                                                                    height: "100%",
+                                                                                    top: "50%",
+                                                                                    left: "50%",
+                                                                                    position: "absolute",
+                                                                                    transform: "translate(-50%, -50%)",
+                                                                                }}
+                                                                            >
+                                                                                {content}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {isCompleted && isDatefield ? (
+                                                                        currentDate 
+                                                                    ) : (
+                                                                        isDatefield ? <FaCalendar style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)" }} /> : <></>
+                                                                    )}
+                                                                </>
+                                                                )}
+                                                            </OverlayTrigger>
+                                                            ) : (
+                                                            <>
+                                                               {content}
+
+                                                                {isCompleted && isDatefield ? (
+                                                                    currentDate 
+                                                                ) : (
+                                                                    isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
+                                                                )}
+                                                            </>
                                                         )}
                                                     </Rnd>
                                             </>
@@ -1225,7 +1343,7 @@ function ReceiveDocument() {
                                             prevField.status !== "Completed" || prevField.is_submitted !== true
                                         );
                                         
-                                        console.log("current item id:", currentItemId);
+                                        // console.log("current item id:", currentItemId);
 
                                         //FIX PLISSS JGN DIUBAH!!!
                                         const borderStyle = 
@@ -1259,42 +1377,73 @@ function ReceiveDocument() {
                                         ? normalizedDelegated.map(String)
                                         : normalizedDelegated ? [String(normalizedDelegated)] : [];
 
-                                        let bgFirst = "transparent";
-                                        let bgOthers = "transparent";
+                                        // let bgFirst = "transparent";
+                                        // let bgOthers = "transparent";
 
-                                        if (isSubmitted) {
-                                            bgFirst = "transparent";
-                                        }
-                                        else if (!isCompleted){
-                                            bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        }
-                                        if (!isSignerDelegated && is_delegated && !isSubmitted && !isCompleted) {
-                                            bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        } else if (!isSignerOwner && !isSignerDelegated) {
-                                            bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        } 
+                                        // if (isSubmitted) {
+                                        //     bgFirst = "transparent";
+                                        // }
+                                        // else if (!isCompleted){
+                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
+                                        // }
+                                        // if (!isSignerDelegated && is_delegated === true && !isSubmitted && !isCompleted) {
+                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
+                                        // } else if (!isSignerOwner && is_delegated === true && !isSignerDelegated) {
+                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
+                                        // } 
 
-                                        if (isSubmitted) {
-                                            bgOthers = "transparent";
-                                        }
-                                        else if (!isCompleted){
-                                            bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        }
-                                        if (!isSignerDelegated && is_delegated && !isSubmitted && !isCompleted) {
-                                            bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        } else if (!isSignerOwner && !isSignerDelegated) {
-                                            bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        } 
+                                        // if (isSubmitted) {
+                                        //     bgOthers = "transparent";
+                                        // }
+                                        // else if (!isCompleted){
+                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
+                                        // }
+                                        // if (!isSignerDelegated && is_delegated === true && !isSubmitted && !isCompleted) {
+                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
+                                        // } else if (!isSignerOwner && is_delegated === true && !isSignerDelegated) {
+                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
+                                        // } 
 
-                                        if ((delegatedArray.length > 1 || normalizedArray.length > 1) && isCompleted !== true) {
-                                            bgFirst = "rgba(25, 230, 25, 0.5)";
-                                            bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        }
+
+                                        // // (delegatedArray.length > 1 || normalizedArray.length > 1)
+                                        // if (isCompleted !== true && is_delegated === true) {
+                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
+                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
+                                        // }
+
+                                        // if (isCompleted === true) {
+                                        //     bgFirst = "transparent"
+                                        //     bgOthers = "transparent"
+                                        // }
+
+                                        let bgFirst = is_delegated === true ?  "rgba(86, 90, 90, 0.3)" : currentItem || isSubmitted ? "transparent" : "rgba(25, 230, 25, 0.5)";
+                                        let bgOthers = is_delegated === true ? "rgba(86, 90, 90, 0.3)" : currentItem || isSubmitted ? "transparent": "rgba(25, 230, 25, 0.5)";
+
+                                        // let bgFirst = currentItem || isSubmitted ? "transparent" : "rgba(25, 230, 25, 0.5)";
+                                        // let bgOthers = currentItem || isSubmitted ? "transparent" : "rgba(25, 230, 25, 0.5)";
+
+                                        // if ((delegatedArray.length > 1 || normalizedArray.length > 1) && isCompleted !== true) {
+                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
+                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
+                                        // }
 
                                         if (isCompleted === true) {
-                                            bgFirst = "transparent"
-                                            bgOthers = "transparent"
+                                            bgFirst = "transparent";
+                                            bgOthers = "transparent";
                                         }
+
+                                        const firstBorderStyle = currentItem
+                                        ? "transparent"
+                                        : isSubmitted
+                                        ? "transparent"
+                                        : "solid 5px rgba(86, 90, 90, 0.3)";
+
+                                        const otherBorderStyle = currentItem 
+                                        ? "transparent"
+                                        : isSubmitted
+                                        ? "transparent"
+                                        : "solid 5px rgba(86, 90, 90, 0.3)";
+
 
                                         const currentSignerStr = String(current_signer);
 
@@ -1309,7 +1458,7 @@ function ReceiveDocument() {
                                             )
                                         ).length;
 
-                                        console.log("current item count:", signerItemCount);
+                                        // console.log("current item count:", signerItemCount);
 
                                         return (
                                             <Rnd
@@ -1325,8 +1474,21 @@ function ReceiveDocument() {
                                                     backgroundColor: 
                                                         isFirstSigner ? bgFirst : bgOthers,
                                                     border: borderStyle, 
-                                                    // cursor: !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated && token_db.every(tokenn => tokenn === token)) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
-                                                    cursor: !is_submitted || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
+                                                    // cursor: !is_submitted || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
+                                                    
+                                                    
+                                                    // cursor:  !isSubmitted || (is_delegated && token !== main_token) && isCurrentItem  && (delegatedDoc === id_dokumen) ? "pointer" : "default",
+                                                    // cursor: !is_submitted || is_delegated || isCurrentItem && token !== main_token || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
+
+                                                    // cursor: token === main_token && !is_submitted || (is_delegated === true && !isSubmitted && delegated_signers !== null) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
+
+                                                    // cursor: delegate_token === main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
+
+                                                    //last benar
+                                                    // cursor: !is_delegated ? "pointer" : (is_delegated && delegatedDoc === id_dokumen && token === main_token) ? "default" : "pointer",
+
+                                                    cursor: token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
+
                                                     zIndex: isCompleted? 1 : 2,
                                                 }}
                                                 hidden={isDecline}
@@ -1337,7 +1499,9 @@ function ReceiveDocument() {
                                                     delegatedArray.includes(currentSignerStr) ||
                                                     normalizedArray.includes(currentSignerStr);
 
-                                                    const canClick = !is_submitted || isCurrentItem && isCurrentSigner && (delegatedDoc !== id_dokumen);
+                                                    // const canClick = !is_submitted || isCurrentItem && isCurrentSigner && (delegatedDoc !== id_dokumen);
+                                                    const canClick = token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem && isCurrentSigner  && (delegatedDoc !== id_dokumen);
+
 
                                                     if (canClick) {
                                                         if (isInitialpad){

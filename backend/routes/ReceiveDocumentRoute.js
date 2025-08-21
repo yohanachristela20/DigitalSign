@@ -973,6 +973,122 @@ const sendEmailDeclineInternal = async(declineLink, reason, id_dokumen, signerID
 // });
 
 
+
+// Lastt
+// router.post('/send-delegate-email', async (req, res) => {
+//   try {
+//     const { id_dokumen, delegated_signers, token } = req.body;
+//     const jwtSecret = process.env.JWT_SECRET_KEY;
+
+//     if (!jwtSecret) throw new Error("JWT_SECRET_KEY is not set");
+
+//     const decoded = jwt.verify(token, jwtSecret);
+//     const {
+//       id_dokumen: docFromToken,
+//       urutan,
+//       id_signers,
+//       id_item,
+//       id_karyawan,
+//     } = decoded.dokumenLogsign || {};
+
+//     const finalDocId = id_dokumen || docFromToken;
+
+//     const delegateList = Array.isArray(delegated_signers)
+//       ? delegated_signers
+//       : [delegated_signers];
+
+//     let emailResults = [];
+
+//     const docName = await LogSign.findOne({
+//       where: { id_dokumen: finalDocId },
+//       include: [
+//         { model: Dokumen, as: "DocName", attributes: ["nama_dokumen"] },
+//       ],
+//       attributes: ["id_dokumen"],
+//     });
+//     const documentName = docName?.DocName?.nama_dokumen;
+
+//     const row = await LogSign.findOne({
+//       where: {
+//         id_dokumen: finalDocId,
+//         id_signers,
+//         urutan,
+//         status: "Pending",
+//       },
+//       attributes: ["id_logsign", "id_signers", "urutan"],
+//     });
+
+//     if (!row) {
+//       return res.status(404).json({
+//         message: `LogSign row not found for signer ${id_signers} urutan ${urutan}`,
+//       });
+//     }
+
+//     const senderInfo = await Karyawan.findOne({
+//       where: { id_karyawan: row.id_signers },
+//       include: [{ model: User, as: "Pengirim", attributes: ["email"] }],
+//       attributes: ["id_karyawan", "nama"],
+//     });
+//     const senderName = senderInfo?.nama || "Unknown";
+
+//     for (const delegateId of delegateList) {
+//       const receiver = await Karyawan.findOne({
+//         where: { id_karyawan: delegateId },
+//         include: [{ model: User, as: "Penerima", attributes: ["email"] }],
+//         attributes: ["id_karyawan", "nama"],
+//       });
+
+//       const intended_email = receiver?.Penerima?.email;
+//       const receiverName = receiver?.nama || "Unknown";
+//       const newToken = jwt.sign(
+//         {
+//           dokumenLogsign: {
+//             id_logsign: row.id_logsign,
+//             id_dokumen: finalDocId,
+//             id_signers: row.id_signers,
+//             delegated_signers: delegateId, 
+//             urutan: row.urutan,
+//             currentSigner: delegateId,
+//             id_item,
+//             id_karyawan,
+//             is_delegated: true,
+//             intended_email,
+//           },
+//         },
+//         jwtSecret
+//       );
+
+//       const delegateLink = `http://localhost:3000/user/envelope?token=${newToken}`;
+
+
+//       await sendEmailDelegateInternal(
+//         delegateLink,
+//         documentName,
+//         receiverName,
+//         intended_email,
+//         senderName
+//       );
+//       await LogSign.update(
+//         { delegate_token: newToken },
+//         { where: { id_logsign: row.id_logsign, id_dokumen: finalDocId } }
+//       );
+
+//       emailResults.push({
+//         delegateId,
+//         message: "Delegate email sent successfully.",
+//       });
+//     }
+
+//     res.status(200).json({
+//       message: "Delegate email processed.",
+//       results: emailResults,
+//     });
+//   } catch (error) {
+//     console.log("Failed to send delegate email:", error.message);
+//     res.status(500).json({ message: "Failed to send delegate email." });
+//   }
+// });
+
 router.post('/send-delegate-email', async (req, res) => {
   try {
     const { id_dokumen, delegated_signers, token } = req.body;
@@ -982,11 +1098,9 @@ router.post('/send-delegate-email', async (req, res) => {
 
     const decoded = jwt.verify(token, jwtSecret);
     const {
-      id_dokumen: docFromToken,
-      urutan,
-      id_signers,
-      id_item,
-      id_karyawan,
+        id_dokumen: docFromToken,
+        urutan,
+        id_signers,
     } = decoded.dokumenLogsign || {};
 
     const finalDocId = id_dokumen || docFromToken;
@@ -998,11 +1112,11 @@ router.post('/send-delegate-email', async (req, res) => {
     let emailResults = [];
 
     const docName = await LogSign.findOne({
-      where: { id_dokumen: finalDocId },
-      include: [
+        where: { id_dokumen: finalDocId },
+        include: [
         { model: Dokumen, as: "DocName", attributes: ["nama_dokumen"] },
-      ],
-      attributes: ["id_dokumen"],
+        ],
+        attributes: ["id_dokumen"],
     });
     const documentName = docName?.DocName?.nama_dokumen;
 
@@ -1013,68 +1127,67 @@ router.post('/send-delegate-email', async (req, res) => {
         urutan,
         status: "Pending",
       },
-      attributes: ["id_logsign", "id_signers", "urutan"],
+      attributes: ["id_logsign", "id_signers", "urutan", "main_token"],
     });
 
     if (!row) {
-      return res.status(404).json({
-        message: `LogSign row not found for signer ${id_signers} urutan ${urutan}`,
-      });
+        return res.status(404).json({
+            message: `LogSign row not found for signer ${id_signers} urutan ${urutan}`,
+        });
     }
 
     const senderInfo = await Karyawan.findOne({
-      where: { id_karyawan: row.id_signers },
-      include: [{ model: User, as: "Pengirim", attributes: ["email"] }],
-      attributes: ["id_karyawan", "nama"],
+        where: { id_karyawan: row.id_signers },
+        include: [{ model: User, as: "Pengirim", attributes: ["email"] }],
+        attributes: ["id_karyawan", "nama"],
     });
     const senderName = senderInfo?.nama || "Unknown";
 
     for (const delegateId of delegateList) {
-      const receiver = await Karyawan.findOne({
+        const receiver = await Karyawan.findOne({
         where: { id_karyawan: delegateId },
         include: [{ model: User, as: "Penerima", attributes: ["email"] }],
         attributes: ["id_karyawan", "nama"],
-      });
+        });
 
-      const intended_email = receiver?.Penerima?.email;
-      const receiverName = receiver?.nama || "Unknown";
-      const newToken = jwt.sign(
+        const intended_email = receiver?.Penerima?.email;
+        const receiverName = receiver?.nama || "Unknown";
+
+        const basePayload = jwt.verify(row.main_token, jwtSecret);
+
+        const newToken = jwt.sign(
         {
-          dokumenLogsign: {
-            id_logsign: row.id_logsign,
-            id_dokumen: finalDocId,
-            id_signers: row.id_signers,
-            delegated_signers: delegateId, 
-            urutan: row.urutan,
-            currentSigner: delegateId,
-            id_item,
-            id_karyawan,
+            ...basePayload,
+            dokumenLogsign: {
+            ...basePayload.dokumenLogsign,
+            delegated_signers: delegateId,
             is_delegated: true,
+            currentSigner: delegateId,
             intended_email,
-          },
+            },
         },
         jwtSecret
-      );
+        );
 
-      const delegateLink = `http://localhost:3000/user/envelope?token=${newToken}`;
+        const delegateLink = `http://localhost:3000/user/envelope?token=${newToken}`;
 
-
-      await sendEmailDelegateInternal(
+        await sendEmailDelegateInternal(
         delegateLink,
         documentName,
         receiverName,
         intended_email,
         senderName
-      );
-      await LogSign.update(
-        { delegate_token: newToken },
-        { where: { id_logsign: row.id_logsign, id_dokumen: finalDocId } }
-      );
+        );
 
-      emailResults.push({
+        await LogSign.update(
+            { delegate_token: newToken },
+            { where: { id_logsign: row.id_logsign, id_signers: row.id_signers, delegated_signers: delegateId} }
+        );
+
+        emailResults.push({
         delegateId,
         message: "Delegate email sent successfully.",
-      });
+        });
     }
 
     res.status(200).json({
@@ -1086,7 +1199,6 @@ router.post('/send-delegate-email', async (req, res) => {
     res.status(500).json({ message: "Failed to send delegate email." });
   }
 });
-
 
 
 const sendEmailDelegateInternal = async(delegateLink, documentName, receiverName, receiverEmail, senderName) => {
