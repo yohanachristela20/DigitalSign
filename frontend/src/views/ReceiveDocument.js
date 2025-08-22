@@ -838,7 +838,11 @@ function ReceiveDocument() {
         setIsSubmitted(hasSubmitted);
     }, [initial]);
 
-    console.log("TOKEN:", token, "vs", "MAIN TOKEN:", main_token);
+    // const showDelegateAlert = (token === delegate_token && !is_submitted) || (is_delegated === true && is_submitted) || (delegatedDoc !== id_dokumen);
+
+    const showDelegateAlert = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc !== id_dokumen) : !is_delegated || (delegatedDoc === id_dokumen);
+
+    console.log("TOKEN:", token, "vs", "MAIN TOKEN:", main_token, "vs", "DELEGATE TOKEN:", delegate_token );
     console.log("is_delegated!!:", is_delegated);
 
     return (
@@ -875,8 +879,21 @@ function ReceiveDocument() {
                         variant="default"
                         className="mr-5 mt-2"
                         // hidden={is_delegated ? isDelegatedAlertVisible && token === delegate_token : isDelegatedAlertVisible}
-                        hidden={is_delegated || is_submitted ? isDelegatedAlertVisible && token === delegate_token : isDelegatedAlertVisible}
+                        
+                        //last
+                        // hidden={is_delegated || is_submitted ? isDelegatedAlertVisible && token === delegate_token : isDelegatedAlertVisible}
+                        // hidden={(!is_submitted)  && (delegatedDoc === id_dokumen)}
 
+                        // hidden={!is_submitted ? (!is_delegated && delegate_token !== null) || (delegatedDoc === id_dokumen) : !is_submitted && (delegatedDoc === id_dokumen)}
+
+                        //last benar
+                        // hidden={is_submitted ? (!is_delegated && delegate_token !== null) && (delegatedDoc === id_dokumen) : !is_submitted && (!is_delegated && delegate_token !== null) && (delegatedDoc === id_dokumen)}
+
+                        hidden={
+                            is_submitted 
+                            ? ((!is_delegated && delegate_token !== null) && (delegatedDoc === id_dokumen))
+                            : ((!is_submitted) && (!is_delegated && delegate_token !== null) && (delegatedDoc === id_dokumen))
+                        }
                         >
                         <span className="fs-6">Actions</span>
                         </Dropdown.Toggle>
@@ -931,8 +948,14 @@ function ReceiveDocument() {
                         //last
                         // hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible && token === delegate_token : is_submitted || isDelegatedAlertVisible}
 
-                        hidden={!is_delegated || is_submitted ? isDelegatedAlertVisible : !isDelegatedAlertVisible}
+                        // hidden={(!is_submitted)  && (delegatedDoc === id_dokumen)}
+                        
+                        //belum submit
+                        // hidden={!is_submitted && (!is_delegated && delegate_token !== null) || (delegatedDoc === id_dokumen)}
 
+                        // hidden={!is_submitted ? ((!is_delegated && delegate_token !== null) || (delegatedDoc === id_dokumen)) : is_submitted}
+
+                        hidden={!is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) && (delegatedDoc === id_dokumen) : !is_delegated && (delegatedDoc !== id_dokumen)}
                     >
 
                         Finish
@@ -950,7 +973,19 @@ function ReceiveDocument() {
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
                         </Alert>
                         {/* hidden={!isDelegatedAlertVisible || token !== delegate_token} */}
-                        <Alert variant="warning" hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible || main_token !== delegate_token : is_submitted || isDelegatedAlertVisible}>
+
+                        {/* last
+                        hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible || main_token !== delegate_token : is_submitted || isDelegatedAlertVisible}
+                         */}
+                        
+                        <Alert variant="warning"
+                            // hidden={
+                            //     (token === delegate_token && !is_submitted) ||
+                            //     (is_delegated === true && is_submitted) ||
+                            //     (delegatedDoc !== id_dokumen)
+                            // }
+                            hidden={showDelegateAlert}
+                        >
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has delegate this document to other signer.
                         </Alert>
                         {isAccessed !== true && (
@@ -1161,14 +1196,25 @@ function ReceiveDocument() {
                                         } else if (is_delegated && isInitialpad) {
                                         content = <FaFont style={{ width: "100%", height: "100%"}} />;
                                         } else if (isSignpad) {
-                                        content = <FaSignature style={{ width: "100%", height: "100%"}} />;
+                                        content = <FaSignature style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}} />;
                                         } else {
                                         content = <></>;
                                         }
 
+                                        // const canClick = (token === delegate_token && !is_submitted) || (is_delegated === true && !isSubmitted) || (isCurrentItem && delegatedDoc !== id_dokumen);
+
+                                        //lasttt
+                                        // const canClick = (token === delegate_token && !is_submitted) || (is_delegated === true && !isSubmitted) || (isCurrentItem && delegatedDoc === id_dokumen);
+
+
+                                        //PERBAIKI SIGNEDINITIALS, CEK DARI HOVER OVERLAYTRIGGER UNTUK FILTER
+                                        const canClick = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || !is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
+
+
+                                        // const canClick = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
+
 
                                         // console.log("current item count:", signerItemCount);
-
 
                                         return (
                                             <>
@@ -1189,8 +1235,12 @@ function ReceiveDocument() {
                                                             
                                                             
                                                             // cursor:  !isSubmitted || (is_delegated && token !== main_token) || isCurrentItem  && (delegatedDoc === id_dokumen) ? "pointer" : "default",
-                                                            cursor: token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
                                                             
+                                                            
+                                                            // cursor: token === delegate_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
+                                                            
+                                                            cursor: canClick ? "pointer" : "default",
+
                                                         }}
                                                         hidden={isDecline}
                                                         onClick={() => {
@@ -1204,8 +1254,6 @@ function ReceiveDocument() {
                                                             
                                                             // const canClick = (is_delegated === true && !isSubmitted) || isCurrentItem && isCurrentSigner && token === main_token  && (delegatedDoc !== id_dokumen);
                                                             
-                                                            const canClick = token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem && isCurrentSigner  && (delegatedDoc !== id_dokumen);
-
 
                                                             if (canClick) {
                                                                 if (isInitialpad){
@@ -1241,7 +1289,7 @@ function ReceiveDocument() {
                                                         )} */}
 
 
-                                                         {!isSubmitted && token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? (
+                                                        {!isSubmitted && token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? (
                                                             <OverlayTrigger
                                                                 placement="bottom"
                                                                 overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
@@ -1458,6 +1506,19 @@ function ReceiveDocument() {
                                             )
                                         ).length;
 
+                                        // const canClick = (token === delegate_token && !is_submitted) || (is_delegated === true && !isSubmitted) || (isCurrentItem  && delegatedDoc !== id_dokumen);
+
+                                        //lastt
+                                        // const canClick = (token === delegate_token && !is_submitted) || (is_delegated === true && !isSubmitted) || (isCurrentItem  && delegatedDoc === id_dokumen);
+
+
+                                        // const canClick = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
+
+
+                                        //benar
+                                        const canClick = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
+
+
                                         // console.log("current item count:", signerItemCount);
 
                                         return (
@@ -1487,7 +1548,10 @@ function ReceiveDocument() {
                                                     //last benar
                                                     // cursor: !is_delegated ? "pointer" : (is_delegated && delegatedDoc === id_dokumen && token === main_token) ? "default" : "pointer",
 
-                                                    cursor: token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
+                                                    
+                                                    // cursor: token === delegate_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
+
+                                                    cursor: canClick ? "pointer" : "default",
 
                                                     zIndex: isCompleted? 1 : 2,
                                                 }}
@@ -1500,8 +1564,6 @@ function ReceiveDocument() {
                                                     normalizedArray.includes(currentSignerStr);
 
                                                     // const canClick = !is_submitted || isCurrentItem && isCurrentSigner && (delegatedDoc !== id_dokumen);
-                                                    const canClick = token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem && isCurrentSigner  && (delegatedDoc !== id_dokumen);
-
 
                                                     if (canClick) {
                                                         if (isInitialpad){
@@ -1513,7 +1575,7 @@ function ReceiveDocument() {
                                                 }}
                                                 disabled ={isSubmitted === true}
                                             >
-                                                {!isSubmitted ? (
+                                                {!isSubmitted  ? (
                                                 <OverlayTrigger
                                                     placement="bottom"
                                                     overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}

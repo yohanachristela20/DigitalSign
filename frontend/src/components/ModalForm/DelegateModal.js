@@ -159,6 +159,8 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                 hideProgressBar: true,
             });
 
+            window.location.reload();
+
             
         } catch (error) {
             console.error("Failed to send delegate email:", error.message);
