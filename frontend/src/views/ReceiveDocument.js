@@ -960,7 +960,7 @@ function ReceiveDocument() {
 
                         // hidden={!is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (delegatedDoc !== id_dokumen)}
 
-                        hidden={!is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (delegatedDoc !== id_dokumen)}
+                        hidden={!is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
                     >
 
                         Finish
@@ -1093,35 +1093,34 @@ function ReceiveDocument() {
                                         // let bgOthers = currentItem || isSubmitted ? "transparent" : is_delegated ? "rgba(25, 230, 25, 0.5)" : "rgba(86, 90, 90, 0.3)";
 
                                         // console.log("IS DELEGATED :", is_delegated);
-                                        let bgFirst = is_delegated === true ? "rgba(25, 230, 25, 0.5)" : currentItem || isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
-                                        let bgOthers = is_delegated === true ? "rgba(25, 230, 25, 0.5)" : currentItem || isSubmitted ? "transparent": "rgba(86, 90, 90, 0.3)";
+
+                                        //lastt
+                                        // let bgFirst = is_delegated === true ? "rgba(25, 230, 25, 0.5)" : currentItem || isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
+                                        // let bgOthers = is_delegated === true ? "rgba(25, 230, 25, 0.5)" : currentItem || isSubmitted ? "transparent": "rgba(86, 90, 90, 0.3)";
 
 
-                                        // if ((delegatedArray.length > 1 || normalizedArray.length > 1) && isCompleted !== true) {
-                                        //     bgFirst = "rgba(86, 90, 90, 0.3)";
-                                        //     bgOthers = "rgba(86, 90, 90, 0.3)";
-                                        // }
+                                        let bgFirst = is_delegated === true || !currentItem ?  "rgba(86, 90, 90, 0.3)" : isSubmitted ? "transparent" : "rgba(25, 230, 25, 0.5)";
+                                        let bgOthers = is_delegated === true || !currentItem ? "rgba(86, 90, 90, 0.3)" : isSubmitted ? "transparent": "rgba(25, 230, 25, 0.5)";
+
 
                                         if (isCompleted === true) {
                                             bgFirst = "transparent";
                                             bgOthers = "transparent";
                                         }
 
-                                        // const firstBorderStyle = currentItem
-                                        // ? "transparent"
-                                        // : isSubmitted
-                                        // ? "transparent"
-                                        // : "solid 5px rgba(86, 90, 90, 0.3)";
+                                        const bgStyle = 
+                                        isSubmitted || isCompleted
+                                        ? "transparent"
+                                        : !isSignerDelegated && !isSignerOwner
+                                        ? "rgba(86, 90, 90, 0.4)"
+                                        : !isSignerOwner && !isSignerDelegated
+                                        ? "rgba(86, 90, 90, 0.4)"
+                                        : !isSubmitted || isCompleted
+                                        ? "rgba(25, 230, 25, 0.4)"
+                                        : "transparent";
 
-                                        // const otherBorderStyle = currentItem 
-                                        // ? "transparent"
-                                        // : isSubmitted
-                                        // ? "transparent"
-                                        // : "solid 5px rgba(86, 90, 90, 0.3)";
-
-
-                                        let firstBorderStyle = (isSubmitted || currentItem) ? "transparent" : is_delegated ? "solid 5px rgba(25, 230, 25, 0.5)" : "solid 5px rgba(86, 90, 90, 0.3)";
-                                        let otherBorderStyle = (isSubmitted || currentItem) ? "transparent" : is_delegated ? "solid 5px rgba(25, 230, 25, 0.5)" : "solid 5px rgba(86, 90, 90, 0.3)";
+                                        let firstBorderStyle = (isSubmitted) ? "transparent" : is_delegated || !currentItem ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
+                                        let otherBorderStyle = (isSubmitted) ? "transparent" : is_delegated || !currentItem ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
 
                                         const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
 
@@ -1239,7 +1238,8 @@ function ReceiveDocument() {
                                                             display: "flex",
                                                             alignItems: "center",
                                                             justifyContent: "center",
-                                                            backgroundColor: isFirstSigner ? bgFirst : bgOthers,
+                                                            // backgroundColor: isFirstSigner ? bgFirst : bgOthers,
+                                                            backgroundColor: bgStyle,
                                                             border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
                                                             zIndex: zIndexStyle,
                                                             // cursor: !isSubmitted || token_db.every(tokenn => tokenn === token) && (delegatedDoc !== id_dokumen || !isdelegated) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
@@ -1250,7 +1250,18 @@ function ReceiveDocument() {
                                                             
                                                             // cursor: token === delegate_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
                                                             
-                                                            cursor: is_submitted || canClick && showDelegateAlert ? "default" : "pointer",
+                                                            //lastt benar
+                                                            // cursor: is_submitted || canClick && showDelegateAlert ? "default" : "pointer",
+
+                                                            // cursor: is_submitted || canClick && showDelegateAlert ? "pointer" : "default",
+
+                                                            // cursor: !is_submitted ? isCurrentItem || canClick && showDelegateAlert ? "pointer" : "default" : "default",
+
+                                                            //lasttt
+                                                            // cursor: is_delegated || is_submitted ?  isCurrentItem && canClick && showDelegateAlert ? "pointer" : "default" : "pointer",
+
+                                                            cursor: !is_submitted && isCurrentItem ? canClick && showDelegateAlert ? "default" : "pointer" : "default",
+
 
                                                         }}
                                                         hidden={isDecline}
@@ -1266,10 +1277,10 @@ function ReceiveDocument() {
                                                             // const canClick = (is_delegated === true && !isSubmitted) || isCurrentItem && isCurrentSigner && token === main_token  && (delegatedDoc !== id_dokumen);
                                                             
 
-                                                            if (token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
-                                                                if (isInitialpad){
+                                                            if (!is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
+                                                                if (isInitialpad && isCurrentItem){
                                                                     handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                                } else if (isSignpad){
+                                                                } else if (isSignpad && isCurrentItem){
                                                                     handleSignatureClick(sig.id_item, sig.editable, sig.show);
                                                                 }
                                                             }
@@ -1300,10 +1311,10 @@ function ReceiveDocument() {
                                                         )} */}
 
 
-                                                        {!isSubmitted && token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? (
+                                                        {!isSubmitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? (
                                                             <OverlayTrigger
                                                                 placement="bottom"
-                                                                overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
+                                                                overlay={<Tooltip id="initialCompleteTooltip" hidden={!isCurrentItem}>Click to change your sign.</Tooltip>}
                                                             >
                                                                 {({ ref, ...triggerHandler }) => (
                                                                 <>
@@ -1408,7 +1419,7 @@ function ReceiveDocument() {
                                         const borderStyle = 
                                         isSubmitted 
                                         ? "transparent"
-                                        : !isSignerDelegated && !isSignerOwner && !is_delegated
+                                        : !isSignerDelegated && !isSignerOwner
                                         ? "solid 5px rgba(86, 90, 90, 0.5)"
                                         : !isSignerOwner && !isSignerDelegated
                                         ? "solid 5px rgba(86, 90, 90, 0.5)"
@@ -1436,73 +1447,30 @@ function ReceiveDocument() {
                                         ? normalizedDelegated.map(String)
                                         : normalizedDelegated ? [String(normalizedDelegated)] : [];
 
-                                        // let bgFirst = "transparent";
-                                        // let bgOthers = "transparent";
 
-                                        // if (isSubmitted) {
-                                        //     bgFirst = "transparent";
-                                        // }
-                                        // else if (!isCompleted){
-                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        // }
-                                        // if (!isSignerDelegated && is_delegated === true && !isSubmitted && !isCompleted) {
-                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        // } else if (!isSignerOwner && is_delegated === true && !isSignerDelegated) {
-                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        // } 
+                                        let bgFirst = is_delegated === true || currentItem ?  "rgba(25, 230, 25, 0.5)" : isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
+                                        let bgOthers = is_delegated === true || currentItem ? "rgba(25, 230, 25, 0.5))" : isSubmitted ? "transparent": "rgba(86, 90, 90, 0.3)";
 
-                                        // if (isSubmitted) {
-                                        //     bgOthers = "transparent";
-                                        // }
-                                        // else if (!isCompleted){
-                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        // }
-                                        // if (!isSignerDelegated && is_delegated === true && !isSubmitted && !isCompleted) {
-                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        // } else if (!isSignerOwner && is_delegated === true && !isSignerDelegated) {
-                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        // } 
+                                        // let bgFirst = is_delegated === true || currentItem ? "rgba(25, 230, 25, 0.5)" : isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
+                                        // let bgOthers = is_delegated === true || currentItem ? "rgba(25, 230, 25, 0.5)" : isSubmitted ? "transparent": "rgba(86, 90, 90, 0.3)";
 
 
-                                        // // (delegatedArray.length > 1 || normalizedArray.length > 1)
-                                        // if (isCompleted !== true && is_delegated === true) {
-                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        // }
+                                        const bgStyle = 
+                                        isSubmitted || isCompleted
+                                        ? "transparent"
+                                        : !isSignerDelegated && !isSignerOwner
+                                        ? "rgba(86, 90, 90, 0.4)"
+                                        : !isSignerOwner && !isSignerDelegated
+                                        ? "rgba(86, 90, 90, 0.4)"
+                                        : !isSubmitted || isCompleted 
+                                        ? "rgba(25, 230, 25, 0.4)"
+                                        : "transparent";
 
-                                        // if (isCompleted === true) {
-                                        //     bgFirst = "transparent"
-                                        //     bgOthers = "transparent"
-                                        // }
-
-                                        let bgFirst = is_delegated === true ?  "rgba(86, 90, 90, 0.3)" : currentItem || isSubmitted ? "transparent" : "rgba(25, 230, 25, 0.5)";
-                                        let bgOthers = is_delegated === true ? "rgba(86, 90, 90, 0.3)" : currentItem || isSubmitted ? "transparent": "rgba(25, 230, 25, 0.5)";
-
-                                        // let bgFirst = currentItem || isSubmitted ? "transparent" : "rgba(25, 230, 25, 0.5)";
-                                        // let bgOthers = currentItem || isSubmitted ? "transparent" : "rgba(25, 230, 25, 0.5)";
-
-                                        // if ((delegatedArray.length > 1 || normalizedArray.length > 1) && isCompleted !== true) {
-                                        //     bgFirst = "rgba(25, 230, 25, 0.5)";
-                                        //     bgOthers = "rgba(25, 230, 25, 0.5)";
-                                        // }
 
                                         if (isCompleted === true) {
                                             bgFirst = "transparent";
                                             bgOthers = "transparent";
                                         }
-
-                                        const firstBorderStyle = currentItem
-                                        ? "transparent"
-                                        : isSubmitted
-                                        ? "transparent"
-                                        : "solid 5px rgba(86, 90, 90, 0.3)";
-
-                                        const otherBorderStyle = currentItem 
-                                        ? "transparent"
-                                        : isSubmitted
-                                        ? "transparent"
-                                        : "solid 5px rgba(86, 90, 90, 0.3)";
-
 
                                         const currentSignerStr = String(current_signer);
 
@@ -1531,6 +1499,10 @@ function ReceiveDocument() {
                                         //delegated signers
                                         // const canClick = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
 
+                                        // cursor: !is_submitted && isCurrentItem ? canClick && showDelegateAlert ? "default" : "pointer" : "default",
+
+
+                                        // const canClick = !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
 
                                         const canClick = !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
 
@@ -1550,7 +1522,8 @@ function ReceiveDocument() {
                                                     alignItems: "center",
                                                     justifyContent: "center",
                                                     backgroundColor: 
-                                                        isFirstSigner ? bgFirst : bgOthers,
+                                                        // isFirstSigner ? bgFirst : bgOthers,
+                                                        bgStyle,
                                                     border: borderStyle, 
                                                     // cursor: !is_submitted || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
                                                     
@@ -1568,9 +1541,12 @@ function ReceiveDocument() {
                                                     
                                                     // cursor: token === delegate_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
 
-                                                    cursor: is_submitted || canClick && showDelegateAlert ? "default" : "pointer",
+                                                    //last benarr
+                                                    // cursor: is_submitted || canClick && showDelegateAlert || isCurrentItem ? "default" : "pointer",
 
-                                                    zIndex: isCompleted? 1 : 2,
+                                                    cursor: !is_submitted && isCurrentItem ? canClick && showDelegateAlert ? "default" : "pointer" : "default",
+
+                                                    zIndex: isCompleted ? 1 : 2,
                                                 }}
                                                 hidden={isDecline}
                                                 onClick={() => {
@@ -1582,20 +1558,28 @@ function ReceiveDocument() {
 
                                                     // const canClick = !is_submitted || isCurrentItem && isCurrentSigner && (delegatedDoc !== id_dokumen);
 
-                                                    if (token !== main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
-                                                        if (isInitialpad){
+                                                    // if (!is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
+                                                    //     if (isInitialpad && isCurrentItem && is_delegated){
+                                                    //         handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                    //     } else if (isSignpad && isCurrentItem && is_delegated) {
+                                                    //         handleSignatureClick(sig.id_item, sig.editable, sig.show);
+                                                    //     }
+                                                    // }
+
+                                                    if (!is_submitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
+                                                        if (isInitialpad && isCurrentItem || is_delegated){
                                                             handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                        } else if (isSignpad) {
+                                                        } else if (isSignpad && isCurrentItem || is_delegated) {
                                                             handleSignatureClick(sig.id_item, sig.editable, sig.show);
                                                         }
                                                     }
                                                 }}
                                                 disabled ={isSubmitted === true}
                                             >
-                                                {!isSubmitted  ? (
+                                                {!isSubmitted ? (
                                                 <OverlayTrigger
                                                     placement="bottom"
-                                                    overlay={<Tooltip id="initialCompleteTooltip">Click to change your sign.</Tooltip>}
+                                                    overlay={<Tooltip id="initialCompleteTooltip" hidden={!isCurrentItem || !is_delegated}>Click to change your sign.</Tooltip>}
                                                 >
                                                     {({ ref, ...triggerHandler }) => (
                                                     <>
