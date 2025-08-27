@@ -943,23 +943,6 @@ function ReceiveDocument() {
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, current_signer)}
                         disabled={isFinishDisabled}
-                        // hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible : is_submitted || isDelegatedAlertVisible}
-
-                        //last
-                        // hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible && token === delegate_token : is_submitted || isDelegatedAlertVisible}
-
-                        // hidden={(!is_submitted)  && (delegatedDoc === id_dokumen)}
-                        
-                        //belum submit
-                        // hidden={!is_submitted && (!is_delegated && delegate_token !== null) || (delegatedDoc === id_dokumen)}
-
-                        // hidden={!is_submitted ? ((!is_delegated && delegate_token !== null) || (delegatedDoc === id_dokumen)) : is_submitted}
-
-                        //last benar
-                        // hidden={!is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc !== id_dokumen) : !is_delegated || (delegatedDoc === id_dokumen)}
-
-                        // hidden={!is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (delegatedDoc !== id_dokumen)}
-
                         hidden={!is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
                     >
 
@@ -977,19 +960,13 @@ function ReceiveDocument() {
                         <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
                         </Alert>
-                        {/* hidden={!isDelegatedAlertVisible || token !== delegate_token} */}
-
-                        {/* last
-                        hidden={is_delegated || !is_submitted ? isDelegatedAlertVisible || main_token !== delegate_token : is_submitted || isDelegatedAlertVisible}
-                         */}
-                        
+   
                         <Alert variant="warning"
                             hidden={
                                 (token === delegate_token && !is_submitted) ||
                                 (is_delegated === true && is_submitted) ||
                                 (delegatedDoc !== id_dokumen)
                             }
-                            // hidden={!showDelegateAlert}
                         >
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has delegate this document to other signer.
                         </Alert>
@@ -1047,9 +1024,6 @@ function ReceiveDocument() {
                         {isAccessed === true && pdfUrl && (
                             <div className="center-object">
                                 <div className="vertical-center">
-                                    {/* <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
-                                    <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
-                                    </Alert> */}
                                     <PDFCanvas pdfUrl={pdfUrl} />                           
 
                                     {signedInitials.map((sig) => {
@@ -1086,18 +1060,6 @@ function ReceiveDocument() {
                                         const normalizedArray = Array.isArray(normalizedDelegated)
                                         ? normalizedDelegated.map(String)
                                         : normalizedDelegated ? [String(normalizedDelegated)] : [];
-
-                                        // setIsSubmitted(isSubmitted);
-
-                                        // let bgFirst = currentItem || isSubmitted ? "transparent" : is_delegated ? "rgba(25, 230, 25, 0.5)"  : "rgba(86, 90, 90, 0.3)";
-                                        // let bgOthers = currentItem || isSubmitted ? "transparent" : is_delegated ? "rgba(25, 230, 25, 0.5)" : "rgba(86, 90, 90, 0.3)";
-
-                                        // console.log("IS DELEGATED :", is_delegated);
-
-                                        //lastt
-                                        // let bgFirst = is_delegated === true ? "rgba(25, 230, 25, 0.5)" : currentItem || isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
-                                        // let bgOthers = is_delegated === true ? "rgba(25, 230, 25, 0.5)" : currentItem || isSubmitted ? "transparent": "rgba(86, 90, 90, 0.3)";
-
 
                                         let bgFirst = is_delegated === true || !currentItem ?  "rgba(86, 90, 90, 0.3)" : isSubmitted ? "transparent" : "rgba(25, 230, 25, 0.5)";
                                         let bgOthers = is_delegated === true || !currentItem ? "rgba(86, 90, 90, 0.3)" : isSubmitted ? "transparent": "rgba(25, 230, 25, 0.5)";
@@ -1205,26 +1167,7 @@ function ReceiveDocument() {
                                         content = <></>;
                                         }
 
-                                        // const canClick = (token === delegate_token && !is_submitted) || (is_delegated === true && !isSubmitted) || (isCurrentItem && delegatedDoc !== id_dokumen);
-
-                                        //lasttt
-                                        // const canClick = (token === delegate_token && !is_submitted) || (is_delegated === true && !isSubmitted) || (isCurrentItem && delegatedDoc === id_dokumen);
-
-
-                                        //PERBAIKI SIGNEDINITIALS, CEK DARI HOVER OVERLAYTRIGGER UNTUK FILTER
-                                        
-                                        //25-08-25
-                                        //delegated_signers
-                                        // const canClick = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
-
-                                        //non delegated 
                                         const canClick = !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
-
-
-                                        // const canClick = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
-
-
-                                        // console.log("current item count:", signerItemCount);
 
                                         return (
                                             <>
@@ -1238,28 +1181,9 @@ function ReceiveDocument() {
                                                             display: "flex",
                                                             alignItems: "center",
                                                             justifyContent: "center",
-                                                            // backgroundColor: isFirstSigner ? bgFirst : bgOthers,
                                                             backgroundColor: bgStyle,
                                                             border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
-                                                            zIndex: zIndexStyle,
-                                                            // cursor: !isSubmitted || token_db.every(tokenn => tokenn === token) && (delegatedDoc !== id_dokumen || !isdelegated) && currentSignerStr === String(sig.id_signers) || (delegatedArray.includes(currentSignerStr) && !isSubmitted) && (normalizedArray.includes(currentSignerStr) && !isSubmitted)? "pointer" : "default",
-                                                            
-                                                            
-                                                            // cursor:  !isSubmitted || (is_delegated && token !== main_token) || isCurrentItem  && (delegatedDoc === id_dokumen) ? "pointer" : "default",
-                                                            
-                                                            
-                                                            // cursor: token === delegate_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
-                                                            
-                                                            //lastt benar
-                                                            // cursor: is_submitted || canClick && showDelegateAlert ? "default" : "pointer",
-
-                                                            // cursor: is_submitted || canClick && showDelegateAlert ? "pointer" : "default",
-
-                                                            // cursor: !is_submitted ? isCurrentItem || canClick && showDelegateAlert ? "pointer" : "default" : "default",
-
-                                                            //lasttt
-                                                            // cursor: is_delegated || is_submitted ?  isCurrentItem && canClick && showDelegateAlert ? "pointer" : "default" : "pointer",
-
+                                                            zIndex: zIndexStyle,     
                                                             cursor: !is_submitted && isCurrentItem ? canClick && showDelegateAlert ? "default" : "pointer" : "default",
 
 
@@ -1271,13 +1195,7 @@ function ReceiveDocument() {
                                                             String(sig.id_signers) === currentSignerStr ||
                                                             delegatedArray.includes(currentSignerStr) ||
                                                             normalizedArray.includes(currentSignerStr);
-
-                                                            // const canClick = isCurrentSigner || token_db.every(tokenn => tokenn === token) && isCurrentItem && !isSubmitted && (delegatedDoc !== id_dokumen || !isdelegated);
-                                                            
-                                                            // const canClick = (is_delegated === true && !isSubmitted) || isCurrentItem && isCurrentSigner && token === main_token  && (delegatedDoc !== id_dokumen);
-                                                            
-
-                                                            if (!is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
+                                                            if (!is_submitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
                                                                 if (isInitialpad && isCurrentItem){
                                                                     handleInitialClick(sig.id_item, sig.show, sig.editable);
                                                                 } else if (isSignpad && isCurrentItem){
@@ -1289,27 +1207,6 @@ function ReceiveDocument() {
 
                                                     >
                                                         {console.log("isDELEGATED:", is_delegated)}
-                                                        {/* {(isCompleted && completedNext && sig.sign_base64) || is_delegated? (
-                                                            <img
-                                                                src={sig.sign_base64}
-                                                                alt="Initial"
-                                                                style={{ width: "100%", height: "100%" }}
-                                                            />
-                                                        ) : is_delegated === true ? (
-                                                            isInitialpad ? <FaFont style={{ width: "25%", height: "25%" }} /> : is_delegated === true || isSignpad ? <FaSignature style={{ width: "25%", height: "25%" }} /> : <></>
-                                                        ) : isFirstSigner ? (
-                                                            message
-                                                        ) : !isFirstSigner ? (
-                                                            message
-                                                        ) : (
-                                                           <></>
-                                                        )}
-                                                        {isCompleted && completedNext && isDatefield ? (
-                                                            currentDate
-                                                        ) : (
-                                                        <></>
-                                                        )} */}
-
 
                                                         {!isSubmitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? (
                                                             <OverlayTrigger
@@ -1451,10 +1348,6 @@ function ReceiveDocument() {
                                         let bgFirst = is_delegated === true || currentItem ?  "rgba(25, 230, 25, 0.5)" : isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
                                         let bgOthers = is_delegated === true || currentItem ? "rgba(25, 230, 25, 0.5))" : isSubmitted ? "transparent": "rgba(86, 90, 90, 0.3)";
 
-                                        // let bgFirst = is_delegated === true || currentItem ? "rgba(25, 230, 25, 0.5)" : isSubmitted ? "transparent" : "rgba(86, 90, 90, 0.3)";
-                                        // let bgOthers = is_delegated === true || currentItem ? "rgba(25, 230, 25, 0.5)" : isSubmitted ? "transparent": "rgba(86, 90, 90, 0.3)";
-
-
                                         const bgStyle = 
                                         isSubmitted || isCompleted
                                         ? "transparent"
@@ -1484,31 +1377,7 @@ function ReceiveDocument() {
                                                 normalizedArray.includes(currentSignerStr)
                                             )
                                         ).length;
-
-                                        // const canClick = (token === delegate_token && !is_submitted) || (is_delegated === true && !isSubmitted) || (isCurrentItem  && delegatedDoc !== id_dokumen);
-
-                                        //lastt
-                                        // const canClick = (token === delegate_token && !is_submitted) || (is_delegated === true && !isSubmitted) || (isCurrentItem  && delegatedDoc === id_dokumen);
-
-
-                                        // const canClick = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
-
-
-                                        //benar
-                                        // 25-08-25
-                                        //delegated signers
-                                        // const canClick = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
-
-                                        // cursor: !is_submitted && isCurrentItem ? canClick && showDelegateAlert ? "default" : "pointer" : "default",
-
-
-                                        // const canClick = !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
-
                                         const canClick = !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
-
-
-
-                                        // console.log("current item count:", signerItemCount);
 
                                         return (
                                             <Rnd
@@ -1522,27 +1391,8 @@ function ReceiveDocument() {
                                                     alignItems: "center",
                                                     justifyContent: "center",
                                                     backgroundColor: 
-                                                        // isFirstSigner ? bgFirst : bgOthers,
                                                         bgStyle,
                                                     border: borderStyle, 
-                                                    // cursor: !is_submitted || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
-                                                    
-                                                    
-                                                    // cursor:  !isSubmitted || (is_delegated && token !== main_token) && isCurrentItem  && (delegatedDoc === id_dokumen) ? "pointer" : "default",
-                                                    // cursor: !is_submitted || is_delegated || isCurrentItem && token !== main_token || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
-
-                                                    // cursor: token === main_token && !is_submitted || (is_delegated === true && !isSubmitted && delegated_signers !== null) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
-
-                                                    // cursor: delegate_token === main_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
-
-                                                    //last benar
-                                                    // cursor: !is_delegated ? "pointer" : (is_delegated && delegatedDoc === id_dokumen && token === main_token) ? "default" : "pointer",
-
-                                                    
-                                                    // cursor: token === delegate_token && !is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? "pointer" : "default",
-
-                                                    //last benarr
-                                                    // cursor: is_submitted || canClick && showDelegateAlert || isCurrentItem ? "default" : "pointer",
 
                                                     cursor: !is_submitted && isCurrentItem ? canClick && showDelegateAlert ? "default" : "pointer" : "default",
 
@@ -1556,20 +1406,10 @@ function ReceiveDocument() {
                                                     delegatedArray.includes(currentSignerStr) ||
                                                     normalizedArray.includes(currentSignerStr);
 
-                                                    // const canClick = !is_submitted || isCurrentItem && isCurrentSigner && (delegatedDoc !== id_dokumen);
-
-                                                    // if (!is_submitted || (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
-                                                    //     if (isInitialpad && isCurrentItem && is_delegated){
-                                                    //         handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                    //     } else if (isSignpad && isCurrentItem && is_delegated) {
-                                                    //         handleSignatureClick(sig.id_item, sig.editable, sig.show);
-                                                    //     }
-                                                    // }
-
                                                     if (!is_submitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
-                                                        if (isInitialpad && isCurrentItem || is_delegated){
+                                                        if (!is_delegated ? isInitialpad && isCurrentItem || is_delegated : isInitialpad && isCurrentItem && is_delegated){
                                                             handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                        } else if (isSignpad && isCurrentItem || is_delegated) {
+                                                        } else if (!is_delegated ? isSignpad && isCurrentItem || is_delegated : isSignpad && isCurrentItem && is_delegated) {
                                                             handleSignatureClick(sig.id_item, sig.editable, sig.show);
                                                         }
                                                     }
