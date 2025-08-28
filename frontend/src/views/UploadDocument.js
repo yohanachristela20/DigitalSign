@@ -88,7 +88,7 @@ function UploadDocument() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [is_deadline, setIsDeadline] = useState(false);
   const [is_download, setIsDownload] = useState(false);
-  const [day_after_reminder, setDayAfterReminder] = useState(1);
+  const [day_after_reminder, setDayAfterReminder] = useState(0);
   const [repeat_freq, setRepeatFreq] = useState("none");
   const [deadline, setDeadline] = useState("");
 

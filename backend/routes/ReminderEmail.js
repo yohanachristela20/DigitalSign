@@ -9,33 +9,44 @@ import { Op } from "sequelize";
 import Dokumen from "../models/DokumenModel.js";
 import jwt from 'jsonwebtoken';
 import sendEmailToSigner from "../helpers/sendEmailHelper.js";
-// import  { sendEmailToSigner } from "../helpers/sendEmailHelper.js";
 
 dotenv.config();
 
+
+function addDays(date, days) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
 const sendReminderEmail = async () => {
   try {
-    const logs = await LogSign.findAll({attributes: ['id_logsign', 'status', 'reminder_date', 'reminder_sent']});
-    console.log(logs.map(l => ({ id: l.id_logsign, status: l.status, reminder_date: l.reminder_date })));
-    // console.log(JSON.stringify(logs, null, 2));
-
     const today = new Date();
-    today.setHours(0, 0, 0, 0); //reset time ke 00:00:00
+    today.setHours(0, 0, 0, 0);
 
-    const pendingReminders = await LogSign.findAll({
+    const year = today.getFullYear();
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const day = today.getDate().toString().padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+
+    console.log("Today's date:", formattedDate);
+
+    const logs = await LogSign.findAll({
       where: {
-        status: "Pending",
-        reminder_date: { [Op.lte]: today }, // less than or equal to
         [Op.or]: [
-          { reminder_sent: false },
-          { reminder_sent: null }
+          { status: "Pending" },
+          { status: "Decline" }
         ]
-      }, 
-      attributes: ["id_logsign", "status", "reminder_date", "id_signers", "delegated_signers", "id_dokumen", "id_karyawan", "id_item", "urutan", "main_token", "delegate_token", "is_delegated"],
+      },
+      attributes: [
+        "id_logsign", "status", "reminder_date", "reminder_sent", "repeat_freq", "is_deadline", "deadline",
+        "id_signers", "delegated_signers", "id_dokumen", "id_karyawan", "id_item", "urutan", "main_token", "delegate_token", "is_delegated"
+      ],
       include: [
         {
           model: Karyawan,
-          as: "Signerr", 
+          as: "Signerr",
           include: [
             {
               model: User,
@@ -46,23 +57,71 @@ const sendReminderEmail = async () => {
         },
         {
           model: Dokumen,
-          as: "DocName", 
+          as: "DocName",
           attributes: ["nama_dokumen"]
         }
       ]
     });
 
-    console.log("pendingReminders:", pendingReminders);
+    const remindersToSend = [];
 
-    // if (pendingReminders.length === 0) {
-    //   console.log("Reminder doesn't exist.");
-    //   return;
-    // }
+    for (const log of logs) {
+      const repeat = log.repeat_freq;
+      const status = log.status;
+      const isDeadline = log.is_deadline;
+      const deadline = log.deadline ? new Date(log.deadline) : null;
+      let reminderDate = log.reminder_date ? new Date(log.reminder_date) : null;
+
+      if (!reminderDate && repeat !== "none" && status === "Pending") {
+        let interval = 0;
+        if (repeat === "3days") interval = 3;
+        else if (repeat === "weekly") interval = 7;
+        else if (repeat === "monthly") interval = 30;
+        if (interval > 0) {
+          reminderDate = addDays(today, interval);
+          await LogSign.update(
+            { reminder_date: reminderDate },
+            { where: { id_logsign: log.id_logsign } }
+          );
+          console.log(`Set initial reminder_date for logsign ID ${log.id_logsign}:`, reminderDate);
+        }
+      }
+
+      console.log("Reminder date:", reminderDate);
+
+      if (repeat === "none" || status === "Decline") {
+        if (
+          reminderDate &&
+          today.getTime() === reminderDate.setHours(0, 0, 0, 0) &&
+          !log.reminder_sent
+        ) {
+          remindersToSend.push(log);
+        }
+        continue;
+      }
+
+      if (status === "Pending") {
+        let interval = 0;
+        if (repeat === "3days") interval = 3;
+        else if (repeat === "weekly") interval = 7;
+        else if (repeat === "monthly") interval = 30;
+        else continue;
+
+        if (reminderDate && today.getTime() === reminderDate.setHours(0, 0, 0, 0) && !log.reminder_sent) {
+          if (isDeadline && deadline) {
+            if (today <= deadline) {
+              remindersToSend.push(log);
+            }
+          } else {
+            remindersToSend.push(log);
+          }
+        }
+      }
+    }
 
     const uniqueReminders = [];
     const seen = new Set();
-
-    for (const log of pendingReminders) {
+    for (const log of remindersToSend) {
       const key = `${log.id_dokumen}-${log.id_signers}`;
       if (!seen.has(key)) {
         seen.add(key);
@@ -70,34 +129,31 @@ const sendReminderEmail = async () => {
       }
     }
 
-    console.log(`Unique reminders after filter: ${uniqueReminders.length}`);
-
-
     for (const log of uniqueReminders) {
       try {
         await sendEmailToSigner(log, [], [], log.token);
 
+        let updateFields = { reminder_sent: true };
+        if (["3days", "weekly", "monthly"].includes(log.repeat_freq) && log.status === "Pending") {
+          let interval = 0;
+          if (log.repeat_freq === "3days") interval = 3;
+          else if (log.repeat_freq === "weekly") interval = 7;
+          else if (log.repeat_freq === "monthly") interval = 30;
+          updateFields.reminder_date = addDays(new Date(log.reminder_date || today), interval);
+          updateFields.reminder_sent = false;
+        }
+
         await LogSign.update(
-          { reminder_sent: true },
-          { where: {id_dokumen: log.id_dokumen, id_signers: log.id_signers} }
+          updateFields,
+          { where: { id_dokumen: log.id_dokumen, id_signers: log.id_signers } }
         );
         console.log(`Reminder sent & marked for document: ${log.id_dokumen} and signer ${log.id_signers}`);
       } catch (error) {
-         console.error(`Failed to send email for logsign ID ${log.id_logsign}:`, error.message);
+        console.error(`Failed to send email for logsign ID ${log.id_logsign}:`, error.message);
       }
     }
-
-    
-
-    // console.log("Pending Reminders Found:", pendingReminders.map(r => ({
-    //   id_logsign: r.id_logsign,
-    //   reminder_date: r.reminder_date,
-    //   status: r.status
-    // })));
-
   } catch (err) {
     console.error("Email sending error:", err.message);
-    // throw err;
   }
 };
 
