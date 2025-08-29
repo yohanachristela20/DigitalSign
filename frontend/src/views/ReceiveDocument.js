@@ -21,7 +21,10 @@ import DelegateModal from "components/ModalForm/DelegateModal.js";
 import "../assets/scss/lbd/_receivedoc.scss";
 import "../assets/scss/lbd/_usernavbar.scss";
 import "../assets/scss/lbd/_login.scss";
-import { isDate } from "moment";
+
+
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 function ReceiveDocument() {
     const [pdfUrl, setPdfUrl] = useState(null);
@@ -44,12 +47,16 @@ function ReceiveDocument() {
     const [nama, setNama] = useState("");
     const [mainSigner, setMainSigner] = useState("");
 
+    const [idDokumen, setIDDokumen] = useState(null);
+
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
     const [showInitialModal, setShowInitialModal] = useState(false);
     const [showDeclineModal, setShowDeclineModal] = useState(false);
     const [showDocInfoModal, setShowDocInfoModal] = useState(false);
     const [showAuditTrailModal, setShowAuditTrailModal] = useState(false);
     const [showDelegateModal, setShowDelegateModal] = useState(false);
+    
+    const [showDownloadModal, setShowDownloadModal] = useState(false);
 
     const [selectedIdItem, setSelectedIdItem] = useState([]);
     
@@ -129,6 +136,8 @@ function ReceiveDocument() {
     const year = date.getFullYear();
 
     const currentDate = `${day} ${month} ${year}`;
+    
+    const pdfContainerRef = useRef(null);
 
     // const isdelegated = localStorage.getItem("is_delegated");
     const delegatedDoc = localStorage.getItem("id_dokumen");
@@ -842,6 +851,50 @@ function ReceiveDocument() {
 
     const showDelegateAlert = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc !== id_dokumen) : !is_delegated || (delegatedDoc === id_dokumen);
 
+    const plainPDF = async (id_dokumen) => {
+        try {
+            const res = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
+            if (!res.ok) throw new Error("Failed to fetch PDF for download.");
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a"); 
+            a.href = url;
+            a.download = `${id_dokumen}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Downloading error:", error.message);
+        }
+    }
+
+    const downloadPDF = async (id_dokumen) => {
+        try {
+            const input = pdfContainerRef.current;
+            if (!input) throw new Error("PDF container not found.");
+
+            const canvas = await html2canvas(input, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+
+            const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
+
+            const pdf = new jsPDF({
+                orientation: orientation,
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save(`${id_dokumen}.pdf`);
+        } catch (error) {
+            console.error("Downloading error:", error.message);
+        }
+    }
+
+
     console.log("TOKEN:", token, "vs", "MAIN TOKEN:", main_token, "vs", "DELEGATE TOKEN:", delegate_token );
     console.log("is_delegated!!:", is_delegated);
 
@@ -931,7 +984,7 @@ function ReceiveDocument() {
                             href="#"
                             onClick={(e) => {
                             e.preventDefault();
-                            setShowModal(true); 
+                            is_submitted ? downloadPDF(id_dokumen) : plainPDF(id_dokumen); 
                             }}
                         >   Download
                         </Dropdown.Item>
@@ -945,7 +998,6 @@ function ReceiveDocument() {
                         disabled={isFinishDisabled}
                         hidden={!is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
                     >
-
                         Finish
                     </Button>
                     </Nav>
@@ -1023,7 +1075,7 @@ function ReceiveDocument() {
                         </div>
                         {isAccessed === true && pdfUrl && (
                             <div className="center-object">
-                                <div className="vertical-center">
+                                <div className="vertical-center" ref={pdfContainerRef}>
                                     <PDFCanvas pdfUrl={pdfUrl} />                           
 
                                     {signedInitials.map((sig) => {

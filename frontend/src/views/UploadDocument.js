@@ -465,7 +465,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     const delegated_signers = JSON.parse(localStorage.getItem("delegated_signers") || "[]");
 
     if (logsigns.length > 0) {
-      await sendEmailNotification(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers, day_after_reminder);
+      await sendEmailNotification(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers, day_after_reminder, deadline);
     } else {
       console.warn("No logsigns found.");
     }
@@ -482,7 +482,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
-  const sendEmailNotification = async(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers, day_after_reminder) => {
+  const sendEmailNotification = async(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers, day_after_reminder, deadline) => {
     console.log("Urutan dari sendemail:", urutan);
     try {
         const response = await axios.get(`http://localhost:5000/logsign-link/${id_dokumen}`, {
@@ -500,6 +500,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         id_karyawan: logsigns.map(log => log.id_karyawan),
         delegated_signers: logsigns.map(log => log.delegated_signers),
         day_after_reminder,
+        deadline,
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -1285,7 +1286,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                           <Form.Group as={Row} className="align-items-center">
                           <Col xs="auto">
                             <Form.Select value={day_after_reminder} onChange={handleChange} style={{ width: '80px' }}>
-                              {[...Array(30)].map((_, i) => (
+                              {[...Array(30)].map((_, i = 0) => (
                                 <option key={i + 1} value={i + 1}>
                                   {i + 1}
                                 </option>

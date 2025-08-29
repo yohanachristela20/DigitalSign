@@ -18,9 +18,10 @@ import {getDocument,
         updateReminder,
         sendEmailNotification,
         getSignLink,
-        updateInitialSign
+        updateInitialSign,
         // deleteSigner
 } from "../controllers/DocumentController.js"; 
+import LogSign from "../models/LogSignModel.js";
 
 const router = express.Router(); 
 
@@ -65,6 +66,23 @@ router.post('/send-email', sendEmailNotification);
 router.get("/logsign-link/:id_dokumen", getSignLink);
 
 router.patch('/initialsign/:id_dokumen/:id_item/:id_signers', updateInitialSign);
+
+
+router.get('/document-status', async (req, res) => {
+    const statusList = await LogSign.findAll({
+        attributes: ['id_dokumen', 'status'],
+        group: ['id_dokumen'],
+        include: [
+            {
+                model: Document,
+                as: 'Dokumen',
+                attributes: ['nama_dokumen']
+            }
+        ]
+    });
+    res.json(statusList);
+});
+
 
 
 export default router;

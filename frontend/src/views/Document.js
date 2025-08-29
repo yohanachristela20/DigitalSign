@@ -39,7 +39,10 @@ function Document() {
   const [sortOrderDibayar, setSortOrderDibayar] = useState("asc");
   const [showAddDoc, setShowAddDoc] = React.useState(false);
   const selectedCategory = location.state?.selectedCategory;
+  const selectedDocuments = location.state?.selectedDocument;
 //   const [documentList, setDocumentList] = useState([]);
+
+  const [documentStatus, setDocumentStatus] = useState([]);
 
   const token = localStorage.getItem("token");
 
@@ -62,11 +65,35 @@ function Document() {
     }
   };
 
+   const getDocumentStatus = async () =>{
+    try {
+      const url = `http://localhost:5000/document-status`;
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+      },
+      });
+      setDocumentStatus(response.data);
+    } catch (error) {
+      console.error("Error fetching data:", error.message); 
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     getDocument(selectedCategory);
+    getDocumentStatus();
   }, [selectedCategory]);
 
   console.log("Selected category: ", selectedCategory);
+  // console.log("Selected document: ", selectedDocuments);
+
+  const getStatusById = (id) => {
+    const statusObj = documentStatus.find(ds => ds.id_dokumen === id);
+    return statusObj ? statusObj.status : "-";
+  };
 
   const filteredDocuments = selectedCategory
     ? document.filter(doc => doc.id_kategoridok === selectedCategory)
@@ -81,6 +108,18 @@ function Document() {
     (document.organisasi && String(document.organisasi).toLowerCase().includes(searchQuery)) ||
     (document?.Kategori?.kategori && String(document.kategori).toLowerCase().includes(searchQuery))
   );
+
+  const filteredDocsStatus = selectedDocuments
+    ? documentStatus.filter(doc => doc.id_dokumen === selectedDocuments)
+    : documentStatus;
+
+  console.log("filteredDocsStatus: ", filteredDocsStatus);
+
+  const filteredDocStatus = documentStatus.filter((documentStatus) =>
+    (documentStatus.id_dokumen && String(documentStatus.id_dokumen).toLowerCase().includes(searchQuery)) ||
+    (documentStatus.status && String(documentStatus.status).toLowerCase().includes(searchQuery))
+  );
+
 
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -112,30 +151,6 @@ function Document() {
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber); 
   }
-
-
-//   useEffect(()=> {
-//     getDocument();
-//     // fetchEmployeeData();
-//   }, []); 
-
-//   const getDocument = async () =>{
-//     try {
-//       const response = await axios.get("http://localhost:5000/document", {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//       },
-//       });
-//       setDocument(response.data);
-//     } catch (error) {
-//       console.error("Error fetching data:", error.message); 
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-
-//   console.log("document: ", document);
 
 
   const deleteDocument = async(id_dokumen) =>{
@@ -345,7 +360,7 @@ function Document() {
                 <th className="border-0" onClick={() => handleSort("nama_dokumen")}>Document Name {sortBy==="nama_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
                 <th className="border-0" onClick={() => handleSort("id_kategoridok")}>Category {sortBy==="id_kategoridok" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
                 <th className="border-0">Status</th>
-                <th className="border-0">Uploaded</th>
+                <th className="border-0" onClick={() => handleSort("createdAt")}>Uploaded {sortBy==="createdAt" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
                 <th className="border-0">Action</th>
               </tr>
             </CDBTableHeader>
@@ -355,17 +370,9 @@ function Document() {
                   <td className="text-center">{document.id_dokumen}</td>
                   <td className="text-center">{document.nama_dokumen}</td>
                   <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
-                  <td className="text-center"></td>
+                  <td className="text-center">{getStatusById(document.id_dokumen) == "Pending"? <Badge pill bg="secondary">{getStatusById(document.id_dokumen)}</Badge> : getStatusById(document.id_dokumen) == "Completed" ? <Badge pill bg="success">{getStatusById(document.id_dokumen)}</Badge> : <Badge pill bg="danger">{getStatusById(document.id_dokumen)}</Badge> }</td>
                   <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
                   <td className="text-center">
-                  {/* <FaRegEdit
-                      type="button"
-                      onClick={() => {
-                        setShowEditModal(true);
-                        setSelectedDocument(document);
-                      }}
-                      className="btn-edit"
-                  /> */}
                   <button
                     style={{background:"transparent", border:"none"}} 
                     disabled={document.user_active === true}
