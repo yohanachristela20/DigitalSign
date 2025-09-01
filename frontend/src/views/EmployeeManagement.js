@@ -87,6 +87,7 @@ function EmployeeManagement() {
     getEmployee();
     // fetchEmployeeData();
   }, []); 
+  
   const getEmployee = async () =>{
     try {
       const response = await axios.get("http://localhost:5000/employee-details", {
@@ -217,7 +218,7 @@ function EmployeeManagement() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", "master_karyawan.csv");
+    link.setAttribute("download", "employees.csv");
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import {FaFileCsv, FaFileImport, FaFilePdf, FaPlusCircle, FaRegEdit, FaTrashAlt, FaTrashRestore, FaUserLock, FaSortUp, FaSortDown} from 'react-icons/fa'; 
+import React, { useEffect, useState, useRef } from "react";
+import {FaFileCsv, FaFileImport, FaFilePdf, FaPlusCircle, FaRegEdit, FaTrashAlt, FaTrashRestore, FaUserLock, FaSortUp, FaSortDown, FaMailBulk, FaPaperPlane, FaDownload} from 'react-icons/fa'; 
 import SearchBar from "components/Search/SearchBar.js";
 import axios from "axios";
 import AddKaryawan from "components/ModalForm/AddKaryawan.js";
@@ -8,12 +8,11 @@ import AddDocument from "components/ModalForm/AddDocument.js";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import "jspdf-autotable";
 import Pagination from "react-js-pagination";
 import "../assets/scss/lbd/_pagination.scss";
-import cardBeranda from "../assets/img/dashboard3.png";
 import "../assets/scss/lbd/_table-header.scss";
-import { stopInactivityTimer } from "views/Heartbeat";
 import { useLocation, useHistory } from "react-router-dom";
 import { CDBTable, CDBTableHeader, CDBTableBody, CDBContainer, CDBBtn, CDBBtnGrp } from 'cdbreact';
 
@@ -43,8 +42,20 @@ function Document() {
 //   const [documentList, setDocumentList] = useState([]);
 
   const [documentStatus, setDocumentStatus] = useState([]);
+  const [documentDeadline, setDocumentDeadline] = useState([]);
+
+  const pdfRefs = useRef({});
 
   const token = localStorage.getItem("token");
+
+  const today = new Date();
+  // today.setHours(0, 0, 0, 0);
+  const currentYear = today.getFullYear();
+  const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
+  const todayDate = today.getDate().toString().padStart(2, '0');
+  const formattedDate = `${currentYear}-${currentMonth}-${todayDate}`;
+
+  const pdfContainerRef = useRef(null);
 
   const getDocument = async (selectedCategory) =>{
     try {
@@ -65,7 +76,14 @@ function Document() {
     }
   };
 
-   const getDocumentStatus = async () =>{
+  const getRef = (id) => {
+    if (!pdfRefs.current[id]) {
+      pdfRefs.current[id] = React.createRef();
+    }
+    return pdfRefs.current[id];
+  }
+
+  const getDocumentStatus = async () =>{
     try {
       const url = `http://localhost:5000/document-status`;
 
@@ -82,9 +100,27 @@ function Document() {
     }
   };
 
+  const getDocumentDeadline = async () =>{
+    try {
+      const url = `http://localhost:5000/document-deadline`;
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+      },
+      });
+      setDocumentDeadline(response.data);
+    } catch (error) {
+      console.error("Error fetching data:", error.message); 
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     getDocument(selectedCategory);
     getDocumentStatus();
+    getDocumentDeadline();
   }, [selectedCategory]);
 
   console.log("Selected category: ", selectedCategory);
@@ -93,6 +129,11 @@ function Document() {
   const getStatusById = (id) => {
     const statusObj = documentStatus.find(ds => ds.id_dokumen === id);
     return statusObj ? statusObj.status : "-";
+  };
+
+  const getDeadlineById = (id) => {
+    const deadlineObj = documentDeadline.find(ds => ds.id_dokumen === id);
+    return deadlineObj ? deadlineObj.deadline : "-";
   };
 
   const filteredDocuments = selectedCategory
@@ -172,6 +213,25 @@ function Document() {
     }
   };
 
+  const sendReminder = async(id_dokumen) =>{
+    try {
+      await axios.post('http://localhost:5000/send-reminder', {id_dokumen}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+      },
+      }); 
+      toast.success("Reminder email has been sent!", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
+      getDocument(); 
+      // window.location.reload();
+    } catch (error) {
+      console.log(error.message); 
+    }
+  };
+
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value.toLowerCase());
   };
@@ -222,35 +282,50 @@ function Document() {
   };
 
   const downloadCSV = (data) => {
-    const header = ["id_dokumen", "nama_dokumen", "id_kategoridok", "organisasi", "sign_base64"];
+    if (!Array.isArray(data)) {
+      console.error("Data is not an array:", data);
+      return;
+    }
+
+    const header = [
+      "id_dokumen",
+      "nama_dokumen",
+      "kategori",
+      "status",
+      "deadline",
+      "createdAt",
+    ];
+
     const rows = data.map((item) => [
       item.id_dokumen,
       item.nama_dokumen,
-      item.id_kategoridok,
-      item.organisasi,
-      item.sign_base64
+      item?.Kategori?.kategori || "N/A",
+      getStatusById(item.id_dokumen),
+      getDeadlineById(item.id_dokumen),
+      new Date(item.createdAt)
+        .toLocaleString("en-GB", { timeZone: "Asia/Jakarta" })
+        .replace(/\//g, "-")
+        .replace(",", ""),
     ]);
-  
-    const csvContent = [header, ...rows]
-      .map((e) => e.join(","))
-      .join("\n");
-  
+
+    const csvContent = [header, ...rows].map((e) => e.join(",")).join("\n");
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "master_karyawan.csv");
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    const a = window.document.createElement("a");
+    a.href = url;
+    a.download = "documents.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
+
 
   const downloadPDF = (data) => {
     const doc = new jsPDF({ orientation: 'landscape' });
   
     doc.setFontSize(12); 
-    doc.text("Employees Data", 12, 20);
+    doc.text("Documents Data", 12, 20);
 
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleString('en-EN', {
@@ -266,13 +341,15 @@ function Document() {
     doc.setFontSize(12); 
     doc.text(`Exported date: ${formattedDate}`, 12, 30);
   
-    const headers = [["Employee ID", "Name", "Job Title", "Organization"]];
+    const headers = [["Document ID", "File Name", "Category", "Status", "Deadline", "Uploaded"]];
   
     const rows = data.map((item) => [
       item.id_dokumen,
       item.nama_dokumen,
-      item.id_kategoridok,
-      item.organisasi
+      item?.Kategori?.kategori || 'N/A',
+      getStatusById(item.id_dokumen),
+      getDeadlineById(item.id_dokumen),
+      new Date(item.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', ''),
     ]);
 
     const marginTop = 15; 
@@ -285,8 +362,124 @@ function Document() {
       headStyles: { fillColor: [3, 177, 252] }, 
     });
   
-    doc.save("master_karyawan.pdf");
+    doc.save("documents.pdf");
   };
+
+  const plainDoc = async (id_dokumen) => {
+    try {
+      const res = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to fetch PDF for download.");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = window.document.createElement("a");
+      a.href = url;
+      a.download = `${id_dokumen}.pdf`;
+      window.document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Downloading error:", error.message);
+    }
+  };
+
+
+  // const downloadDoc = async (id_dokumen, ref, sign_base64) => {
+  //   console.log("SIGN BASE64:", sign_base64);
+  //   try {
+  //     if (!ref?.current) throw new Error("PDF container not found.");
+
+  //     const canvas = await html2canvas(ref.current, { scale: 2 });
+  //     const imgData = canvas.toDataURL("image/png");
+
+  //     const orientation = canvas.width > canvas.height ? "landscape" : "portrait";
+
+  //     const pdf = new jsPDF({
+  //       orientation,
+  //       unit: "px",
+  //       format: [canvas.width, canvas.height],
+  //     });
+
+  //     pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+
+  //     if (document.LogSigns?.[0]?.sign_base64 && typeof document.LogSigns?.[0]?.sign_base64 === "string") {
+  //       const cleanBase64 = document.LogSigns?.[0]?.sign_base64.replace(/\s/g, "");
+
+  //       const finalBase64 = cleanBase64.startsWith("data:image")
+  //         ? cleanBase64
+  //         : `data:image/png;base64,${cleanBase64}`;
+
+  //       try {
+  //         const signWidth = 120;
+  //         const signHeight = 60;
+  //         const x = canvas.width - signWidth - 40;
+  //         const y = canvas.height - signHeight - 40;
+
+  //         pdf.addImage(finalBase64, "PNG", x, y, signWidth, signHeight);
+  //       } catch (err) {
+  //         console.error("Error adding signature:", err.message);
+  //       }
+  //     }
+
+      
+  //     pdf.save(`${id_dokumen}.pdf`);
+  //   } catch (error) {
+  //     console.error("Downloading error:", error.message);
+  //   }
+  // };
+
+
+  const downloadDoc = async (id_dokumen, ref, logSigns = []) => {
+  try {
+    if (!ref?.current) throw new Error("PDF container not found.");
+
+    const canvas = await html2canvas(ref.current, { scale: 2 });
+    const imgData = canvas.toDataURL("image/png");
+
+    const orientation = canvas.width > canvas.height ? "landscape" : "portrait";
+
+    const pdf = new jsPDF({
+      orientation,
+      unit: "px",
+      format: [canvas.width, canvas.height],
+    });
+
+    pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+
+    if (Array.isArray(logSigns) && logSigns.length > 0) {
+      logSigns.forEach((sign, index) => {
+        if (sign?.sign_base64 && typeof sign.sign_base64 === "string") {
+          const cleanBase64 = sign.sign_base64.replace(/\s/g, "");
+          const finalBase64 = cleanBase64.startsWith("data:image")
+            ? cleanBase64
+            : `data:image/png;base64,${cleanBase64}`;
+
+          try {
+            const signWidth = 120;
+            const signHeight = 60;
+            const x = canvas.width - signWidth - 40;
+            const y = canvas.height - signHeight - (index + 1) * 80;
+
+            pdf.addImage(finalBase64, "PNG", x, y, signWidth, signHeight);
+          } catch (err) {
+            console.error("Error adding signature:", err.message);
+          }
+        }
+      });
+    }
+
+    pdf.save(`${id_dokumen}.pdf`);
+  } catch (error) {
+    console.error("Downloading error:", error.message);
+  }
+};
+
 
   const handleUpload = () => {
     history.push("/admin/upload-document");
@@ -360,8 +553,9 @@ function Document() {
                 <th className="border-0" onClick={() => handleSort("nama_dokumen")}>Document Name {sortBy==="nama_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
                 <th className="border-0" onClick={() => handleSort("id_kategoridok")}>Category {sortBy==="id_kategoridok" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
                 <th className="border-0">Status</th>
+                <th className="border-0">Deadline</th>
                 <th className="border-0" onClick={() => handleSort("createdAt")}>Uploaded {sortBy==="createdAt" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                <th className="border-0">Action</th>
+                <th className="border-0" colSpan={3}>Action</th>
               </tr>
             </CDBTableHeader>
             <CDBTableBody>
@@ -370,9 +564,10 @@ function Document() {
                   <td className="text-center">{document.id_dokumen}</td>
                   <td className="text-center">{document.nama_dokumen}</td>
                   <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
-                  <td className="text-center">{getStatusById(document.id_dokumen) == "Pending"? <Badge pill bg="secondary">{getStatusById(document.id_dokumen)}</Badge> : getStatusById(document.id_dokumen) == "Completed" ? <Badge pill bg="success">{getStatusById(document.id_dokumen)}</Badge> : <Badge pill bg="danger">{getStatusById(document.id_dokumen)}</Badge> }</td>
+                  <td className="text-center">{getStatusById(document.id_dokumen) == "Pending"? <Badge pill bg="secondary">{getStatusById(document.id_dokumen)}</Badge> : getStatusById(document.id_dokumen) == "Completed" ? <Badge pill bg="success">{getStatusById(document.id_dokumen)}</Badge> : <Badge pill bg="danger">{getStatusById(document.id_dokumen)}</Badge>}</td>
+                  <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
                   <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
-                  <td className="text-center">
+                  <td className="text-center px-0">
                   <button
                     style={{background:"transparent", border:"none"}} 
                     disabled={document.user_active === true}
@@ -380,10 +575,72 @@ function Document() {
                     <FaTrashAlt 
                       type="button"
                       onClick={() => deleteDocument(document.id_dokumen)}
-                      className="btn-del"
+                      className="text-danger btn-action"
                     />
                   </button>
                   </td>
+                  <td className="text-center px-0">
+                    <button
+                    style={{background:"transparent", border:"none"}} 
+                    disabled={document.user_active === true}
+                    >
+                    <FaPaperPlane 
+                      type="button"
+                      onClick={() => sendReminder(document.id_dokumen)}
+                      className="text-primary btn-action"
+                      hidden={getStatusById(document.id_dokumen) !== "Pending" || formattedDate > getDeadlineById(document.id_dokumen)}
+                    />
+                  </button>
+                  </td>
+                  {/* <td className="text-center px-0">
+                    <button
+                      style={{background:"transparent", border:"none"}} 
+                      disabled={document.user_active === true}
+                      >
+                      <FaDownload 
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (getStatusById(document.id_dokumen) === "Completed") {
+                            downloadDoc(document.id_dokumen, pdfContainerRef, document.sign_base64);
+                          } else {
+                            plainDoc(document.id_dokumen);
+                          }
+                        }}
+                        className="text-success btn-action"
+                        // hidden={getStatusById(document.id_dokumen) !== "Pending" || formattedDate > getDeadlineById(document.id_dokumen)}
+                      />
+                    </button>
+                  </td> */}
+                  <td className="text-center px-0">
+                    <button
+                      style={{ background: "transparent", border: "none" }}
+                      disabled={document.user_active === true}
+                    >
+                      <FaDownload
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const ref = getRef(document.id_dokumen); 
+                          if (getStatusById(document.id_dokumen) === "Completed") {
+                            downloadDoc(id_dokumen, pdfContainerRef, document.LogSigns || []);
+                          } else {
+                            plainDoc(document.id_dokumen);
+                          }
+                        }}
+                        className="text-success btn-action"
+                      />
+                    </button>
+
+                    <div
+                      ref={getRef(document.id_dokumen)}
+                      style={{ display: "none" }}
+                    >
+                      <h3>{document.nama_dokumen}</h3>
+                      <p>Category: {document?.Kategori?.kategori}</p>
+                    </div>
+                </td>
+
                 </tr>
               ))}
             </CDBTableBody>

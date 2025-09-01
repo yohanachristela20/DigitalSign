@@ -128,14 +128,23 @@ function ReceiveDocument() {
 
     const [main_token, setMainToken] = useState("");
     const [delegate_token, setDelegateToken] = useState("");
+    const [deadline, setDeadline] = useState("");
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] 
     const month = monthNames[date.getMonth()];
     const year = date.getFullYear();
-
     const currentDate = `${day} ${month} ${year}`;
+
+    const today = new Date();
+    // today.setHours(0, 0, 0, 0);
+    const currentYear = today.getFullYear();
+    const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
+    const todayDate = today.getDate().toString().padStart(2, '0');
+    const formattedDate = `${currentYear}-${currentMonth}-${todayDate}`;
+
+    console.log("FORMATTED DATE:", formattedDate);
     
     const pdfContainerRef = useRef(null);
 
@@ -336,8 +345,10 @@ function ReceiveDocument() {
             const is_delegated = res.data.is_delegated;
             const main_token = res.data.main_token;
             const delegate_token = res.data.delegate_token;
+            const deadline = res.data.deadline;
 
             // console.log("MAIN TOKEN:", main_token, "DELEGATE TOKEN:", delegate_token);
+            console.log("Deadline from token:", deadline);
 
             const finalSignerId = allSigners || currentSigner || delegated_signers;
             setDelegatedSigners(delegated_signers);
@@ -356,6 +367,7 @@ function ReceiveDocument() {
             setIsDelegated(is_delegated);
             setMainToken(main_token);
             setDelegateToken(delegate_token);
+            setDeadline(deadline)
 
             const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
             if (!fileRes.ok) {
@@ -493,7 +505,7 @@ function ReceiveDocument() {
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
             setErrorMsg(error.message);
-             toast.error("Failed to load PDF Document.");
+             toast.error("Load document error or Expired token.");
             } finally {
                 setLoading(false);
             }
@@ -1009,7 +1021,7 @@ function ReceiveDocument() {
                 <Container fluid className="px-0">
                         {loading && <Spinner animation="border" variant="primary" />}
                         <div className="sign-in__user d-flex align-items-center justify-content-center pt-5 ">
-                        <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline")}>
+                        <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline") && formattedDate > deadline && deadline !== null}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
                         </Alert>
    

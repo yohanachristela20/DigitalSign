@@ -74,7 +74,8 @@ const sendReminderEmail = async () => {
 
       if (!reminderDate && repeat !== "none" && status === "Pending") {
         let interval = 0;
-        if (repeat === "3days") interval = 3;
+        if (repeat === "daily") interval = 1;
+        else if (repeat === "3days") interval = 3;
         else if (repeat === "weekly") interval = 7;
         else if (repeat === "monthly") interval = 30;
         if (interval > 0) {
@@ -102,10 +103,19 @@ const sendReminderEmail = async () => {
 
       if (status === "Pending") {
         let interval = 0;
-        if (repeat === "3days") interval = 3;
+        if (repeat === "daily") interval = 1;
+        else if (repeat === "3days") interval = 3;
         else if (repeat === "weekly") interval = 7;
         else if (repeat === "monthly") interval = 30;
         else continue;
+
+        if (today.getTime() > deadline) {
+          await LogSign.update(
+            {status: "Expired"},
+            {where: {id_logsign: log.id_logsign}}
+          );
+          console.log(`Logsign ${log.id_logsign} expired because deadline ${deadline.toISOString().split("T")[0]} < today ${today.toISOString().split("T")[0]}`);
+        }
 
         if (reminderDate && today.getTime() === reminderDate.setHours(0, 0, 0, 0) && !log.reminder_sent) {
           if (isDeadline && deadline) {
@@ -134,9 +144,10 @@ const sendReminderEmail = async () => {
         await sendEmailToSigner(log, [], [], log.token);
 
         let updateFields = { reminder_sent: true };
-        if (["3days", "weekly", "monthly"].includes(log.repeat_freq) && log.status === "Pending") {
+        if (["daily", "3days", "weekly", "monthly"].includes(log.repeat_freq) && log.status === "Pending") {
           let interval = 0;
-          if (log.repeat_freq === "3days") interval = 3;
+          if (log.repeat_freq === "daily") interval = 1;
+          else if (log.repeat_freq === "3days") interval = 3;
           else if (log.repeat_freq === "weekly") interval = 7;
           else if (log.repeat_freq === "monthly") interval = 30;
           updateFields.reminder_date = addDays(new Date(log.reminder_date || today), interval);

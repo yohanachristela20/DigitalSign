@@ -97,6 +97,4 @@ const sendEmailToSigner = async (log, subject = [], message = [], token = null) 
     console.log(`Email sent to ${receiverEmail} for signer ${log.is_delegated? log.delegated_signers : log.id_signers}`);
 }
 
-// module.exports = { sendEmailToSigner };
-
 export default sendEmailToSigner;

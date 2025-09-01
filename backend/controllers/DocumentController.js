@@ -13,8 +13,6 @@ import User from "../models/UserModel.js";
 import jwt from 'jsonwebtoken';
 import { log } from "console";
 import { Op } from "sequelize";
-// import  { sendEmailToSigner } from "../helpers/sendEmailHelper.js";
-import sendEmailToSigner from "../helpers/sendEmailHelper.js";
 
 dotenv.config();
 
@@ -27,6 +25,11 @@ export const getDocument = async(req, res) => {
                     as: "Kategori",
                     attributes: ["id_kategoridok", "kategori"],
                 },
+                {
+                  model: LogSign, 
+                  as: "LogSigns", 
+                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted"],
+                }
             ],
         });
         res.status(200).json(response);
@@ -52,7 +55,7 @@ export const getDocumentByCategory = async(req, res) => {
     const {id_kategoridok} = req.params;
     try {
         const response = await Dokumen.findAll({
-            where: {id_kategoridok: id_kategoridok},
+            where: {id_kategoridok},
             attributes: ["id_dokumen", "nama_dokumen", "id_kategoridok", "createdAt"],
              include: [
                 {
@@ -60,6 +63,11 @@ export const getDocumentByCategory = async(req, res) => {
                     as: "Kategori",
                     attributes: ["id_kategoridok", "kategori"],
                 },
+                {
+                  model: LogSign, 
+                  as: "LogSigns", 
+                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted"],
+                }
             ],
         });
         res.status(200).json(response);
@@ -316,7 +324,8 @@ export const sendEmailNotification = async (req, res) => {
             id_item: itemList,
             id_karyawan: senderList,
             intended_email,
-            delegated_signers: delegateList
+            delegated_signers: delegateList,
+            deadline,
           }
         }, 
         jwtSecret, {expiresIn}

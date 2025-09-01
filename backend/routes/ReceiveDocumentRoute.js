@@ -39,6 +39,7 @@ router.get('/receive-document', async(req, res) => {
             id_karyawan, 
             is_delegated, 
             delegated_signers, 
+            deadline,
         } = decoded.dokumenLogsign || {};
 
         const finalSignerId = is_delegated ? delegated_signers : id_signers ;
@@ -76,6 +77,7 @@ router.get('/receive-document', async(req, res) => {
             delegated_signers: is_delegated ? delegated_signers : null, 
             main_token,
             delegate_token,
+            deadline,
         });
         
     } catch (error) {
