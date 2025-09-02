@@ -20,6 +20,73 @@ dotenv.config();
 
 const router = express.Router();
 
+// router.get('/receive-document', async(req, res) => {
+//     const token = req.query.token;
+//     const jwtSecret = process.env.JWT_SECRET_KEY;
+
+//     if (!token) {
+//         return res.status(401).json({message: 'Token is required!'});
+//     }
+
+//     try {
+//         const decoded = jwt.verify(token, jwtSecret);
+//         const {
+//             id_dokumen,
+//             id_signers,
+//             urutan, 
+//             currentSigner,
+//             id_item, 
+//             id_karyawan, 
+//             is_delegated, 
+//             delegated_signers, 
+//             deadline,
+//         } = decoded.dokumenLogsign || {};
+
+//         const finalSignerId = is_delegated ? delegated_signers : id_signers ;
+//         if (!id_dokumen || !id_item || !id_karyawan || !urutan || !finalSignerId) {
+//             return res.status(400).json({
+//                 message: 'Missing id_dokumen, id_signers or delegated_signers, id_item, id_karyawan, or urutan from token.'
+//             });
+//         }
+
+//         const logsignRecord = await LogSign.findOne({
+//             where: {
+//                 id_dokumen,
+//                 id_signers, 
+//                 id_item
+//             }, 
+//             attributes: ['id_logsign', 'main_token', 'delegate_token']
+//         });
+
+//         // console.log("LOGSIGN RECORDDD:", logsignRecord);
+
+//         const id_logsign = logsignRecord ? logsignRecord.id_logsign : null;
+//         const main_token = logsignRecord ? logsignRecord.main_token : null;
+//         const delegate_token = logsignRecord ? logsignRecord.delegate_token : null;
+
+//         res.status(200).json({
+//             id_dokumen, 
+//             id_signers: id_signers, 
+//             main_signer: id_signers,
+//             urutan,
+//             currentSigner, 
+//             id_item, 
+//             id_karyawan, 
+//             id_logsign, 
+//             is_delegated,
+//             delegated_signers: is_delegated ? delegated_signers : null, 
+//             main_token,
+//             delegate_token,
+//             deadline,
+//         });
+        
+//     } catch (error) {
+//         console.error("Receive document error:", error.message);
+//         return res.status(403).json({message: 'Invalid or expired token'});
+//     }
+// });
+
+
 router.get('/receive-document', async(req, res) => {
     const token = req.query.token;
     const jwtSecret = process.env.JWT_SECRET_KEY;
@@ -29,7 +96,12 @@ router.get('/receive-document', async(req, res) => {
     }
 
     try {
-        const decoded = jwt.verify(token, jwtSecret);
+        const decodeRaw = jwt.decode(token);
+
+        if (!decodeRaw || !decodeRaw.dokumenLogsign){
+            return res.status(400).json({message: 'Invalid token payload'});
+        }
+
         const {
             id_dokumen,
             id_signers,
@@ -40,7 +112,7 @@ router.get('/receive-document', async(req, res) => {
             is_delegated, 
             delegated_signers, 
             deadline,
-        } = decoded.dokumenLogsign || {};
+        } = decodeRaw.dokumenLogsign;
 
         const finalSignerId = is_delegated ? delegated_signers : id_signers ;
         if (!id_dokumen || !id_item || !id_karyawan || !urutan || !finalSignerId) {
@@ -60,13 +132,26 @@ router.get('/receive-document', async(req, res) => {
 
         // console.log("LOGSIGN RECORDDD:", logsignRecord);
 
-        const id_logsign = logsignRecord ? logsignRecord.id_logsign : null;
-        const main_token = logsignRecord ? logsignRecord.main_token : null;
-        const delegate_token = logsignRecord ? logsignRecord.delegate_token : null;
+        // const id_logsign = logsignRecord ? logsignRecord.id_logsign : null;
+        // const main_token = logsignRecord ? logsignRecord.main_token : null;
+        // const delegate_token = logsignRecord ? logsignRecord.delegate_token : null;
+
+        const { id_logsign, main_token, delegate_token, status } = logsignRecord;
+
+        if (status === 'Pending'){
+            try {
+                jwt.verify(token, jwtSecret);
+            } catch (error) {
+                console.error('Receive document error (expired token on Pending):', err.message);
+                return res.status(403).json({message: 'Invalid or expired token'});
+            }
+        } else if (status === 'Completed') {
+            console.log('Status completed, bypass token expiry.');
+        }
 
         res.status(200).json({
             id_dokumen, 
-            id_signers: id_signers, 
+            id_signers, 
             main_signer: id_signers,
             urutan,
             currentSigner, 
@@ -85,7 +170,6 @@ router.get('/receive-document', async(req, res) => {
         return res.status(403).json({message: 'Invalid or expired token'});
     }
 });
-
 
 router.post('/link-access-log', async (req, res) => {
   const { token, real_email, password, is_accessed, currentSigner } = req.body;
@@ -186,6 +270,51 @@ router.post('/link-access-log', async (req, res) => {
 
 
 
+// router.get('/access-status', async(req, res) => {
+//     const {token} = req.query;
+//     const jwtSecret = process.env.JWT_SECRET_KEY;
+
+//     const clientIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+//     try {
+//         const decoded = jwt.verify(token, jwtSecret);
+//         const {
+//             id_dokumen,
+//             id_signers,
+//             urutan, 
+//             currentSigner,
+//             id_item, 
+//             id_karyawan, 
+//             is_delegated, 
+//             delegated_signers
+//         } = decoded.dokumenLogsign || {};
+
+//         const signerId = currentSigner || delegated_signers  || id_signers;
+
+//         const logsign = await LogSign.findOne({
+//             where: {id_dokumen, [!is_delegated ? "id_signers" : "delegated_signers"] : signerId},
+//             attributes: ['id_logsign', 'id_signers', 'delegated_signers'],
+//         });
+
+//         if (!logsign) {
+//             return res.status(404).json({ message: "LogSign not found", is_accessed: false });
+//         }
+
+//         const accessLogs = await LinkAccessLog.findOne({
+//             where: {id_logsign: logsign.id_logsign, id_karyawan: signerId}, 
+//             attributes: ['is_accessed'], 
+//         });
+
+//         const isAccessed = accessLogs?.is_accessed === true;
+//         res.status(200).json({is_accessed: isAccessed});
+
+//     } catch (error) {
+//         console.error("Error checking access:", error);
+//         res.status(500).json({message: "Error fetching access status.", is_accessed: false});
+//     }
+// });
+
+
 router.get('/access-status', async(req, res) => {
     const {token} = req.query;
     const jwtSecret = process.env.JWT_SECRET_KEY;
@@ -193,7 +322,12 @@ router.get('/access-status', async(req, res) => {
     const clientIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     try {
-        const decoded = jwt.verify(token, jwtSecret);
+        const decodeRaw = jwt.decode(token);
+        
+        if (!decodeRaw || !decodeRaw.dokumenLogsign){
+            return res.status(400).json({message: "Invalid token payload", is_accessed: false});
+        }
+
         const {
             id_dokumen,
             id_signers,
@@ -202,18 +336,29 @@ router.get('/access-status', async(req, res) => {
             id_item, 
             id_karyawan, 
             is_delegated, 
-            delegated_signers
-        } = decoded.dokumenLogsign || {};
+            delegated_signers,
+        } = decodeRaw.dokumenLogsign || {};
 
         const signerId = currentSigner || delegated_signers  || id_signers;
 
         const logsign = await LogSign.findOne({
             where: {id_dokumen, [!is_delegated ? "id_signers" : "delegated_signers"] : signerId},
-            attributes: ['id_logsign', 'id_signers', 'delegated_signers'],
+            attributes: ['id_logsign', 'id_signers', 'delegated_signers', 'status'],
         });
 
         if (!logsign) {
             return res.status(404).json({ message: "LogSign not found", is_accessed: false });
+        }
+
+        if (logsign.status === "Pending") {
+            try {
+                jwt.verify(token, jwtSecret);
+            } catch (error) {
+                console.error("Access denied, token expired:", error.message);
+                return res.status(403).json({message: "Invalid or expired token", is_accessed: false});
+            }
+        } else if (logsign.status === "Completed"){
+            console.log("Access status bypass expired (Completed)");
         }
 
         const accessLogs = await LinkAccessLog.findOne({
@@ -229,6 +374,7 @@ router.get('/access-status', async(req, res) => {
         res.status(500).json({message: "Error fetching access status.", is_accessed: false});
     }
 });
+
 
 router.get('/pdf-document/:id_dokumen?', async (req, res) => {
     try {

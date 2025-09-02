@@ -64,7 +64,7 @@ const PDFCanvas = ({pdfUrl}) => {
     };
     
     
-    console.log("x_axis:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
+    // console.log("x_axis:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
 
     useEffect(() => {
     const handleButtonClicked = () => {
@@ -72,9 +72,9 @@ const PDFCanvas = ({pdfUrl}) => {
         const initButton = localStorage.getItem("initialClicked");
         const dateButton = localStorage.getItem("dateFieldClicked");
 
-        console.log("signButton clicked from canvas:", signButton);
-        console.log("initialButton clicked from canvas:", initButton);
-        console.log("dateButton clicked from canvas", dateButton);
+        // console.log("signButton clicked from canvas:", signButton);
+        // console.log("initialButton clicked from canvas:", initButton);
+        // console.log("dateButton clicked from canvas", dateButton);
 
         setSignClicked(signButton === "true");
         setInitClicked(initButton === "true");
@@ -143,17 +143,17 @@ const PDFCanvas = ({pdfUrl}) => {
 
     const deleteObject = (id) => {
         setSignatures(prev => prev.filter(sig => sig.id !== id));
-        console.log(`Deleted object with id: ${id}`);
+        // console.log(`Deleted object with id: ${id}`);
     };
 
     const deleteInitials = (id) => {
         setInitials(prev => prev.filter(sig => sig.id !== id));
-        console.log(`Deleted initials with id: ${id}`);
+        // console.log(`Deleted initials with id: ${id}`);
     };
 
     const deleteDateField = (id) => {
         setDateField(prev => prev.filter(sig => sig.id !== id));
-        console.log(`Deleted date field with id: ${id}`);
+        // console.log(`Deleted date field with id: ${id}`);
     };
 
 

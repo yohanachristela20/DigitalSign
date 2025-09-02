@@ -281,6 +281,8 @@ function ReceiveDocument() {
                 const accessed = logsignRes.data.is_accessed;
                 setIsAccessed(accessed);
 
+                // console.log("IsAccessed:", accessed);
+
                 if (accessed === true) {
                     setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
                     setEmailVerified(true);
@@ -505,7 +507,7 @@ function ReceiveDocument() {
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
             setErrorMsg(error.message);
-             toast.error("Load document error or Expired token.");
+            toast.error("Load document error or Expired token.");
             } finally {
                 setLoading(false);
             }
@@ -1021,10 +1023,21 @@ function ReceiveDocument() {
                 <Container fluid className="px-0">
                         {loading && <Spinner animation="border" variant="primary" />}
                         <div className="sign-in__user d-flex align-items-center justify-content-center pt-5 ">
-                        <Alert variant="warning" hidden={!initial_status.every(status => status === "Decline") && formattedDate > deadline && deadline !== null}>
+                        
+                        {isAccessed === false ? 
+                            (
+                            <Alert variant="danger">
+                                <FaExclamationTriangle className="mb-1 mr-2"/> Access denied, token expired.
+                            </Alert>
+                            ) : (
+                                <>
+                                </>    
+                            )
+                        }
+
+                        <Alert variant="warning" hidden={initial_status.every(status => status !== "Decline")}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
                         </Alert>
-   
                         <Alert variant="warning"
                             hidden={
                                 (token === delegate_token && !is_submitted) ||
@@ -1034,6 +1047,8 @@ function ReceiveDocument() {
                         >
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has delegate this document to other signer.
                         </Alert>
+
+                       
                         {isAccessed !== true && (
                     
                         <Row className="login-user user-element mt-2">
@@ -1235,113 +1250,113 @@ function ReceiveDocument() {
 
                                         return (
                                             <>
-                                                 <Rnd
-                                                        key={`${sig.id_signers}-${sig.id_item}`}
-                                                        position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
-                                                        size={{ width: Number(sig.height), height: Number(sig.width) }}
-                                                        enableResizing={sig.enableResizing}
-                                                        disableDragging={sig.disableDragging}
-                                                        style={{
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                            backgroundColor: bgStyle,
-                                                            border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
-                                                            zIndex: zIndexStyle,     
-                                                            cursor: !is_submitted && isCurrentItem ? canClick && showDelegateAlert ? "default" : "pointer" : "default",
+                                                <Rnd
+                                                    key={`${sig.id_signers}-${sig.id_item}`}
+                                                    position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
+                                                    size={{ width: Number(sig.height), height: Number(sig.width) }}
+                                                    enableResizing={sig.enableResizing}
+                                                    disableDragging={sig.disableDragging}
+                                                    style={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        backgroundColor: bgStyle,
+                                                        border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
+                                                        zIndex: zIndexStyle,     
+                                                        cursor: !is_submitted && isCurrentItem ? canClick && showDelegateAlert ? "default" : "pointer" : "default",
 
 
-                                                        }}
-                                                        hidden={isDecline}
-                                                        onClick={() => {
-                                                            const currentSignerStr = String(current_signer);
-                                                            const isCurrentSigner = 
-                                                            String(sig.id_signers) === currentSignerStr ||
-                                                            delegatedArray.includes(currentSignerStr) ||
-                                                            normalizedArray.includes(currentSignerStr);
-                                                            if (!is_submitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
-                                                                if (isInitialpad && isCurrentItem){
-                                                                    handleInitialClick(sig.id_item, sig.show, sig.editable);
-                                                                } else if (isSignpad && isCurrentItem){
-                                                                    handleSignatureClick(sig.id_item, sig.editable, sig.show);
-                                                                }
+                                                    }}
+                                                    hidden={isDecline}
+                                                    onClick={() => {
+                                                        const currentSignerStr = String(current_signer);
+                                                        const isCurrentSigner = 
+                                                        String(sig.id_signers) === currentSignerStr ||
+                                                        delegatedArray.includes(currentSignerStr) ||
+                                                        normalizedArray.includes(currentSignerStr);
+                                                        if (!is_submitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
+                                                            if (isInitialpad && isCurrentItem){
+                                                                handleInitialClick(sig.id_item, sig.show, sig.editable);
+                                                            } else if (isSignpad && isCurrentItem){
+                                                                handleSignatureClick(sig.id_item, sig.editable, sig.show);
                                                             }
-                                                        }}
-                                                        disabled ={isSubmitted === true}
+                                                        }
+                                                    }}
+                                                    disabled ={isSubmitted === true}
 
-                                                    >
-                                                        {console.log("isDELEGATED:", is_delegated)}
+                                                >
+                                                    {console.log("isDELEGATED:", is_delegated)}
 
-                                                        {!isSubmitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? (
-                                                            <OverlayTrigger
-                                                                placement="bottom"
-                                                                overlay={<Tooltip id="initialCompleteTooltip" hidden={!isCurrentItem}>Click to change your sign.</Tooltip>}
-                                                            >
-                                                                {({ ref, ...triggerHandler }) => (
-                                                                <>
-                                                                    <div {...triggerHandler} ref={ref} style={{width: "100%", height: "100%" }}>
-                                                                        {!message && (isInitialpad && !isCompleted) ? (
-                                                                           <div
-                                                                                style={{
-                                                                                    width: "25%",
-                                                                                    height: "25%",
-                                                                                    top: "50%",
-                                                                                    left: "50%",
-                                                                                    position: "absolute",
-                                                                                    transform: "translate(-50%, -50%)",
-                                                                                }}
-                                                                            >
-                                                                                {content}
-                                                                            </div>
-                                                                        ) : message && (isInitialpad && !isCompleted) ? (
-                                                                           <div
-                                                                                style={{
-                                                                                    // width: "25%",
-                                                                                    // height: "25%",
-                                                                                    top: "50%",
-                                                                                    left: "50%",
-                                                                                    position: "absolute",
-                                                                                    transform: "translate(-50%, -50%)",
-                                                                                }}
-                                                                            >
-                                                                                {content}
-                                                                            </div>
-                                                                        ) : (
-                                                                            <div
-                                                                                style={{
-                                                                                    width: "100%",
-                                                                                    height: "100%",
-                                                                                    top: "50%",
-                                                                                    left: "50%",
-                                                                                    position: "absolute",
-                                                                                    transform: "translate(-50%, -50%)",
-                                                                                }}
-                                                                            >
-                                                                                {content}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-
-                                                                    {isCompleted && isDatefield ? (
-                                                                        currentDate 
-                                                                    ) : (
-                                                                        isDatefield ? <FaCalendar style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)" }} /> : <></>
-                                                                    )}
-                                                                </>
-                                                                )}
-                                                            </OverlayTrigger>
-                                                            ) : (
+                                                    {!isSubmitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? (
+                                                        <OverlayTrigger
+                                                            placement="bottom"
+                                                            overlay={<Tooltip id="initialCompleteTooltip" hidden={!isCurrentItem}>Click to change your sign.</Tooltip>}
+                                                        >
+                                                            {({ ref, ...triggerHandler }) => (
                                                             <>
-                                                               {content}
+                                                                <div {...triggerHandler} ref={ref} style={{width: "100%", height: "100%" }}>
+                                                                    {!message && (isInitialpad && !isCompleted) ? (
+                                                                        <div
+                                                                            style={{
+                                                                                width: "25%",
+                                                                                height: "25%",
+                                                                                top: "50%",
+                                                                                left: "50%",
+                                                                                position: "absolute",
+                                                                                transform: "translate(-50%, -50%)",
+                                                                            }}
+                                                                        >
+                                                                            {content}
+                                                                        </div>
+                                                                    ) : message && (isInitialpad && !isCompleted) ? (
+                                                                        <div
+                                                                            style={{
+                                                                                // width: "25%",
+                                                                                // height: "25%",
+                                                                                top: "50%",
+                                                                                left: "50%",
+                                                                                position: "absolute",
+                                                                                transform: "translate(-50%, -50%)",
+                                                                            }}
+                                                                        >
+                                                                            {content}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div
+                                                                            style={{
+                                                                                width: "100%",
+                                                                                height: "100%",
+                                                                                top: "50%",
+                                                                                left: "50%",
+                                                                                position: "absolute",
+                                                                                transform: "translate(-50%, -50%)",
+                                                                            }}
+                                                                        >
+                                                                            {content}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
 
                                                                 {isCompleted && isDatefield ? (
                                                                     currentDate 
                                                                 ) : (
-                                                                    isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
+                                                                    isDatefield ? <FaCalendar style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)" }} /> : <></>
                                                                 )}
                                                             </>
-                                                        )}
-                                                    </Rnd>
+                                                            )}
+                                                        </OverlayTrigger>
+                                                        ) : (
+                                                        <>
+                                                            {content}
+
+                                                            {isCompleted && isDatefield ? (
+                                                                currentDate 
+                                                            ) : (
+                                                                isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </Rnd>
                                             </>
                                         );
                                     })}
