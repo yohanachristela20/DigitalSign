@@ -20,6 +20,7 @@ import { PDFDocument } from "pdf-lib";
 
 // react-bootstrap components
 import {Button, Container, Row, Col, Card, Table, Spinner, Badge} from "react-bootstrap";
+import { saveAs } from "file-saver";
 function Document() {
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
@@ -63,6 +64,7 @@ function Document() {
   const formattedDate = `${currentYear}-${currentMonth}-${todayDate}`;
 
   const pdfContainerRef = useRef(null);
+  const canvasRef = useRef(null);
 
   const getDocument = async (selectedCategory) =>{
     try {
@@ -75,7 +77,7 @@ function Document() {
           Authorization: `Bearer ${token}`,
       },
       });
-      setDocument(response.data);
+      setDocument(response.data || []);
     } catch (error) {
       console.error("Error fetching data:", error.message); 
     } finally {
@@ -397,248 +399,74 @@ function Document() {
   };
 
 
-  // const downloadDoc = async (id_dokumen, ref, logSigns = []) => {
+  // const downloadDoc = async (id_dokumen, ref, logSigns = []) => { 
   //   try {
   //     const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
   //     const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
-
   //     const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
   //     const pages = pdfDoc.getPages();
-
-  //     for (let i = 0; i < logSigns.length; i++) {
-  //       const sign = logSigns[i];
-  //       if (sign?.is_submitted && sign?.sign_base64) {
-  //         let cleanBase64 = sign.sign_base64.replace(/^data:image\/\w+;base64,/, "");
-
-  //         const pngImage = await pdfDoc.embedPng(cleanBase64);
-
-  //         const { width, height } = pages[0].getSize();
-  //         const signWidth = 120;
-  //         const signHeight = 60;
-
-  //         const x = width - signWidth - 40;
-  //         const y = 40 + (i * 80); 
-
-  //         pages[0].drawImage(pngImage, {
-  //           x,
-  //           y,
-  //           width: signWidth,
-  //           height: signHeight,
-  //         });
-  //       }
-  //     }
-
-  //     const pdfBytes = await pdfDoc.save();
-  //     const blob = new Blob([pdfBytes], { type: "application/pdf" });
-
-  //     const a = window.document.createElement("a");
-  //     a.href = URL.createObjectURL(blob);
-  //     a.download = `${id_dokumen}.pdf`;
-  //     window.document.body.appendChild(a);
-  //     a.click();
-  //     a.remove();
-  //     window.URL.revokeObjectURL(blob);
-  //   } catch (error) {
-  //     console.error("Downloading error:", error.message);
-  //   }
-  // };
-
-
-  //last benar
-  // const downloadDoc = async (id_dokumen, ref, logSigns = []) => {
-  //   try {
-  //     const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
-  //     const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
-
-  //     const pdfDoc = await PDFDocument.load(existingPdfBytes);
-  //     const pages = pdfDoc.getPages();
-
-  //     for (let i = 0; i < logSigns.length; i++) {
-  //       const sign = logSigns[i];
-  //       console.log("ID Dokumen:", id_dokumen, "ID Signers:", sign.id_signers, "ID Item:", sign.id_item);
-
-  //       if (sign?.is_submitted && sign?.sign_base64) {
-  //         const fieldRes = await axios.get(
+  //     const scale = 1.5;
+     
+  //     for (const sign of logSigns) {
+  //       if (sign.status === "Completed" && sign.is_submitted && sign.sign_base64){
+  //         const axisRes = await fetch(
   //           `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
-  //         );
+  //         ).then(res => res.json());
 
-  //         const fieldData = fieldRes.data?.[0]?.ItemField;
-  //         if (!fieldData) continue;
+  //         const field = axisRes[0]?.ItemField;
+  //         if (!field) continue;
 
-  //         let { x_axis, y_axis, width, height} = fieldData;
-  //         console.log("x_axis:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
+  //         let {x_axis, y_axis, width, height, page_num} = field;
 
-  //         let cleanBase64 = sign.sign_base64.replace(/^data:image\/\w+;base64,/, "");
-  //         // const uint8Array = Uint8Array.from(atob(cleanBase64), c => c.charCodeAt(0));
-  //         const pngImage = await pdfDoc.embedPng(cleanBase64);
+  //         x_axis = Number(x_axis) / scale;
+  //         y_axis = Number(y_axis) / scale;
+  //         width = Number(height) / scale;
+  //         height = Number(width) / scale;
 
-  //         const { height: pageHeight } = pages[0].getSize();
-  //         // const x = Number(x_axis);
-  //         // const y = pageHeight - Number(y_axis) - Number(height);
+  //         let base64Url = sign.sign_base64;
+  //         if (!base64Url.startsWith("data:image")){
+  //           base64Url = `data:image/png;base64,${base64Url}`;
+  //         } 
 
-  //         // const { width, height } = pages[0].getSize();
-  
+  //         console.log("base64Url:", base64Url);
 
-  //         // const page = pages[0];
-  //         // const x = Number(x_axis) || 0;
-  //         // const y = pageHeight - Number(y_axis) - Number(height); 
+  //         const pngImage = await pdfDoc.embedPng(base64Url);
 
-  //         // pages[0].drawImage(pngImage, {
-  //         //   x,
-  //         //   y,
-  //         //   width: Number(width),
-  //         //   height: Number(height),
-  //         // });
+  //         console.log("pngImage:", pngImage);
 
-  //         const x = x_axis - Number(x_axis);
-  //         const y = y_axis - Number(y_axis); 
-
-  //         pages[0].drawImage(pngImage, {
-  //           x,
-  //           y,
-  //           width: Number(height),
-  //           height: Number(width),
-  //         });
-  //       }
-  //     }
-
-  //     const pdfBytes = await pdfDoc.save();
-  //     const blob = new Blob([pdfBytes], { type: "application/pdf" });
-
-  //     const a = window.document.createElement("a");
-  //     a.href = URL.createObjectURL(blob);
-  //     a.download = `${id_dokumen}.pdf`;
-  //     window.document.body.appendChild(a);
-  //     a.click();
-  //     a.remove();
-  //     window.URL.revokeObjectURL(blob);
-  //   } catch (error) {
-  //     console.error("Downloading error:", error.message);
-  //   }
-  // };
+  //         console.log("Pages length:", pages.length);
 
 
-  // const downloadDoc = async (id_dokumen, ref, logSigns = []) => {
-  //   try {
-  //     const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
-  //     const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+  //         const targetPageIndex = (page_num ? Number(page_num) : 1) - 1;          
+  //         console.log("targetPageIndex:", targetPageIndex);
 
-  //     const pdfDoc = await PDFDocument.load(existingPdfBytes);
-  //     const pages = pdfDoc.getPages();
-  //     const firstPage = pages[0];
-  //     const { height: pageHeight } = firstPage.getSize();
-
-  //     for (let i = 0; i < logSigns.length; i++) {
-  //       const sign = logSigns[i];
-  //       console.log("ID Dokumen:", id_dokumen, "ID Signers:", sign.id_signers, "ID Item:", sign.id_item);
-
-  //       if (sign?.is_submitted && sign?.sign_base64) {
-  //         const fieldRes = await axios.get(
-  //           `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
-  //         );
-
-  //         const fieldData = fieldRes.data.filter(item => item.ItemField);
-  //         if (!fieldData.length) continue;
           
-  //         const urutanMapping = {};
-  //         const submittedMapping = {};
-  //         const delegateMapping = {};
-  //         const allStatus = [];
-  //         const localSignatureFields = [];
+          
+  //         if (targetPageIndex >= 0 && targetPageIndex < pages.length){
 
+  //           const page = pages[targetPageIndex];
+  //           const pageHeight = page.getHeight();
 
-  //         for (let idx = 0; idx < fieldData.length; idx++) {
-  //             const item = fieldData[idx];
-  //             const{
-  //                 x_axis, 
-  //                 y_axis, 
-  //                 width, 
-  //                 height, 
-  //                 jenis_item, 
-  //                 id_item: fieldItemId,
-  //             } = item.ItemField;
-
-  //             const status = item.status || "Pending";
-  //             const urutan = item.urutan;
-  //             const is_submitted = item.is_submitted;
-
-  //             if (!urutanMapping[fieldItemId]) {
-  //                 urutanMapping[fieldItemId] = urutan;
-  //             }
-
-  //             if (!submittedMapping[sign.id_signers]) {
-  //                 submittedMapping[sign.id_signers] = is_submitted;
-  //             }
-
-  //             const fieldObj = {
-  //                 id: `field-${sign.id_signers}-${idx}`,
-  //                 x_axis,
-  //                 y_axis,
-  //                 width,
-  //                 height, 
-  //                 jenis_item,
-  //                 pageScale: 1,
-  //                 enableResizing: false,
-  //                 disableDragging: true,
-  //                 id_item: fieldItemId, 
-  //                 status,
-  //                 urutan, 
-  //                 is_submitted, 
-  //                 show,
-  //                 editable,
-  //                 id_signers: sign.id_signers, 
-  //                 is_delegated,
-  //                 delegated_signers,
-  //                 // token
-  //             }; 
-
-  //             allStatus.push({id_item: fieldItemId, status});
-
-  //             // if (jenis_item === "Signpad") {
-  //             //     localSignatureFields.push(fieldObj);
-  //             // } else if (jenis_item === "Initialpad") {
-  //             //     localInitialFields.push(fieldObj);
-  //             // } else if (jenis_item === "Date") {
-  //             //     localDateFields.push(fieldObj);
-  //             // }
-
-  //             console.log("x_axis:", x_axis, "y_axis:", y_axis, "width:", width, "height:", height);
-
-  //             let cleanBase64 = sign.sign_base64.replace(/^data:image\/\w+;base64,/, "");
-  //             const pngImage = await pdfDoc.embedPng(cleanBase64);
-
-  //             // const x = Number(x_axis);
-  //             // const y = pageHeight - Number(y_axis);
-
-            
-
-  //             pages[0].drawImage(pngImage, {
-  //               x : Number(x_axis),
-  //               y: Number(y_axis),
-  //               width: Number(height),
-  //               height: Number(width),
-  //             });
-
-  //             console.log(
-  //               `Drawing sign for item ${fieldItemId} => x:${x_axis}, y:${y_axis}, w:${width}, h:${height}`
-  //             );
+  //           const yPos = pageHeight - y_axis - height;
+  
+  //           page.drawImage(pngImage, {
+  //             x: x_axis,
+  //             y: yPos,
+  //             width,
+  //             height,
+  //           });
   //         }
 
-  //         // let { x_axis, y_axis, width, height } = fieldData;
           
   //       }
   //     }
-
+      
   //     const pdfBytes = await pdfDoc.save();
   //     const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      
+  //     saveAs(blob, `signed_${id_dokumen}.pdf`);
 
-  //     const a = window.document.createElement("a");
-  //     a.href = URL.createObjectURL(blob);
-  //     a.download = `${id_dokumen}.pdf`;
-  //     window.document.body.appendChild(a);
-  //     a.click();
-  //     a.remove();
-  //     window.URL.revokeObjectURL(a.href);
   //   } catch (error) {
   //     console.error("Downloading error:", error.message);
   //   }
@@ -649,82 +477,86 @@ function Document() {
     try {
       const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
       const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
-
       const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
       const pages = pdfDoc.getPages();
-
-      for (let i = 0; i < logSigns.length; i++) {
-        const sign = logSigns[i];
-        if (sign?.is_submitted && sign?.sign_base64) {
-          const fieldRes = await axios.get(
+      const scale = 1.5;
+     
+      for (const sign of logSigns) {
+        if (sign.status === "Completed" && sign.is_submitted && sign.sign_base64){
+          const axisRes = await fetch(
             `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
-          );
-          const fieldData = fieldRes.data.filter(item => item.ItemField);
-          if (!fieldData.length) continue;
+          ).then(res => res.json());
 
-          let cleanBase64 = sign.sign_base64.startsWith("data:image")
-          ? sign.sign_base64.replace(/^data:image\/\w+;base64,/, "")
-          : sign.sign_base64;
+          const field = axisRes[0]?.ItemField;
+          if (!field) continue;
 
-          console.log("cleanBase64:", cleanBase64);
-          const pngImage = await pdfDoc.embedPng(cleanBase64);
+          let {x_axis, y_axis, width, height} = field;
 
-          for (let idx = 0; idx < fieldData.length; idx++) {
-            const item = fieldData[idx];
-            const { 
-              x_axis, 
-              y_axis, 
-              width, 
-              height, 
-              id_item: fieldItemId 
-            } = item.ItemField;
+          x_axis = Number(x_axis) / scale;
+          y_axis = Number(y_axis) / scale;
+          width = Number(height) / scale;
+          height = Number(width) / scale;
 
-            const page = pages[0];
-            const { height: pageHeight } = page.getSize();
+          let base64Url = sign.sign_base64;
+          if (!base64Url.startsWith("data:image")){
+            base64Url = `data:image/png;base64,${base64Url}`;
+          } 
 
-            const w = Number(width) || 0;
-            const h = (Number(height)/2) || 0;
-            // const x = pageHeight - Number(x_axis) - ( w - h) || 0;
-            // const y = pageHeight - Number(y_axis) - ( w - h ) || 0;
+          console.log("base64Url:", base64Url);
 
-            const x = pageHeight - ((Number(x_axis) - w)/ 2);
-            const y = pageHeight - (Number(y_axis) - (h/2));
+          const pngImage = await pdfDoc.embedPng(base64Url);
 
-            // const x = pageHeight - ((Number(x_axis) + (h+w)/2)*2);
-            // const y = pageHeight - (Number(y_axis) - (h/2));
+          console.log("pngImage:", pngImage);
 
-            pages[0].drawImage(pngImage, {
-              x,
-              y,
-              width: w,
-              height: h,
-            });
+          console.log("Pages length:", pages.length);
 
-            console.log(
-              `Drawing sign for item ${fieldItemId} => x:${x}, y:${y}, w:${w}, h:${h}`
-            );
+          let targetPageIndex = 0;  
+          
+          let remainingY = y_axis;
+          for (let i = 0; i < pages.length; i++) {
+            const pageHeight = pages[i].getHeight();
+
+            if (remainingY <= pageHeight){
+              targetPageIndex = i;
+              break;
+            }
+            remainingY -= pageHeight;
           }
-        }
-      }
 
+          const page = pages[targetPageIndex];
+          const pageHeight = page.getHeight();
+
+          const yPos = pageHeight - remainingY - height + 29;
+ 
+          console.log("Placing sign at:", {
+            targetPageIndex,
+            x_axis,
+            y_axis,
+            remainingY,
+            pageHeight,
+            finalY: yPos
+          });
+
+          page.drawImage(pngImage, {
+            x: x_axis,
+            y: yPos,
+            width,
+            height,
+          });
+          }
+
+      }
+      
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      
+      saveAs(blob, `signed_${id_dokumen}.pdf`);
 
-      const a = window.document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${id_dokumen}.pdf`;
-      window.document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(a.href);
     } catch (error) {
       console.error("Downloading error:", error.message);
     }
   };
-
-
-
-
 
   const handleUpload = () => {
     history.push("/admin/upload-document");
@@ -833,30 +665,10 @@ function Document() {
                       type="button"
                       onClick={() => sendReminder(document.id_dokumen)}
                       className="text-primary btn-action"
-                      hidden={getStatusById(document.id_dokumen) !== "Pending" || formattedDate > getDeadlineById(document.id_dokumen)}
+                      hidden={getStatusById(document.id_dokumen) !== "Pending" && formattedDate > getDeadlineById(document.id_dokumen)}
                     />
                   </button>
                   </td>
-                  {/* <td className="text-center px-0">
-                    <button
-                      style={{background:"transparent", border:"none"}} 
-                      disabled={document.user_active === true}
-                      >
-                      <FaDownload 
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (getStatusById(document.id_dokumen) === "Completed") {
-                            downloadDoc(document.id_dokumen, pdfContainerRef, document.sign_base64);
-                          } else {
-                            plainDoc(document.id_dokumen);
-                          }
-                        }}
-                        className="text-success btn-action"
-                        // hidden={getStatusById(document.id_dokumen) !== "Pending" || formattedDate > getDeadlineById(document.id_dokumen)}
-                      />
-                    </button>
-                  </td> */}
                   <td className="text-center px-0">
                     <button
                       style={{ background: "transparent", border: "none" }}
@@ -880,47 +692,6 @@ function Document() {
                         className="text-success btn-action"
                       />
                     </button>
-
-                    <div
-                      ref={getRef(document.id_dokumen)}
-                      style={{
-                        position: "absolute",
-                        // left: `${sign.x_axis}`,
-                        // top: y_axis,
-                        // width: "800px",
-                        background: "#fff",
-                        visibility: "hidden",
-                        zIndex: -1
-                      }}
-                    >
-                      <PDFCanvas pdfUrl={`http://localhost:5000/pdf-document/${document.id_dokumen}`} />
-
-                      {document.LogSigns?.map((sign) => {
-                        if (!sign.is_submitted || !sign.sign_base64) return null;
-                        return (
-                          <img
-                            key={sign.id_logsign}
-                            src={
-                              sign.sign_base64.startsWith("data:image")
-                                ? sign.sign_base64
-                                : `data:image/png;base64,${sign.sign_base64}`
-                            }
-                            alt="Signature"
-                            style={{
-                              position: "absolute",
-                              left: `${sign.x_axis}px`,   
-                              top: `${sign.y_axis}px`,
-                              width: `${sign.width}px`,
-                              height: `${sign.height}px`,
-                              pointerEvents: "none",
-                            }}
-                          />
-                        );
-                      })}
-
-
-                    </div>
-
                   </td>
 
                 </tr>

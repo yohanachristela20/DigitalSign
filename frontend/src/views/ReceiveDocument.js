@@ -10,6 +10,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/$
 
 import { Container, Spinner, Alert, Row, Col, Card, Navbar, Nav, Dropdown, Button, Modal, OverlayTrigger, Tooltip, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
+import { PDFDocument } from "pdf-lib";
 
 import SignatureModal from 'components/ModalForm/SignatureModal.js';
 import InitialModal from "components/ModalForm/InitialModal.js";
@@ -25,6 +26,8 @@ import "../assets/scss/lbd/_login.scss";
 
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+
+import { saveAs } from "file-saver";
 
 function ReceiveDocument() {
     const [pdfUrl, setPdfUrl] = useState(null);
@@ -129,6 +132,7 @@ function ReceiveDocument() {
     const [main_token, setMainToken] = useState("");
     const [delegate_token, setDelegateToken] = useState("");
     const [deadline, setDeadline] = useState("");
+    const [documents, setDocuments] = useState([]); 
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -147,9 +151,11 @@ function ReceiveDocument() {
     console.log("FORMATTED DATE:", formattedDate);
     
     const pdfContainerRef = useRef(null);
+    const pdfRefs = useRef({});
 
     // const isdelegated = localStorage.getItem("is_delegated");
     const delegatedDoc = localStorage.getItem("id_dokumen");
+    
 
     // console.log("isDelegated from modal:", isdelegated);
     // console.log("delegatedDoc:", delegatedDoc);
@@ -183,6 +189,31 @@ function ReceiveDocument() {
         width: "25%",
         height: "25%"
     }
+
+    const selectedCategory = location.state?.selectedCategory;
+
+    const getDocument = async (selectedCategory) =>{
+        try {
+        const url = selectedCategory 
+        ? `http://localhost:5000/document/category/${selectedCategory}`
+        : `http://localhost:5000/document`;
+
+        const response = await axios.get(url, {
+            headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        });
+        setDocuments(response.data || []);
+        } catch (error) {
+        console.error("Error fetching data:", error.message); 
+        } finally {
+        setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        getDocument(selectedCategory);
+    }, [selectedCategory]);
 
     const handleSignatureClick = (id_item, show, editable) => {
         const signer = signatures.find(i => i.id_item === id_item);
@@ -885,28 +916,122 @@ function ReceiveDocument() {
         }
     }
 
-    const downloadPDF = async (id_dokumen) => {
-        try {
-            const input = pdfContainerRef.current;
-            if (!input) throw new Error("PDF container not found.");
+    // const downloadPDF = async (id_dokumen) => {
+    //     try {
+    //         const input = pdfContainerRef.current;
+    //         if (!input) throw new Error("PDF container not found.");
 
-            const canvas = await html2canvas(input, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
+    //         const canvas = await html2canvas(input, { scale: 2 });
+    //         const imgData = canvas.toDataURL('image/png');
 
-            const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
+    //         const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
 
-            const pdf = new jsPDF({
-                orientation: orientation,
-                unit: 'px',
-                format: [canvas.width, canvas.height]
-            });
+    //         const pdf = new jsPDF({
+    //             orientation: orientation,
+    //             unit: 'px',
+    //             format: [canvas.width, canvas.height]
+    //         });
 
-            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-            pdf.save(`${id_dokumen}.pdf`);
-        } catch (error) {
-            console.error("Downloading error:", error.message);
+    //         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+    //         pdf.save(`${id_dokumen}.pdf`);
+    //     } catch (error) {
+    //         console.error("Downloading error:", error.message);
+    //     }
+    // }
+
+    const getRef = (id) => {
+        if (!pdfRefs.current[id]) {
+            pdfRefs.current[id] = React.createRef();
         }
+        return pdfRefs.current[id];
     }
+
+    const downloadPDF = async (id_dokumen, ref, LOGSIGN) => { 
+
+        console.log("logSigns downloadPDF:", LOGSIGN);
+        try {
+          const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
+          const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+          const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    
+          const pages = pdfDoc.getPages();
+          const scale = 1.5;
+         
+          for (const sign of LOGSIGN) {
+            console.log("sign_base64:", sign.sign_base64);
+            if (sign.status === "Completed" && sign.is_submitted && sign.sign_base64){
+              const axisRes = await fetch(
+                `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
+              ).then(res => res.json());
+    
+              const field = axisRes[0]?.ItemField;
+              if (!field) continue;
+    
+              let {x_axis, y_axis, width, height} = field;
+    
+              x_axis = Number(x_axis) / scale;
+              y_axis = Number(y_axis) / scale;
+              width = Number(height) / scale;
+              height = Number(width) / scale;
+    
+              let base64Url = sign.sign_base64;
+              if (!base64Url.startsWith("data:image")){
+                base64Url = `data:image/png;base64,${base64Url}`;
+              } 
+    
+              console.log("base64Url:", base64Url);
+    
+              const pngImage = await pdfDoc.embedPng(base64Url);
+    
+              console.log("pngImage:", pngImage);
+    
+              console.log("Pages length:", pages.length);
+    
+              let targetPageIndex = 0;  
+              
+              let remainingY = y_axis;
+              for (let i = 0; i < pages.length; i++) {
+                const pageHeight = pages[i].getHeight();
+    
+                if (remainingY <= pageHeight){
+                  targetPageIndex = i;
+                  break;
+                }
+                remainingY -= pageHeight;
+              }
+    
+              const page = pages[targetPageIndex];
+              const pageHeight = page.getHeight();
+              const yPos = pageHeight - remainingY - height + 29;
+     
+              console.log("Placing sign at:", {
+                targetPageIndex,
+                x_axis,
+                y_axis,
+                remainingY,
+                pageHeight,
+                finalY: yPos
+              });
+    
+              page.drawImage(pngImage, {
+                x: x_axis,
+                y: yPos,
+                width,
+                height,
+              });
+              }
+    
+          }
+          
+          const pdfBytes = await pdfDoc.save();
+          const blob = new Blob([pdfBytes], { type: "application/pdf" });
+          
+          saveAs(blob, `signed_${id_dokumen}.pdf`);
+    
+        } catch (error) {
+          console.error("Downloading error:", error.message);
+        }
+    };
 
 
     console.log("TOKEN:", token, "vs", "MAIN TOKEN:", main_token, "vs", "DELEGATE TOKEN:", delegate_token );
@@ -996,9 +1121,25 @@ function ReceiveDocument() {
                         <div className="divider"></div>
                         <Dropdown.Item
                             href="#"
-                            onClick={(e) => {
-                            e.preventDefault();
-                            is_submitted ? downloadPDF(id_dokumen) : plainPDF(id_dokumen); 
+                            onClick={async (e) => {
+                                e.preventDefault();
+
+                                const currentDoc = documents.find(doc => doc.id_dokumen === id_dokumen); 
+                                if (!currentDoc) return;
+                                const ref = getRef(id_dokumen);
+                                const LOGSIGN = JSON.parse(JSON.stringify(currentDoc.LogSigns || []));
+                                
+                                // console.log("logSigns:", LOGSIGN);
+                                LOGSIGN.forEach((log, i) => {
+                                    console.log(`LogSigns[${i}].sign_base64:`, log.sign_base64);
+
+                                    log.is_submitted 
+                                    ? downloadPDF(id_dokumen, ref, LOGSIGN) 
+                                    : plainPDF(id_dokumen); 
+                                });
+
+                               
+
                             }}
                         >   Download
                         </Dropdown.Item>
@@ -1026,7 +1167,7 @@ function ReceiveDocument() {
                         
                         {isAccessed === false ? 
                             (
-                            <Alert variant="danger">
+                            <Alert variant="danger" hidden={initial_status.every(status => status !== "Expired")}>
                                 <FaExclamationTriangle className="mb-1 mr-2"/> Access denied, token expired.
                             </Alert>
                             ) : (

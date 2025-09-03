@@ -66,7 +66,7 @@ export const getDocumentByCategory = async(req, res) => {
                 {
                   model: LogSign, 
                   as: "LogSigns", 
-                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted"],
+                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted", "id_signers", "id_item"],
                 }
             ],
         });

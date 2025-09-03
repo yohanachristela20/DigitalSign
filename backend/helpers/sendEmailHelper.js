@@ -83,7 +83,7 @@ const sendEmailToSigner = async (log, subject = [], message = [], token = null) 
       from: process.env.EMAIL_ADMIN,
       to: receiverEmail,
       subject: subject.length ? subject.join(', ') : `Reminder to sign document ${log.DocName?.nama_dokumen || ""}`,
-      text: `${receiverName || "Signer"}, Please sign a document ${log.DocName?.nama_dokumen } from ${senderName || "Sender"}.\n
+      text: `${receiverName || "Signer"}, Please sign a document ${log.DocName?.nama_dokumen || log.id_dokumen } from ${senderName || "Sender"}.\n
           ${ message.length ? message.join(', ') : "Please review and check the document before signing it."}\n
           Click link to sign the document ${signLink}\n\n
           Please do not share this email and the link attached with others.\n
