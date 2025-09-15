@@ -523,12 +523,12 @@ function Document() {
           const field = axisRes[0]?.ItemField;
           if (!field) continue;
 
-          let {x_axis, y_axis, width, height} = field;
+          let {x_axis, y_axis, width, height, jenis_item} = field;
 
           x_axis = Number(x_axis) / scale;
-          y_axis = Number(y_axis) / scale;
+          y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale - 10 : Number(y_axis) / scale + 10;
           width = Number(height) / scale;
-          height = Number(width) / scale;
+          height = Number(width) / scale - 20;
 
           let base64Url = sign.sign_base64;
           if (!base64Url.startsWith("data:image")){

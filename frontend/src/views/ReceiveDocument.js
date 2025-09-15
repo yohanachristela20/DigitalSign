@@ -955,11 +955,11 @@ function ReceiveDocument() {
                     const field = axisRes[0]?.ItemField;
                     if (!field) continue;
 
-                    let { x_axis, y_axis, width, height } = field;
+                    let { x_axis, y_axis, width, height, jenis_item } = field;
                     x_axis = Number(x_axis) / scale;
-                    y_axis = Number(y_axis) / scale;
+                    y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale - 10 : Number(y_axis) / scale + 10;
                     width = Number(height) / scale;
-                    height = Number(width) / scale;
+                    height = Number(width) / scale - 20;
 
                     let base64Url = sign.sign_base64;
                     if (!base64Url.startsWith("data:image")) {
@@ -1192,7 +1192,9 @@ function ReceiveDocument() {
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, current_signer)}
                         disabled={isFinishDisabled}
-                        hidden={pendingCount == 0 && !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
+                        // hidden={pendingCount == 0 && !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
+                        hidden={pendingCount == 0 && ((is_delegated && is_submitted && delegate_token !== null) || (token !== delegate_token) && (delegatedDoc === id_dokumen)) || (is_submitted && !is_delegated === true && (delegatedDoc !== id_dokumen))}
+
                     >
                         Finish
                     </Button>
@@ -1202,7 +1204,7 @@ function ReceiveDocument() {
                         className="navigate-btn mt-3 fs-6"
                         type="button"
                         onClick={handleJumpTo}
-                        hidden={pendingCount == 0}
+                        hidden={pendingCount == 0 || !is_submitted && ((!is_delegated && delegate_token !== null) && (delegatedDoc === id_dokumen)) || initial_status.every(status => status === "Decline" || status === "Completed")}
                     >
                         Jump to ({pendingCount})
                     </Button>
@@ -1211,13 +1213,13 @@ function ReceiveDocument() {
             </Navbar>
 
             <div>
-                <Container fluid className="px-0">
+                <Container fluid className="px-0 center-object">
                         {loading && <Spinner animation="border" variant="primary" />}
                         <div className="sign-in__user d-flex align-items-center justify-content-center">
                         
                         {isAccessed === false ? 
                             (
-                            <Alert variant="danger" hidden={initial_status.every(status => status !== "Expired")}>
+                            <Alert variant="danger" style={{marginTop: "-1030px"}} hidden={initial_status.every(status => status !== "Expired")}>
                                 <FaExclamationTriangle className="mb-1 mr-2"/> Access denied, token expired.
                             </Alert>
                             ) : (
@@ -1226,10 +1228,10 @@ function ReceiveDocument() {
                             )
                         }
 
-                        <Alert variant="warning" hidden={initial_status.every(status => status !== "Decline")}>
+                        <Alert variant="danger" style={{marginTop: "-1030px"}} hidden={initial_status.every(status => status !== "Decline")}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
                         </Alert>
-                        <Alert variant="warning"
+                        <Alert variant="warning" style={{marginTop: "-1030px"}}
                             hidden={
                                 (token === delegate_token && !is_submitted) ||
                                 (is_delegated === true && is_submitted) ||
@@ -1242,7 +1244,7 @@ function ReceiveDocument() {
                        
                         {isAccessed !== true && (
                     
-                        <Row className="login-user user-element">
+                        <Row className="login-user user-element" style={{marginTop: "-2px"}}>
                             <Card className="login-card shadow mb-0">
                                 <>{errorMsg && <Alert variant="danger" className="m-4">{errorMsg}</Alert>}</>
                                 <div className="d-flex justify-content-center">
@@ -1292,7 +1294,7 @@ function ReceiveDocument() {
                         )}
                         </div>
                         {isAccessed === true && pdfUrl && (
-                            <div className="center-object">
+                            <div>
                                 <div className="vertical-center" >
                                     <PDFCanvas pdfUrl={pdfUrl} signatures={signatures} initials={initials} dateField={dateField} />                           
 

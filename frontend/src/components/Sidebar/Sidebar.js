@@ -118,10 +118,7 @@ const folders = [
   };
 
   return (
-    <div className="sidebar" style={{
-      width: sidebarWidth,
-      transition: "width 0.3s",
-    }}>
+    <div className="sidebar">
       <CDBSidebarContent>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <label className="toggle-button">

@@ -623,7 +623,7 @@ const PDFCanvas = ({pdfUrl}) => {
 
                     const canvas = document.createElement('canvas');
                     const context = canvas.getContext('2d');
-
+                    
                     canvas.width = viewport.width;
                     canvas.height = viewport.height;
 
@@ -633,6 +633,14 @@ const PDFCanvas = ({pdfUrl}) => {
                     };
 
                     await page.render(renderContext).promise;
+
+                    context.font = '14px Arial';
+                    // context.fillStyle = 'black';
+                    context.textAlign = 'right'; 
+                    context.fillText(`Page ${pageNum} of ${pdf.numPages}`, canvas.width - 20, canvas.height - 10);
+
+                    // console.log("pageNum:", pageNum, "of:", pdf.numPages);
+
                     renderedCanvases.push(canvas.toDataURL());
                 }
                 setCanvases(renderedCanvases);
