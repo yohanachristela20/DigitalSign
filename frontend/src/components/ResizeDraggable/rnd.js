@@ -4,13 +4,14 @@ import { FaSignature } from 'react-icons/fa';
 import "../../assets/scss/lbd/_rnd.scss";
 import SignatureModal from 'components/ModalForm/SignatureModal.js';
 
-function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=50, width=50, scale=1, onDelete}) {
+function ResizableDragable ({onChange, x_axis, y_axis, height=200, width=150, scale=1, onDelete, page}) {
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
 
-    const [position, setPosition] = useState({ x: 0, y: 0 });
-    const [size, setSize] = useState({ width: 50, height: 50 });
+    const [position, setPosition] = useState({ x: x_axis, y: y_axis });
+    const [size, setSize] = useState({ width: 150, height: 200 });
     const [clickCount, setClickCount] = useState(0);
     const timeRef = useRef(null);
+    const [pg, setPage] = useState({page});
 
     const [signClicked, setSignClicked] = useState(false);
     const [initClicked, setInitClicked] = useState(false);
@@ -80,6 +81,7 @@ function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=50, width=50, 
             width: height * scale,
             height: width * scale
         });
+        setPage({page});
 
         if (signClicked === true) {
             setJenisItem("Signpad");
@@ -87,13 +89,14 @@ function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=50, width=50, 
             setJenisItem("Initialpad");
         }
 
-    }, [x_axis, y_axis, height, width, scale, jenis_item]);
+    }, [x_axis, y_axis, height, width, scale, jenis_item, page]);
 
     return(
        <>
         <Rnd
             style={styleRnd}
             size={{ width: size.width, height: size.height }}
+            page={page}
             position={{x: position.x, y: position.y}}
             onDragStop={(e, d) => {
                 onChange({

@@ -67,7 +67,7 @@ function Login({index}) {
 
   const navigateToRolePage = (role) => {
     if (role === "Admin") {
-      history.push("/admin/beranda"); 
+      history.push("/admin/all-document"); 
       <Heartbeat/>
     }
     else if (role === "Super Admin") {
@@ -89,18 +89,18 @@ function Login({index}) {
     <div className="sign-in__wrapper body-bg">
       <Container fluid className="d-flex align-items-center justify-content-center">
       <Row className="login-row element">
-        <Card className="login-card shadow mb-0 ">
+        <Card className="login-card shadow mb-0">
           {/* <Col className="form-container card-img-top d-flex align-items-center justify-content-center">
           
           </Col> */}
-          <div className="d-flex align-items-center justify-content-center">
-            <img src={require("assets/img/login2.png")} alt="login-img" style={{width:450}} />
+          <div className="d-flex justify-content-center">
+            <img src={require("assets/img/login2.png")} alt="login-img" className="login-illustration" />
           </div>
           <Card.Body > 
-            <h3 className="text-center font-form mt-0">Campina Sign</h3>
+            <h4 className="text-center font-form mt-3 mb-0">Campina Sign</h4>
             <Form onSubmit={handleLogin}>
-              <Form.Group className="mb-2 mt-2" controlId="email">
-              <span class="input-group-text bg-transparent  border-0" id="basic-addon1">
+              <Form.Group className="mb-2" controlId="email">
+              <span class="input-group-text bg-transparent border-0" id="basic-addon1">
               <FaUser style={{ marginRight: '8px' }} />
               <Form.Control
                   type="text"
@@ -148,7 +148,7 @@ function Login({index}) {
               <Button
                 // variant="primary"
                 type="submit"
-                className="w-100 mt-3"
+                className="w-100 mt-2"
                 style={{ backgroundColor: "#4c4ef9", border: "none", color: "white", marginBottom:'15px'}}
               >
                 Sign In

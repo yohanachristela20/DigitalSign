@@ -1,10 +1,12 @@
 import cron from "node-cron";
 import sendReminderEmail from "./routes/ReminderEmail.js";
+import { autoDeleteDocument } from "./controllers/DocumentController.js";
 
 cron.schedule('* * * * *', async () => {
     const now = new Date();
     console.log(`Cronjob running on ${now}`);
     await sendReminderEmail();
+    autoDeleteDocument({}, { status: () => ({json: () => {} }) });
 }, {
     scheduled: true,
     timezone: "Asia/Jakarta"

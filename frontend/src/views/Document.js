@@ -17,6 +17,7 @@ import { useLocation, useHistory } from "react-router-dom";
 import { CDBTable, CDBTableHeader, CDBTableBody, CDBContainer, CDBBtn, CDBBtnGrp } from 'cdbreact';
 import PDFCanvas from "components/Canvas/canvas.js";
 import { PDFDocument } from "pdf-lib";
+import { getProgress } from "../../src/utils/progress.js";
 
 // react-bootstrap components
 import {Button, Container, Row, Col, Card, Table, Spinner, Badge} from "react-bootstrap";
@@ -33,6 +34,7 @@ function Document() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [loading, setLoading] = useState(true);
+  const [is_deleted, setIsDeleted] = useState(false);
   const location = useLocation();
   const history = useHistory();
   const [id_dokumen, setIdKaryawan] = useState("");
@@ -65,6 +67,8 @@ function Document() {
 
   const pdfContainerRef = useRef(null);
   const canvasRef = useRef(null);
+
+  const {progress, status} = getProgress(document);
 
   const getDocument = async (selectedCategory) =>{
     try {
@@ -151,13 +155,20 @@ function Document() {
 
   // console.log("filtered documents: ", filteredDocuments);
 
-  const filteredDocument = document.filter((document) =>
-    (document.id_dokumen && String(document.id_dokumen).toLowerCase().includes(searchQuery)) ||
-    (document.nama_dokumen && String(document.nama_dokumen).toLowerCase().includes(searchQuery)) ||
-    (document.id_kategoridok && String(document.id_kategoridok).toLowerCase().includes(searchQuery)) ||
-    (document.organisasi && String(document.organisasi).toLowerCase().includes(searchQuery)) ||
-    (document?.Kategori?.kategori && String(document.kategori).toLowerCase().includes(searchQuery))
-  );
+  const filteredDocument = document.filter((doc) =>
+  {
+     const status = getStatusById(doc.id_dokumen);
+
+   return (
+    (doc.id_dokumen && String(doc.id_dokumen).includes(searchQuery)) ||
+    (doc.nama_dokumen && String(doc.nama_dokumen).toLowerCase().includes(searchQuery)) ||
+    (status && status.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (doc.deadline && String(doc.deadline).toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (doc.updatedAt && String(doc.updatedAt).toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (doc.createdAt && String(doc.createdAt).toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (doc?.Kategori?.kategori && doc.Kategori.kategori.toLowerCase().includes(searchQuery.toLowerCase()))
+   );
+  });
 
   const filteredDocsStatus = selectedDocuments
     ? documentStatus.filter(doc => doc.id_dokumen === selectedDocuments)
@@ -203,18 +214,39 @@ function Document() {
   }
 
 
+  // const deleteDocument = async(id_dokumen) =>{
+  //   try {
+  //     await axios.delete(`http://localhost:5000/document/${id_dokumen}` , {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //     },
+  //     }); 
+  //     toast.success("Employee was deleted successfully!", {
+  //       position: "top-right",
+  //       autoClose: 5000,
+  //       hideProgressBar: true,
+  //     });
+  //     getDocument(); 
+  //     window.location.reload();
+  //   } catch (error) {
+  //     console.log(error.message); 
+  //   }
+  // };
+
   const deleteDocument = async(id_dokumen) =>{
     try {
-      await axios.delete(`http://localhost:5000/document/${id_dokumen}` , {
-        headers: {
-          Authorization: `Bearer ${token}`,
-      },
-      }); 
-      toast.success("Employee was deleted successfully!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-      });
+      await axios.patch(`http://localhost:5000/temporary-del/${id_dokumen}`,
+      {is_deleted: true},
+      {
+        headers: {Authorization: `Bearer ${token}`}
+      }
+      ); 
+     
+      // toast.success("Employee was deleted successfully!", {
+      //   position: "top-right",
+      //   autoClose: 5000,
+      //   hideProgressBar: true,
+      // });
       getDocument(); 
       window.location.reload();
     } catch (error) {
@@ -636,12 +668,30 @@ function Document() {
               </tr>
             </CDBTableHeader>
             <CDBTableBody>
-              {currentItems.map((document, index) => (
+              {currentItems
+              .filter(document => !document.is_deleted)
+              .map((document, index) => (
                 <tr key={document.id_dokumen}>
                   <td className="text-center">{document.id_dokumen}</td>
-                  <td className="text-center">{document.nama_dokumen}</td>
+                  <td className="text-center">
+                    <p>{document.nama_dokumen}</p>
+                    <p className="signer-font">To: {document.LogSigns.map((log) => log.Signerr?.nama).join(", ")}</p>
+                  </td>
                   <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
-                  <td className="text-center">{getStatusById(document.id_dokumen) == "Pending"? <Badge pill bg="secondary">{getStatusById(document.id_dokumen)}</Badge> : getStatusById(document.id_dokumen) == "Completed" ? <Badge pill bg="success">{getStatusById(document.id_dokumen)}</Badge> : <Badge pill bg="danger">{getStatusById(document.id_dokumen)}</Badge>}</td>
+                  <td className="text-center">
+                    <p>
+                      {getStatusById(document.id_dokumen) === "Decline" ? (
+                        <Badge pill bg="danger">Decline</Badge>
+                      ) : getStatusById(document.id_dokumen) === "Completed" &&
+                        document.LogSigns.every((log) => log.is_submitted === true) ?
+                      (
+                        <Badge pill bg="success">Completed</Badge>
+                      ) : (
+                        <Badge pill bg="secondary">Pending</Badge>
+                      )}
+                    </p>
+                    <p className="signer-font" hidden={getStatusById(document.id_dokumen) === "Completed" && document.LogSigns.every((log) => log.is_submitted === true)}>{getProgress(document)}</p>                      
+                  </td>
                   <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
                   <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
                   <td className="text-center px-0">
@@ -665,7 +715,8 @@ function Document() {
                       type="button"
                       onClick={() => sendReminder(document.id_dokumen)}
                       className="text-primary btn-action"
-                      hidden={getStatusById(document.id_dokumen) !== "Pending" && formattedDate > getDeadlineById(document.id_dokumen)}
+                      hidden={getStatusById(document.id_dokumen) !== "Pending"}
+                      // && formattedDate > getDeadlineById(document.id_dokumen)
                     />
                   </button>
                   </td>

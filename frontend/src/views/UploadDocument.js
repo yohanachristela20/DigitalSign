@@ -57,6 +57,7 @@ function UploadDocument() {
   const [width, setWidth] = useState(100);
   const [height, setHeight] = useState(150);
   const [jenis_item, setJenisItem] = useState("");
+  const [page, setPage] = useState("");
   const [id_item, setIdItem] = useState("");
   const [signersToolbar, setSignersToolbar] = useState([]);
   const [signersCount, setSignersCount] = useState("");
@@ -93,6 +94,7 @@ function UploadDocument() {
   const [deadline, setDeadline] = useState("");
 
   const [urutan, setUrutan] = useState("");
+  let fileName;
   
   const minDate = useMemo(() => {
     const tomorrow = new Date(); 
@@ -232,12 +234,14 @@ function UploadDocument() {
     const w = localStorage.getItem("width");
     const h = localStorage.getItem("height");
     const jenis = localStorage.getItem("jenis_item");
+    const page = localStorage.getItem("page");
 
     if (x !== null)setXAxis(parseFloat(x));
     if (y !== null)setYAxis(parseFloat(y));
     if (w !== null)setWidth(parseFloat(w));
     if (h !== null)setHeight(parseFloat(h));
     if (jenis !== null)setJenisItem(jenis);
+    if (page !== null)setPage(page);
 
     // setJenisItem("Signpad");
    };
@@ -687,6 +691,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       let items = [];
 
       const clickedOrder = JSON.parse(localStorage.getItem("clickedFields")) || [];
+      console.log("clickedOrder:", clickedOrder);
 
       for (const type of clickedOrder) {
         if (type === "Signpad" && signClicked && Array.isArray(signatures)) {
@@ -698,6 +703,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
               y_axis: sig.y_axis,
               width: sig.width,
               height: sig.height,
+              page: sig.page,
               id_karyawan: sig.id_karyawan,
             }))
           ];
@@ -712,6 +718,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
               y_axis: sig.y_axis,
               width: sig.width,
               height: sig.height,
+              page: sig.page,
               id_karyawan: sig.id_karyawan,
             }))
           ];
@@ -726,6 +733,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
               y_axis: sig.y_axis,
               width: sig.width,
               height: sig.height,
+              page: sig.page,
               id_karyawan: sig.id_karyawan,
             }))
           ];
@@ -735,6 +743,9 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       const itemKaryawan = items.map(item => item.id_karyawan);
       const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
       const missingItemSigners = allSigners.filter(signer => !itemKaryawan.includes(signer.value));
+
+      console.log("itemKaryawan:", itemKaryawan);
+      console.log("allSigners:", allSigners);
 
       if (missingItemSigners.length > 0) {
         setError('Signer should have an item.');
@@ -926,8 +937,21 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     console.log("Steps from handle previous:", steps - 1);
   };
 
+  // const handleFileChange = (event) => {
+  //   setFile(event.target.files[0]);
+  // };
+
   const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
+    if (event.target.files && event.target.files.length > 0) {
+      const uploadedFile = event.target.files[0];
+      fileName = uploadedFile.name;
+
+      console.log("FILENAME:", fileName);
+      
+      setNamaDokumen(fileName);
+      setFile(uploadedFile);
+      
+    }
   };
 
   const stepTitle = [
@@ -1346,7 +1370,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                                 label={option}
                                 className="mt-2 radio-doc-settings"
                                 value={option}
-                                checked={is_download === (option === "Allowed")}
+                                checked={is_download !== (option === "Not Allowed")}
                                 onChange={handleDownload}
                               />
                             ))}
@@ -1367,7 +1391,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
         <div className="row gy-2 mt-3 mb-3 d-flex justify-content-center">
           {steps === 1 && (
               <div className="col-12 col-md-auto my-2">
-                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={handleNext} disabled={steps === 1 && nama_dokumen === "" || id_kategoridok === "" || category ==="" || file === null }>
+                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={handleNext} disabled={steps === 1 && (nama_dokumen === "" || id_kategoridok === "" || category ==="" || file === null) }>
                   Next
                   <FaRegArrowAltCircleRight style={{ marginLeft: '8px' }}/>
                 </Button>

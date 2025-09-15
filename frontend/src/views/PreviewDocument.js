@@ -50,19 +50,19 @@ function PreviewDocument() {
         <>
             <div>
                 <Container fluid className="mt-5 mb-5 px-0">
-                <Form>
-                    <div>
-                        <h5>Preview</h5>
+                    <Form>
                         <div>
-                        {pdfUrl? (
-                          <PDFCanvas pdfUrl={pdfUrl}/>
-                        ) : (
-                          <p>Loading PDF...</p>  
-                        )}
+                            <h5>Preview</h5>
+                            <div>
+                            {pdfUrl? (
+                            <PDFCanvas pdfUrl={pdfUrl}/>
+                            ) : (
+                            <p>Loading PDF...</p>  
+                            )}
+                            </div>
                         </div>
-                    </div>
-                </Form>
-            </Container>
+                    </Form>
+                </Container>
             </div>
         </>
     );

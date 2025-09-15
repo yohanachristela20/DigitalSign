@@ -46,7 +46,9 @@ function EmployeeManagement() {
     (employee.nama && String(employee.nama).toLowerCase().includes(searchQuery)) ||
     (employee.email && String(employee.email).toLowerCase().includes(searchQuery)) ||
     (employee.job_title && String(employee.job_title).toLowerCase().includes(searchQuery)) ||
-    (employee.organisasi && String(employee.organisasi).toLowerCase().includes(searchQuery)) 
+    (employee.organisasi && String(employee.organisasi).toLowerCase().includes(searchQuery)) || 
+    (employee.createdAt && String(employee.createdAt).toLowerCase().includes(searchQuery)) ||
+    (employee.updatedAt && String(employee.updatedAt).toLowerCase().includes(searchQuery))
   );
 
   

@@ -25,7 +25,7 @@ import "../assets/scss/lbd/_login.scss";
 
 
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import {jsPDF} from "jspdf";
 
 import { saveAs } from "file-saver";
 
@@ -70,6 +70,8 @@ function ReceiveDocument() {
     const [signatures, setSignatures] = useState([]);
     const [signedSignatures, setSignedSignatures] = useState([]);
     const [signature, setSignature] = useState([]);
+
+    const [page, setPage] = useState([]);
 
     const [dateField, setDateField] = useState([]);
     const [clickCount, setClickCount] = useState(0);
@@ -133,6 +135,7 @@ function ReceiveDocument() {
     const [delegate_token, setDelegateToken] = useState("");
     const [deadline, setDeadline] = useState("");
     const [documents, setDocuments] = useState([]); 
+    const [is_download, setIsDownload] = useState(true);
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -474,6 +477,7 @@ function ReceiveDocument() {
                             width, 
                             height, 
                             jenis_item, 
+                            page,
                             id_item: fieldItemId,
                         } = item.ItemField;
 
@@ -496,6 +500,7 @@ function ReceiveDocument() {
                             width,
                             height, 
                             jenis_item,
+                            page,
                             pageScale: 1,
                             enableResizing: false,
                             disableDragging: true,
@@ -510,6 +515,8 @@ function ReceiveDocument() {
                             delegated_signers,
                             // token
                         }; 
+
+                        console.log("FieldObj:", fieldObj);
 
                         allStatus.push({id_item: fieldItemId, status});
 
@@ -650,6 +657,7 @@ function ReceiveDocument() {
                         y_axis: field.ItemField?.y_axis || 0,
                         width: field.ItemField?.width || 0,
                         height: field.ItemField?.height || 0,
+                        page: field.ItemField?.page || 0,
                         enableResizing: false,
                         disableDragging: true,
                         jenis_item: field.ItemField?.jenis_item || "", 
@@ -806,6 +814,12 @@ function ReceiveDocument() {
         const jenisItemList = filteredFields.map(field => field.jenis_item);
         setJenisItemList(jenisItemList);
 
+        const pageList = filteredFields.map(field => field.page);
+        setPage(pageList);
+
+        console.log("pageList:", pageList);
+        console.log("PAGE:", page);
+
         // const tokenDbList = filteredFields.map(field => field.token);
         // setTokenDb(tokenDbList);
 
@@ -916,29 +930,6 @@ function ReceiveDocument() {
         }
     }
 
-    // const downloadPDF = async (id_dokumen) => {
-    //     try {
-    //         const input = pdfContainerRef.current;
-    //         if (!input) throw new Error("PDF container not found.");
-
-    //         const canvas = await html2canvas(input, { scale: 2 });
-    //         const imgData = canvas.toDataURL('image/png');
-
-    //         const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
-
-    //         const pdf = new jsPDF({
-    //             orientation: orientation,
-    //             unit: 'px',
-    //             format: [canvas.width, canvas.height]
-    //         });
-
-    //         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-    //         pdf.save(`${id_dokumen}.pdf`);
-    //     } catch (error) {
-    //         console.error("Downloading error:", error.message);
-    //     }
-    // }
-
     const getRef = (id) => {
         if (!pdfRefs.current[id]) {
             pdfRefs.current[id] = React.createRef();
@@ -946,96 +937,136 @@ function ReceiveDocument() {
         return pdfRefs.current[id];
     }
 
-    const downloadPDF = async (id_dokumen, ref, LOGSIGN) => { 
-
-        console.log("logSigns downloadPDF:", LOGSIGN);
+    const downloadPDF = async (id_dokumen, ref, LOGSIGN) => {
         try {
-          const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
-          const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
-          const pdfDoc = await PDFDocument.load(existingPdfBytes);
-    
-          const pages = pdfDoc.getPages();
-          const scale = 1.5;
-         
-          for (const sign of LOGSIGN) {
-            console.log("sign_base64:", sign.sign_base64);
-            if (sign.status === "Completed" && sign.is_submitted && sign.sign_base64){
-              const axisRes = await fetch(
-                `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
-              ).then(res => res.json());
-    
-              const field = axisRes[0]?.ItemField;
-              if (!field) continue;
-    
-              let {x_axis, y_axis, width, height} = field;
-    
-              x_axis = Number(x_axis) / scale;
-              y_axis = Number(y_axis) / scale;
-              width = Number(height) / scale;
-              height = Number(width) / scale;
-    
-              let base64Url = sign.sign_base64;
-              if (!base64Url.startsWith("data:image")){
-                base64Url = `data:image/png;base64,${base64Url}`;
-              } 
-    
-              console.log("base64Url:", base64Url);
-    
-              const pngImage = await pdfDoc.embedPng(base64Url);
-    
-              console.log("pngImage:", pngImage);
-    
-              console.log("Pages length:", pages.length);
-    
-              let targetPageIndex = 0;  
-              
-              let remainingY = y_axis;
-              for (let i = 0; i < pages.length; i++) {
-                const pageHeight = pages[i].getHeight();
-    
-                if (remainingY <= pageHeight){
-                  targetPageIndex = i;
-                  break;
+            const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
+            const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+            const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
+            const pages = pdfDoc.getPages();
+            const scale = 1.5;
+
+            for (const sign of LOGSIGN) {
+                if (sign.status === "Completed" && sign.is_submitted && sign.sign_base64) {
+                    const axisRes = await fetch(
+                        `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
+                    ).then(res => res.json());
+
+                    const field = axisRes[0]?.ItemField;
+                    if (!field) continue;
+
+                    let { x_axis, y_axis, width, height } = field;
+                    x_axis = Number(x_axis) / scale;
+                    y_axis = Number(y_axis) / scale;
+                    width = Number(height) / scale;
+                    height = Number(width) / scale;
+
+                    let base64Url = sign.sign_base64;
+                    if (!base64Url.startsWith("data:image")) {
+                        base64Url = `data:image/png;base64,${base64Url}`;
+                    }
+
+                    const pngImage = await pdfDoc.embedPng(base64Url);
+
+                    let targetPageIndex = 0;
+                    let remainingY = y_axis;
+                    for (let i = 0; i < pages.length; i++) {
+                        const pageHeight = pages[i].getHeight();
+                        if (remainingY <= pageHeight) {
+                            targetPageIndex = i;
+                            break;
+                        }
+                        remainingY -= pageHeight;
+                    }
+
+                    const page = pages[targetPageIndex];
+                    const pageHeight = page.getHeight();
+                    const yPos = pageHeight - remainingY - height + 29;
+
+                    page.drawImage(pngImage, {
+                        x: x_axis,
+                        y: yPos,
+                        width,
+                        height,
+                    });
                 }
-                remainingY -= pageHeight;
-              }
-    
-              const page = pages[targetPageIndex];
-              const pageHeight = page.getHeight();
-              const yPos = pageHeight - remainingY - height + 29;
-     
-              console.log("Placing sign at:", {
-                targetPageIndex,
-                x_axis,
-                y_axis,
-                remainingY,
-                pageHeight,
-                finalY: yPos
-              });
-    
-              page.drawImage(pngImage, {
-                x: x_axis,
-                y: yPos,
-                width,
-                height,
-              });
-              }
-    
-          }
-          
-          const pdfBytes = await pdfDoc.save();
-          const blob = new Blob([pdfBytes], { type: "application/pdf" });
-          
-          saveAs(blob, `signed_${id_dokumen}.pdf`);
-    
+            }
+
+            const signedBytes = await pdfDoc.save();
+            const loadingTask = pdfjsLib.getDocument({ data: signedBytes, disableStream: true, disableAutoFetch: true });
+            const pdf = await loadingTask.promise;
+
+            let finalPdf;
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 2 });
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                await page.render({ canvasContext: ctx, viewport }).promise;
+
+                const imgData = canvas.toDataURL("image/jpeg", 1.0);
+                const orientation = canvas.width > canvas.height ? "landscape" : "portrait";
+
+                if (i === 1) {
+                    finalPdf = new jsPDF({
+                        orientation,
+                        unit: "px",
+                        format: [canvas.width, canvas.height],
+                        compress: true,
+                    });
+                } else {
+                    finalPdf.addPage([canvas.width, canvas.height], orientation);
+                }
+
+                finalPdf.addImage(imgData, "JPEG", 0, 0, canvas.width, canvas.height);
+            }
+
+            const finalBytes = finalPdf.output("blob");
+            saveAs(finalBytes, `signed_${id_dokumen}.pdf`);
+
         } catch (error) {
-          console.error("Downloading error:", error.message);
+            console.error("Downloading error:", error.message);
         }
     };
+    
+    const pendingFields = signedInitials.filter(sig => {
+        if (!sig || !sig.id_item || sig.show !== true) return false;
 
+        const isCompleted = sig.status === "Completed";
+        const isSubmitted = sig.is_submitted === true;
 
-    console.log("TOKEN:", token, "vs", "MAIN TOKEN:", main_token, "vs", "DELEGATE TOKEN:", delegate_token );
-    console.log("is_delegated!!:", is_delegated);
+        const currentSignerStr = String(id_signers);
+        const delegatedArray = Array.isArray(sig.delegated_signers)
+        ? sig.delegated_signers.map(String)
+        : sig.delegated_signers ? [String(sig.delegated_signers)] : [];
+
+        const normalizedArray = Array.isArray(normalizedDelegated)
+        ? normalizedDelegated.map(String)
+        : normalizedDelegated ? [String(normalizedDelegated)] : [];
+
+        const isSigner = 
+        String(sig.id_signers) === currentSignerStr || 
+        delegatedArray.includes(currentSignerStr) ||
+        normalizedArray.includes(currentSignerStr);
+        
+        return isSigner && !isCompleted && !isSubmitted;
+    });
+
+    let pendingCount = pendingFields.length;
+
+    const handleJumpTo = () => {
+        if (pendingFields.length === 0) return;
+
+        const firstField = pendingFields[0];
+        const fieldElement = document.getElementById(`field-${firstField.id_item}-${firstField.id_signers}`);
+        if (fieldElement) {
+            fieldElement.scrollIntoView({behavior: "smooth", block:"center"});
+            fieldElement.focus?.();
+        }
+    };
 
     return (
         <>
@@ -1118,44 +1149,63 @@ function ReceiveDocument() {
                             onClick={() => handleAuditTrail(id_dokumen, id_signers)}
                         >   Audit Trail
                         </Dropdown.Item>
-                        <div className="divider"></div>
-                        <Dropdown.Item
-                            href="#"
-                            onClick={async (e) => {
-                                e.preventDefault();
+                        {(() => {
+                            const currentDoc = documents.find(doc => doc.id_dokumen === id_dokumen);
+                            if (!currentDoc) return null;
 
-                                const currentDoc = documents.find(doc => doc.id_dokumen === id_dokumen); 
-                                if (!currentDoc) return;
-                                const ref = getRef(id_dokumen);
-                                const LOGSIGN = JSON.parse(JSON.stringify(currentDoc.LogSigns || []));
-                                
-                                // console.log("logSigns:", LOGSIGN);
-                                LOGSIGN.forEach((log, i) => {
-                                    console.log(`LogSigns[${i}].sign_base64:`, log.sign_base64);
+                            const hasDownload = currentDoc.LogSigns?.some(log => log.is_download === true);
 
-                                    log.is_submitted 
-                                    ? downloadPDF(id_dokumen, ref, LOGSIGN) 
-                                    : plainPDF(id_dokumen); 
-                                });
+                            if (!hasDownload) return null; 
 
-                               
+                            return (
+                                <>
+                                    <div className="divider"></div>
+                                    <Dropdown.Item
+                                        href="#"
+                                        onClick={async (e) => {
+                                        e.preventDefault();
 
-                            }}
-                        >   Download
-                        </Dropdown.Item>
+                                        const ref = getRef(id_dokumen);
+                                        const LOGSIGN = JSON.parse(JSON.stringify(currentDoc.LogSigns || []));
+
+                                        LOGSIGN.forEach((log, i) => {
+                                            console.log(`LogSigns[${i}].sign_base64:`, log.sign_base64);
+
+                                            log.is_submitted
+                                            ? downloadPDF(id_dokumen, ref, LOGSIGN)
+                                            : plainPDF(id_dokumen);
+                                        });
+                                        }}
+                                    >
+                                        Download
+                                    </Dropdown.Item>
+                                </>
+                            );
+                        })()}
+
+
                         </Dropdown.Menu>
                     </Dropdown>
-        
+
                     <Button
                         className="submit-btn w-100 mt-3 fs-6"
                         type="submit"
                         onClick={() => updateSubmitted(id_dokumen, current_signer)}
                         disabled={isFinishDisabled}
-                        hidden={!is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
+                        hidden={pendingCount == 0 && !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
                     >
                         Finish
                     </Button>
                     </Nav>
+
+                    <Button
+                        className="navigate-btn mt-3 fs-6"
+                        type="button"
+                        onClick={handleJumpTo}
+                        hidden={pendingCount == 0}
+                    >
+                        Jump to ({pendingCount})
+                    </Button>
                 </Navbar.Collapse>
                 </Container>
             </Navbar>
@@ -1163,7 +1213,7 @@ function ReceiveDocument() {
             <div>
                 <Container fluid className="px-0">
                         {loading && <Spinner animation="border" variant="primary" />}
-                        <div className="sign-in__user d-flex align-items-center justify-content-center pt-5 ">
+                        <div className="sign-in__user d-flex align-items-center justify-content-center">
                         
                         {isAccessed === false ? 
                             (
@@ -1192,19 +1242,18 @@ function ReceiveDocument() {
                        
                         {isAccessed !== true && (
                     
-                        <Row className="login-user user-element mt-2">
-                            
+                        <Row className="login-user user-element">
                             <Card className="login-card shadow mb-0">
                                 <>{errorMsg && <Alert variant="danger" className="m-4">{errorMsg}</Alert>}</>
-                                <div className="d-flex align-items-center justify-content-center">
-                                    <img src={require("assets/img/login2.png")} alt="login-img" style={{width:450}} />
+                                <div className="d-flex justify-content-center">
+                                    <img src={require("assets/img/login2.png")} alt="login-img" className="login-illustration" />
                                 </div>
                                 <Card.Body>
-                                    <h3 className="text-center font-form mt-0">Campina Sign</h3>
-                                    <Alert variant="info"><FaInfoCircle className="mr-2"/>Please verify your email</Alert>
-                                    <Form onSubmit={handleEmailVerify} className="mb-3">
-                                        <Form.Group className="mb-2"> 
-                                            <span class="input-group-text bg-transparent  border-0" id="basic-addon1">
+                                    <h4 className="text-center font-form mt-3 mb-2">Campina Sign</h4>
+                                    <Alert variant="info" className="mb-0"><FaInfoCircle className="mr-2"/>Please verify your email</Alert>
+                                    <Form onSubmit={handleEmailVerify}>
+                                        <Form.Group> 
+                                            <span class="input-group-text bg-transparent border-0" id="basic-addon1">
                                                 <FaUser style={{ marginRight: '8px' }} />
                                                 <Form.Control
                                                     type="email"
@@ -1213,6 +1262,7 @@ function ReceiveDocument() {
                                                     onChange={(e) => setInputEmail(e.target.value)}
                                                     required
                                                     style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}
+                                                    className="m-0"
                                                 />
                                             </span>
                                         </Form.Group>
@@ -1229,7 +1279,7 @@ function ReceiveDocument() {
                                                 />
                                             </span> 
                                         </Form.Group>
-                                        <Button type="submit" className="w-100 mt-3" disabled={loading} 
+                                        <Button type="submit" className="w-100 mt-2" disabled={loading} 
                                             style={{ backgroundColor: "#4c4ef9", border: "none", color: "white", marginBottom:'15px'}}
                                             >
                                             {loading ? "Verifying..." : "Verify Email"}
@@ -1243,8 +1293,8 @@ function ReceiveDocument() {
                         </div>
                         {isAccessed === true && pdfUrl && (
                             <div className="center-object">
-                                <div className="vertical-center" ref={pdfContainerRef}>
-                                    <PDFCanvas pdfUrl={pdfUrl} />                           
+                                <div className="vertical-center" >
+                                    <PDFCanvas pdfUrl={pdfUrl} signatures={signatures} initials={initials} dateField={dateField} />                           
 
                                     {signedInitials.map((sig) => {
                                         if (!sig || !sig.id_item || sig.show !== true) return null;
@@ -1392,6 +1442,7 @@ function ReceiveDocument() {
                                         return (
                                             <>
                                                 <Rnd
+                                                    id={`field-${sig.id_item}-${sig.id_signers}`} 
                                                     key={`${sig.id_signers}-${sig.id_item}`}
                                                     position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
                                                     size={{ width: Number(sig.height), height: Number(sig.width) }}
@@ -1601,6 +1652,7 @@ function ReceiveDocument() {
 
                                         return (
                                             <Rnd
+                                                id={`field-${sig.id_item}-${sig.id_signers}`} 
                                                 key={`${sig.id_signers}-${sig.id_item}`}
                                                 position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
                                                 size={{ width: Number(sig.height), height: Number(sig.width) }}

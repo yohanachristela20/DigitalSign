@@ -11,6 +11,7 @@ const Dokumen = db.define('dokumen', {
     },
     nama_dokumen: DataTypes.STRING,
     filepath_dokumen: DataTypes.STRING,
+    is_deleted: DataTypes.BOOLEAN,
     id_kategoridok: {
         type: DataTypes.STRING,
         allowNull: false,

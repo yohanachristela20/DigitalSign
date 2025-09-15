@@ -322,7 +322,7 @@ router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async (req, res) => {
                 {
                     model: Item,
                     as: "ItemField",
-                    attributes: ["jenis_item", "x_axis", "y_axis", "width", "height", "id_item"]
+                    attributes: ["jenis_item", "x_axis", "y_axis", "width", "height", "id_item", "page"]
                 },
                 {
                     model: Karyawan,
@@ -332,7 +332,12 @@ router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async (req, res) => {
             ]
         });
 
+        console.log("RESPONSE:", JSON.stringify(response, null, 2));
+        const pages = response.map(r => r?.ItemField?.page);
+        console.log("PAGES:", pages);
+
         res.status(200).json(response);
+        // res.status(200).json({ pages });
     } catch (error) {
         console.log("error:", error.message);
         res.status(500).json({ error: error.message });

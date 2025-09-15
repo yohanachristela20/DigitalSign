@@ -15,6 +15,20 @@
     }
 }
 
+.navigate-btn{
+    background-color: rgb(77, 80, 253);
+    border: none;
+    color: white;
+    width: 120px;
+    padding: 11px;
+
+    &:hover, 
+    &:focus{
+        background-color: #4c4ef9;
+        color: white;
+    }
+}
+
 .nav-padding{
     padding: 20px;
 }

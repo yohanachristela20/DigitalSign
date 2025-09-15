@@ -10,6 +10,8 @@ import DocumentSent from "views/DocumentSent.js";
 import Login from "views/Login.js";
 import PreviewDocument from "views/PreviewDocument";
 
+import Trash from "views/Trash.js";
+
 const dashboardRoutes = [
   // ADMIN
   {
@@ -31,6 +33,13 @@ const dashboardRoutes = [
     name: "Upload Document",
     icon: "file",
     component: UploadDocument,
+    layout: "/admin"
+  },
+  {
+    path: "/trash",
+    name: "Trash",
+    icon: "trash",
+    component: Trash,
     layout: "/admin"
   },
   {

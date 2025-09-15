@@ -5,6 +5,7 @@
     height: 100vh;
     padding: 10px 0;
     position: relative; //untuk container
+    margin-top: -550px;
 }
 
 
@@ -28,6 +29,6 @@
 canvas{
     width: auto !important;
     max-width: unset !important;
-    height: auto !important;
+    height: 170px !important;
     display: block;
 }

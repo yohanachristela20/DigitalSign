@@ -279,7 +279,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                                             <div>
                                                 <p className="mb-1 mt-2">Viewed by: {signer.nama}</p>
                                                 {signer.emails.map((email, i) => (
-                                                    <p key={i} className="mb-1">{email}</p>
+                                                    <p key={i} className="mb-1 multiline-ellipsis">{email}</p>
                                                 ))}
                                             </div>
                                         </Col>
@@ -293,7 +293,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                                 </Col>
                                 <Col md="6">
                                     <p className="mb-1 mt-2">Viewed by: {nama}</p>
-                                    <p className="mb-1">{real_email}</p>
+                                    <p className="mb-1 multiline-ellipsis">{real_email}</p>
                                 </Col>
                             </>
                         )}
@@ -340,7 +340,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                                             <div>
                                                 <p className="mb-1 mt-2">Signed by: {signer.nama}</p>
                                                 {signer.emails.map((email, i) => (
-                                                    <p key={i} className="mb-1">{email}</p>
+                                                    <p key={i} className="mb-1 multiline-ellipsis">{email}</p>
                                                 ))}
                                             </div>
                                         </Col>
@@ -354,7 +354,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                                 </Col>
                                 <Col md="6">
                                     <p className="mb-1 mt-2">Signed by: {nama}</p>
-                                    <p className="mt-1">{real_email}</p>
+                                    <p className="mt-1 multiline-ellipsis">{real_email}</p>
                                 </Col>
                             </>
                         )}

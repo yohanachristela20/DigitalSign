@@ -13,7 +13,6 @@ const LogSign = db.define('log_sign', {
         primaryKey: true,
     },
     tgl_tt: DataTypes.DATE,
-    tgl_lihat:DataTypes.DATE,
     action:DataTypes.STRING,
     status: DataTypes.STRING,
     is_deadline: DataTypes.BOOLEAN, 

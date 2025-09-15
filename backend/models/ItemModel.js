@@ -13,6 +13,7 @@ const Item = db.define('item_field', {
     y_axis: DataTypes.DECIMAL(15,4),
     width: DataTypes.DECIMAL(15,4),
     height: DataTypes.DECIMAL(15,4),
+    page: DataTypes.INTEGER,
 }, {
     freezeTableName: true,
     timestamps: true,

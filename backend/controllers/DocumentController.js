@@ -10,6 +10,8 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import Karyawan from "../models/KaryawanModel.js";
 import User from "../models/UserModel.js";
+import LinkAccessLog from "../models/linkAccessModel.js";
+
 import jwt from 'jsonwebtoken';
 import { log } from "console";
 import { Op } from "sequelize";
@@ -19,6 +21,12 @@ dotenv.config();
 export const getDocument = async(req, res) => {
     try {
         const response = await Dokumen.findAll({
+            where: {
+              [Op.or] : [
+                { is_deleted: false }, 
+                { is_deleted: null }
+              ]
+            },
             include: [
                 {
                     model: KategoriDokumen,
@@ -28,7 +36,49 @@ export const getDocument = async(req, res) => {
                 {
                   model: LogSign, 
                   as: "LogSigns", 
-                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted", "id_signers", "id_item"],
+                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted", "id_signers", "id_item", "is_download"],
+                  include: [
+                    {
+                      model: Karyawan,
+                      as: "Signerr",
+                      attributes: ["nama", "organisasi", "id_karyawan"]
+                    }
+                  ]
+                }
+            ],
+        });
+        res.status(200).json(response);
+    } catch (error) {
+        console.log(error.message);
+    }
+}
+
+export const getTrash = async(req, res) => {
+    try {
+        const response = await Dokumen.findAll({
+            // where: {
+            //   [Op.or] : [
+            //     { is_deleted: false }, 
+            //     { is_deleted: null }
+            //   ]
+            // },
+            include: [
+                {
+                    model: KategoriDokumen,
+                    as: "Kategori",
+                    attributes: ["id_kategoridok", "kategori"],
+                },
+                {
+                  model: LogSign, 
+                  as: "LogSigns", 
+                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted", "id_signers", "id_item", "is_download"],
+                  include: [
+                    {
+                      model: Karyawan,
+                      as: "Signerr",
+                      attributes: ["nama", "organisasi", "id_karyawan"]
+                    }
+                  ]
                 }
             ],
         });
@@ -55,9 +105,16 @@ export const getDocumentByCategory = async(req, res) => {
     const {id_kategoridok} = req.params;
     try {
         const response = await Dokumen.findAll({
-            where: {id_kategoridok},
+            // where: {id_kategoridok},
             attributes: ["id_dokumen", "nama_dokumen", "id_kategoridok", "createdAt"],
-             include: [
+            where: {
+              id_kategoridok,
+              [Op.or]: [
+                { is_deleted: false },
+                { is_deleted: null }
+              ]
+            }, 
+            include: [
                 {
                     model: KategoriDokumen,
                     as: "Kategori",
@@ -66,7 +123,52 @@ export const getDocumentByCategory = async(req, res) => {
                 {
                   model: LogSign, 
                   as: "LogSigns", 
-                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted", "id_signers", "id_item"],
+                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted", "id_signers", "id_item", "is_download"],
+                  include: [
+                    {
+                      model: Karyawan,
+                      as: "Signerr",
+                      attributes: ["nama", "organisasi", "id_karyawan"]
+                    }
+                  ]
+                }
+            ],
+        });
+        res.status(200).json(response);
+    } catch (error) {
+        console.log(error.message);
+    }
+}
+
+export const getTrashByCategory = async(req, res) => {
+    const {id_kategoridok} = req.params;
+    try {
+        const response = await Dokumen.findAll({
+            where: {id_kategoridok},
+            attributes: ["id_dokumen", "nama_dokumen", "id_kategoridok", "createdAt"],
+            // where: {
+            //   [Op.or]: [
+            //     { is_deleted: false },
+            //     { is_deleted: null }
+            //   ]
+            // }, 
+            include: [
+                {
+                    model: KategoriDokumen,
+                    as: "Kategori",
+                    attributes: ["id_kategoridok", "kategori"],
+                },
+                {
+                  model: LogSign, 
+                  as: "LogSigns", 
+                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted", "id_signers", "id_item", "is_download"],
+                  include: [
+                    {
+                      model: Karyawan,
+                      as: "Signerr",
+                      attributes: ["nama", "organisasi", "id_karyawan"]
+                    }
+                  ]
                 }
             ],
         });
@@ -112,13 +214,99 @@ export const createDocument = async(req, res) => {
     }
 }
 
+// export const createLogSign = async (req, res) => {
+//   const transaction = await db.transaction();
+//   try {
+//     const { logsigns } = req.body;
+
+//     if (!Array.isArray(logsigns) || logsigns.length === 0) {
+//       return res.status(400).json({ message: "logsign must be a non-empty array." });
+//     }
+
+//     const lastRecord = await LogSign.findOne({
+//       order: [["id_logsign", "DESC"]],
+//       transaction,
+//       lock: transaction.LOCK.UPDATE,
+//     });
+
+//     let lastIdNumber = lastRecord ? parseInt(lastRecord.id_logsign.substring(2), 10) : 0;
+//     const newLogSign = [];
+
+//     for (const log of logsigns) {
+//       const items = Array.isArray(log.id_item) ? log.id_item : [log.id_item];
+//       for (const item of items) {
+//         lastIdNumber += 1;
+//         const newIdNumber = lastIdNumber.toString().padStart(5, "0");
+
+//         newLogSign.push({
+//           id_logsign: `LS${newIdNumber}`,
+//           action: log.action,
+//           status: log.status,
+//           id_dokumen: log.id_dokumen,
+//           id_karyawan: log.id_karyawan,
+//           id_signers: log.id_signers,
+//           id_item: item,
+//           urutan: parseInt(log.urutan),
+//         });
+//       }
+//     }
+
+//     await LogSign.bulkCreate(newLogSign, { transaction });
+
+//     const lastSign = await Sign.findOne({
+//         order: [['id_sign', 'DESC']],
+//         transaction,
+//         lock: transaction.LOCK.UPDATE,
+//     });
+
+//     let lastSignNumber = lastSign ? parseInt(lastSign.id_sign.substring(5), 10) : 0;
+
+//     const newSigns = newLogSign.map(log => {
+//         lastSignNumber += 1;
+//         const newSignNumber = lastSignNumber.toString().padStart(5, '0');
+//         return {
+//             id_sign: `SN${newSignNumber}`,
+//             id_logsign: log.id_logsign,
+//         };
+//     });
+
+//     await Sign.bulkCreate(newSigns, { transaction});
+//     await transaction.commit();
+
+//     const subjectt = [...new Set(logsigns.map(log => log.subject).filter(Boolean))];
+//     const messagee = [...new Set(logsigns.map(log => log.message).filter(Boolean))];
+   
+//     res.status(201).json({
+//       msg: "New logsigns and signs have been created!",
+//       data: { logsigns: newLogSign, subjectt, messagee },
+//     });
+//   } catch (error) {
+//     console.error("Error when creating logsigns: ", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 export const createLogSign = async (req, res) => {
   const transaction = await db.transaction();
   try {
     const { logsigns } = req.body;
 
     if (!Array.isArray(logsigns) || logsigns.length === 0) {
-      return res.status(400).json({ message: "logsign must be a non-empty array." });
+      return res
+        .status(400)
+        .json({ message: "logsign must be a non-empty array." });
+    }
+
+    const dokumenIds = [...new Set(logsigns.map((log) => log.id_dokumen))];
+    const existingDocs = await Dokumen.findAll({
+      where: { id_dokumen: dokumenIds },
+      transaction,
+    });
+
+    if (existingDocs.length !== dokumenIds.length) {
+      return res.status(400).json({
+        message: "One or more id_dokumen not found in dokumen table.",
+      });
     }
 
     const lastRecord = await LogSign.findOne({
@@ -127,9 +315,11 @@ export const createLogSign = async (req, res) => {
       lock: transaction.LOCK.UPDATE,
     });
 
-    let lastIdNumber = lastRecord ? parseInt(lastRecord.id_logsign.substring(2), 10) : 0;
-    const newLogSign = [];
+    let lastIdNumber = lastRecord
+      ? parseInt(lastRecord.id_logsign.substring(2), 10)
+      : 0;
 
+    const newLogSign = [];
     for (const log of logsigns) {
       const items = Array.isArray(log.id_item) ? log.id_item : [log.id_item];
       for (const item of items) {
@@ -140,7 +330,7 @@ export const createLogSign = async (req, res) => {
           id_logsign: `LS${newIdNumber}`,
           action: log.action,
           status: log.status,
-          id_dokumen: log.id_dokumen,
+          id_dokumen: log.id_dokumen, 
           id_karyawan: log.id_karyawan,
           id_signers: log.id_signers,
           id_item: item,
@@ -151,38 +341,47 @@ export const createLogSign = async (req, res) => {
 
     await LogSign.bulkCreate(newLogSign, { transaction });
 
+    // 🔹 Generate id_sign
     const lastSign = await Sign.findOne({
-        order: [['id_sign', 'DESC']],
-        transaction,
-        lock: transaction.LOCK.UPDATE,
+      order: [["id_sign", "DESC"]],
+      transaction,
+      lock: transaction.LOCK.UPDATE,
     });
 
-    let lastSignNumber = lastSign ? parseInt(lastSign.id_sign.substring(5), 10) : 0;
+    let lastSignNumber = lastSign
+      ? parseInt(lastSign.id_sign.substring(2), 10)
+      : 0;
 
-    const newSigns = newLogSign.map(log => {
-        lastSignNumber += 1;
-        const newSignNumber = lastSignNumber.toString().padStart(5, '0');
-        return {
-            id_sign: `SN${newSignNumber}`,
-            id_logsign: log.id_logsign,
-        };
+    const newSigns = newLogSign.map((log) => {
+      lastSignNumber += 1;
+      const newSignNumber = lastSignNumber.toString().padStart(5, "0");
+      return {
+        id_sign: `SN${newSignNumber}`,
+        id_logsign: log.id_logsign,
+      };
     });
 
-    await Sign.bulkCreate(newSigns, { transaction});
+    await Sign.bulkCreate(newSigns, { transaction });
     await transaction.commit();
 
-    const subjectt = [...new Set(logsigns.map(log => log.subject).filter(Boolean))];
-    const messagee = [...new Set(logsigns.map(log => log.message).filter(Boolean))];
-   
+    const subjectt = [
+      ...new Set(logsigns.map((log) => log.subject).filter(Boolean)),
+    ];
+    const messagee = [
+      ...new Set(logsigns.map((log) => log.message).filter(Boolean)),
+    ];
+
     res.status(201).json({
       msg: "New logsigns and signs have been created!",
       data: { logsigns: newLogSign, subjectt, messagee },
     });
   } catch (error) {
+    await transaction.rollback(); 
     console.error("Error when creating logsigns: ", error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, messagee, documentName) => {
     console.log("Logsigns:", validLogsigns);
@@ -598,6 +797,7 @@ export const createItem = async(req, res) => {
                 y_axis: item.y_axis, 
                 width: item.width,
                 height: item.height,
+                page: item.page,
 
             };
         })
@@ -629,43 +829,181 @@ export const updateDocument = async(req, res) => {
     }
 }
 
-export const deleteDocument = async(req, res) => {
-    try {
-        const document = await Dokumen.findOne({
-            where:{
-                id_dokumen: req.params.id_dokumen
-            }
-        });
+// export const deleteDocument = async(req, res) => {
+//     try {
+//         const document = await Dokumen.findOne({
+//             where:{
+//                 id_dokumen: req.params.id_dokumen
+//             }
+//         });
 
-        if (!document){
-            return res.status(404).json({msg: "Document not found"});
-        }
+//         if (!document){
+//             return res.status(404).json({msg: "Document not found"});
+//         }
 
-        if(document.filepath_dokumen) {
-            const filePath = path.resolve(document.filepath_dokumen);
+//         if(document.filepath_dokumen) {
+//             const filePath = path.resolve(document.filepath_dokumen);
 
-            try {
-                await fs.promises.unlink(filePath);
-                console.log("Document was deleted successfully.", filePath);
-            } catch (error) {
-                console.error("Failed to delete document", error.message)
-            }
-        }
+//             try {
+//                 await fs.promises.unlink(filePath);
+//                 console.log("Document was deleted successfully.", filePath);
+//             } catch (error) {
+//                 console.error("Failed to delete document", error.message)
+//             }
+//         }
 
-        await Dokumen.destroy(
-            {
-                where:{
-                    id_dokumen: req.params.id_dokumen
-                }
-            }
-        );
+//         await Dokumen.destroy(
+//             {
+//                 where:{
+//                     id_dokumen: req.params.id_dokumen
+//                 }
+//             }
+//         );
 
-        res.status(200).json({msg: "Document was deleted successfully."}); 
-    } catch (error) {
-        console.error("Failed to delete document:", error.message);
-        return res.status(500).json({message: "Failed to delete document."});
+//         res.status(200).json({msg: "Document was deleted successfully."}); 
+//     } catch (error) {
+//         console.error("Failed to delete document:", error.message);
+//         return res.status(500).json({message: "Failed to delete document."});
+//     }
+// }
+
+export const deleteDocument = async (req, res) => {
+  try {
+    const { id_dokumen } = req.params;
+
+    const document = await Dokumen.findOne({ where: { id_dokumen } });
+    if (!document) {
+      return res.status(404).json({ msg: "Document not found" });
     }
-}
+
+    const logsigns = await LogSign.findAll({ where: { id_dokumen } });
+
+    const logsignIds = logsigns.map(log => log.id_logsign);
+
+    if (logsignIds.length > 0) {
+      await LinkAccessLog.destroy({ where: { id_logsign: logsignIds } });
+
+      await Sign.destroy({ where: { id_logsign: logsignIds } });
+
+      await LogSign.destroy({ where: { id_dokumen } });
+    }
+
+    if (document.filepath_dokumen) {
+      const filePath = path.resolve(document.filepath_dokumen);
+      try {
+        await fs.promises.unlink(filePath);
+        console.log("File deleted:", filePath);
+      } catch (err) {
+        console.error("Failed to delete file:", err.message);
+      }
+    }
+
+    await Dokumen.destroy({ where: { id_dokumen } });
+
+    res.status(200).json({ msg: "Document and related data deleted successfully." });
+  } catch (error) {
+    console.error("Failed to delete document:", error.message);
+    res.status(500).json({ message: "Failed to delete document." });
+  }
+};
+
+export const autoDeleteDocument = async(req, res) => {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const documents = await Dokumen.findAll({
+      where: {
+        is_deleted: true,
+        updatedAt: {
+          [Op.lt]: sevenDaysAgo,
+        }, 
+      },
+    });
+
+    if (!documents.length){
+      return res.status(200).json({msg: "No documents to delete."});
+    }
+
+    for (const document of documents){
+      const {id_dokumen, filepath_dokumen} = document;
+
+      const logsigns = await LogSign.findAll({where: {id_dokumen}});
+      const logsignIds = logsigns.map((log) => log.id_logsign);
+
+      if (logsignIds.length > 0){
+        await LinkAccessLog.destroy({where: {id_logsign: logsignIds}});
+        await Sign.destroy({where: {id_logsign: logsignIds}});
+        await LogSign.destroy({where: {id_dokumen}});
+      }
+
+      if (filepath_dokumen){
+        const filePath = path.resolve(filepath_dokumen);
+        try {
+          await fs.promises.unlink(filePath);
+          console.log("File deleted:", filePath);
+        } catch (error) {
+          console.error("Failed to delete file", err.message);
+        }
+      }
+
+      await Dokumen.destroy({where: {id_dokumen}});
+    }
+    res.status(200).json({msg: "Auto delete completed"});
+
+  } catch (error) {
+    console.error("Failed to auto delete documents:", error.message);
+    res.status(500).json({message: "Failed to delete documents."});
+  }
+};
+
+export const temporaryDelete = async(req, res) => {
+    try {
+      const {id_dokumen} = req.params;
+
+      const document = await Dokumen.findAll({
+        where: {id_dokumen}
+      });
+
+      if (!document || document.length === 0){
+        return res.status(404).json({msg: "Document not found."})
+      }
+
+      await Dokumen.update(
+        {is_deleted: true},
+        {where: {id_dokumen}}
+      );
+
+      res.status(200).json({msg: "Document status updated."});
+    } catch (error) {
+      console.error("Failed to update document:", error.message);
+      return res.status(500).json({message: "Failed to update dccument status."});
+    }
+};
+
+export const restoreDocument = async(req, res) => {
+    try {
+      const {id_dokumen} = req.params;
+
+      const document = await Dokumen.findAll({
+        where: {id_dokumen}
+      });
+
+      if (!document || document.length === 0){
+        return res.status(404).json({msg: "Document not found."})
+      }
+
+      await Dokumen.update(
+        {is_deleted: false},
+        {where: {id_dokumen}}
+      );
+
+      res.status(200).json({msg: "Document status updated."});
+    } catch (error) {
+      console.error("Failed to update document:", error.message);
+      return res.status(500).json({message: "Failed to update dccument status."});
+    }
+};
 
 export const getLastDocumentId = async (req, res) => {
     try {

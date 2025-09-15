@@ -14,6 +14,11 @@ import {
 const Sidebar = ({ color, routes }) => {
   const role = localStorage.getItem("role");
   const location = useLocation();
+  const currentPath = location.pathname;
+
+  const sidebarWidth = currentPath === "/admin/upload-document" || currentPath === "/admin/trash" || currentPath === "/admin/document-sent"
+  ? "250px" 
+  : "370px";
 
   const [openMenus, setOpenMenus] = useState({});
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -113,7 +118,10 @@ const folders = [
   };
 
   return (
-    <div className="sidebar">
+    <div className="sidebar" style={{
+      width: sidebarWidth,
+      transition: "width 0.3s",
+    }}>
       <CDBSidebarContent>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <label className="toggle-button">
