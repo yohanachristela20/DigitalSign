@@ -572,6 +572,7 @@ function ReceiveDocument() {
             const response = await axios.patch(`http://localhost:5000/update-submitted/${id_dokumen}/${current_signer}`, {
                 is_submitted: true,
                 status: "Completed",
+                tgl_tt: date,
             });
 
             toast.success("Document signed successfully.", {
@@ -947,7 +948,7 @@ function ReceiveDocument() {
             const scale = 1.5;
 
             for (const sign of LOGSIGN) {
-                if (sign.status === "Completed" && sign.is_submitted && sign.sign_base64) {
+                if (sign.status === "Completed" && sign.is_submitted) {
                     const axisRes = await fetch(
                         `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
                     ).then(res => res.json());
@@ -956,17 +957,21 @@ function ReceiveDocument() {
                     if (!field) continue;
 
                     let { x_axis, y_axis, width, height, jenis_item } = field;
-                    x_axis = Number(x_axis) / scale;
-                    y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale - 10 : Number(y_axis) / scale + 10;
+                    x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
+                    y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale + 20 : jenis_item === "Signpad" ? Number(y_axis) / scale + 10 :jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale ;
+                    //y_axis initialpad +20 atau hanya /scale saja
+                    
                     width = Number(height) / scale;
                     height = Number(width) / scale - 20;
 
-                    let base64Url = sign.sign_base64;
-                    if (!base64Url.startsWith("data:image")) {
-                        base64Url = `data:image/png;base64,${base64Url}`;
-                    }
+                    // let base64Url = sign.sign_base64;
+                    // if (!base64Url.startsWith("data:image")) {
+                    //     base64Url = `data:image/png;base64,${base64Url}`;
+                    // }
 
-                    const pngImage = await pdfDoc.embedPng(base64Url);
+                    // console.log("currentDate:", currentDate);
+
+                    // const pngImage = jenis_item === "Initialpad" || jenis_item === "Signpad" ? await pdfDoc.embedPng(base64Url) : await pdfDoc.embedPng(currentDate);
 
                     let targetPageIndex = 0;
                     let remainingY = y_axis;
@@ -983,12 +988,46 @@ function ReceiveDocument() {
                     const pageHeight = page.getHeight();
                     const yPos = pageHeight - remainingY - height + 29;
 
-                    page.drawImage(pngImage, {
-                        x: x_axis,
-                        y: yPos,
-                        width,
-                        height,
-                    });
+                    // page.drawImage(pngImage, {
+                    //     x: x_axis,
+                    //     y: yPos,
+                    //     width,
+                    //     height,
+                    // });
+                    console.log("jenis item:", jenis_item);
+                    console.log("currentDate:", currentDate);
+
+                    if (jenis_item === "Initialpad" || jenis_item === "Signpad") {
+                        let base64Url = sign.sign_base64;
+                        if (!base64Url.startsWith("data:image")) {
+                            base64Url = `data:image/png;base64,${base64Url}`;
+                        }
+
+                        const pngImage = await pdfDoc.embedPng(base64Url);
+
+                        page.drawImage(pngImage, {
+                            x: x_axis,
+                            y: yPos,
+                            width,
+                            height,
+                        });
+                    } else{
+                        let date = new Date(sign.tgl_tt);
+                        // const date = new Date();
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] 
+                        const month = monthNames[date.getMonth()];
+                        const year = date.getFullYear();
+                        const currentDate = `${day} ${month} ${year}`;
+
+                        page.drawText(currentDate, {
+                            x: x_axis,
+                            y: yPos,
+                            size: 9,
+                            textAlign: 'center',
+                            // color: rgb(0,0,0),
+                        });
+                    }
                 }
             }
 

@@ -29,14 +29,14 @@ export const getDocument = async(req, res) => {
             },
             include: [
                 {
-                    model: KategoriDokumen,
-                    as: "Kategori",
-                    attributes: ["id_kategoridok", "kategori"],
+                  model: KategoriDokumen,
+                  as: "Kategori",
+                  attributes: ["id_kategoridok", "kategori"],
                 },
                 {
                   model: LogSign, 
                   as: "LogSigns", 
-                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted", "id_signers", "id_item", "is_download"],
+                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted", "id_signers", "id_item", "is_download", "tgl_tt"],
                   include: [
                     {
                       model: Karyawan,
@@ -71,7 +71,7 @@ export const getTrash = async(req, res) => {
                 {
                   model: LogSign, 
                   as: "LogSigns", 
-                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted", "id_signers", "id_item", "is_download"],
+                  attributes: ["id_logsign", "sign_base64", "status", "is_submitted", "id_signers", "id_item", "is_download", "tgl_tt"],
                   include: [
                     {
                       model: Karyawan,
