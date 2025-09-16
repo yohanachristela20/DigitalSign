@@ -505,90 +505,260 @@ function Document() {
   // };
 
 
-  const downloadDoc = async (id_dokumen, ref, logSigns = []) => { 
-    try {
-      const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
-      const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
-      const pdfDoc = await PDFDocument.load(existingPdfBytes);
+  // const downloadDoc = async (id_dokumen, ref, logSigns = []) => { 
+  //   try {
+  //     const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
+  //     const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+  //     const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
-      const pages = pdfDoc.getPages();
-      const scale = 1.5;
+  //     const pages = pdfDoc.getPages();
+  //     const scale = 1.5;
      
-      for (const sign of logSigns) {
-        if (sign.status === "Completed" && sign.is_submitted && sign.sign_base64){
-          const axisRes = await fetch(
-            `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
-          ).then(res => res.json());
+  //     for (const sign of logSigns) {
+  //       if (sign.status === "Completed" && sign.is_submitted && sign.sign_base64){
+  //         const axisRes = await fetch(
+  //           `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
+  //         ).then(res => res.json());
 
-          const field = axisRes[0]?.ItemField;
-          if (!field) continue;
+  //         const field = axisRes[0]?.ItemField;
+  //         if (!field) continue;
 
-          let {x_axis, y_axis, width, height, jenis_item} = field;
+  //         let {x_axis, y_axis, width, height, jenis_item} = field;
 
-          x_axis = Number(x_axis) / scale;
-          y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale - 10 : Number(y_axis) / scale + 10;
-          width = Number(height) / scale;
-          height = Number(width) / scale - 20;
+  //         x_axis = Number(x_axis) / scale;
+  //         y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale - 10 : Number(y_axis) / scale + 10;
+  //         width = Number(height) / scale;
+  //         height = Number(width) / scale - 20;
 
-          let base64Url = sign.sign_base64;
-          if (!base64Url.startsWith("data:image")){
-            base64Url = `data:image/png;base64,${base64Url}`;
-          } 
+  //         let base64Url = sign.sign_base64;
+  //         if (!base64Url.startsWith("data:image")){
+  //           base64Url = `data:image/png;base64,${base64Url}`;
+  //         } 
 
-          console.log("base64Url:", base64Url);
+  //         console.log("base64Url:", base64Url);
 
-          const pngImage = await pdfDoc.embedPng(base64Url);
+  //         const pngImage = await pdfDoc.embedPng(base64Url);
 
-          console.log("pngImage:", pngImage);
+  //         console.log("pngImage:", pngImage);
 
-          console.log("Pages length:", pages.length);
+  //         console.log("Pages length:", pages.length);
 
-          let targetPageIndex = 0;  
+  //         let targetPageIndex = 0;  
           
-          let remainingY = y_axis;
-          for (let i = 0; i < pages.length; i++) {
-            const pageHeight = pages[i].getHeight();
+  //         let remainingY = y_axis;
+  //         for (let i = 0; i < pages.length; i++) {
+  //           const pageHeight = pages[i].getHeight();
 
-            if (remainingY <= pageHeight){
-              targetPageIndex = i;
-              break;
-            }
-            remainingY -= pageHeight;
-          }
+  //           if (remainingY <= pageHeight){
+  //             targetPageIndex = i;
+  //             break;
+  //           }
+  //           remainingY -= pageHeight;
+  //         }
 
-          const page = pages[targetPageIndex];
-          const pageHeight = page.getHeight();
+  //         const page = pages[targetPageIndex];
+  //         const pageHeight = page.getHeight();
 
-          const yPos = pageHeight - remainingY - height + 29;
+  //         const yPos = pageHeight - remainingY - height + 29;
  
-          console.log("Placing sign at:", {
-            targetPageIndex,
-            x_axis,
-            y_axis,
-            remainingY,
-            pageHeight,
-            finalY: yPos
-          });
+  //         console.log("Placing sign at:", {
+  //           targetPageIndex,
+  //           x_axis,
+  //           y_axis,
+  //           remainingY,
+  //           pageHeight,
+  //           finalY: yPos
+  //         });
 
+  //         page.drawImage(pngImage, {
+  //           x: x_axis,
+  //           y: yPos,
+  //           width,
+  //           height,
+  //         });
+  //         }
+
+  //     }
+      
+  //     const pdfBytes = await pdfDoc.save();
+  //     const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      
+  //     saveAs(blob, `signed_${id_dokumen}.pdf`);
+
+  //   } catch (error) {
+  //     console.error("Downloading error:", error.message);
+  //   }
+  // };
+
+  //   const downloadDoc = async (id_dokumen, ref, logSigns = []) => { 
+  //   try {
+  //     const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
+  //     const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+  //     const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
+  //     const pages = pdfDoc.getPages();
+  //     const scale = 1.5;
+     
+  //     for (const sign of logSigns) {
+  //       if (sign.status === "Completed" && sign.is_submitted){
+  //         const axisRes = await fetch(
+  //           `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
+  //         ).then(res => res.json());
+
+  //         const field = axisRes[0]?.ItemField;
+  //         if (!field) continue;
+
+  //         let {x_axis, y_axis, width, height, jenis_item} = field;
+
+  //         x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
+  //         y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale + 20 : jenis_item === "Signpad" ? Number(y_axis) / scale + 10 : jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale;
+          
+  //         width = Number(height) / scale;
+  //         height = Number(width) / scale - 20;
+
+  //         let base64Url = sign.sign_base64;
+  //         if (!base64Url.startsWith("data:image")){
+  //           base64Url = `data:image/png;base64,${base64Url}`;
+  //         } 
+
+  //         console.log("base64Url:", base64Url);
+
+  //         const pngImage = await pdfDoc.embedPng(base64Url);
+
+  //         console.log("pngImage:", pngImage);
+
+  //         console.log("Pages length:", pages.length);
+
+  //         let targetPageIndex = 0;  
+          
+  //         let remainingY = y_axis;
+  //         for (let i = 0; i < pages.length; i++) {
+  //           const pageHeight = pages[i].getHeight();
+
+  //           if (remainingY <= pageHeight){
+  //             targetPageIndex = i;
+  //             break;
+  //           }
+  //           remainingY -= pageHeight;
+  //         }
+
+  //         const page = pages[targetPageIndex];
+  //         const pageHeight = page.getHeight();
+
+  //         const yPos = pageHeight - remainingY - height + 29;
+ 
+  //         console.log("Placing sign at:", {
+  //           targetPageIndex,
+  //           x_axis,
+  //           y_axis,
+  //           remainingY,
+  //           pageHeight,
+  //           finalY: yPos
+  //         });
+
+  //         page.drawImage(pngImage, {
+  //           x: x_axis,
+  //           y: yPos,
+  //           width,
+  //           height,
+  //         });
+  //         }
+
+  //     }
+      
+  //     const pdfBytes = await pdfDoc.save();
+  //     const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      
+  //     saveAs(blob, `signed_${id_dokumen}.pdf`);
+
+  //   } catch (error) {
+  //     console.error("Downloading error:", error.message);
+  //   }
+  // };
+
+
+  const downloadDoc = async (id_dokumen, ref, logSigns) => { 
+  try {
+    const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
+    const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
+    const pages = pdfDoc.getPages();
+    const scale = 1.5;
+   
+    for (const sign of logSigns) {
+      if (sign.status === "Completed" && sign.is_submitted) {
+        const axisRes = await fetch(
+          `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
+        ).then(res => res.json());
+
+        const field = axisRes[0]?.ItemField;
+        if (!field) continue;
+
+        let { x_axis, y_axis, width, height, jenis_item } = field;
+
+        x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
+        y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale - 5 : jenis_item === "Signpad" ? Number(y_axis) / scale + 25 :jenis_item === "Date" ? Number(y_axis) / scale - 50 : Number(y_axis) / scale ;
+        
+        width = Number(height) / scale;
+        height = Number(width) / scale - 20;
+
+        let targetPageIndex = 0;  
+        let remainingY = y_axis;
+        for (let i = 0; i < pages.length; i++) {
+          const pageHeight = pages[i].getHeight();
+          if (remainingY <= pageHeight) {
+            targetPageIndex = i;
+            break;
+          }
+          remainingY -= pageHeight;
+        }
+
+        const page = pages[targetPageIndex];
+        const pageHeight = page.getHeight();
+        const yPos = pageHeight - remainingY - height + 29;
+
+        if (jenis_item === "Initialpad" || jenis_item === "Signpad") {
+          let base64Url = sign.sign_base64;
+          if (!base64Url.startsWith("data:image")) {
+            base64Url = `data:image/png;base64,${base64Url}`;
+          }
+          const pngImage = await pdfDoc.embedPng(base64Url);
           page.drawImage(pngImage, {
             x: x_axis,
             y: yPos,
             width,
             height,
           });
-          }
+        } else {
+          const date = new Date(sign.tgl_tt);
+          console.log("DATE:", sign.tgl_tt);
+          const day = String(date.getDate()).padStart(2, "0");
+          const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec"];
+          const month = monthNames[date.getMonth()];
+          const year = date.getFullYear();
+          const currentDate = `${day} ${month} ${year}`;
 
+          page.drawText(currentDate, {
+            x: x_axis,
+            y: yPos,
+            size: 9,
+          });
+        }
       }
-      
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      
-      saveAs(blob, `signed_${id_dokumen}.pdf`);
-
-    } catch (error) {
-      console.error("Downloading error:", error.message);
     }
-  };
+
+    const signedBytes = await pdfDoc.save();
+    const blob = new Blob([signedBytes], { type: "application/pdf" });
+
+    saveAs(blob, `signed_${id_dokumen}.pdf`);
+
+  } catch (error) {
+    console.error("Downloading error:", error.message);
+  }
+};
+
+
 
   const handleUpload = () => {
     history.push("/admin/upload-document");
@@ -732,7 +902,7 @@ function Document() {
                           const ref = getRef(document.id_dokumen); 
                           const status = getStatusById(document.id_dokumen);
                           const logSigns = document.LogSigns || [];
-                          const allSubmitted = logSigns.length > 0 && logSigns.every(sign => sign?.is_submitted === true && !!sign?.sign_base64);
+                          const allSubmitted = logSigns.length > 0 && logSigns.every(sign => sign?.is_submitted === true);
 
                           if (status === "Completed" && allSubmitted) {
                             await downloadDoc(document.id_dokumen, ref, document.LogSigns);

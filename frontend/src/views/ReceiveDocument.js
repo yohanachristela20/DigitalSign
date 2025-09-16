@@ -1151,11 +1151,36 @@ function ReceiveDocument() {
                         //last benar
                         // hidden={is_submitted ? (!is_delegated && delegate_token !== null) && (delegatedDoc === id_dokumen) : !is_submitted && (!is_delegated && delegate_token !== null) && (delegatedDoc === id_dokumen)}
 
+                        // hidden={
+                        //     !is_delegated 
+                        //     ? ((is_submitted && delegate_token === null) && (delegatedDoc === id_dokumen))
+                        //     : !is_delegated && (is_submitted && delegate_token !== null)
+                        // }
+
+                        // hidden={
+                        //     (is_delegated && is_submitted && delegatedDoc === id_dokumen && !is_submitted  )
+                        // }
+
+                        // hidden={!is_delegated && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
+
                         hidden={
-                            is_submitted 
-                            ? ((!is_delegated && delegate_token !== null) && (delegatedDoc === id_dokumen))
-                            : ((!is_submitted) && (!is_delegated && delegate_token !== null) && (delegatedDoc === id_dokumen))
+                            (token !== delegate_token) &&
+                            (!is_delegated ) &&
+                            (delegatedDoc === id_dokumen)
                         }
+
+                        // hidden={
+                        //         (token === delegate_token && !is_submitted) ||
+                        //         (is_delegated === true && is_submitted) ||
+                        //         (delegatedDoc !== id_dokumen)
+                        //     }
+
+                        // hidden={!is_delegated || is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated && (delegatedDoc !== id_dokumen)}
+
+                        // hidden={!is_delegated || is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated && (delegatedDoc !== id_dokumen)}
+
+
+
                         >
                         <span className="fs-6">Actions</span>
                         </Dropdown.Toggle>
@@ -1232,7 +1257,8 @@ function ReceiveDocument() {
                         onClick={() => updateSubmitted(id_dokumen, current_signer)}
                         disabled={isFinishDisabled}
                         // hidden={pendingCount == 0 && !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
-                        hidden={pendingCount == 0 && ((is_delegated && is_submitted && delegate_token !== null) || (token !== delegate_token) && (delegatedDoc === id_dokumen)) || (is_submitted && !is_delegated === true && (delegatedDoc !== id_dokumen))}
+                        // hidden={((is_delegated && is_submitted && delegate_token !== null) || (token !== delegate_token) && (delegatedDoc === id_dokumen)) || (is_submitted && !is_delegated === true && (delegatedDoc !== id_dokumen))}
+                        hidden={is_delegated !== true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
 
                     >
                         Finish
@@ -1243,7 +1269,22 @@ function ReceiveDocument() {
                         className="navigate-btn mt-3 fs-6"
                         type="button"
                         onClick={handleJumpTo}
-                        hidden={pendingCount == 0 || !is_submitted && ((!is_delegated && delegate_token !== null) && (delegatedDoc === id_dokumen)) || initial_status.every(status => status === "Decline" || status === "Completed")}
+
+                        // hidden={!is_delegated || is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated && (delegatedDoc !== id_dokumen)}
+
+                        // hidden={
+                        //     pendingCount == 0 ||
+                        //     (!is_delegated && delegate_token === null || delegatedDoc === id_dokumen && !is_submitted  )
+                        // }
+
+                        hidden={
+                            pendingCount == 0 ||
+                            (token !== delegate_token) &&
+                            (!is_delegated ) &&
+                            (delegatedDoc === id_dokumen)
+                        }
+
+
                     >
                         Jump to ({pendingCount})
                     </Button>

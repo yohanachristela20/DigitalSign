@@ -253,19 +253,6 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
 
                     <hr />
 
-                    {/* {signerData.map((s, idx) => (
-                    <Row key={`viewed-${s.id_signers}-${idx}`} className="mt-2">
-                        <Col md="6">
-                        <FaEye className="mr-3 mt-1" style={{ width: 40, height: 40 }} />
-                        {s.accessed_at ? moment(s.accessed_at).format("DD-MM-YYYY HH:mm:ss") : "-"}
-                        </Col>
-                        <Col md="6">
-                        <p className="mb-1 mt-2">Viewed by: {s.nama}</p>
-                        <p className="mb-1 multiline-ellipsis">{s.real_email}</p>
-                        </Col>
-                    </Row>
-                    ))} */}
-
                     {groupedSignersArray.length > 0 && 
                     groupedSignersArray 
                     .sort((a,b) => new Date(b.tgl_tt) - new Date(a.tgl_tt))
@@ -286,21 +273,6 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                         </Row>
                     ))
                     }
-
-                    {/* {signerData.map((s, idx) => (
-                    <Row key={`sent-${s.id_signers}-${idx}`} className="mt-2">
-                        <Col md="6">
-                        <FaUpload className="mr-3 mt-1" style={{ width: 40, height: 40 }} />
-                        {s.createdAt ? moment(s.createdAt).format("DD-MM-YYYY HH:mm:ss") : "-"}
-                        </Col>
-                        <Col md="6">
-                        <p className="mb-1 mt-2">
-                            Sent for signature to {s.nama} from {senderData.nama}
-                        </p>
-                        <p>{senderData.email_sender}</p>
-                        </Col>
-                    </Row>
-                    ))} */}
 
                     {groupedSignersArray.length > 0 && 
                         groupedSignersArray
@@ -333,22 +305,6 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                         <p>{senderData.email_sender}</p>
                     </Col>
                     </Row>
-
-                    {/* {signerData
-                    .filter((s) => s.status === "Completed")
-                    .map((s, idx) => (
-                        <Row key={`signed-${s.id_signers}-${idx}`} className="mt-2">
-                        <Col md="6">
-                            <FaSignature className="mr-3 mt-1" style={{ width: 40, height: 40 }} />
-                            {s.signed_at ? moment(s.signed_at).format("DD-MM-YYYY HH:mm:ss") : "-"}
-                        </Col>
-                        <Col md="6">
-                            <p className="mb-1 mt-2">Signed by: {s.nama}</p>
-                            <p>{s.real_email}</p>
-                        </Col>
-                        </Row>
-                    ))} */}
-
 
                     {groupedSignersArray.length > 0 &&
                     groupedSignersArray
