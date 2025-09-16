@@ -179,67 +179,83 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
         setSelectedValues({});
     }
 
+    
+
     return (
        <>
-        {signerData.length > 0 && signerData.map((selectedSigner) => (
-            <Modal
-                key={selectedSigner.id_signers}
-                show={showDocInfoModal}
-                onHide={handleCloseModal}
-            >
-            <Modal.Header closeButton>
-                <Modal.Title>Document Info</Modal.Title>
-            </Modal.Header>
-            <Modal.Body className="text-left pt-0 mt-2 my-3">
-                <Form onSubmit={(e) => handleSubmit(e, signerID)}>
-                    <Row className="mt-3">
-                        <Col md="6">
-                            <Form.Group>
-                                <label>Document name</label>
-                            </Form.Group>
-                        </Col>
-                        <Col md="6">
-                            {selectedSigner.doc_name}
-                        </Col>
-                    </Row>
-                    <Row className="mt-2">
-                        <Col md="6">
-                            <Form.Group>
-                                <label>Sender</label>
-                            </Form.Group>
-                        </Col>
-                        <Col md="6">
-                            <p className="mb-1">{senderData.nama}</p>
-                            <p>{senderData.email_sender}</p>
-                        </Col>
-                    </Row>
-                    <Row className="mt-2">
-                        <Col md="6">
-                            <Form.Group>
-                                <label>Organization name</label>
-                            </Form.Group>
-                        </Col>
-                        <Col md="6">
-                            {senderData.organisasi}
-                        </Col>
-                    </Row>
-                    <Row className="mt-2">
-                        <Col md="6">
-                            <Form.Group>
-                                <label>Sent on</label>
-                            </Form.Group>
-                        </Col>
-                        <Col md="6">
-                            {selectedSigner.createdAt ? new Date(selectedSigner.createdAt).toLocaleDateString() : "N/A"}
-                        </Col>
-                    </Row>
+        {signerData.length > 0 && signerData.map((selectedSigner) => {
+            const date = selectedSigner?.createdAt ? new Date(selectedSigner.createdAt) : null;
+            let currentDate = "N/A";
+            if (date){
+                const day = String(date.getDate()).padStart(2, '0');
+                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"] 
+                const month = monthNames[date.getMonth()];
+                const year = date.getFullYear();
+                currentDate = `${day} ${month} ${year}`;
+            }
 
-                    
-                </Form>
+            return (
+                <Modal
+                    key={selectedSigner.id_signers}
+                    show={showDocInfoModal}
+                    onHide={handleCloseModal}
+                >
+                <Modal.Header closeButton>
+                    <Modal.Title>Document Info</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="text-left pt-0 mt-2 my-3">
+                    <Form onSubmit={(e) => handleSubmit(e, signerID)}>
+                        <Row className="mt-3">
+                            <Col md="6">
+                                <Form.Group>
+                                    <label>Document name</label>
+                                </Form.Group>
+                            </Col>
+                            <Col md="6">
+                                {selectedSigner.doc_name}
+                            </Col>
+                        </Row>
+                        <Row className="mt-2">
+                            <Col md="6">
+                                <Form.Group>
+                                    <label>Sender</label>
+                                </Form.Group>
+                            </Col>
+                            <Col md="6">
+                                <p className="mb-1">{senderData.nama}</p>
+                                <p>{senderData.email_sender}</p>
+                            </Col>
+                        </Row>
+                        <Row className="mt-2">
+                            <Col md="6">
+                                <Form.Group>
+                                    <label>Organization name</label>
+                                </Form.Group>
+                            </Col>
+                            <Col md="6">
+                                {senderData.organisasi}
+                            </Col>
+                        </Row>
+                        <Row className="mt-2">
+                            <Col md="6">
+                                <Form.Group>
+                                    <label>Sent on</label>
+                                </Form.Group>
+                            </Col>
+                            <Col md="6">
+                                {currentDate}
+                            </Col>
+                        </Row>
 
-            </Modal.Body>
-            </Modal>
-       ))}
+                        
+                    </Form>
+
+                </Modal.Body>
+                </Modal>
+            )
+
+           
+        })}
        </>
     )
 }

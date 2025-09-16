@@ -139,7 +139,7 @@ function ReceiveDocument() {
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] 
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"] 
     const month = monthNames[date.getMonth()];
     const year = date.getFullYear();
     const currentDate = `${day} ${month} ${year}`;
@@ -1015,7 +1015,7 @@ function ReceiveDocument() {
                         let date = new Date(sign.tgl_tt);
                         // const date = new Date();
                         const day = String(date.getDate()).padStart(2, '0');
-                        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] 
+                        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"] 
                         const month = monthNames[date.getMonth()];
                         const year = date.getFullYear();
                         const currentDate = `${day} ${month} ${year}`;
@@ -1270,7 +1270,7 @@ function ReceiveDocument() {
                         <Alert variant="danger" style={{marginTop: "-1030px"}} hidden={initial_status.every(status => status !== "Decline")}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
                         </Alert>
-                        <Alert variant="warning" style={{marginTop: "-1030px"}}
+                        <Alert variant="warning" style={{marginTop: "-680px"}}
                             hidden={
                                 (token === delegate_token && !is_submitted) ||
                                 (is_delegated === true && is_submitted) ||

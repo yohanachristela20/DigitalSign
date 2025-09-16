@@ -196,7 +196,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
         setSelectedValues({});
     };
 
-    const groupedSigners = completedSignersUnique.reduce((acc, signer) => {
+    const groupedSigners = signerData.reduce((acc, signer) => {
         const key = signer.nama;
         if (!acc[key]) {
             acc[key] = {
@@ -214,159 +214,170 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
     const groupedSignersArray = Object.values(groupedSigners);
 
     return (
-       <>
-        {signerData.length > 0 && signerData.map((selectedSigner) => (
+        <>
+            {signerData.length > 0 && (
             <Modal
-                key={selectedSigner.id_signers}
                 show={showAuditTrailModal}
                 onHide={handleCloseModal}
             >
-            <Modal.Header closeButton>
+                <Modal.Header closeButton>
                 <Modal.Title>Audit Trail</Modal.Title>
-            </Modal.Header>
-            <Modal.Body className="text-left pt-0 mt-2 my-3">
+                </Modal.Header>
+
+                <Modal.Body className="text-left pt-0 mt-2 my-3">
                 <Form onSubmit={(e) => handleSubmit(e, signerID)}>
+
                     <Row className="mt-3">
-                        <Col md="6">
-                            <Form.Group>
-                                <label>Document name</label>
-                            </Form.Group>
-                        </Col>
-                        <Col md="6">
-                            {selectedSigner.doc_name}
-                        </Col>
+                    <Col md="6"><label>Document name</label></Col>
+                    <Col md="6">{signerData[0]?.doc_name}</Col>
                     </Row>
                     <Row className="mt-2">
-                        <Col md="6">
-                            <Form.Group>
-                                <label>Document ID</label>
-                            </Form.Group>
-                        </Col>
-                        <Col md="6">
-                            {selectedSigner.id_dokumen}
-                        </Col>
+                    <Col md="6"><label>Document ID</label></Col>
+                    <Col md="6">{signerData[0]?.id_dokumen}</Col>
                     </Row>
                     <Row className="mt-2">
-                        <Col md="6">
-                            <Form.Group>
-                                <label>Status</label>
-                            </Form.Group>
-                        </Col>
-                        <Col md="6">
-                            {
-                                selectedSigner.status ? (
-                                    selectedSigner.status === "Pending" ? <FaCircle style={{ color: 'orange' }} className="mr-2"/>  : selectedSigner.status === "Completed" ? <FaCircle style={{ color: 'green' }} className="mr-2"/> : <FaCircle style={{ color: 'red' }} className="mr-2"/>   
-                                ) :  null
-                            }
-                            {selectedSigner.status}
-                        </Col>
+                    <Col md="6"><label>Status</label></Col>
+                    <Col md="6">
+                        {signerData[0]?.status === "Pending" && (
+                        <FaCircle style={{ color: "orange" }} className="mr-2" />
+                        )}
+                        {signerData[0]?.status === "Completed" && (
+                        <FaCircle style={{ color: "green" }} className="mr-2" />
+                        )}
+                        {signerData[0]?.status === "Decline" && (
+                        <FaCircle style={{ color: "red" }} className="mr-2" />
+                        )}
+                        {signerData[0]?.status}
+                    </Col>
                     </Row>
+
                     <hr />
 
-                    <Row className="mt-2">
-                        {groupedSignersArray.length > 0 ? (
-                            groupedSignersArray
-                                .sort((a, b) => new Date(b.tgl_tt) - new Date(a.tgl_tt))
-                                .map((signer, idx) => (
-                                    <React.Fragment key={`${signer.id_signers}-${idx}`}>
-                                        <Col md="6">
-                                            <div>
-                                                <FaEye className="mr-3 mt-1" style={{ width: '40', height: '40' }} /> 
-                                                {signer.accessed_at ? moment(signer.accessed_at).format('DD-MM-YYYY HH:mm:ss') : '-'}
-                                            </div>
-                                        </Col>
-                                        <Col md="6">
-                                            <div>
-                                                <p className="mb-1 mt-2">Viewed by: {signer.nama}</p>
-                                                {signer.emails.map((email, i) => (
-                                                    <p key={i} className="mb-1 multiline-ellipsis">{email}</p>
-                                                ))}
-                                            </div>
-                                        </Col>
-                                    </React.Fragment>
-                                ))
-                        ) : (
-                            <>
-                                <Col md="6">
-                                    <FaEye className="mr-3" style={{ width: '40', height: '40' }} /> 
-                                    {accessed_at ? moment(accessed_at).format('DD-MM-YYYY HH:mm:ss') : '-'}
-                                </Col>
-                                <Col md="6">
-                                    <p className="mb-1 mt-2">Viewed by: {nama}</p>
-                                    <p className="mb-1 multiline-ellipsis">{real_email}</p>
-                                </Col>
-                            </>
-                        )}
+                    {/* {signerData.map((s, idx) => (
+                    <Row key={`viewed-${s.id_signers}-${idx}`} className="mt-2">
+                        <Col md="6">
+                        <FaEye className="mr-3 mt-1" style={{ width: 40, height: 40 }} />
+                        {s.accessed_at ? moment(s.accessed_at).format("DD-MM-YYYY HH:mm:ss") : "-"}
+                        </Col>
+                        <Col md="6">
+                        <p className="mb-1 mt-2">Viewed by: {s.nama}</p>
+                        <p className="mb-1 multiline-ellipsis">{s.real_email}</p>
+                        </Col>
                     </Row>
+                    ))} */}
+
+                    {groupedSignersArray.length > 0 && 
+                    groupedSignersArray 
+                    .sort((a,b) => new Date(b.tgl_tt) - new Date(a.tgl_tt))
+                    .map((s, idx) => (
+                        <Row key={`viewed-${s.id_signers}-${idx}`} className="mt-2">
+                            <Col md="6">
+                            <FaEye className="mr-3 mt-1" style={{ width: 40, height: 40 }} />
+                            {s.accessed_at ? moment(s.accessed_at).format("DD-MM-YYYY HH:mm:ss") : "-"}
+                            </Col>
+                            <Col md="6">
+                            <p className="mb-1 mt-2">Viewed by: {s.nama}</p>
+                            {s.emails.map((email, i) => (
+                                <p key={i} className="mb-1 multiline-ellipsis">
+                                    {email}
+                                </p>
+                            ))}
+                            </Col>
+                        </Row>
+                    ))
+                    }
+
+                    {/* {signerData.map((s, idx) => (
+                    <Row key={`sent-${s.id_signers}-${idx}`} className="mt-2">
+                        <Col md="6">
+                        <FaUpload className="mr-3 mt-1" style={{ width: 40, height: 40 }} />
+                        {s.createdAt ? moment(s.createdAt).format("DD-MM-YYYY HH:mm:ss") : "-"}
+                        </Col>
+                        <Col md="6">
+                        <p className="mb-1 mt-2">
+                            Sent for signature to {s.nama} from {senderData.nama}
+                        </p>
+                        <p>{senderData.email_sender}</p>
+                        </Col>
+                    </Row>
+                    ))} */}
+
+                    {groupedSignersArray.length > 0 && 
+                        groupedSignersArray
+                        .sort((a, b) => new Date(b.tgl_tt) - new Date(a.tgl_tt))
+                        .map((s, idx) => (
+                            <Row key={`sent-${s.id_signers}-${idx}`} className="mt-2">
+                                <Col md="6">
+                                <FaUpload className="mr-3 mt-1" style={{ width: 40, height: 40 }} />
+                                {s.createdAt ? moment(s.createdAt).format("DD-MM-YYYY HH:mm:ss") : "-"}
+                                </Col>
+                                <Col md="6">
+                                <p className="mb-1 mt-2">
+                                    Sent for signature to {s.nama} from {senderData.nama}
+                                </p>
+                                <p>{senderData.email_sender}</p>
+                                </Col>
+                            </Row>
+                        ))
+                    }
 
                     <Row className="mt-2">
-                        <Col md="6">
-                            <FaUpload className="mr-3 mt-1" style={{ width: '40', height: '40' }} /> 
-                            {selectedSigner?.createdAt ? moment(selectedSigner.createdAt).format('DD-MM-YYYY HH:mm:ss') : '-'}
-                        </Col>
-                        <Col md="6">
-                            <p className="mb-1 mt-2">Sent for signature to {nama} from {senderData.nama}</p>
-                            <p>{senderData.email_sender}</p>
-                        </Col>
+                    <Col md="6">
+                        <FaCheckCircle className="mr-3 mt-1" style={{ width: 40, height: 40 }} />
+                        {signerData[0]?.createdAt
+                        ? moment(signerData[0].createdAt).format("DD-MM-YYYY HH:mm:ss")
+                        : "-"}
+                    </Col>
+                    <Col md="6">
+                        <p className="mb-1 mt-2">Created by: {senderData.nama}</p>
+                        <p>{senderData.email_sender}</p>
+                    </Col>
                     </Row>
 
-                    <Row className="mt-2">
+                    {/* {signerData
+                    .filter((s) => s.status === "Completed")
+                    .map((s, idx) => (
+                        <Row key={`signed-${s.id_signers}-${idx}`} className="mt-2">
                         <Col md="6">
-                            <FaCheckCircle className="mr-3 mt-1" style={{ width: '40', height: '40' }} /> 
-                            {selectedSigner?.createdAt ? moment(selectedSigner.createdAt).format('DD-MM-YYYY HH:mm:ss') : '-'}
+                            <FaSignature className="mr-3 mt-1" style={{ width: 40, height: 40 }} />
+                            {s.signed_at ? moment(s.signed_at).format("DD-MM-YYYY HH:mm:ss") : "-"}
                         </Col>
                         <Col md="6">
-                            <p className="mb-1 mt-2">Created by: {senderData.nama}</p>
-                            <p>{senderData.email_sender}</p>
+                            <p className="mb-1 mt-2">Signed by: {s.nama}</p>
+                            <p>{s.real_email}</p>
                         </Col>
-                    </Row>
+                        </Row>
+                    ))} */}
 
-                    <Row
-                        className="mt-2"
-                        hidden={selectedSigner.status !== "Completed"}
-                    >
-                        {groupedSignersArray.length > 0 ? (
-                            groupedSignersArray
-                                .sort((a, b) => new Date(b.tgl_tt) - new Date(a.tgl_tt))
-                                .map((signer, idx) => (
-                                    <React.Fragment key={`signed-${signer.id_signers}-${idx}`}>
-                                        <Col md="6">
-                                            <div>
-                                                <FaSignature className="mr-3 mt-1" style={{ width: '40', height: '40' }} /> 
-                                                {signer.tgl_tt ? moment(signer.tgl_tt).format('DD-MM-YYYY HH:mm:ss') : '-'}
-                                            </div>
-                                        </Col>
-                                        <Col md="6">
-                                            <div>
-                                                <p className="mb-1 mt-2">Signed by: {signer.nama}</p>
-                                                {signer.emails.map((email, i) => (
-                                                    <p key={i} className="mb-1 multiline-ellipsis">{email}</p>
-                                                ))}
-                                            </div>
-                                        </Col>
-                                    </React.Fragment>
-                                ))
-                        ) : (
-                            <>
-                                <Col md="6">
-                                    <FaSignature className="mr-3 mt-1" style={{ width: '40', height: '40' }} /> 
-                                    {selectedSigner?.tgl_tt ? moment(selectedSigner.tgl_tt).format('DD-MM-YYYY HH:mm:ss') : '-'}
-                                </Col>
-                                <Col md="6">
-                                    <p className="mb-1 mt-2">Signed by: {nama}</p>
-                                    <p className="mt-1 multiline-ellipsis">{real_email}</p>
-                                </Col>
-                            </>
-                        )}
-                    </Row>
+
+                    {groupedSignersArray.length > 0 &&
+                    groupedSignersArray
+                    .sort((a,b) => new Date(b.tgl_tt) - new Date(a.tgl_tt))
+                    .filter((s) => s.status === "Completed")
+                    .map((s, idx) => (
+                        <Row key={`signed-${s.id_signers}-${idx}`} className="mt-2">
+                        <Col md="6">
+                            <FaSignature className="mr-3 mt-1" style={{ width: 40, height: 40 }} />
+                            {s.tgl_tt ? moment(s.tgl_tt).format("DD-MM-YYYY HH:mm:ss") : "-"}
+                        </Col>
+                        <Col md="6">
+                            <p className="mb-1 mt-2">Signed by: {s.nama}</p>
+                            {s.emails.map((email, i) => (
+                                <p key={i} className="mb-1 multiline-ellipsis">
+                                    {email}
+                                </p>
+                            ))}
+                        </Col>
+                        </Row>
+                    ))}
 
                 </Form>
-
-            </Modal.Body>
+                </Modal.Body>
             </Modal>
-        ))}
-       </>
-    )
+            )}
+        </>
+    );
+
 }
 
 export default AuditTrailModal;
