@@ -5,6 +5,7 @@ import { CDBTable, CDBTableHeader, CDBTableBody } from 'cdbreact';
 import {Alert, Container, Row, Col, Badge} from "react-bootstrap";
 import {FaInfoCircle, FaTrashAlt, FaSortUp, FaSortDown, FaUpload} from 'react-icons/fa'; 
 import Pagination from "react-js-pagination";
+import { toast } from "react-toastify";
 
 function Trash() {
     const [document, setDocument] = useState([]); 
