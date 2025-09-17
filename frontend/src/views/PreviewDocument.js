@@ -1,9 +1,7 @@
 import React, {useState, useEffect} from "react";
-import { useLocation, useHistory } from "react-router-dom";
-import axios from "axios";
+import { useLocation } from "react-router-dom";
 import PDFCanvas from "components/Canvas/canvas.js";
-import {Button, Container, Row, Col, Card, Table, Spinner, Badge, Form} from "react-bootstrap";
-import { Document, Page } from "react-pdf";
+import {Container, Form} from "react-bootstrap";
 import "../assets/scss/lbd/_previewdoc.scss"
 
 function PreviewDocument() {
@@ -11,12 +9,6 @@ function PreviewDocument() {
     const selectedDoc = location?.state?.selectedDoc || null;
     const [pdfUrl, setPdfUrl] = useState(null);
     const token = localStorage.getItem("token");
-    const [x_axis, setXAxis] = useState(0);
-    const [y_axis, setYAxis] = useState(0);
-    const [panjang, setPanjang] = useState(250);
-    const [lebar, setLebar] = useState(150);
-    const [pageScale, setPageScale] = useState(1);
-    const [id_dokumen, setIdDokumen] = useState("");
 
   useEffect(() => {
         const fetchPdf = async () => {

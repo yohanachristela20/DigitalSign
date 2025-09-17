@@ -19,7 +19,6 @@ import PDFCanvas from "components/Canvas/canvas.js";
 import { PDFDocument } from "pdf-lib";
 import { getProgress } from "../../src/utils/progress.js";
 
-// react-bootstrap components
 import {Button, Container, Row, Col, Card, Table, Spinner, Badge} from "react-bootstrap";
 import { saveAs } from "file-saver";
 function Document() {
@@ -136,8 +135,6 @@ function Document() {
     getDocumentDeadline();
   }, [selectedCategory]);
 
-  // console.log("Selected category: ", selectedCategory);
-  // console.log("Selected document: ", selectedDocuments);
 
   const getStatusById = (id) => {
     const statusObj = documentStatus.find(ds => ds.id_dokumen === id);
@@ -153,7 +150,6 @@ function Document() {
     ? document.filter(doc => doc.id_kategoridok === selectedCategory)
     : document;
 
-  // console.log("filtered documents: ", filteredDocuments);
 
   const filteredDocument = document.filter((doc) =>
   {
@@ -174,7 +170,6 @@ function Document() {
     ? documentStatus.filter(doc => doc.id_dokumen === selectedDocuments)
     : documentStatus;
 
-  // console.log("filteredDocsStatus: ", filteredDocsStatus);
 
   const filteredDocStatus = documentStatus.filter((documentStatus) =>
     (documentStatus.id_dokumen && String(documentStatus.id_dokumen).toLowerCase().includes(searchQuery)) ||
@@ -213,26 +208,6 @@ function Document() {
     setCurrentPage(pageNumber); 
   }
 
-
-  // const deleteDocument = async(id_dokumen) =>{
-  //   try {
-  //     await axios.delete(`http://localhost:5000/document/${id_dokumen}` , {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //     },
-  //     }); 
-  //     toast.success("Employee was deleted successfully!", {
-  //       position: "top-right",
-  //       autoClose: 5000,
-  //       hideProgressBar: true,
-  //     });
-  //     getDocument(); 
-  //     window.location.reload();
-  //   } catch (error) {
-  //     console.log(error.message); 
-  //   }
-  // };
-
   const deleteDocument = async(id_dokumen) =>{
     try {
       await axios.patch(`http://localhost:5000/temporary-del/${id_dokumen}`,
@@ -241,12 +216,11 @@ function Document() {
         headers: {Authorization: `Bearer ${token}`}
       }
       ); 
-     
-      // toast.success("Employee was deleted successfully!", {
-      //   position: "top-right",
-      //   autoClose: 5000,
-      //   hideProgressBar: true,
-      // });
+      toast.success("Document was deleted successfully!", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
       getDocument(); 
       window.location.reload();
     } catch (error) {
@@ -267,7 +241,6 @@ function Document() {
         hideProgressBar: true,
       });
       getDocument(); 
-      // window.location.reload();
     } catch (error) {
       console.log(error.message); 
     }
@@ -279,7 +252,6 @@ function Document() {
 
   const handleAddSuccess = () => {
     getDocument();
-    // fetchEmployeeData();
     toast.success("New document has been created!", {
         position: "top-right",
         autoClose: 5000,
@@ -289,8 +261,6 @@ function Document() {
 
   
   const handleAddDocSuccess = () => {
-    // getDocument();
-    // fetchEmployeeData();
     toast.success("New document has been uploaded!", {
         position: "top-right",
         autoClose: 5000,
@@ -303,19 +273,6 @@ function Document() {
   const handleEditSuccess = () => {
     getDocument();
     toast.success("Employee was updated successfully!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-    });
-  };
-
-  const handleImportButtonClick = () => {
-    setShowImportModal(true);
-  }
-
-  const handleImportSuccess = () => {
-    getDocument();
-    toast.success("User successfully imported!", {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: true,
@@ -431,252 +388,6 @@ function Document() {
   };
 
 
-  // const downloadDoc = async (id_dokumen, ref, logSigns = []) => { 
-  //   try {
-  //     const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
-  //     const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
-  //     const pdfDoc = await PDFDocument.load(existingPdfBytes);
-
-  //     const pages = pdfDoc.getPages();
-  //     const scale = 1.5;
-     
-  //     for (const sign of logSigns) {
-  //       if (sign.status === "Completed" && sign.is_submitted && sign.sign_base64){
-  //         const axisRes = await fetch(
-  //           `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
-  //         ).then(res => res.json());
-
-  //         const field = axisRes[0]?.ItemField;
-  //         if (!field) continue;
-
-  //         let {x_axis, y_axis, width, height, page_num} = field;
-
-  //         x_axis = Number(x_axis) / scale;
-  //         y_axis = Number(y_axis) / scale;
-  //         width = Number(height) / scale;
-  //         height = Number(width) / scale;
-
-  //         let base64Url = sign.sign_base64;
-  //         if (!base64Url.startsWith("data:image")){
-  //           base64Url = `data:image/png;base64,${base64Url}`;
-  //         } 
-
-  //         console.log("base64Url:", base64Url);
-
-  //         const pngImage = await pdfDoc.embedPng(base64Url);
-
-  //         console.log("pngImage:", pngImage);
-
-  //         console.log("Pages length:", pages.length);
-
-
-  //         const targetPageIndex = (page_num ? Number(page_num) : 1) - 1;          
-  //         console.log("targetPageIndex:", targetPageIndex);
-
-          
-          
-  //         if (targetPageIndex >= 0 && targetPageIndex < pages.length){
-
-  //           const page = pages[targetPageIndex];
-  //           const pageHeight = page.getHeight();
-
-  //           const yPos = pageHeight - y_axis - height;
-  
-  //           page.drawImage(pngImage, {
-  //             x: x_axis,
-  //             y: yPos,
-  //             width,
-  //             height,
-  //           });
-  //         }
-
-          
-  //       }
-  //     }
-      
-  //     const pdfBytes = await pdfDoc.save();
-  //     const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      
-  //     saveAs(blob, `signed_${id_dokumen}.pdf`);
-
-  //   } catch (error) {
-  //     console.error("Downloading error:", error.message);
-  //   }
-  // };
-
-
-  // const downloadDoc = async (id_dokumen, ref, logSigns = []) => { 
-  //   try {
-  //     const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
-  //     const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
-  //     const pdfDoc = await PDFDocument.load(existingPdfBytes);
-
-  //     const pages = pdfDoc.getPages();
-  //     const scale = 1.5;
-     
-  //     for (const sign of logSigns) {
-  //       if (sign.status === "Completed" && sign.is_submitted && sign.sign_base64){
-  //         const axisRes = await fetch(
-  //           `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
-  //         ).then(res => res.json());
-
-  //         const field = axisRes[0]?.ItemField;
-  //         if (!field) continue;
-
-  //         let {x_axis, y_axis, width, height, jenis_item} = field;
-
-  //         x_axis = Number(x_axis) / scale;
-  //         y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale - 10 : Number(y_axis) / scale + 10;
-  //         width = Number(height) / scale;
-  //         height = Number(width) / scale - 20;
-
-  //         let base64Url = sign.sign_base64;
-  //         if (!base64Url.startsWith("data:image")){
-  //           base64Url = `data:image/png;base64,${base64Url}`;
-  //         } 
-
-  //         console.log("base64Url:", base64Url);
-
-  //         const pngImage = await pdfDoc.embedPng(base64Url);
-
-  //         console.log("pngImage:", pngImage);
-
-  //         console.log("Pages length:", pages.length);
-
-  //         let targetPageIndex = 0;  
-          
-  //         let remainingY = y_axis;
-  //         for (let i = 0; i < pages.length; i++) {
-  //           const pageHeight = pages[i].getHeight();
-
-  //           if (remainingY <= pageHeight){
-  //             targetPageIndex = i;
-  //             break;
-  //           }
-  //           remainingY -= pageHeight;
-  //         }
-
-  //         const page = pages[targetPageIndex];
-  //         const pageHeight = page.getHeight();
-
-  //         const yPos = pageHeight - remainingY - height + 29;
- 
-  //         console.log("Placing sign at:", {
-  //           targetPageIndex,
-  //           x_axis,
-  //           y_axis,
-  //           remainingY,
-  //           pageHeight,
-  //           finalY: yPos
-  //         });
-
-  //         page.drawImage(pngImage, {
-  //           x: x_axis,
-  //           y: yPos,
-  //           width,
-  //           height,
-  //         });
-  //         }
-
-  //     }
-      
-  //     const pdfBytes = await pdfDoc.save();
-  //     const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      
-  //     saveAs(blob, `signed_${id_dokumen}.pdf`);
-
-  //   } catch (error) {
-  //     console.error("Downloading error:", error.message);
-  //   }
-  // };
-
-  //   const downloadDoc = async (id_dokumen, ref, logSigns = []) => { 
-  //   try {
-  //     const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
-  //     const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
-  //     const pdfDoc = await PDFDocument.load(existingPdfBytes);
-
-  //     const pages = pdfDoc.getPages();
-  //     const scale = 1.5;
-     
-  //     for (const sign of logSigns) {
-  //       if (sign.status === "Completed" && sign.is_submitted){
-  //         const axisRes = await fetch(
-  //           `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
-  //         ).then(res => res.json());
-
-  //         const field = axisRes[0]?.ItemField;
-  //         if (!field) continue;
-
-  //         let {x_axis, y_axis, width, height, jenis_item} = field;
-
-  //         x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
-  //         y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale + 20 : jenis_item === "Signpad" ? Number(y_axis) / scale + 10 : jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale;
-          
-  //         width = Number(height) / scale;
-  //         height = Number(width) / scale - 20;
-
-  //         let base64Url = sign.sign_base64;
-  //         if (!base64Url.startsWith("data:image")){
-  //           base64Url = `data:image/png;base64,${base64Url}`;
-  //         } 
-
-  //         console.log("base64Url:", base64Url);
-
-  //         const pngImage = await pdfDoc.embedPng(base64Url);
-
-  //         console.log("pngImage:", pngImage);
-
-  //         console.log("Pages length:", pages.length);
-
-  //         let targetPageIndex = 0;  
-          
-  //         let remainingY = y_axis;
-  //         for (let i = 0; i < pages.length; i++) {
-  //           const pageHeight = pages[i].getHeight();
-
-  //           if (remainingY <= pageHeight){
-  //             targetPageIndex = i;
-  //             break;
-  //           }
-  //           remainingY -= pageHeight;
-  //         }
-
-  //         const page = pages[targetPageIndex];
-  //         const pageHeight = page.getHeight();
-
-  //         const yPos = pageHeight - remainingY - height + 29;
- 
-  //         console.log("Placing sign at:", {
-  //           targetPageIndex,
-  //           x_axis,
-  //           y_axis,
-  //           remainingY,
-  //           pageHeight,
-  //           finalY: yPos
-  //         });
-
-  //         page.drawImage(pngImage, {
-  //           x: x_axis,
-  //           y: yPos,
-  //           width,
-  //           height,
-  //         });
-  //         }
-
-  //     }
-      
-  //     const pdfBytes = await pdfDoc.save();
-  //     const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      
-  //     saveAs(blob, `signed_${id_dokumen}.pdf`);
-
-  //   } catch (error) {
-  //     console.error("Downloading error:", error.message);
-  //   }
-  // };
-
-
   const downloadDoc = async (id_dokumen, ref, logSigns) => { 
   try {
     const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
@@ -777,8 +488,6 @@ function Document() {
               onSuccess={handleEditSuccess}
           />
 
-          {/* <ImportUser showImportModal={showImportModal} setShowImportModal={setShowImportModal} onSuccess={handleImportSuccess} /> */}
-
           <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>
             <Button
               type="button"
@@ -789,23 +498,6 @@ function Document() {
                 Upload Document
             </Button>
           <Container>
-            {/* <Button
-              type="button"
-              className="btn btn-fill btn-success pull-right mb-3 mr-3"
-              onClick={() => setShowAddModal(true)}>
-              <i class="fa fa-plus-circle" style={{ marginRight: '8px' }}></i>
-               New Employee
-            </Button> */}
-
-            {/* <Button
-              className="btn-fill pull-right mb-3 mr-3"
-              type="button"
-              variant="info"
-              onClick={handleImportButtonClick}>
-              <FaFileImport style={{ marginRight: '8px' }} />
-              Import
-            </Button> */}
-
             <Button
               className="btn-fill pull-right mb-3 mr-3"
               type="button"
@@ -860,7 +552,7 @@ function Document() {
                         <Badge pill bg="secondary">Pending</Badge>
                       )}
                     </p>
-                    <p className="signer-font" hidden={getStatusById(document.id_dokumen) === "Completed" && document.LogSigns.every((log) => log.is_submitted === true)}>{getProgress(document)}</p>                      
+                    <p className="signer-font" hidden={getStatusById(document.id_dokumen) === "Completed" || getStatusById(document.id_dokumen) === "Decline" || document.LogSigns.every((log) => log.is_submitted === true)}>{getProgress(document)}</p>                      
                   </td>
                   <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
                   <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom"; 
 import { Form, Button, Container, Row, Col, Card, FormGroup } from "react-bootstrap";
 import "../assets/scss/lbd/_login.scss";
-import loginImage from "../assets/img/login.jpg";
 import axios from "axios";
 import Heartbeat from "./Heartbeat.js";
 import {FaUser, FaKey, FaBriefcase} from 'react-icons/fa'; 
@@ -12,11 +11,8 @@ function Login({index}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
-  const [user_active, setUserActive] = useState("");
   const history = useHistory();
   const [redirecting, setRedirecting] = useState(false); 
-  const [logoutTimer, setLogoutTimer] = useState(null);
-  const offset = index * 10;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -60,10 +56,6 @@ function Login({index}) {
     }
   };
 
-  // const handleUsername = (value) => {
-  //   const numericValue = value.replace(/\D/g, "");
-  //   setUsername(numericValue);
-  // };
 
   const navigateToRolePage = (role) => {
     if (role === "Admin") {
@@ -90,9 +82,6 @@ function Login({index}) {
       <Container fluid className="d-flex align-items-center justify-content-center">
       <Row className="login-row element">
         <Card className="login-card shadow mb-0">
-          {/* <Col className="form-container card-img-top d-flex align-items-center justify-content-center">
-          
-          </Col> */}
           <div className="d-flex justify-content-center">
             <img src={require("assets/img/login2.png")} alt="login-img" className="login-illustration" />
           </div>

@@ -1,6 +1,5 @@
 import EmployeeManagement from "views/EmployeeManagement.js";
 import MasterUser from "views/MasterUser.js";
-import DashboardKaryawan from "views/DashboardKaryawan.js";
 import Document from "views/Document.js";
 import UploadDocument from "views/UploadDocument.js";
 
@@ -74,15 +73,6 @@ const dashboardRoutes = [
     layout: "/"
   },
 
-
-  //KARYAWAN
-  {
-    path: "/dashboard-karyawan2",
-    name: "Beranda",
-    icon: "nc-icon nc-chart-pie-35",
-    component: DashboardKaryawan,
-    layout: "/karyawan"
-  },
 
   // SUPER ADMIN
   {

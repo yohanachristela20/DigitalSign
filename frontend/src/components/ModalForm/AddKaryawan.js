@@ -8,9 +8,6 @@ const AddKaryawan = ({showAddModal, setShowAddModal, onSuccess}) => {
     const [nama, setNama] = useState("");
     const [job_title, setJob] = useState("");
     const [organisasi, setOrganisasi] = useState("");
-    const [email, setEmail] = useState("");
-    const [role, setRole] = useState("");
-    const [user_active, setUserActive] = useState("");
 
     const token = localStorage.getItem("token");
 
@@ -23,10 +20,6 @@ const AddKaryawan = ({showAddModal, setShowAddModal, onSuccess}) => {
 
         const newId = response.data?.nextId || "K00001";
         setIdKaryawan(newId);
-        // setRole('');
-        // setUserActive('');
-
-        // console.log("newId: ", newId);
     };
 
     useEffect(() => {
@@ -41,26 +34,15 @@ const AddKaryawan = ({showAddModal, setShowAddModal, onSuccess}) => {
                 nama, 
                 job_title,
                 organisasi, 
-                // email,
-                // role: '',
-                // user_active:'',
             }, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
 
-            // await axios.post('http://localhost:5000/user', {
-            //     email,
-            //     role: '',
-            //     user_active:'',
-            // }, {
-            //     headers: {
-            //         Authorization: `Bearer ${token}`,
-            //     },
-            // });
             setShowAddModal(false);
             onSuccess();
+            window.location.reload();
         } catch (error) {
             console.log(error.message);
         }
@@ -155,21 +137,6 @@ const AddKaryawan = ({showAddModal, setShowAddModal, onSuccess}) => {
                         </Form.Group>
                     </Col>
                 </Row>
-                {/* <Row className="mt-3 mb-2">
-                    <Col md="12">
-                    <Form.Group>
-                    <span className="text-danger">*</span>
-                        <label>Email</label>
-                        <Form.Control
-                            type="text"
-                            className="form-control"
-                            required
-                            value={email || ""}
-                            onChange={(e) => setEmail(e.target.value)}
-                        ></Form.Control>
-                        </Form.Group>
-                    </Col>
-                </Row> */}
 
                 <Row>
                 <Col md="12">

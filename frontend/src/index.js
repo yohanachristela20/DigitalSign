@@ -91,7 +91,6 @@ root.render(
 
             <Route path="/document" element={<Document />} />
             <Route path="/user/envelope" component={ReceiveDocument} />
-            {/* <Route path="/user/envelope" /> */}
             <Redirect from="/" to="/login" />
 
           </Switch>

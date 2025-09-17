@@ -383,7 +383,6 @@ function ReceiveDocument() {
             const delegate_token = res.data.delegate_token;
             const deadline = res.data.deadline;
 
-            // console.log("MAIN TOKEN:", main_token, "DELEGATE TOKEN:", delegate_token);
             console.log("Deadline from token:", deadline);
 
             const finalSignerId = allSigners || currentSigner || delegated_signers;
@@ -539,9 +538,6 @@ function ReceiveDocument() {
             setSubmittedMap(submittedMapping);
             setDelegatedMap(delegateMapping);
 
-            // console.log("Token dari DB:", token);
-            // console.log("Signatures:", signatures);
-
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
             setErrorMsg(error.message);
@@ -553,9 +549,6 @@ function ReceiveDocument() {
 
         fetchData();
     }, [token]);
-
-    // console.log("id_dokumen real:", id_dokumen);
-
 
     
     useEffect(() => {
@@ -597,7 +590,6 @@ function ReceiveDocument() {
     };
 
     const sendSignedDelegate = async(id_dokumen, delegated_signers, token) => {
-        // console.log("token signed delegated:", token);
 
         try {
             const signedDelegate = await axios.post('http://localhost:5000/signed-delegate-email', {
@@ -789,19 +781,9 @@ function ReceiveDocument() {
         });
         setFilterFields(filteredFields);
 
-        
-        // console.log("filteredFields for render:", filteredFields.map(f => ({
-        //     id_signers: f.id_signers,
-        //     delegated_signers: f.delegated_signers,
-        //     id_item: f.id_item,
-        //     jenis_item: f.jenis_item,
-        // })));
-
         setInitial(filteredFields);
         setSignature(filteredFields);
         setDateField(filteredFields);
-
-        // console.log("filteredFields for Initial:", filteredFields);
 
         const statusList = filteredFields.map(field => field.status);
         setInitialStatus(statusList);
@@ -817,12 +799,6 @@ function ReceiveDocument() {
 
         const pageList = filteredFields.map(field => field.page);
         setPage(pageList);
-
-        console.log("pageList:", pageList);
-        console.log("PAGE:", page);
-
-        // const tokenDbList = filteredFields.map(field => field.token);
-        // setTokenDb(tokenDbList);
 
         const nextSignCompletedList = allFields
             .filter(field => field.prevSigner === id_signers)
@@ -858,14 +834,6 @@ function ReceiveDocument() {
 
     const itemArray = Array.isArray(allItems) ? allItems : [allItems];
     const signerArray = Array.isArray(allSigners) ? allSigners : [allSigners];
-
-    const stableItemArray = useMemo(() => (
-        Array.isArray(allItems) ? allItems : [allItems]
-    ), [allItems]);
-
-    const stableSignerArray = useMemo(() => (
-        Array.isArray(signerArray) ? signerArray : [signerArray]
-    ), [signerArray]);
     
     useEffect(() => {
         let allCurrentItemIds = [];
@@ -880,7 +848,6 @@ function ReceiveDocument() {
                     const currentItemId = activeItem.id_item;
                     const isCurrentItem = currentItemId === item;
 
-                    // console.log(`Item ${item} → is current: ${isCurrentItem}`);
                 }
             }
         }
@@ -892,22 +859,13 @@ function ReceiveDocument() {
             prevArray.every(id => allCurrentItemIds.includes(id));
             return isSame ? prevArray : allCurrentItemIds;
         });
-        // console.log("Final currentItemIds:", allCurrentItemIds);
     }, [signerArray, itemArray, initial]);
     
-
-    const isDelegatedAlertVisible = delegatedDoc === id_dokumen && (
-        initial_status.every(status => status === "Completed")
-        ? delegated_signers !== id_signers
-        : is_delegated
-    );
 
     useEffect(() => {
         const hasSubmitted = initial.some(sig => sig?.is_submitted === true);
         setIsSubmitted(hasSubmitted);
     }, [initial]);
-
-    // const showDelegateAlert = (token === delegate_token && !is_submitted) || (is_delegated === true && is_submitted) || (delegatedDoc !== id_dokumen);
 
     const showDelegateAlert = !is_delegated === true && is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc !== id_dokumen) : !is_delegated || (delegatedDoc === id_dokumen);
 
@@ -964,15 +922,6 @@ function ReceiveDocument() {
                     width = Number(height) / scale;
                     height = Number(width) / scale - 20;
 
-                    // let base64Url = sign.sign_base64;
-                    // if (!base64Url.startsWith("data:image")) {
-                    //     base64Url = `data:image/png;base64,${base64Url}`;
-                    // }
-
-                    // console.log("currentDate:", currentDate);
-
-                    // const pngImage = jenis_item === "Initialpad" || jenis_item === "Signpad" ? await pdfDoc.embedPng(base64Url) : await pdfDoc.embedPng(currentDate);
-
                     let targetPageIndex = 0;
                     let remainingY = y_axis;
                     for (let i = 0; i < pages.length; i++) {
@@ -987,15 +936,6 @@ function ReceiveDocument() {
                     const page = pages[targetPageIndex];
                     const pageHeight = page.getHeight();
                     const yPos = pageHeight - remainingY - height + 29;
-
-                    // page.drawImage(pngImage, {
-                    //     x: x_axis,
-                    //     y: yPos,
-                    //     width,
-                    //     height,
-                    // });
-                    console.log("jenis item:", jenis_item);
-                    console.log("currentDate:", currentDate);
 
                     if (jenis_item === "Initialpad" || jenis_item === "Signpad") {
                         let base64Url = sign.sign_base64;
@@ -1013,7 +953,6 @@ function ReceiveDocument() {
                         });
                     } else{
                         let date = new Date(sign.tgl_tt);
-                        // const date = new Date();
                         const day = String(date.getDate()).padStart(2, '0');
                         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"] 
                         const month = monthNames[date.getMonth()];
@@ -1025,7 +964,6 @@ function ReceiveDocument() {
                             y: yPos,
                             size: 9,
                             textAlign: 'center',
-                            // color: rgb(0,0,0),
                         });
                     }
                 }
@@ -1109,7 +1047,7 @@ function ReceiveDocument() {
 
     return (
         <>
-            <Navbar className="bg-navbar nav-padding" expand="lg" hidden={isAccessed !== true}>
+            <Navbar className="bg-navbar nav-padding w-100" style={{position:'fixed', top:'0'}} expand="lg" hidden={isAccessed !== true}>
                 <Container fluid>
                 <div className="d-flex justify-content-center align-items-center ml-2 ml-lg-0">
                     <Button
@@ -1166,7 +1104,8 @@ function ReceiveDocument() {
                         hidden={
                             (token !== delegate_token) &&
                             (!is_delegated ) &&
-                            (delegatedDoc === id_dokumen)
+                            (delegatedDoc === id_dokumen) ||
+                            initial_status.every(status => status === "Decline")
                         }
 
                         // hidden={
@@ -1258,7 +1197,7 @@ function ReceiveDocument() {
                         disabled={isFinishDisabled}
                         // hidden={pendingCount == 0 && !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
                         // hidden={((is_delegated && is_submitted && delegate_token !== null) || (token !== delegate_token) && (delegatedDoc === id_dokumen)) || (is_submitted && !is_delegated === true && (delegatedDoc !== id_dokumen))}
-                        hidden={is_delegated !== true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
+                        hidden={is_delegated !== true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) || initial_status.every(status => status === "Decline") : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
 
                     >
                         Finish
@@ -1281,7 +1220,8 @@ function ReceiveDocument() {
                             pendingCount == 0 ||
                             (token !== delegate_token) &&
                             (!is_delegated ) &&
-                            (delegatedDoc === id_dokumen)
+                            (delegatedDoc === id_dokumen) ||
+                            initial_status.every(status => status === "Decline")
                         }
 
 
@@ -1299,7 +1239,7 @@ function ReceiveDocument() {
                         
                         {isAccessed === false ? 
                             (
-                            <Alert variant="danger" style={{marginTop: "-1030px"}} hidden={initial_status.every(status => status !== "Expired")}>
+                            <Alert variant="danger" style={{marginTop: "-680px"}} hidden={initial_status.every(status => status !== "Expired")}>
                                 <FaExclamationTriangle className="mb-1 mr-2"/> Access denied, token expired.
                             </Alert>
                             ) : (
@@ -1308,7 +1248,7 @@ function ReceiveDocument() {
                             )
                         }
 
-                        <Alert variant="danger" style={{marginTop: "-1030px"}} hidden={initial_status.every(status => status !== "Decline")}>
+                        <Alert variant="danger" style={{marginTop: "-680px"}} hidden={initial_status.every(status => status !== "Decline")}>
                             <FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
                         </Alert>
                         <Alert variant="warning" style={{marginTop: "-680px"}}
@@ -1375,7 +1315,7 @@ function ReceiveDocument() {
                         </div>
                         {isAccessed === true && pdfUrl && (
                             <div>
-                                <div className="vertical-center" >
+                                <div className="vertical-center mt-5" >
                                     <PDFCanvas pdfUrl={pdfUrl} signatures={signatures} initials={initials} dateField={dateField} />                           
 
                                     {signedInitials.map((sig) => {
@@ -1390,10 +1330,7 @@ function ReceiveDocument() {
                                         const isPrevField = sig.prevFieldDisplay === true;
                                         const completedNext = sig.is_submitted === true;
                                         const urutan = sig.urutan;
-                                        const prevSigner = sig.prevSigner; //item field
-                                        const currentSigner = sig.id_signers;
                                         const currentItem = sig.id_item === currentItemId;
-                                        const nextSigner = sig.nextSigner;
                                         const is_delegated = sig.is_delegated;
                                         const delegated_signers = sig.delegated_signers;
 
@@ -1401,9 +1338,6 @@ function ReceiveDocument() {
                                         const isSignerDelegated = delegated_signers === id_signers;
 
                                         const isFirstSigner = urutan === 1;
-
-                                        const showImage = sig.sign_base64;
-                                        const showDate = isCompleted && completedNext && isDatefield;
 
                                         const delegatedArray = Array.isArray(delegated_signers)
                                         ? delegated_signers.map(String)
@@ -1488,14 +1422,6 @@ function ReceiveDocument() {
 
                                         const currentSignerStr = String(current_signer);
                                         const isCurrentItem = currentItemId.includes(sig.id_item);
-
-                                        const signerItemCount = initial.filter(item => 
-                                            currentItemId.includes(item.id_item) && (
-                                                String(item.id_signers) === currentSignerStr ||
-                                                delegatedArray.includes(currentSignerStr) || 
-                                                normalizedArray.includes(currentSignerStr)
-                                            )
-                                        ).length;
 
                                         let content;
 
@@ -1585,8 +1511,6 @@ function ReceiveDocument() {
                                                                     ) : message && (isInitialpad && !isCompleted) ? (
                                                                         <div
                                                                             style={{
-                                                                                // width: "25%",
-                                                                                // height: "25%",
                                                                                 top: "50%",
                                                                                 left: "50%",
                                                                                 position: "absolute",
@@ -1635,7 +1559,6 @@ function ReceiveDocument() {
                                         );
                                     })}
 
-                                    {/* field sign */}
                                     {initial.map((sig) => {
                                         if (!sig || !sig.id_item || sig.show !== true) return null;
 
@@ -1646,13 +1569,12 @@ function ReceiveDocument() {
                                         const isSignpad = sig.jenis_item === "Signpad";
                                         const isDatefield = sig.jenis_item === "Date";
                                         const isPrevField = sig.prevFieldDisplay === true;
-                                        const prevSigner = sig.prevSigner; //item field
+                                        const prevSigner = sig.prevSigner; 
                                         const urutan = sig.urutan;
                                         const isFirstSigner = urutan === 1;
                                         const currentSigner = sig.id_signers;
                                         const currentItem = sig.id_item === currentItemId;
                                         const nextSigner = sig.nextSigner;
-                                        // const isDelegated = sig.is_delegated;
                                         const is_delegated = sig.is_delegated;
 
                                         const isSignerOwner = sig.id_signers === id_signers;
@@ -1663,7 +1585,6 @@ function ReceiveDocument() {
                                             prevField.status !== "Completed" || prevField.is_submitted !== true
                                         );
                                         
-                                        // console.log("current item id:", currentItemId);
 
                                         //FIX PLISSS JGN DIUBAH!!!
                                         const borderStyle = 

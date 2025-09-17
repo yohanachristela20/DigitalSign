@@ -137,6 +137,7 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                 autoClose: 5000,
                 hideProgressBar: true, 
             }); 
+            window.location.reload();
             setShowDelegateModal(false);
         } catch (error) {
             console.error("Failed to update status document.", error.message);

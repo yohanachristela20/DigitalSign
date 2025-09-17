@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import SearchBar from "components/Search/SearchBar.js";
-import { CDBTable, CDBTableHeader, CDBTableBody, CDBContainer, CDBBtn, CDBBtnGrp } from 'cdbreact';
-import {Alert, Button, Container, Row, Col, Card, Table, Spinner, Badge} from "react-bootstrap";
-import {FaInfoCircle, FaFileCsv, FaFileImport, FaFilePdf, FaPlusCircle, FaRegEdit, FaTrashAlt, FaTrashRestore, FaUserLock, FaSortUp, FaSortDown, FaMailBulk, FaPaperPlane, FaDownload, FaUpload} from 'react-icons/fa'; 
+import { CDBTable, CDBTableHeader, CDBTableBody } from 'cdbreact';
+import {Alert, Container, Row, Col, Badge} from "react-bootstrap";
+import {FaInfoCircle, FaTrashAlt, FaSortUp, FaSortDown, FaUpload} from 'react-icons/fa'; 
 import Pagination from "react-js-pagination";
 
 function Trash() {
@@ -36,27 +36,17 @@ function Trash() {
       return statusObj ? statusObj.status : "-";
     };
 
-    // const filteredDocument = document.filter((document) =>
-    //     (document.id_dokumen && String(document.id_dokumen).toLowerCase().includes(searchQuery)) ||
-    //     (document.nama_dokumen && String(document.nama_dokumen).toLowerCase().includes(searchQuery)) ||
-    //     (document.id_kategoridok && String(document.id_kategoridok).toLowerCase().includes(searchQuery)) ||
-    //     (document.organisasi && String(document.organisasi).toLowerCase().includes(searchQuery)) ||
-    //     (document?.Kategori?.kategori && String(document.kategori).toLowerCase().includes(searchQuery))
-    // );
-
-    const filteredDocument = document.filter((doc) =>
-    {
+    const filteredDocument = document.filter((doc) => {
     const status = getStatusById(doc.id_dokumen);
-
-   return (
-    (doc.id_dokumen && String(doc.id_dokumen).includes(searchQuery)) ||
-    (doc.nama_dokumen && String(doc.nama_dokumen).toLowerCase().includes(searchQuery)) ||
-    (status && status.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (doc.deadline && String(doc.deadline).toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (doc.createdAt && String(doc.createdAt).toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (doc?.Kategori?.kategori && doc.Kategori.kategori.toLowerCase().includes(searchQuery.toLowerCase()))
-   );
-  });
+      return (
+        (doc.id_dokumen && String(doc.id_dokumen).includes(searchQuery)) ||
+        (doc.nama_dokumen && String(doc.nama_dokumen).toLowerCase().includes(searchQuery)) ||
+        (status && status.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (doc.deadline && String(doc.deadline).toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (doc.createdAt && String(doc.createdAt).toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (doc?.Kategori?.kategori && doc.Kategori.kategori.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    });
 
     const handleSort = (key) => {
     if (sortBy === key) {
@@ -170,11 +160,11 @@ function Trash() {
         }
         ); 
         
-        // toast.success("Employee was deleted successfully!", {
-        //   position: "top-right",
-        //   autoClose: 5000,
-        //   hideProgressBar: true,
-        // });
+        toast.success("Document was deleted successfully!", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: true,
+        });
         getDocument(); 
         window.location.reload();
         } catch (error) {
@@ -191,11 +181,11 @@ function Trash() {
         }
       ); 
         
-        // toast.success("Employee was deleted successfully!", {
-        //   position: "top-right",
-        //   autoClose: 5000,
-        //   hideProgressBar: true,
-        // });
+        toast.success("Document has been restored", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: true,
+        });
         getDocument(); 
         window.location.reload();
       } catch (error) {
@@ -232,7 +222,6 @@ function Trash() {
                       <td className="text-center">{document.nama_dokumen}</td>
                       <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
                       <td className="text-center">
-                        {/* {getStatusById(document.id_dokumen) == "Pending"? <Badge pill bg="secondary">{getStatusById(document.id_dokumen)}</Badge> : getStatusById(document.id_dokumen) == "Completed" ? <Badge pill bg="success">{getStatusById(document.id_dokumen)}</Badge> : <Badge pill bg="danger">{getStatusById(document.id_dokumen)}</Badge>} */}
                          {getStatusById(document.id_dokumen) === "Decline" ? (
                             <Badge pill bg="danger">Decline</Badge>
                           ) : getStatusById(document.id_dokumen) === "Completed" &&

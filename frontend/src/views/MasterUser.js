@@ -1,39 +1,32 @@
 import React, { useEffect, useState } from "react";
-import {FaFileCsv, FaFileImport, FaFilePdf, FaPlusCircle, FaRegEdit, FaTrashAlt, FaTrashRestore, FaUserLock, FaSortUp, FaSortDown} from 'react-icons/fa'; 
+import {FaFileCsv, FaFilePdf, FaRegEdit, FaTrashAlt, FaUserLock, FaSortUp, FaSortDown} from 'react-icons/fa'; 
 import SearchBar from "components/Search/SearchBar.js";
 import axios from "axios";
 import AddUser from "components/ModalForm/AddUser.js";
 import EditUser from "components/ModalForm/EditUser.js";
-import ImportUser from "components/ModalForm/ImportUser.js";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import Pagination from "react-js-pagination";
 import "../assets/scss/lbd/_pagination.scss";
-import cardBeranda from "../assets/img/dashboard3.png";
 import "../assets/scss/lbd/_table-header.scss";
-import { stopInactivityTimer } from "views/Heartbeat";
 import { useLocation, useHistory } from "react-router-dom";
-import { CDBTable, CDBTableHeader, CDBTableBody, CDBContainer, CDBBtn, CDBBtnGrp } from 'cdbreact';
+import { CDBTable, CDBTableHeader, CDBTableBody, CDBBtn, CDBBtnGrp } from 'cdbreact';
 
-// react-bootstrap components
-import {Button, Container, Row, Col, Card, Table, Spinner, Badge} from "react-bootstrap";
+import {Button, Container, Row, Col, Badge} from "react-bootstrap";
 
 function MasterUser() {
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [showImportModal, setShowImportModal] = useState(false); 
   const [user, setUser] = useState([]); 
-  const [user_active, setUserActive] = useState();
   const [selectedUser, setSelectedUser] = useState(null); 
   const [searchQuery, setSearchQuery] = useState("");
   const [userData, setUserData] = useState({id_karyawan: "", nama: "", divisi: ""}); 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [loading, setLoading] = useState(true);
-  const location = useLocation();
-  const history = useHistory();
 
   const [sortBy, setSortBy] = useState("id_user");
   const [sortOrder, setSortOrder] = useState("asc");
@@ -138,7 +131,6 @@ function MasterUser() {
           nama: response.data.nama,
           organisasi: response.data.organisasi,
         });
-        // console.log("User data fetched:", response.data);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -262,7 +254,6 @@ function MasterUser() {
         getUser();    
     } catch (error) {
         const errorMessage = error.response?.data?.message || error.message;
-        // console.log(error.message);
         toast.error('Failed to update password.', {
             position: "top-right",
             autoClose: 5000,
@@ -272,32 +263,6 @@ function MasterUser() {
 
   };
 
-  const deleteSession = async (id_user, user_active) => {
-    try {
-        await axios.post(`http://localhost:5000/logout-user/${id_user}`, {
-            id_user,
-            user_active
-        }, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        toast.success("User session was successfully deleted.", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: true,
-        });
-        getUser();
-
-    } catch (error) {
-        console.log(error.message);
-        toast.error('Failed to delete user session.', {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: true,
-          });
-    }
-  };
   
   
   return (
@@ -313,8 +278,6 @@ function MasterUser() {
               onSuccess={handleEditSuccess}
           />
 
-          {/* <ImportUser showImportModal={showImportModal} setShowImportModal={setShowImportModal} onSuccess={handleImportSuccess} /> */}
-
           <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>
 
           <Container>
@@ -325,15 +288,6 @@ function MasterUser() {
               <i class="fa fa-plus-circle" style={{ marginRight: '8px' }}></i>
               Add User
             </Button>
-
-            {/* <Button
-              className="btn-fill pull-right mb-3 mr-3"
-              type="button"
-              variant="info"
-              onClick={handleImportButtonClick}>
-              <FaFileImport style={{ marginRight: '8px' }} />
-              Import
-            </Button> */}
 
             <Button
               className="btn-fill pull-right mb-3 mr-3"

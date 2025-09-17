@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {FaFileCsv, FaFileImport, FaFilePdf, FaPlusCircle, FaRegEdit, FaTrashAlt, FaTrashRestore, FaUserLock, FaSortUp, FaSortDown} from 'react-icons/fa'; 
+import {FaFileCsv, FaFilePdf, FaRegEdit, FaTrashAlt, FaSortUp, FaSortDown} from 'react-icons/fa'; 
 import SearchBar from "components/Search/SearchBar.js";
 import axios from "axios";
 import AddKaryawan from "components/ModalForm/AddKaryawan.js";
@@ -11,13 +11,10 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import Pagination from "react-js-pagination";
 import "../assets/scss/lbd/_pagination.scss";
-import cardBeranda from "../assets/img/dashboard3.png";
 import "../assets/scss/lbd/_table-header.scss";
-import { stopInactivityTimer } from "views/Heartbeat";
 import { useLocation, useHistory } from "react-router-dom";
 import { CDBTable, CDBTableHeader, CDBTableBody, CDBContainer, CDBBtn, CDBBtnGrp } from 'cdbreact';
 
-// react-bootstrap components
 import {Button, Container, Row, Col, Card, Table, Spinner, Badge} from "react-bootstrap";
 function EmployeeManagement() {
   const [showAddModal, setShowAddModal] = React.useState(false);
@@ -87,7 +84,6 @@ function EmployeeManagement() {
 
   useEffect(()=> {
     getEmployee();
-    // fetchEmployeeData();
   }, []); 
   
   const getEmployee = async () =>{
@@ -123,41 +119,12 @@ function EmployeeManagement() {
     }
   };
 
-  // const fetchEmployeeData = async () => {
-  //   const token = localStorage.getItem("token");
-  //   const email = localStorage.getItem("email");
-  //   // if (!token || !email) return;
-
-  //   try {
-  //     const response = await axios.get(
-  //       `http://localhost:5000/karyawan-details/${email}`,
-  //       {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       }
-  //     );
-
-  //     if (response.data) {
-  //       setkaryawanData({
-  //         id_user: response.data.id_user,
-  //         email: response.data.email,
-  //         role: response.data.role,
-  //         // user_active: response.data.user_active
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching user data:", error);
-  //   }
-  // };
-
-
-
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value.toLowerCase());
   };
 
   const handleAddSuccess = () => {
     getEmployee();
-    // fetchEmployeeData();
     toast.success("New employee has been created!", {
         position: "top-right",
         autoClose: 5000,
@@ -167,8 +134,6 @@ function EmployeeManagement() {
 
   
   const handleAddDocSuccess = () => {
-    // getEmployee();
-    // fetchEmployeeData();
     toast.success("New document has been uploaded!", {
         position: "top-right",
         autoClose: 5000,
@@ -185,18 +150,6 @@ function EmployeeManagement() {
     });
   };
 
-  const handleImportButtonClick = () => {
-    setShowImportModal(true);
-  }
-
-  const handleImportSuccess = () => {
-    getEmployee();
-    toast.success("User successfully imported!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-    });
-  };
 
   const handleUpload = () => {
     history.push("/admin/upload-document");
@@ -284,8 +237,6 @@ function EmployeeManagement() {
               onSuccess={handleEditSuccess}
           />
 
-          {/* <ImportUser showImportModal={showImportModal} setShowImportModal={setShowImportModal} onSuccess={handleImportSuccess} /> */}
-
           <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>
           <Button
               type="button"
@@ -304,15 +255,6 @@ function EmployeeManagement() {
               <i class="fa fa-plus-circle" style={{ marginRight: '8px' }}></i>
                New Employee
             </Button>
-
-            {/* <Button
-              className="btn-fill pull-right mb-3 mr-3"
-              type="button"
-              variant="info"
-              onClick={handleImportButtonClick}>
-              <FaFileImport style={{ marginRight: '8px' }} />
-              Import
-            </Button> */}
 
             <Button
               className="btn-fill pull-right mb-3 mr-3"
@@ -338,10 +280,8 @@ function EmployeeManagement() {
               <tr>
                 <th onClick={() => handleSort("id_karyawan")}>Employee Id {sortBy==="id_karyawan" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
                 <th className="border-0" onClick={() => handleSort("nama")}>Name {sortBy==="nama" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                {/* <th className="border-0" onClick={() => handleSort("email")}>Email {sortBy==="email" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th> */}
                 <th className="border-0" onClick={() => handleSort("job_title")}>Job Title {sortBy==="job_title" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
                 <th className="border-0" onClick={() => handleSort("organisasi")}>Organization {sortBy==="organisasi" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                {/* <th className="border-0" onClick={() => handleSort("role")}>Role {sortBy==="role" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th> */}
                 <th className="border-0">Registered</th>
                 <th className="border-0">Last Updated</th>
                 <th className="border-0">Action</th>
@@ -352,23 +292,10 @@ function EmployeeManagement() {
                 <tr key={employee.id_karyawan}>
                   <td className="text-center">{employee.id_karyawan}</td>
                   <td className="text-center">{employee.nama}</td>
-                  {/* <td className="text-center">{employee.email}</td> */}
                   <td className="text-center">{employee.job_title}</td>
                   <td className="text-center">{employee.organisasi}</td>
                   <td className="text-center">{new Date(employee.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
                   <td className="text-center">{new Date(employee.updatedAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
-                  {/* <td className="text-center">{employee.role}</td>
-                  <td className="text-center">
-                      {employee.user_active === true ? (
-                        <Badge pill bg="success p-2" style={{ color: 'white'}} >
-                          Active
-                        </Badge >
-                        ) : (
-                        <Badge pill bg="secondary p-2" style={{ color: 'white'}} >
-                          Not Active
-                        </Badge >
-                      )}
-                  </td> */}
                   <td className="text-center">
                   <FaRegEdit
                       type="button"

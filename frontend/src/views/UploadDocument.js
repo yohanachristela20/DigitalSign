@@ -1,38 +1,36 @@
-import React, { useEffect, useState, useMemo, useRef, Component, act } from "react";
-import {FaRegArrowAltCircleLeft, FaRegArrowAltCircleRight, FaRegSave, FaHistory, FaCheckCircle, FaTimesCircle, FaCoins, FaFileContract, FaCalculator, FaTrashAlt, FaPlusCircle} from 'react-icons/fa'; 
+import React, { useEffect, useState, useMemo } from "react";
+import {FaRegArrowAltCircleLeft, FaRegArrowAltCircleRight, FaPlusCircle} from 'react-icons/fa'; 
 import axios from "axios";
-import { useHistory, useLocation } from "react-router-dom"; 
+import { useHistory } from "react-router-dom"; 
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "jspdf-autotable";
 import Heartbeat from "./Heartbeat.js";
 import "../assets/scss/lbd/_pagination.scss";
 import "../assets/scss/lbd/_stepper.scss";
-import { SortableContainer, SortableElement } from "react-sortable-hoc";
-import arrayMove from "array-move-item";
+import { SortableContainer } from "react-sortable-hoc";
 import PreviewDocument from "./PreviewDocument.js";
 import SortableItem from "components/SortableList/SortableList.js";
 
 import { useInitial } from "components/Provider/InitialContext.js";
 import { useSignature } from "components/Provider/SignatureContext.js";
 import { useDateField } from "components/Provider/DateContext.js";
+
+import ReactLoading from "react-loading";
+
 import "../assets/scss/lbd/_previewdoc.scss";
+import "../assets/scss/lbd/_docsent.scss";
 
 import { arrayMoveImmutable } from "array-move";
 
 import {
   Card,
-  Table,
   Container,
   Row,
   Col,
   Form,
-  Spinner, 
   Button,
-  Modal
 } from "react-bootstrap";
-import { error } from "jquery";
-import { Prev } from "react-bootstrap/esm/PageItem.js";
 
 function UploadDocument() {
   const [id_dokumen, setIdDokumen] = useState("");
@@ -75,23 +73,13 @@ function UploadDocument() {
   const [initClicked, setInitClicked] = useState(false);
   const [dateClicked, setDateClicked] = useState(false);
   const [deletedSigner, setDeletedSigner] = useState("");
-  const [editedSigner, setEditedSigner] = useState("");
 
-  const [selectedSigner, setSelectedSigner] = useState(null);
-  let [oldIdSigner, setOldIdSigner] = useState("");
-  let [newIdSigner, setNewIdSigner] = useState("");
-  let [idSigner, setIdSigner] = useState("");
-
-  let [id_logsign, setIdLogsign] = useState("");
-  const [ori_id_signers, setOriIdSigners] = useState("");
-  const [ori_id_items, setOriIdItems] = useState("");
-
-  const [selectedIndex, setSelectedIndex] = useState(null);
   const [is_deadline, setIsDeadline] = useState(false);
   const [is_download, setIsDownload] = useState(false);
   const [day_after_reminder, setDayAfterReminder] = useState(0);
   const [repeat_freq, setRepeatFreq] = useState("none");
   const [deadline, setDeadline] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [urutan, setUrutan] = useState("");
   let fileName;
@@ -103,7 +91,6 @@ function UploadDocument() {
   }, []);
 
   const handleRadioChange = (e) => {
-    // const value = e.target.value;
     setIsDeadline(e.target.value === "With Deadline");
   };
 
@@ -112,9 +99,6 @@ function UploadDocument() {
     setIsDownload(value === "Allowed");
   };
 
-  const handleDayChange = (e) => {
-    setDayAfterReminder(Number(e.target.value));
-  };
 
   const [selectedDoc, setSelectedDoc] = useState(
       location?.state?.selectedDoc || null
@@ -128,10 +112,6 @@ function UploadDocument() {
       const sgnData = localStorage.getItem("signers");
       const sgnCount = localStorage.getItem("signersCount");
       const selectedSigner = localStorage.getItem("selectedOption");
-
-      // console.log("signerToolbar:", sgnData);
-      // console.log("selected signer from toolbar:", selectedSigner);
-
       if (sgnData !== null) setSignersToolbar(sgnData);
       if (sgnCount !== null) setSignersCount(parseFloat(sgnCount));
       if (selectedSigner !== null) setSelectedOption(selectedSigner);
@@ -145,10 +125,6 @@ function UploadDocument() {
       window.removeEventListener("localStorageUpdated", handleSignersUpdate);
     };
   }, []);
-
-  // console.log("signers toolbar:", signersToolbar);
-  // console.log("signers count:", signersCount);
-  // console.log("selected signer:", selectedOption);
 
   const [documentCards, setDocumentCards] = useState([
     {
@@ -197,14 +173,9 @@ function UploadDocument() {
   useEffect(() => {
     const fetchUserData = async() => {
       const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role");
       const email = localStorage.getItem("email");
-      const user_active = localStorage.getItem("user_active");
-
-      // console.log("User token: ", token, "User role:", role, "Email: ", email, "User active: ", user_active);
 
       if(!token || !email) return;
-      // console.log("User token:", token, "User role:", role);
 
       try {
         const response = await axios.get(`http://localhost:5000/user-details/${email}`, {
@@ -243,7 +214,6 @@ function UploadDocument() {
     if (jenis !== null)setJenisItem(jenis);
     if (page !== null)setPage(page);
 
-    // setJenisItem("Signpad");
    };
 
    window.addEventListener("localStorageUpdated", handleLocalStorageUpdate);
@@ -327,13 +297,6 @@ const handleRepeatReminder = (e) => {
   setRepeatFreq(e.target.value);
 }
 
-// const onSortEnd = ({ oldIndex, newIndex }) => {
-//   setDocumentCards((prevCards) => {
-//     const newCards = arrayMove([...prevCards], oldIndex, newIndex);
-//     return newCards;
-//   });
-// };
-
 const onSortEnd = ({ oldIndex, newIndex }) => {
   const newOrder = arrayMoveImmutable(documentCards, oldIndex, newIndex)
   .map((card, idx) => ({...card, urutan: idx + 1})); 
@@ -348,7 +311,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     getDocument();
   }, []);
 
-  // console.log("Document cards:", documentCards);
 
   const handleAddCard = () => {
     setDocumentCards(prevCards => {
@@ -399,24 +361,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
-  // const deleteSigner = async(deletedSigner) => {
-  //   console.log("Deleting signer with id_signer:", deletedSigner);
-  //   try {
-  //     await axios.delete(`http://localhost:5000/delete-signer/${deletedSigner}`, {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-
-  //     toast.success("Signer deleted successfully.", {
-  //       position: "top-right",
-  //       autoClose: 5000,
-  //       hideProgressBar: true,
-  //     });
-  //   } catch (error) {
-  //     console.log(error.message);
-  //   }
-  // };
 
   const updateSigner = async(id_dokumen, id_item, newIdSigner, oldIdSigner) => { 
     try {
@@ -440,7 +384,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   const updateReminder = async(id_dokumen) => {
     try {
-      
+      setIsLoading(true);
+
       const response = await axios.patch(`http://localhost:5000/update-reminder/${id_dokumen}`, {
       is_deadline,
       is_download,
@@ -455,6 +400,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         Authorization: `Bearer ${token}`,
       },
     });
+
     toast.success("Reminder updated successfully.", {
       position: "top-right",
       autoClose: 5000,
@@ -483,6 +429,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       autoClose: 5000, 
       hideProgressBar: true,
     });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -532,7 +480,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
     if (index !== -1) {
       const deletedCard = updatedCards[index];
-      // console.log("Deleted card: ", deletedCard);
 
       const deletedIdSigner = deletedCard.id_karyawan;
       const dokId = deletedCard.id_dokumen;
@@ -542,7 +489,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       const cardIndex = documentCards.findIndex(c => c.id === id);
       const itemId = storedIdItems[cardIndex]; 
 
-      // console.log("deleting id signers with:", deletedIdSigner, dokId, itemId);
       setDeletedSigner(deletedIdSigner);
 
       try {
@@ -568,12 +514,10 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   if (index !== -1) {
     const deletedCard = updatedCards[index];
-    // console.log("Deleted card: ", deletedCard);
 
     const deletedIdSigner = deletedCard.id_karyawan;
     setDeletedSigner(deletedIdSigner);
 
-    // await deleteSigner(deletedIdSigner);
     updatedCards.splice(index, 1);
     setDocumentCards(updatedCards);
   }
@@ -601,7 +545,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     return;
   }
 
-  // console.log("PATCH call for:", { dokId, idItem, oldIdSigner, newIdSigner });
 
   await updateSigner(dokId, idItem, newIdSigner, oldIdSigner);
 
@@ -649,7 +592,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   const saveSigner = async(e) => {
     e.preventDefault();
     try {
-      // console.log("nextStep3:", nextStep3);
       if (nextStep3 !== true) {
         const karyawanIds = documentCards.map(card => card.id_karyawan);
         const response = await axios.post('http://localhost:5000/signer', {
@@ -672,16 +614,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       console.log(error.message);
     }
   };
-
-  const groupBySignerAndJenis = (items) => {
-    const grouped = {};
-    items.forEach((item) => {
-      const key = `${item.id_karyawan}-${item.jenis_item}`;
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(item);
-    });
-    return grouped;
-  }
 
 
   const saveLogSignandItems = async (e) => {
@@ -763,10 +695,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
       const createdItems = itemResponse.data.data.items;
       localStorage.setItem("id_item", JSON.stringify(createdItems.map(item => item.id_item)));
-      const orderedSigners = JSON.parse(localStorage.getItem("signers")) || [];
-
-      // localStorage.setItem("id_signers", JSON.stringify(logsigns.map(log => log.id_signers)));
-
       const signerOrderMap = {};
       let urutanCounter = 1;
 
@@ -794,7 +722,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             message,
             delegated_signers: delegateSignerId,
             urutan: signerOrderMap[signerId] || Number(cardData?.urutan) || urutanCounter++,
-            // urutan: Number(cardData?.urutan) || index + 1,
             };
         });
 
@@ -806,9 +733,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
       const delegateIds = logsigns.map(log => log.delegated_signers);
       localStorage.setItem("delegated_signers:", delegateIds);
-
-      // const urutanList = logsigns.map(log => log.urutan);
-      // localStorage.setItem("urutan", JSON.stringify(urutanList));
 
       const idItemList = logsigns.map(log => log.id_item);
       localStorage.setItem("id_item", JSON.stringify(idItemList));
@@ -840,11 +764,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
           };
         })
       );
-
-
-      // console.log("Id items:", id_item);
-      // console.log("Ori id items:", ori_id_items);
-      // console.log("DocumentCards:", documentCards);
       localStorage.removeItem("clickedFields");
       toast.success("Logsigns and items created successfully!", {
         position: "top-right",
@@ -937,16 +856,10 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     console.log("Steps from handle previous:", steps - 1);
   };
 
-  // const handleFileChange = (event) => {
-  //   setFile(event.target.files[0]);
-  // };
-
   const handleFileChange = (event) => {
     if (event.target.files && event.target.files.length > 0) {
       const uploadedFile = event.target.files[0];
       fileName = uploadedFile.name;
-
-      console.log("FILENAME:", fileName);
       
       setNamaDokumen(fileName);
       setFile(uploadedFile);
@@ -1084,362 +997,341 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
 
   return (
     <>
-    <div className="App">
-      <Container fluid>
-        <Heartbeat/>
-        <Row>
-          <Col md="12">
-            <Card className="p-3">
-              <Card.Body>
-              <Card.Header className="px-0">
-                  <Card.Title>
-                    Upload Document
-                  </Card.Title>
-              </Card.Header>
-                <hr/>
-                <div className="stepper-wrapper mt-5">
-                <div className="stepper">
-                  {[1, 2, 3, 4].map((step) => (
-                    <div
-                      key={step}
-                      className={`step ${steps === step ? "active" : steps > step ? "completed" : ""}`}
-                    >
-                      <div className="circle">{step}</div>
-                      <div className="label">{stepTitle[step - 1].title}</div>
+      {isLoading === false ? (
+        <div className="App">
+          <Container fluid>
+            <Heartbeat/>
+            <Row>
+              <Col md="12">
+                <Card className="p-3">
+                  <Card.Body>
+                  <Card.Header className="px-0">
+                      <Card.Title>
+                        Upload Document
+                      </Card.Title>
+                  </Card.Header>
+                    <hr/>
+                    <div className="stepper-wrapper mt-5">
+                    <div className="stepper">
+                      {[1, 2, 3, 4].map((step) => (
+                        <div
+                          key={step}
+                          className={`step ${steps === step ? "active" : steps > step ? "completed" : ""}`}
+                        >
+                          <div className="circle">{step}</div>
+                          <div className="label">{stepTitle[step - 1].title}</div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                </div>
-                <div>
-                    <span className="text-danger required-select">(*) Required.</span>
-                    <>
-                      {steps === 1 && (
+                    </div>
+                    <div>
+                        <span className="text-danger required-select">(*) Required.</span>
                         <>
-                          <Form onSubmit={saveDocument}>
-                            <Row>
-                              <Col md="12" className="mt-2">
-                              <Form.Group>
-                              <span className="text-danger">*</span>
-                                  <label>Document ID</label>
-                                  <Form.Control
-                                      type="text"
-                                      readOnly
-                                      disabled
-                                      value={id_dokumen}
-                                  ></Form.Control>
-                              </Form.Group>
-                              </Col>
-                          </Row>
-
-                          <Row>
-                              <Col md="12" className="mt-2">
-                                  <Form.Group>
-                                      <span className="text-danger">*</span>
-                                      <label>File Name</label>
-                                      <Form.Control
-                                          type="text"
-                                          required
-                                          value={nama_dokumen}
-                                          onChange={(e) => setNamaDokumen(e.target.value)}
-                                      ></Form.Control>
-                                  </Form.Group>
-                              </Col>
-                          </Row>
-
-                          <Row>
-                              <Col md="12" className="mt-2">
-                                  <Form.Group required>
-                                      <span className="text-danger">*</span>
-                                      <label>Upload Document</label><br />
-                                      <input type="file" accept=".pdf" onChange={handleFileChange} />
-                                  </Form.Group>
-                              </Col>
-                          </Row>
-                          
-                          <Row>
-                              <Col md="12" className="mt-2">
+                          {steps === 1 && (
+                            <>
+                              <Form onSubmit={saveDocument}>
+                                <Row>
+                                  <Col md="12" className="mt-2">
                                   <Form.Group>
                                   <span className="text-danger">*</span>
-                                      <label>Category</label>
-                                      <Form.Select 
-                                      className="form-control"
-                                      required
-                                      value={id_kategoridok}
-                                      onChange={handleCategoryChange}
-                                      >
-                                      <option className="placeholder-form" key="blankChoice" hidden value="">
-                                          Choose Category
-                                      </option>
-                                      {category.map(option => (
-                                          <option key={option.value} value={option.value}>
-                                              {option.label}
-                                          </option>
-                                      ))}
-                                      </Form.Select>
-                                  </Form.Group>
-                              </Col>
-                          </Row>
-                          </Form>
-                        </>
-                      )}
-                      {steps === 2 && (
-                      <>
-                        <p className="fs-5 mt-3"><strong>Add Signers or Recipients</strong></p>
-                        <Form onSubmit={nexThirdStep}>
-                          <SortableList 
-                            items={documentCards}
-                            onSortEnd={onSortEnd}
-                            useDragHandle={false}
-                            handleCardEmployeeChange={handleCardEmployeeChange}
-                            handleDeleteCard={handleDeleteStepper2}
-                            employeeName={employeeName}
-                            value={employeeName.id_karyawan}
-                          />
-                          <Button variant="outline-primary" onClick={handleAddCard} className="mt-3">
-                            <FaPlusCircle className="mb-1"/> Add Signer
-                          </Button>
-                        </Form>
-
-                        <Form>
-                          <p className="fs-5 mt-3 mb-0"><strong>Message to Recipients</strong></p>
-                          <Row>
-                              <Col md="12">
-                                  <Form.Group>
-                                      <label>Email Subject</label>
+                                      <label>Document ID</label>
                                       <Form.Control
                                           type="text"
-                                          value={subject}
-                                          onChange={(e) => setSubject(e.target.value)}
+                                          readOnly
+                                          disabled
+                                          value={id_dokumen}
                                       ></Form.Control>
                                   </Form.Group>
-                              </Col>
+                                  </Col>
+                              </Row>
+
+                              <Row>
+                                  <Col md="12" className="mt-2">
+                                      <Form.Group>
+                                          <span className="text-danger">*</span>
+                                          <label>File Name</label>
+                                          <Form.Control
+                                              type="text"
+                                              required
+                                              value={nama_dokumen}
+                                              onChange={(e) => setNamaDokumen(e.target.value)}
+                                          ></Form.Control>
+                                      </Form.Group>
+                                  </Col>
+                              </Row>
+
+                              <Row>
+                                  <Col md="12" className="mt-2">
+                                      <Form.Group required>
+                                          <span className="text-danger">*</span>
+                                          <label>Upload Document</label><br />
+                                          <input type="file" accept=".pdf" onChange={handleFileChange} />
+                                      </Form.Group>
+                                  </Col>
+                              </Row>
+                              
+                              <Row>
+                                  <Col md="12" className="mt-2">
+                                      <Form.Group>
+                                      <span className="text-danger">*</span>
+                                          <label>Category</label>
+                                          <Form.Select 
+                                          className="form-control"
+                                          required
+                                          value={id_kategoridok}
+                                          onChange={handleCategoryChange}
+                                          >
+                                          <option className="placeholder-form" key="blankChoice" hidden value="">
+                                              Choose Category
+                                          </option>
+                                          {category.map(option => (
+                                              <option key={option.value} value={option.value}>
+                                                  {option.label}
+                                              </option>
+                                          ))}
+                                          </Form.Select>
+                                      </Form.Group>
+                                  </Col>
+                              </Row>
+                              </Form>
+                            </>
+                          )}
+                          {steps === 2 && (
+                          <>
+                            <p className="fs-5 mt-3"><strong>Add Signers or Recipients</strong></p>
+                            <Form onSubmit={nexThirdStep}>
+                              <SortableList 
+                                items={documentCards}
+                                onSortEnd={onSortEnd}
+                                useDragHandle={false}
+                                handleCardEmployeeChange={handleCardEmployeeChange}
+                                handleDeleteCard={handleDeleteStepper2}
+                                employeeName={employeeName}
+                                value={employeeName.id_karyawan}
+                              />
+                              <Button variant="outline-primary" onClick={handleAddCard} className="mt-3">
+                                <FaPlusCircle className="mb-1"/> Add Signer
+                              </Button>
+                            </Form>
+
+                            <Form>
+                              <p className="fs-5 mt-3 mb-0"><strong>Message to Recipients</strong></p>
+                              <Row>
+                                  <Col md="12">
+                                      <Form.Group>
+                                          <label>Email Subject</label>
+                                          <Form.Control
+                                              type="text"
+                                              value={subject}
+                                              onChange={(e) => setSubject(e.target.value)}
+                                          ></Form.Control>
+                                      </Form.Group>
+                                  </Col>
+                              </Row>
+                              <Row>
+                                  <Col md="12">
+                                      <Form.Group>
+                                          <label>Message</label>
+                                          <Form.Control
+                                              as="textarea"
+                                              value={message}
+                                              onChange={(e) => setMessage(e.target.value)}
+                                              rows={4}
+                                          ></Form.Control>
+                                      </Form.Group>
+                                  </Col>
+                              </Row>
+                            </Form>
+                          </> 
+                          )}
+                        </>
+                        <div className="clearfix"></div>
+                    </div>
+                  </Card.Body>
+                </Card>
+
+                {steps === 3 && (
+                  <div className="pdf-preview-container mt-4">
+                    <PreviewDocument />
+                  </div>
+                )}
+                {steps === 4 && (
+                  <>
+                    <Card className="p-4">
+                    <Card.Body>
+                      <Card.Header>
+                        <Card.Title>
+                          Review and Send
+                        </Card.Title>
+                      </Card.Header>
+                      <hr/>
+                      <Container fluid>
+                        <Form>
+                          <div>
+                            <span className="text-danger required-select">(*) Required.</span>
+                            <p className="fs-5 mt-3"><strong>Recipients</strong></p>
+                            <SortableList 
+                              items={documentCards}
+                              // onSortEnd={onSortEnd}
+                              useDragHandle={true}
+                              handleCardEmployeeChange={handleCardEmployeeChange}
+                              handleDeleteCard={handleDeleteCard}
+                              handleEditCard={handleEditCard}
+                              employeeName={employeeName}
+                              value={employeeName.id_karyawan}
+                            />
+                          </div>
+                        </Form>
+        
+                        <Form>
+                          <Row className="mt-3 mb-2">
+                            <Col md="12">
+                              <Form.Group>
+                                <span className="text-danger">*</span>
+                                <label className="mt-2">Using deadline</label>
+                                {["Without deadline", "With Deadline"].map((option, idx) => (
+                                  <Form.Check
+                                    key={idx}
+                                    type="radio"
+                                    id={`deadline-${idx}`}
+                                    label={option}
+                                    className="mt-2 radio-doc-settings"
+                                    value={option}
+                                    checked={is_deadline === (option === "With Deadline")}
+                                    onChange={handleRadioChange}
+                                  />
+                                ))}
+                              </Form.Group>
+                            </Col>
                           </Row>
-                          <Row>
-                              <Col md="12">
-                                  <Form.Group>
-                                      <label>Message</label>
-                                      <Form.Control
-                                          as="textarea"
-                                          value={message}
-                                          onChange={(e) => setMessage(e.target.value)}
-                                          rows={4}
-                                      ></Form.Control>
-                                  </Form.Group>
+                          <Row className="mt-3 mb-2">
+                            <Col md="12">
+                              <label className="mt-2">Set a deadline</label>
+                              <Form.Control
+                                  type="date"
+                                  value={deadline}
+                                  onChange={handleDeadline}
+                                  min={minDate}
+                              />
+                            </Col>
+                          </Row>
+
+                          <Row className="mt-3 mb-2">
+                            <Col md="12">
+                                <span className="text-danger">*</span>
+                                <label className="mt-2">Choose day reminder recipient</label>
+
+                              <Form.Group as={Row} className="align-items-center">
+                              <Col xs="auto">
+                                <Form.Select value={day_after_reminder} onChange={handleChange} style={{ width: '80px' }}>
+                                  {[...Array(30)].map((_, i = 0) => (
+                                    <option key={i + 1} value={i + 1}>
+                                      {i + 1}
+                                    </option>
+                                  ))}
+                                </Form.Select>
                               </Col>
+                              <Col xs="auto">
+                                <span style={{ fontSize: '16px' }}>
+                                  day(s) after recipient receives documents
+                                </span>
+                              </Col>
+                              </Form.Group>
+                            </Col>
+                          </Row>
+
+                          <Row className="mt-3 mb-2">
+                            <Col md="12">
+                                <label className="mt-2">Choose repeat reminder</label>
+
+                              <Form.Group as={Row} className="align-items-center">
+                              <Col md="12">
+                                <Form.Select
+                                  value={repeat_freq}
+                                  onChange={handleRepeatReminder}
+                                  style={{maxWidth: "250px"}}
+                                >
+                                {[ 
+                                  {label: "No repeat reminder", value:"none"},
+                                  {label: "Every day", value: "daily"}, 
+                                  {label: "Every 3 days", value: "3days"},
+                                  {label: "Weekly", value: "weekly"}, 
+                                  {label: "Monthly", value: "monthly"}
+                                ].map((option, idx) => (
+                                  <option key={idx} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
+
+                                </Form.Select>
+                              </Col>
+                            </Form.Group>
+                            </Col>
+                          </Row>
+
+                          <Row className="mt-3 mb-2">
+                            <Col md="12">
+                              <Form.Group>
+                                <span className="text-danger">*</span>
+                                <label className="mt-2">
+                                  Allow recipients to download document
+                                </label>
+                                {["Not Allowed", "Allowed"].map((option, idx) => (
+                                  <Form.Check
+                                    key={idx}
+                                    type="radio"
+                                    id={`download-${idx}`}
+                                    label={option}
+                                    className="mt-2 radio-doc-settings"
+                                    value={option}
+                                    checked={is_download !== (option === "Not Allowed")}
+                                    onChange={handleDownload}
+                                  />
+                                ))}
+                              </Form.Group>
+                            </Col>
                           </Row>
                         </Form>
-                      </> 
-                      )}
-                    </>
-                    <div className="clearfix"></div>
+                      </Container>
+                    </Card.Body>
+                    </Card>
+                  </>
+                )}
+              </Col>
+            </Row>
+          </Container>
+          <footer>
+          <div className="row gy-2 mt-3 mb-3 d-flex justify-content-center">
+            {steps === 1 && (
+                <div className="col-12 col-md-auto my-2">
+                  <Button variant="primary" type="submit" className="btn-fill w-100" onClick={handleNext} disabled={steps === 1 && (nama_dokumen === "" || id_kategoridok === "" || category ==="" || file === null) }>
+                    Next
+                    <FaRegArrowAltCircleRight style={{ marginLeft: '8px' }}/>
+                  </Button>
                 </div>
-              </Card.Body>
-            </Card>
-
-            {steps === 3 && (
-              <div className="pdf-preview-container mt-4">
-                <PreviewDocument />
-              </div>
             )}
-            {steps === 4 && (
+            { steps === 2 && (
               <>
-                <Card className="p-4">
-                 <Card.Body>
-                   <Card.Header>
-                    <Card.Title>
-                      Review and Send
-                    </Card.Title>
-                  </Card.Header>
-                  <hr/>
-                  <Container fluid>
-                    <Form>
-                      <div>
-                        <span className="text-danger required-select">(*) Required.</span>
-                        <p className="fs-5 mt-3"><strong>Recipients</strong></p>
-                        <SortableList 
-                          items={documentCards}
-                          // onSortEnd={onSortEnd}
-                          useDragHandle={true}
-                          handleCardEmployeeChange={handleCardEmployeeChange}
-                          handleDeleteCard={handleDeleteCard}
-                          handleEditCard={handleEditCard}
-                          employeeName={employeeName}
-                          value={employeeName.id_karyawan}
-                        />
-                      </div>
-                    </Form>
-    
-                    <Form>
-                      <Row className="mt-3 mb-2">
-                        <Col md="12">
-                          <Form.Group>
-                            <span className="text-danger">*</span>
-                            <label className="mt-2">Using deadline</label>
-                            {["Without deadline", "With Deadline"].map((option, idx) => (
-                              <Form.Check
-                                key={idx}
-                                type="radio"
-                                id={`deadline-${idx}`}
-                                label={option}
-                                className="mt-2 radio-doc-settings"
-                                value={option}
-                                checked={is_deadline === (option === "With Deadline")}
-                                onChange={handleRadioChange}
-                              />
-                            ))}
-                          </Form.Group>
-                        </Col>
-                      </Row>
-                      <Row className="mt-3 mb-2">
-                        <Col md="12">
-                          <label className="mt-2">Set a deadline</label>
-                          <Form.Control
-                              type="date"
-                              value={deadline}
-                              onChange={handleDeadline}
-                              min={minDate}
-                          />
-                        </Col>
-                      </Row>
-
-                      <Row className="mt-3 mb-2">
-                        <Col md="12">
-                            <span className="text-danger">*</span>
-                            <label className="mt-2">Choose day reminder recipient</label>
-
-                          <Form.Group as={Row} className="align-items-center">
-                          <Col xs="auto">
-                            <Form.Select value={day_after_reminder} onChange={handleChange} style={{ width: '80px' }}>
-                              {[...Array(30)].map((_, i = 0) => (
-                                <option key={i + 1} value={i + 1}>
-                                  {i + 1}
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </Col>
-                          <Col xs="auto">
-                            <span style={{ fontSize: '16px' }}>
-                              day(s) after recipient receives documents
-                            </span>
-                          </Col>
-                          </Form.Group>
-                        </Col>
-                      </Row>
-
-                      <Row className="mt-3 mb-2">
-                        <Col md="12">
-                            <label className="mt-2">Choose repeat reminder</label>
-
-                          <Form.Group as={Row} className="align-items-center">
-                          <Col md="12">
-                            <Form.Select
-                              value={repeat_freq}
-                              onChange={handleRepeatReminder}
-                              style={{maxWidth: "250px"}}
-                            >
-                            {[ 
-                              {label: "No repeat reminder", value:"none"},
-                              {label: "Every day", value: "daily"}, 
-                              {label: "Every 3 days", value: "3days"},
-                              {label: "Weekly", value: "weekly"}, 
-                              {label: "Monthly", value: "monthly"}
-                             ].map((option, idx) => (
-                              <option key={idx} value={option.value}>
-                                {option.label}
-                              </option>
-                             ))}
-
-                            </Form.Select>
-                          </Col>
-                        </Form.Group>
-                        </Col>
-                      </Row>
-
-                      <Row className="mt-3 mb-2">
-                        <Col md="12">
-                          <Form.Group>
-                            <span className="text-danger">*</span>
-                            <label className="mt-2">
-                              Allow recipients to download document
-                            </label>
-                            {["Allowed", "Not Allowed"].map((option, idx) => (
-                              <Form.Check
-                                key={idx}
-                                type="radio"
-                                id={`download-${idx}`}
-                                label={option}
-                                className="mt-2 radio-doc-settings"
-                                value={option}
-                                checked={is_download !== (option === "Not Allowed")}
-                                onChange={handleDownload}
-                              />
-                            ))}
-                          </Form.Group>
-                        </Col>
-                      </Row>
-                    </Form>
-                  </Container>
-                 </Card.Body>
-                </Card>
-              </>
-            )}
-          </Col>
-        </Row>
-      </Container>
-
-        <footer>
-        <div className="row gy-2 mt-3 mb-3 d-flex justify-content-center">
-          {steps === 1 && (
-              <div className="col-12 col-md-auto my-2">
-                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={handleNext} disabled={steps === 1 && (nama_dokumen === "" || id_kategoridok === "" || category ==="" || file === null) }>
-                  Next
-                  <FaRegArrowAltCircleRight style={{ marginLeft: '8px' }}/>
+              <div className="col-12 col-md-auto my-2" id="ajukan">
+                <Button
+                  className="btn-fill w-100"
+                  variant="primary"
+                  onClick={handlePrevious}
+                  disabled={steps === 2 && employeeName === "" || id_karyawan === ""}
+                >
+                <FaRegArrowAltCircleLeft style={{ marginRight: '8px' }} />
+                  Previous
                 </Button>
               </div>
-          )}
-          { steps === 2 && (
-            <>
-            <div className="col-12 col-md-auto my-2" id="ajukan">
-              <Button
-                className="btn-fill w-100"
-                variant="primary"
-                onClick={handlePrevious}
-                disabled={steps === 2 && employeeName === "" || id_karyawan === ""}
-              >
-              <FaRegArrowAltCircleLeft style={{ marginRight: '8px' }} />
-                Previous
-              </Button>
-            </div>
-            <div className="col-12 col-md-auto my-2">
-              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveSigner} disabled={steps === 2 && employeeName.id_karyawan === "" || id_karyawan === "" || employeeName === ""}>
-              <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
-                Next
-              </Button>
-            </div>
-            </>
-          )} 
-          { steps === 3 && (
-          <>
-            <div className="col-12 col-md-auto my-2" id="ajukan">
-              <Button
-                className="btn-fill w-100"
-                variant="primary"
-                onClick={handlePrevious}
-                disabled={steps === 2}
-              >
-              <FaRegArrowAltCircleLeft style={{ marginRight: '8px' }} />
-                Previous
-              </Button>
-            </div>
-            <div className="col-12 col-md-auto my-2">
-              <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveLogSignandItems} >
-              <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
-                Next
-              </Button>
-            </div>
-          </>
-          )}
-          { steps === 4 && (
+              <div className="col-12 col-md-auto my-2">
+                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveSigner} disabled={steps === 2 && employeeName.id_karyawan === "" || id_karyawan === "" || employeeName === ""}>
+                <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
+                  Next
+                </Button>
+              </div>
+              </>
+            )} 
+            { steps === 3 && (
             <>
               <div className="col-12 col-md-auto my-2" id="ajukan">
                 <Button
@@ -1453,16 +1345,48 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                 </Button>
               </div>
               <div className="col-12 col-md-auto my-2">
-                <Button variant="success" type="submit" className="btn-fill w-100" onClick={() => updateReminder(id_dokumen)} >
+                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveLogSignandItems} >
                 <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
-                  Send
+                  Next
                 </Button>
               </div>
             </>
-          )}
+            )}
+            { steps === 4 && (
+              <>
+                <div className="col-12 col-md-auto my-2" id="ajukan">
+                  <Button
+                    className="btn-fill w-100"
+                    variant="primary"
+                    onClick={handlePrevious}
+                    disabled={steps === 2}
+                  >
+                  <FaRegArrowAltCircleLeft style={{ marginRight: '8px' }} />
+                    Previous
+                  </Button>
+                </div>
+                <div className="col-12 col-md-auto my-2">
+                  <Button variant="success" type="submit" className="btn-fill w-100" onClick={() => updateReminder(id_dokumen)} disabled={isLoading} >
+                  <>
+                    <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
+                    Send
+                  </>
+                  </Button>
+                </div>
+                
+              </>
+            )}
+          </div>
+          </footer>
         </div>
-        </footer>
-    </div>
+      ) : (
+        <>
+        <div className="d-flex flex-column flex-wrap align-items-center justify-content-center" style={{ height: '80vh'}}>
+          <ReactLoading type="cylon" color="#fb8379" height={200} width={200} />
+          <h3 style={{paddingTop:'50px'}}>Please Wait...</h3>
+        </div>
+        </>
+      )}
     </>
 
   );
