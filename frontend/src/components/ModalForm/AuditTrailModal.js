@@ -212,6 +212,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
     }, {});
 
     const groupedSignersArray = Object.values(groupedSigners);
+    console.log("groupedSignersArray:", groupedSignersArray);
 
     return (
         <>

@@ -2771,7 +2771,7 @@ function ReceiveDocument() {
 
                     const pdfPage = pages[targetPageIndex];
                     const pageHeight = pdfPage.getHeight();
-                    const yPos = pageHeight - y_axis - height + 29;
+                    const yPos = pageHeight - y_axis - height + 10;
 
                     if (jenis_item === "Initialpad" || jenis_item === "Signpad") {
                         let base64Url = sign.sign_base64;
@@ -2973,13 +2973,13 @@ function ReceiveDocument() {
                                         const ref = getRef(id_dokumen);
                                         const LOGSIGN = JSON.parse(JSON.stringify(currentDoc.LogSigns || []));
 
-                                        LOGSIGN.forEach((log, i) => {
-                                            console.log(`LogSigns[${i}].sign_base64:`, log.sign_base64);
+                                        const hasSubmitted = LOGSIGN.some((log) => log.is_submitted);
 
-                                            log.is_submitted
-                                            ? downloadPDF(id_dokumen, ref, LOGSIGN)
-                                            : plainPDF(id_dokumen);
-                                        });
+                                        if (hasSubmitted) {
+                                            await downloadPDF(id_dokumen, ref, LOGSIGN);
+                                        } else {
+                                            await plainPDF(id_dokumen);
+                                        }
                                         }}
                                     >
                                         Download
