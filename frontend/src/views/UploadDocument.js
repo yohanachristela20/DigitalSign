@@ -678,6 +678,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
       console.log("itemKaryawan:", itemKaryawan);
       console.log("allSigners:", allSigners);
+      console.log("missingItemSigners:", missingItemSigners);
 
       if (missingItemSigners.length > 0) {
         setError('Signer should have an item.');

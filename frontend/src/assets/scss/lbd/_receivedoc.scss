@@ -32,3 +32,13 @@ canvas{
     height: 170px !important;
     display: block;
 }
+
+.transparent-backdrop {
+  background-color: transparent !important;
+}
+
+.initial-modal-content {
+  background-color: white; 
+  border-radius: 8px;
+  padding: 20px;
+}

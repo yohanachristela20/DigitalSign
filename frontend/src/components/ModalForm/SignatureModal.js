@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import { toast } from "react-toastify";
 import axios from "axios";
+import "../../assets/scss/lbd/_modal.scss";
 
 function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, selectedIdItem, selectedSigner, show, editable}) {
     const signatureRef = useRef();
@@ -154,9 +155,10 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
             {signerData
             .filter((selectedSigner) => selectedSigner.id_item === selectedIdItem) 
             .map((selectedSigner) => (
-                <Modal
+            <Modal
                 key={selectedSigner.id_item}
-                className="modal-primary"
+                // className="modal-backdrop"
+                // style={{backgroundColor: "transparent !important"}}
                 show={showSignatureModal}
                 onHide={() => setShowSignatureModal(false)}
             >

@@ -2,19 +2,23 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
 import { FaSignature } from 'react-icons/fa';
 import "../../assets/scss/lbd/_rnd.scss";
+
+import { useSignature } from "components/Provider/SignatureContext.js";
+import { useInitial } from "components/Provider/InitialContext.js";
+
 import SignatureModal from 'components/ModalForm/SignatureModal.js';
 
-function ResizableDragable ({onChange, x_axis, y_axis, height=200, width=150, scale=1, onDelete, page}) {
+function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=200, width=150, scale=1, onDelete}) {
     const [showSignatureModal, setShowSignatureModal] = React.useState(false);
 
-    const [position, setPosition] = useState({ x: x_axis, y: y_axis });
+    const [position, setPosition] = useState({ x: 0, y: 0 });
     const [size, setSize] = useState({ width: 150, height: 200 });
     const [clickCount, setClickCount] = useState(0);
     const timeRef = useRef(null);
-    const [pg, setPage] = useState({page});
 
     const [signClicked, setSignClicked] = useState(false);
     const [initClicked, setInitClicked] = useState(false);
+    
     const [jenis_item, setJenisItem] = useState("");
 
     const styleRnd = {
@@ -81,7 +85,6 @@ function ResizableDragable ({onChange, x_axis, y_axis, height=200, width=150, sc
             width: height * scale,
             height: width * scale
         });
-        setPage({page});
 
         if (signClicked === true) {
             setJenisItem("Signpad");
@@ -89,14 +92,13 @@ function ResizableDragable ({onChange, x_axis, y_axis, height=200, width=150, sc
             setJenisItem("Initialpad");
         }
 
-    }, [x_axis, y_axis, height, width, scale, jenis_item, page]);
+    }, [x_axis, y_axis, height, width, scale, jenis_item]);
 
     return(
        <>
         <Rnd
             style={styleRnd}
             size={{ width: size.width, height: size.height }}
-            page={page}
             position={{x: position.x, y: position.y}}
             onDragStop={(e, d) => {
                 onChange({

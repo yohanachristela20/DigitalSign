@@ -406,7 +406,7 @@ function Document() {
         const field = axisRes[0]?.ItemField;
         if (!field) continue;
 
-        let { x_axis, y_axis, width, height, jenis_item } = field;
+        let { x_axis, y_axis, width, height, jenis_item, page } = field;
 
         x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
         y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale - 5 : jenis_item === "Signpad" ? Number(y_axis) / scale + 25 :jenis_item === "Date" ? Number(y_axis) / scale - 50 : Number(y_axis) / scale ;
@@ -414,20 +414,15 @@ function Document() {
         width = Number(height) / scale;
         height = Number(width) / scale - 20;
 
-        let targetPageIndex = 0;  
-        let remainingY = y_axis;
-        for (let i = 0; i < pages.length; i++) {
-          const pageHeight = pages[i].getHeight();
-          if (remainingY <= pageHeight) {
-            targetPageIndex = i;
-            break;
-          }
-          remainingY -= pageHeight;
+        const targetPageIndex = Number(page) - 1;  
+        if (targetPageIndex < 0 || targetPageIndex >= pages.length) {
+          console.warn("Invalid page number:", page);
+          continue;
         }
 
-        const page = pages[targetPageIndex];
-        const pageHeight = page.getHeight();
-        const yPos = pageHeight - remainingY - height + 29;
+        const pdfPage = pages[targetPageIndex];
+        const pageHeight = pdfPage.getHeight();
+        const yPos = pageHeight - y_axis - height + 10;
 
         if (jenis_item === "Initialpad" || jenis_item === "Signpad") {
           let base64Url = sign.sign_base64;
@@ -435,7 +430,7 @@ function Document() {
             base64Url = `data:image/png;base64,${base64Url}`;
           }
           const pngImage = await pdfDoc.embedPng(base64Url);
-          page.drawImage(pngImage, {
+          pdfPage.drawImage(pngImage, {
             x: x_axis,
             y: yPos,
             width,
@@ -450,7 +445,7 @@ function Document() {
           const year = date.getFullYear();
           const currentDate = `${day} ${month} ${year}`;
 
-          page.drawText(currentDate, {
+          pdfPage.drawText(currentDate, {
             x: x_axis,
             y: yPos,
             size: 9,
