@@ -24,8 +24,11 @@ LogSign.belongsTo(User, {foreignKey: 'id_karyawan', as: 'Sender'});
 Sign.belongsTo(LogSign, {foreignKey: 'id_logsign', as:'TTDokumen'});
 LogSign.belongsTo(Item, {foreignKey: 'id_item', as: 'ItemField'});
 Signers.belongsTo(Karyawan, {foreignKey: 'id_karyawan', as:'Penandatangan'});
-
 LogSign.belongsTo(Dokumen, {foreignKey: "id_dokumen", as: "Documents"});
+
+Signers.belongsTo(Karyawan, {foreignKey: 'id_karyawan', as:'Permission'});
+
+// Signers.belongsTo(Karyawan, {foreignKey: 'id_karyawan'});
 
 KategoriDokumen.hasMany(Dokumen, {foreignKey: 'id_kategoridok', as:'Kategori'});
 Dokumen.hasMany(LogSign, {foreignKey: 'id_dokumen', as: 'Dokumen'});
@@ -42,7 +45,8 @@ Karyawan.hasOne(User, {foreignKey: 'id_karyawan', as: 'Penerima'});
 Karyawan.hasOne(User, {foreignKey: 'id_karyawan', as: 'Pengirim'});
 LogSign.hasOne(LinkAccessLog, {foreignKey: 'id_logsign', as: 'LinkAccess'});
 Karyawan.hasMany(LinkAccessLog, {foreignKey: 'id_karyawan', as: 'RealKaryawan'});
-
 Dokumen.hasMany(LogSign, {foreignKey: "id_dokumen", as: "LogSigns"});
+
+Karyawan.hasOne(Signers, {foreignKey:'id_karyawan', as:'Permission'});
 
 // Signers.hasMany(LogSign, {foreignKey: 'id_parent_signers', as: 'Signer'});

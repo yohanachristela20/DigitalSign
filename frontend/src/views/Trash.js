@@ -235,18 +235,7 @@ function Trash() {
                       </td>
                       <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
                       <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
-                      <td className="text-center px-0">
-                      <button
-                        style={{background:"transparent", border:"none"}} 
-                        disabled={document.user_active === true}
-                        >
-                        <FaTrashAlt 
-                          type="button"
-                          onClick={() => deleteDocument(document.id_dokumen)}
-                          className="text-danger btn-action"
-                        />
-                      </button>
-                      </td>
+                      
                       <td className="text-center px-0">
                       <button
                         style={{background:"transparent", border:"none"}} 
@@ -259,6 +248,19 @@ function Trash() {
                         />
                       </button>
                       </td>
+                      <td className="text-center px-0">
+                      <button
+                        style={{background:"transparent", border:"none"}} 
+                        disabled={document.user_active === true}
+                        >
+                        <FaTrashAlt 
+                          type="button"
+                          onClick={() => deleteDocument(document.id_dokumen)}
+                          className="text-danger btn-action"
+                        />
+                      </button>
+                      </td>
+                     
                      
     
                     </tr>

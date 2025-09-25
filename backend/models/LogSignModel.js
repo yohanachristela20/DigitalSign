@@ -24,6 +24,7 @@ const LogSign = db.define('log_sign', {
     is_download: DataTypes.BOOLEAN,
     is_submitted: DataTypes.BOOLEAN,
     is_delegated: DataTypes.BOOLEAN,
+    sign_permission: DataTypes.STRING,
     sign_base64: DataTypes.TEXT('long'),
     urutan: DataTypes.INTEGER,
     main_token: {

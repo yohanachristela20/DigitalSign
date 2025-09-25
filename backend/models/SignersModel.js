@@ -21,7 +21,10 @@ const Signers = db.define('signers', {
             model: Karyawan,
             key: 'id_karyawan'
         }
-    }, 
+    },
+    sign_permission: {
+        type: DataTypes.STRING,
+    } 
 }, {
     freezeTableName: true,
     timestamps: true,

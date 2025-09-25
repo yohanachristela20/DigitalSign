@@ -1,8 +1,7 @@
 import Signers from "../models/SignersModel.js";
 import Karyawan from "../models/KaryawanModel.js";
-import bcrypt from "bcrypt";
-import { Sequelize } from "sequelize";
-import {Op} from "sequelize"
+import { Op } from "sequelize";
+
 
 // export const getSigner = async(req, res) => {
 //     try {
@@ -67,7 +66,8 @@ export const getSignerById = async(req, res) => {
 // };
 
 export const createSigner = async(req, res) => {
-    const {id_karyawan} = req.body;
+    const {id_karyawan, sign_permission} = req.body;
+    console.log("sign permission:", sign_permission);
 
     if (!Array.isArray(id_karyawan) || id_karyawan.length === 0) {
         return res.status(400).json({message: "id_karyawan must be a non-empty array"});
@@ -85,9 +85,10 @@ export const createSigner = async(req, res) => {
             newId = `SG${incrementedId}`;
         }
 
-        const signerData = id_karyawan.map(id => ({
+        const signerData = id_karyawan.map((id, index) => ({
             id_signers: newId,
-            id_karyawan: id
+            id_karyawan: id, 
+            sign_permission: Array.isArray(sign_permission) ? sign_permission[index] : sign_permission,
         })); 
 
         await Signers.bulkCreate(signerData);
@@ -103,7 +104,7 @@ export const getSigner = async(req, res) => {
     try {
         const latestSigner = await Signers.findOne({
             order: [['id_signers', 'DESC']],
-            attributes: ['id_signers'], 
+            attributes: ['id_signers', 'sign_permission'], 
             raw: true,
         });
 
@@ -112,12 +113,19 @@ export const getSigner = async(req, res) => {
         }
 
         const latestIdSigners = latestSigner.id_signers;
+        const latestSignersPermission = latestSigner.sign_permission;
+        console.log("latestSignersPermission:", latestSignersPermission);
+
+        const excludedPermission = ['Receive a copy'];
 
         const response = await Signers.findAll({
             where: {
                 id_signers: latestIdSigners,
+                sign_permission: {
+                    [Op.notIn]: excludedPermission,
+                }
             },
-            attributes: ['id_parent_signers', 'id_signers', 'id_karyawan'],
+            attributes: ['id_parent_signers', 'id_signers', 'id_karyawan', 'sign_permission'],
             include: [
                 {
                     model: Karyawan, 

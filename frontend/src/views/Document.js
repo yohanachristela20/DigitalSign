@@ -409,7 +409,7 @@ function Document() {
         let { x_axis, y_axis, width, height, jenis_item, page } = field;
 
         x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
-        y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale - 5 : jenis_item === "Signpad" ? Number(y_axis) / scale + 25 :jenis_item === "Date" ? Number(y_axis) / scale - 50 : Number(y_axis) / scale ;
+        y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale + 20 : jenis_item === "Signpad" ? Number(y_axis) / scale + 10 :jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale ;
         
         width = Number(height) / scale;
         height = Number(width) / scale - 20;
@@ -551,18 +551,7 @@ function Document() {
                   </td>
                   <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
                   <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
-                  <td className="text-center px-0">
-                  <button
-                    style={{background:"transparent", border:"none"}} 
-                    disabled={document.user_active === true}
-                    >
-                    <FaTrashAlt 
-                      type="button"
-                      onClick={() => deleteDocument(document.id_dokumen)}
-                      className="text-danger btn-action"
-                    />
-                  </button>
-                  </td>
+                  
                   <td className="text-center px-0">
                     <button
                     style={{background:"transparent", border:"none"}} 
@@ -600,6 +589,18 @@ function Document() {
                         className="text-success btn-action"
                       />
                     </button>
+                  </td>
+                  <td className="text-center px-0">
+                  <button
+                    style={{background:"transparent", border:"none"}} 
+                    disabled={document.user_active === true}
+                    >
+                    <FaTrashAlt 
+                      type="button"
+                      onClick={() => deleteDocument(document.id_dokumen)}
+                      className="text-danger btn-action"
+                    />
+                  </button>
                   </td>
 
                 </tr>

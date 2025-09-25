@@ -1,16 +1,25 @@
 import { response } from "express";
 import Karyawan from "../models/KaryawanModel.js";
 import User from "../models/UserModel.js";
+import Signers from "../models/SignersModel.js";
+import { Op } from "sequelize";
 
 export const getKaryawan = async(req, res) => {
     try {
         const response = await Karyawan.findAll({
             attributes: ['id_karyawan', 'nama', 'job_title', 'organisasi'],
-            include: [{
-                model: User,
-                as: 'Pengguna', 
-                attributes: ['email']
-            }],
+            include: [
+                {
+                    model: User,
+                    as: 'Pengguna', 
+                    attributes: ['email']
+                }, 
+                {
+                    model: Signers, 
+                    as: 'Penandatangan', 
+                    attributes: ['sign_permission']
+                }
+            ],
             order: [['id_karyawan', 'ASC']]
         });
         res.status(200).json(response); 
@@ -43,7 +52,7 @@ export const getKaryawanById = async(req, res) => {
         const response = await Karyawan.findOne({
             where:{
                 id_karyawan: req.params.id_karyawan 
-            }
+            },
         });
         res.status(200).json(response); 
     } catch (error) {
@@ -119,6 +128,11 @@ export const getKaryawanDetails = async (req, res) => {
                 as: 'Pengguna',
                 attributes: ['email', 'role', 'user_active'],
             },
+            {
+                model: Signers, 
+                as: 'Penandatangan', 
+                attributes: ['sign_permission']
+            }
         ],
         });
 
@@ -131,5 +145,32 @@ export const getKaryawanDetails = async (req, res) => {
     }
 };
 
+
+export const getKaryawanPermission = async (req, res) => {  
+   try {
+        const response = await Karyawan.findOne({
+            where: {
+                id_karyawan: req.params.id_karyawan
+            }, 
+            include:[
+                {
+                    model: Signers,
+                    as: 'Permission',
+                    attributes: ['id_signers', 'id_karyawan', 'sign_permission'],
+                }
+            ]
+        });
+
+        if (!response) {
+            return res.status(404).json({ message: "Signer not found" });
+        }
+
+        console.log("Signer details: ", response);
+        res.status(200).json(response);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({message: "Error fetching signer details"});
+    }
+};
 
 

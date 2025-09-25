@@ -139,14 +139,15 @@ function UbahPassword({ show, onHide }) {
                         />
                         <PasswordChecklist 
                             className="mt-3"
-                            rules={["minLength", "number", "capital", "match"]}
+                            rules={[ "match"]}
+                            // "minLength", "number", "capital",
                             minLength={8}
                             value={newPassword}
                             valueAgain={newRePassword}
                             messages={{
-                                minLength: "Min 8 characters",
-                                number: "Min 1 number",
-                                capital: "Min 1 uppercase letter",
+                                // minLength: "Min 8 characters",
+                                // number: "Min 1 number",
+                                // capital: "Min 1 uppercase letter",
                                 match: "New password and confirm password should be match"
                             }}
                         />

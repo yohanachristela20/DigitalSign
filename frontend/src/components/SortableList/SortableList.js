@@ -16,7 +16,7 @@ import {
   Modal
 } from "react-bootstrap";
 
-const SortableItem = SortableElement(({ handleEditCard, card, index, handleCardEmployeeChange, handleDeleteCard, handleDeleteStepper2, employeeName, documentCards }) => (
+const SortableItem = SortableElement(({ handleEditCard, card, index, handleCardEmployeeChange, handleDeleteCard, handleDeleteStepper2, employeeName, documentCards, sign_permission, handlePermissionChange }) => (
   <Card className="mt-3 mb-0">
     <Card.Body>
       <Row className="mt-2">
@@ -41,16 +41,33 @@ const SortableItem = SortableElement(({ handleEditCard, card, index, handleCardE
             </Form.Select>
           </Form.Group>
         </Col>
-        <Col md="4">
+        <Col md="3">
           <Form.Group>
             <label>Email</label>
             <Form.Control type="email" value={card.email} readOnly />
           </Form.Group>
         </Col>
-        <Col md="2" className="d-flex align-items-end mt-sm-3">
+        <Col md="3">
+        <label>Sign Permission</label>
+          <Form.Select
+            value={card.sign_permission || "Needs to sign"}
+            onChange={(e) => handlePermissionChange(card.id, e.target.value)}
+          >
+          {[ 
+            {label: "Needs to sign", value: "Needs to sign"}, 
+            {label: "Receive a copy", value: "Receive a copy"}
+          ].map((option, idx) => (
+            <option key={idx} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+
+          </Form.Select>
+        </Col>
+        <Col md="1" className="d-flex align-items-center justify-content-center mt-sm-3">
           <Button variant="outline-danger" disabled={documentCards.length <= 1} onClick={() => handleDeleteCard(card.id)} ><FaTrashAlt className="mb-1"/> Delete</Button>
         </Col>
-        <Col md="2" className="d-flex align-items-end mt-sm-3">
+        <Col md="1" className="d-flex align-items-center justify-content-center mt-sm-3">
           <Button variant="outline-warning" onClick={() => handleEditCard(card.id)} ><FaPen className="mb-1"/> Update</Button>
         </Col>
       </Row>

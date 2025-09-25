@@ -15,6 +15,7 @@ import LinkAccessLog from "../models/linkAccessModel.js";
 import bcrypt from 'bcrypt';
 import { where } from "sequelize";
 import { Op } from "sequelize";
+import { sign } from "crypto";
 
 dotenv.config();
 
@@ -70,7 +71,7 @@ router.get('/receive-document', async(req, res) => {
         // const main_token = logsignRecord ? logsignRecord.main_token : null;
         // const delegate_token = logsignRecord ? logsignRecord.delegate_token : null;
 
-        const { id_logsign, main_token, delegate_token, status } = logsignRecord;
+        const { id_logsign, main_token, delegate_token, status, sign_permission } = logsignRecord;
 
         if (status === 'Pending'){
             try {
@@ -97,6 +98,7 @@ router.get('/receive-document', async(req, res) => {
             main_token,
             delegate_token,
             deadline,
+            sign_permission,
         });
         
     } catch (error) {
@@ -307,7 +309,7 @@ router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async (req, res) => {
                     {delegated_signers: id_signers}
                 ]
             }, 
-            attributes: ["id_signers", "delegated_signers", "is_delegated", "main_token", "delegate_token"]
+            attributes: ["id_signers", "delegated_signers", "is_delegated", "main_token", "delegate_token", "sign_permission"]
         });
 
         // console.log("LOGSIGN RECORD AXIS FIELD:", logsignRecord);
@@ -317,7 +319,7 @@ router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async (req, res) => {
 
         const response = await LogSign.findAll({
             where: { id_dokumen, id_signers: mainSignerId, id_item },
-            attributes: ["id_item", "id_signers", "status", "urutan", "is_submitted", "is_delegated", "main_token", "delegate_token" ],
+            attributes: ["id_item", "id_signers", "status", "urutan", "is_submitted", "is_delegated", "main_token", "delegate_token", "sign_permission" ],
             include: [
                 {
                     model: Item,
@@ -332,11 +334,12 @@ router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async (req, res) => {
             ]
         });
 
-        console.log("RESPONSE:", JSON.stringify(response, null, 2));
+        // console.log("RESPONSE:", JSON.stringify(response, null, 2));
         const pages = response.map(r => r?.ItemField?.page);
-        console.log("PAGES:", pages);
+        // console.log("PAGES:", pages);
 
         res.status(200).json(response);
+        console.log("response:", response);
         // res.status(200).json({ pages });
     } catch (error) {
         console.log("error:", error.message);

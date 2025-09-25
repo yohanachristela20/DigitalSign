@@ -42,7 +42,7 @@ const DeclineModal = ({showDeclineModal, setShowDeclineModal, selectedSigner, se
                 const id_signers = res.data.id_signers;
                 setIdSigner(id_signers);
 
-                console.log("Id Signers Decline Modal:", id_signers)
+                // console.log("Id Signers Decline Modal:", id_signers)
 
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
 

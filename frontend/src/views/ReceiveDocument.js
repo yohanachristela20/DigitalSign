@@ -1873,6 +1873,7 @@ function ReceiveDocument() {
 
     const [urutan, setUrutan] = useState("");
     const [urutanMap, setUrutanMap] = useState({});
+    const [permissionMap, setPermissionMap] = useState({});
 
     const [allSigners, setAllSigners] = useState("");
     const [submittedMap, setSubmittedMap] = useState({});
@@ -1924,6 +1925,7 @@ function ReceiveDocument() {
     const [is_download, setIsDownload] = useState(true);
     const canvasContainerRef = useRef(null);
     const [canvases, setCanvases] = useState([]);
+    const [sign_permission, setSignPermission] = useState("");
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -2224,8 +2226,10 @@ function ReceiveDocument() {
             const main_token = res.data.main_token;
             const delegate_token = res.data.delegate_token;
             const deadline = res.data.deadline;
+            const sign_permission = res.data.sign_permission;
 
             console.log("Deadline from token:", deadline);
+            console.log("Sign Permission from receive-doc:", sign_permission);
 
             const finalSignerId = allSigners || currentSigner || delegated_signers;
             setDelegatedSigners(delegated_signers);
@@ -2245,6 +2249,7 @@ function ReceiveDocument() {
             setMainToken(main_token);
             setDelegateToken(delegate_token);
             setDeadline(deadline)
+            // setSignPermission(sign_permission);
 
             const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
             if (!fileRes.ok) {
@@ -2260,6 +2265,7 @@ function ReceiveDocument() {
             const localDateFields = [];
             const allStatus = [];
             const allSigner = [];
+            const allPermission = [];
 
             const signerArray = Array.isArray(finalSignerId) ? finalSignerId : [finalSignerId];
             const itemArray = Array.isArray(allItems) ? allItems : [allItems];
@@ -2268,6 +2274,7 @@ function ReceiveDocument() {
             const urutanMapping = {};
             const submittedMapping = {};
             const delegateMapping = {};
+            // const permissionMapping = {};
 
             for (const signer of signerArray) {
                 const resSignerInfo = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
@@ -2323,8 +2330,11 @@ function ReceiveDocument() {
                         } = item.ItemField;
 
                         const status = item.status || "Pending";
+                        const sign_permission = item.sign_permission || null;
                         const urutan = item.urutan;
                         const is_submitted = item.is_submitted;
+
+                        console.log("signPermisssion from axis field:", sign_permission);
 
                         if (!urutanMapping[fieldItemId]) {
                             urutanMapping[fieldItemId] = urutan;
@@ -2333,6 +2343,10 @@ function ReceiveDocument() {
                         if (!submittedMapping[signer]) {
                             submittedMapping[signer] = is_submitted;
                         }
+
+                        // if (!permissionMapping[fieldItemId]) {
+                        //     permissionMapping[fieldItemId] = sign_permission;
+                        // }
 
                         const fieldObj = {
                             id: `field-${querySigner}-${idx}`,
@@ -2354,11 +2368,13 @@ function ReceiveDocument() {
                             id_signers: querySigner, 
                             is_delegated,
                             delegated_signers,
+                            sign_permission,
                         }; 
 
                         console.log("FieldObj:", fieldObj);
 
                         allStatus.push({id_item: fieldItemId, status});
+                        allPermission.push({id_item: fieldItemId, sign_permission});
 
                         if (jenis_item === "Signpad") {
                             localSignatureFields.push(fieldObj);
@@ -2378,6 +2394,8 @@ function ReceiveDocument() {
             setUrutanMap(urutanMapping);
             setSubmittedMap(submittedMapping);
             setDelegatedMap(delegateMapping);
+            setSignPermission(allPermission);
+
 
         } catch (error) {
             console.error("Failed to load PDF:", error.message);
@@ -2390,6 +2408,41 @@ function ReceiveDocument() {
 
         fetchData();
     }, [token]);
+
+    console.log("SIGN PERMISSION:", sign_permission);
+    console.log("ALL STATUS:", signStatus);
+
+
+
+    // const fetchDataKaryawan = async (current_signer) => {
+
+    //     try {
+    //     const response = await axios.get(`http://localhost:5000/employee-permission/${current_signer}`, {
+    //         headers: {
+    //             Authorization: `Bearer ${token}`,
+    //         },
+    //     });
+
+    //     const karyawanData = response.data;
+    //     console.log("karyawanData:", karyawanData);
+    //     console.log("signPermission:", karyawanData?.Permission?.sign_permission);
+
+    //     if (karyawanData?.Permission?.sign_permission) {
+    //         setSignPermission(karyawanData?.Permission?.sign_permission);
+    //     }
+
+    //     } catch (error) {
+    //     console.error("Error fetching karyawan data:", error);
+    //     }
+    // };
+
+    // useEffect(() => {
+    //     if (current_signer) {
+    //         fetchDataKaryawan(current_signer);
+    //     }
+    // }, [current_signer, token]);
+
+    // console.log("id karyawan:", current_signer, "Sign permission: ", sign_permission);
 
     
     useEffect(() => {
@@ -2469,6 +2522,7 @@ function ReceiveDocument() {
                 const currentUrutan = Number(urutanMap[itemId]);
                 const currentSubmitted = submittedMap[signer];
                 const currentDelegated = delegatedMap[signer] || false;
+
                 const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
                 const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
                 const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
@@ -2479,6 +2533,9 @@ function ReceiveDocument() {
                     const formattedBase64 = base64?.startsWith("data:image")? base64 : base64 ? `data:image/png;base64,${base64}` : null;
 
                     const delegatedForThisSigner = matchInitial?.delegated_signers || null;
+                    // const signPermission = matchInitial?.sign_permission || "";
+
+                    // console.log("signPermission:", signPermission);
 
 
                     fieldBuffer.push({
@@ -2503,6 +2560,7 @@ function ReceiveDocument() {
                         nowSigner: finalSignerId,
                         delegated_signers: delegatedForThisSigner,
                         token,
+                        sign_permission: matchInitial?.sign_permission || "Needs to sign",
 
                     });
                 }
@@ -2510,7 +2568,7 @@ function ReceiveDocument() {
         }
 
         const allFields = fieldBuffer.map(field => {
-            const {urutan: currentUrutan, id_item, id_signers, current_signer, delegated_signers} = field;
+            const {urutan: currentUrutan, id_item, id_signers, current_signer, delegated_signers, sign_permission} = field;
             
             let normalizedDelegated = null;
             if (delegated_signers && !Array.isArray(delegated_signers)) {
@@ -2518,6 +2576,9 @@ function ReceiveDocument() {
             } else if (Array.isArray(delegated_signers)) {
                 normalizedDelegated = delegated_signers.map(String);
             }
+
+            console.log("SIGN PERMISSION ALLFIELDS:", sign_permission);
+            setSignPermission(sign_permission);
 
             setNormalizedDelegated(normalizedDelegated);
 
@@ -2533,6 +2594,8 @@ function ReceiveDocument() {
             const prevStatusList = prevFields.map(f => f.status);
             const prevSubmittedList = prevFields.map(f => f.is_submitted);
 
+            console.log("prevSubmittedList:", prevSubmittedList);
+
             const allCompleted = prevStatusList.length > 0 && 
             prevStatusList.every(s => s === "Completed") && 
             prevSubmittedList.every(s => s === true);
@@ -2540,7 +2603,15 @@ function ReceiveDocument() {
             let show = true;
             let editable = true;
 
+            // if (currentUrutan !== 1 && sign_permission === "Needs to sign") {
+            //     show = true;
+            //     editable = true;
+            // } 
+           
+
+            // only 2 signers
             if (signerArray.length > 1) {
+                
                 if (currentUrutan === 1) {
                     show = true;
                     editable = true;
@@ -2556,8 +2627,46 @@ function ReceiveDocument() {
                 } else {
                     show = true;
                     editable = false;
-                }
+                } 
             }
+
+            if (prevStatusList.length === 0 && currentUrutan !== 1  && sign_permission === "Needs to sign") {
+                show = true;
+                editable = true;
+            }
+
+            // if (field.jenis_item === "Date") {
+            //     show = true;
+            //     editable = false;
+            // }
+
+            //more than 2 signers
+
+            // if (signerArray.length > 1) {
+                
+            //     if (currentUrutan === 1 ) {
+            //         show = true;
+            //         editable = true;
+            //     } else if (currentUrutan === 3 && prevSubmittedList.every(s => s === true) && sign_permission === "Needs to sign") {
+            //         show = true;
+            //         editable = true;
+            //     } else if (prevStatusList.length === 0) {
+            //         show = false;
+            //         editable = false;
+            //     } else if (allCompleted) {
+            //         show = true;
+            //         editable = true;
+            //     } else if (prevSubmittedList.every(s => s !== true)) {
+            //         show = false;
+            //         editable = false;
+            //     } else {
+            //         show = true;
+            //         editable = false;
+            //     } 
+            // }
+
+           
+
 
             if (field.jenis_item === "Date") {
                 show = true;
@@ -3125,7 +3234,7 @@ function ReceiveDocument() {
                                                     />
 
                                                     {signedInitials.map((sig) => {
-                                                        if (!sig || !sig.id_item || sig.show !== true) return null;
+                                                        if (!sig || sig.show !== true) return null;
 
                                                         const isCompleted = sig.status === "Completed";
                                                         const isSubmitted = sig.is_submitted === true;
@@ -3372,7 +3481,7 @@ function ReceiveDocument() {
                                                     })}
 
                                                     {initial.map((sig) => {
-                                                        if (!sig || !sig.id_item || sig.show !== true) return null;
+                                                        if (!sig || sig.show !== true) return null;
 
                                                         const isCompleted = sig.status === "Completed";
                                                         const isSubmitted = sig.is_submitted === true;

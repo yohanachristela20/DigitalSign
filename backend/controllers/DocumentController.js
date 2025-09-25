@@ -15,6 +15,7 @@ import LinkAccessLog from "../models/linkAccessModel.js";
 import jwt from 'jsonwebtoken';
 import { log } from "console";
 import { Op } from "sequelize";
+import { sign } from "crypto";
 
 dotenv.config();
 
@@ -333,6 +334,7 @@ export const createLogSign = async (req, res) => {
           id_dokumen: log.id_dokumen, 
           id_karyawan: log.id_karyawan,
           id_signers: log.id_signers,
+          sign_permission: log.sign_permission,
           id_item: item,
           urutan: parseInt(log.urutan),
         });
@@ -341,27 +343,26 @@ export const createLogSign = async (req, res) => {
 
     await LogSign.bulkCreate(newLogSign, { transaction });
 
-    // 🔹 Generate id_sign
-    const lastSign = await Sign.findOne({
-      order: [["id_sign", "DESC"]],
-      transaction,
-      lock: transaction.LOCK.UPDATE,
-    });
+    // const lastSign = await Sign.findOne({
+    //   order: [["id_sign", "DESC"]],
+    //   transaction,
+    //   lock: transaction.LOCK.UPDATE,
+    // });
 
-    let lastSignNumber = lastSign
-      ? parseInt(lastSign.id_sign.substring(2), 10)
-      : 0;
+    // let lastSignNumber = lastSign
+    //   ? parseInt(lastSign.id_sign.substring(2), 10)
+    //   : 0;
 
-    const newSigns = newLogSign.map((log) => {
-      lastSignNumber += 1;
-      const newSignNumber = lastSignNumber.toString().padStart(5, "0");
-      return {
-        id_sign: `SN${newSignNumber}`,
-        id_logsign: log.id_logsign,
-      };
-    });
+    // const newSigns = newLogSign.map((log) => {
+    //   lastSignNumber += 1;
+    //   const newSignNumber = lastSignNumber.toString().padStart(5, "0");
+    //   return {
+    //     id_sign: `SN${newSignNumber}`,
+    //     id_logsign: log.id_logsign,
+    //   };
+    // });
 
-    await Sign.bulkCreate(newSigns, { transaction });
+    // await Sign.bulkCreate(newSigns, { transaction });
     await transaction.commit();
 
     const subjectt = [
@@ -454,7 +455,7 @@ const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, 
 
 export const sendEmailNotification = async (req, res) => {
   try {
-    const {subjectt, messagee, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers, day_after_reminder, deadline} = req.body;
+    const {subjectt, messagee, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers, day_after_reminder, deadline, sign_permission} = req.body;
     const jwtSecret = process.env.JWT_SECRET_KEY;
 
     console.log("day after reminder:", day_after_reminder);
@@ -464,6 +465,7 @@ export const sendEmailNotification = async (req, res) => {
     const itemList = [...new Set(Array.isArray(id_item) ? id_item : [id_item])];
     const senderList = [...new Set(Array.isArray(id_karyawan) ? id_karyawan : [id_karyawan])];
     const delegateList = [...new Set(Array.isArray(delegated_signers) ? delegated_signers : [delegated_signers])];
+    const permissionList = [...new Set(Array.isArray(sign_permission) ? sign_permission : [sign_permission])];
     // const deadlineList = [...new Set(Array.isArray(deadline) ? deadline : [deadline])];
 
 
@@ -525,6 +527,7 @@ export const sendEmailNotification = async (req, res) => {
             intended_email,
             delegated_signers: delegateList,
             deadline,
+            sign_permission: permissionList,
           }
         }, 
         jwtSecret, {expiresIn}
