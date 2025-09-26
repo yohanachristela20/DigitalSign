@@ -20,7 +20,7 @@ const SortableItem = SortableElement(({ handleEditCard, card, index, handleCardE
   <Card className="mt-3 mb-0">
     <Card.Body>
       <Row className="mt-2">
-        <Col md="4">
+        <Col md="3">
           <Form.Group>
             <span className="text-danger">*</span>
             <label>Full Name</label>
@@ -47,7 +47,7 @@ const SortableItem = SortableElement(({ handleEditCard, card, index, handleCardE
             <Form.Control type="email" value={card.email} readOnly />
           </Form.Group>
         </Col>
-        <Col md="3">
+        <Col md="2">
         <label>Sign Permission</label>
           <Form.Select
             value={card.sign_permission || "Needs to sign"}
@@ -64,10 +64,10 @@ const SortableItem = SortableElement(({ handleEditCard, card, index, handleCardE
 
           </Form.Select>
         </Col>
-        <Col md="1" className="d-flex align-items-center justify-content-center mt-sm-3">
+        <Col md="2" className="d-flex align-items-center justify-content-center mt-sm-3">
           <Button variant="outline-danger" disabled={documentCards.length <= 1} onClick={() => handleDeleteCard(card.id)} ><FaTrashAlt className="mb-1"/> Delete</Button>
         </Col>
-        <Col md="1" className="d-flex align-items-center justify-content-center mt-sm-3">
+        <Col md="2" className="d-flex align-items-center justify-content-center mt-sm-3">
           <Button variant="outline-warning" onClick={() => handleEditCard(card.id)} ><FaPen className="mb-1"/> Update</Button>
         </Col>
       </Row>

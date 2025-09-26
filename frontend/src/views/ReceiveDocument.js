@@ -2010,7 +2010,7 @@ function ReceiveDocument() {
 
                 for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                     const page = await pdf.getPage(pageNum);
-                    const scale = 1.5;
+                    const scale = 1;
                     const viewport = page.getViewport({scale});
 
                     const canvas = document.createElement('canvas');
@@ -2603,51 +2603,10 @@ function ReceiveDocument() {
             let show = true;
             let editable = true;
 
-            // if (currentUrutan !== 1 && sign_permission === "Needs to sign") {
-            //     show = true;
-            //     editable = true;
-            // } 
-           
-
             // only 2 signers
-            if (signerArray.length > 1) {
-                
-                if (currentUrutan === 1) {
-                    show = true;
-                    editable = true;
-                } else if (prevStatusList.length === 0) {
-                    show = false;
-                    editable = false;
-                } else if (allCompleted) {
-                    show = true;
-                    editable = true;
-                } else if (prevSubmittedList.every(s => s !== true)) {
-                    show = false;
-                    editable = false;
-                } else {
-                    show = true;
-                    editable = false;
-                } 
-            }
-
-            if (prevStatusList.length === 0 && currentUrutan !== 1  && sign_permission === "Needs to sign") {
-                show = true;
-                editable = true;
-            }
-
-            // if (field.jenis_item === "Date") {
-            //     show = true;
-            //     editable = false;
-            // }
-
-            //more than 2 signers
-
             // if (signerArray.length > 1) {
                 
-            //     if (currentUrutan === 1 ) {
-            //         show = true;
-            //         editable = true;
-            //     } else if (currentUrutan === 3 && prevSubmittedList.every(s => s === true) && sign_permission === "Needs to sign") {
+            //     if (currentUrutan === 1) {
             //         show = true;
             //         editable = true;
             //     } else if (prevStatusList.length === 0) {
@@ -2665,7 +2624,45 @@ function ReceiveDocument() {
             //     } 
             // }
 
-           
+            // if (prevStatusList.length === 0 && currentUrutan !== 1  && sign_permission === "Needs to sign") {
+            //     show = true;
+            //     editable = true;
+            // }
+
+            console.log("prevStatusList length:", prevStatusList.length, "currentUrutan:", currentUrutan, "sign_permission:", sign_permission);
+
+            const prevNeedsSigner = [...fieldBuffer]
+            .filter(f => f.urutan < currentUrutan && f.sign_permission === "Needs to sign")
+            .sort((a, b) => b.urutan - a.urutan)[0];
+
+            const prevStatusCompleted = prevNeedsSigner 
+            ? prevNeedsSigner.status === "Completed" && prevNeedsSigner.is_submitted === true
+            : false;
+
+            //more than 2 signers
+            if (signerArray.length > 1) {
+                if (currentUrutan === 1 && sign_permission === "Needs to sign") {
+                    show = true;
+                    editable = true;
+                } else if (currentUrutan > 1 && sign_permission === "Receive a copy") {
+                    show = true;
+                    editable = true;
+                } else if (currentUrutan > 1 && sign_permission === "Needs to sign") {
+                    if (prevStatusCompleted) {
+                        show = true;
+                        editable = true;
+                    } else {
+                        show = false;
+                        editable = false;
+                    } 
+                }
+            }
+
+            // if (prevStatusList.length === 0 && currentUrutan !== 1  && sign_permission === "Needs to sign") {
+            //     show = true;
+            //     editable = true;
+            // }
+
 
 
             if (field.jenis_item === "Date") {
@@ -2853,7 +2850,7 @@ function ReceiveDocument() {
             const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
             const pages = pdfDoc.getPages();
-            const scale = 1.5;
+            const scale = 1;
 
             for (const sign of LOGSIGN) {
                 if (sign.status === "Completed" && sign.is_submitted) {
@@ -2921,7 +2918,7 @@ function ReceiveDocument() {
             let finalPdf;
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 2 });
+                const viewport = page.getViewport({ scale: 1 });
                 const canvas = document.createElement("canvas");
                 const ctx = canvas.getContext("2d");
                 canvas.width = viewport.width;

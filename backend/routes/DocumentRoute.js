@@ -13,7 +13,7 @@ import {getDocument,
         getDocumentByCategory,
         createLogSign,
         createItem, 
-        deleteSign, 
+        // deleteSign, 
         deleteLogsign, 
         updateReminder,
         sendEmailNotification,
@@ -65,7 +65,7 @@ router.get('/getLastDocumentId', getLastDocumentId);
 router.post("/document", upload.single("pdf-file"), createDocument);
 router.post('/logsign', createLogSign);
 router.post('/item', createItem);
-router.delete('/delete-sign/:id_logsign', deleteSign);
+// router.delete('/delete-sign/:id_logsign', deleteSign);
 router.delete('/logsign/:id_dokumen/:id_item/:id_signers', deleteLogsign);
 // router.delete('/delete-signer/:id_signers', deleteSigner);
 

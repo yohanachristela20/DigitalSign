@@ -2,7 +2,6 @@ import LogSign from "../models/LogSignModel.js";
 import db from "../config/database.js";
 import Karyawan from "../models/KaryawanModel.js";
 import Signers from "../models/SignersModel.js";
-import Sign from "../models/SignModel.js";
 
 export const getLogSign = async(req, res) => {
     try {

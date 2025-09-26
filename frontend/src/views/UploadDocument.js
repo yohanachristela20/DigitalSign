@@ -931,23 +931,27 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         const logsigns = [];
         documentCards.forEach((card) => {
           if (card.sign_permission === "Needs to sign") {
-            const matchItem = createdItems.find(
+            const matchItem = createdItems.filter(
               (item, idx) => items[idx].id_karyawan === card.id_karyawan
             );
 
-            logsigns.push({
-              action: "Created",
-              status: "Pending",
-              id_dokumen,
-              id_karyawan,
-              id_signers: card.id_karyawan,
-              sign_permission: card.sign_permission,
-              id_item: matchItem?.id_item || null,
-              subject,
-              message,
-              delegated_signers: matchItem?.delegated_signers || null,
-              urutan: signerOrderMap[card.id_karyawan],
-            });
+            if (matchItem.length > 0) {
+              matchItem.forEach((item) => {
+                logsigns.push({
+                  action: "Created",
+                  status: "Pending",
+                  id_dokumen,
+                  id_karyawan,
+                  id_signers: card.id_karyawan,
+                  sign_permission: card.sign_permission,
+                  id_item: item?.id_item || null,
+                  subject,
+                  message,
+                  delegated_signers: item?.delegated_signers || null,
+                  urutan: signerOrderMap[card.id_karyawan],
+                });
+              });
+            }
           } else if (card.sign_permission === "Receive a copy") {
             logsigns.push({
               action: "Created",

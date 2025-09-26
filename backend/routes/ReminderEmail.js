@@ -1,6 +1,5 @@
 import KategoriDokumen from "../models/KategoriDokModel.js";
 import LogSign from "../models/LogSignModel.js";
-import Sign from "../models/SignModel.js";
 import Karyawan from "../models/KaryawanModel.js";
 import User from "../models/UserModel.js";
 import nodemailer from "nodemailer";

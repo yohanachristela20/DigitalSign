@@ -372,7 +372,7 @@ const PDFCanvas = ({pdfUrl, onPagesRendered}) => {
 
                 for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                     const page = await pdf.getPage(pageNum);
-                    const scale = 1.5;
+                    const scale = 1;
                     const viewport = page.getViewport({scale});
 
                     const canvas = document.createElement('canvas');

@@ -2,7 +2,6 @@ import Dokumen from "../models/DokumenModel.js";
 import path from "path";
 import KategoriDokumen from "../models/KategoriDokModel.js";
 import LogSign from "../models/LogSignModel.js";
-import Sign from "../models/SignModel.js";
 import fs, { stat } from 'fs';
 import db from "../config/database.js";
 import Item from "../models/ItemModel.js";
@@ -13,9 +12,7 @@ import User from "../models/UserModel.js";
 import LinkAccessLog from "../models/linkAccessModel.js";
 
 import jwt from 'jsonwebtoken';
-import { log } from "console";
 import { Op } from "sequelize";
-import { sign } from "crypto";
 
 dotenv.config();
 
@@ -693,6 +690,19 @@ export const updateInitialSign = async(req, res) => {
       await log.update({sign_base64: finalSignBase64, status, tgl_tt});
     }
 
+    if (logsign.sign_permission === "Needs to sign") {
+      const otherLogs = await LogSign.findAll({
+        where: {
+          id_dokumen,
+          sign_permission: {[Op.ne] : "Needs to sign"},
+        },
+      });
+
+      for (const otherLog of otherLogs) {
+        await otherLog.update({status: "Completed", tgl_tt, is_submitted: true});
+      }
+    }
+
     res.status(200).json({msg: `${relatedLogs.length} InitialSign saved successful in Logsign.`});
 
   } catch (error) {
@@ -716,10 +726,10 @@ export const deleteLogsign = async(req, res) => {
 
         const deletedUrutan = parseInt(logsign.urutan);
 
-        await Sign.destroy({
-            where: {id_logsign: logsign.id_logsign},
-            transaction
-        });
+        // await Sign.destroy({
+        //     where: {id_logsign: logsign.id_logsign},
+        //     transaction
+        // });
             
         await LogSign.destroy({
             where: {id_dokumen, id_item, id_signers},
@@ -746,31 +756,31 @@ export const deleteLogsign = async(req, res) => {
     }
 };
 
-export const deleteSign = async(req, res) => {
-  const {id_logsign} = req.params;
+// export const deleteSign = async(req, res) => {
+//   const {id_logsign} = req.params;
 
-  try {
-    const sign = await Sign.findOne({
-      where: {id_logsign}
-    });
+//   try {
+//     const sign = await Sign.findOne({
+//       where: {id_logsign}
+//     });
 
-    if (!sign) {
-        return res.status(404).json({ message: "Sign data not found" });
-    }
+//     if (!sign) {
+//         return res.status(404).json({ message: "Sign data not found" });
+//     }
 
-    await Sign.destroy({
-        where: {id_logsign},
-    });
+//     await Sign.destroy({
+//         where: {id_logsign},
+//     });
 
-     await LogSign.destroy({
-      where: { id_logsign },
-    });
-    res.status(200).json({message: "Sign deleted successfullly."});
-  } catch (error) {
-        console.error("Failed to delete sign by id_logsign", error)
-        res.status(500).json({message: error.message});
-  }
-}
+//      await LogSign.destroy({
+//       where: { id_logsign },
+//     });
+//     res.status(200).json({message: "Sign deleted successfullly."});
+//   } catch (error) {
+//         console.error("Failed to delete sign by id_logsign", error)
+//         res.status(500).json({message: error.message});
+//   }
+// }
 
 
 
@@ -886,7 +896,7 @@ export const deleteDocument = async (req, res) => {
     if (logsignIds.length > 0) {
       await LinkAccessLog.destroy({ where: { id_logsign: logsignIds } });
 
-      await Sign.destroy({ where: { id_logsign: logsignIds } });
+      // await Sign.destroy({ where: { id_logsign: logsignIds } });
 
       await LogSign.destroy({ where: { id_dokumen } });
     }
@@ -936,7 +946,7 @@ export const autoDeleteDocument = async(req, res) => {
 
       if (logsignIds.length > 0){
         await LinkAccessLog.destroy({where: {id_logsign: logsignIds}});
-        await Sign.destroy({where: {id_logsign: logsignIds}});
+        // await Sign.destroy({where: {id_logsign: logsignIds}});
         await LogSign.destroy({where: {id_dokumen}});
       }
 

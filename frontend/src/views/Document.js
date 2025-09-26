@@ -389,80 +389,80 @@ function Document() {
 
 
   const downloadDoc = async (id_dokumen, ref, logSigns) => { 
-  try {
-    const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
-    const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
-    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    try {
+      const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
+      const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+      const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
-    const pages = pdfDoc.getPages();
-    const scale = 1.5;
-   
-    for (const sign of logSigns) {
-      if (sign.status === "Completed" && sign.is_submitted) {
-        const axisRes = await fetch(
-          `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
-        ).then(res => res.json());
+      const pages = pdfDoc.getPages();
+      const scale = 1;
+    
+      for (const sign of logSigns) {
+        if (sign.status === "Completed" && sign.is_submitted) {
+          const axisRes = await fetch(
+            `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
+          ).then(res => res.json());
 
-        const field = axisRes[0]?.ItemField;
-        if (!field) continue;
+          const field = axisRes[0]?.ItemField;
+          if (!field) continue;
 
-        let { x_axis, y_axis, width, height, jenis_item, page } = field;
+          let { x_axis, y_axis, width, height, jenis_item, page } = field;
 
-        x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
-        y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale + 20 : jenis_item === "Signpad" ? Number(y_axis) / scale + 10 :jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale ;
-        
-        width = Number(height) / scale;
-        height = Number(width) / scale - 20;
+          x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
+          y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale + 20 : jenis_item === "Signpad" ? Number(y_axis) / scale + 10 :jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale ;
+          
+          width = Number(height) / scale;
+          height = Number(width) / scale - 20;
 
-        const targetPageIndex = Number(page) - 1;  
-        if (targetPageIndex < 0 || targetPageIndex >= pages.length) {
-          console.warn("Invalid page number:", page);
-          continue;
-        }
-
-        const pdfPage = pages[targetPageIndex];
-        const pageHeight = pdfPage.getHeight();
-        const yPos = pageHeight - y_axis - height + 10;
-
-        if (jenis_item === "Initialpad" || jenis_item === "Signpad") {
-          let base64Url = sign.sign_base64;
-          if (!base64Url.startsWith("data:image")) {
-            base64Url = `data:image/png;base64,${base64Url}`;
+          const targetPageIndex = Number(page) - 1;  
+          if (targetPageIndex < 0 || targetPageIndex >= pages.length) {
+            console.warn("Invalid page number:", page);
+            continue;
           }
-          const pngImage = await pdfDoc.embedPng(base64Url);
-          pdfPage.drawImage(pngImage, {
-            x: x_axis,
-            y: yPos,
-            width,
-            height,
-          });
-        } else {
-          const date = new Date(sign.tgl_tt);
-          console.log("DATE:", sign.tgl_tt);
-          const day = String(date.getDate()).padStart(2, "0");
-          const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec"];
-          const month = monthNames[date.getMonth()];
-          const year = date.getFullYear();
-          const currentDate = `${day} ${month} ${year}`;
 
-          pdfPage.drawText(currentDate, {
-            x: x_axis,
-            y: yPos,
-            size: 9,
-          });
+          const pdfPage = pages[targetPageIndex];
+          const pageHeight = pdfPage.getHeight();
+          const yPos = pageHeight - y_axis - height + 10;
+
+          if (jenis_item === "Initialpad" || jenis_item === "Signpad") {
+            let base64Url = sign.sign_base64;
+            if (!base64Url.startsWith("data:image")) {
+              base64Url = `data:image/png;base64,${base64Url}`;
+            }
+            const pngImage = await pdfDoc.embedPng(base64Url);
+            pdfPage.drawImage(pngImage, {
+              x: x_axis,
+              y: yPos,
+              width,
+              height,
+            });
+          } else {
+            const date = new Date(sign.tgl_tt);
+            console.log("DATE:", sign.tgl_tt);
+            const day = String(date.getDate()).padStart(2, "0");
+            const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec"];
+            const month = monthNames[date.getMonth()];
+            const year = date.getFullYear();
+            const currentDate = `${day} ${month} ${year}`;
+
+            pdfPage.drawText(currentDate, {
+              x: x_axis,
+              y: yPos,
+              size: 9,
+            });
+          }
         }
       }
+
+      const signedBytes = await pdfDoc.save();
+      const blob = new Blob([signedBytes], { type: "application/pdf" });
+
+      saveAs(blob, `signed_${id_dokumen}.pdf`);
+
+    } catch (error) {
+      console.error("Downloading error:", error.message);
     }
-
-    const signedBytes = await pdfDoc.save();
-    const blob = new Blob([signedBytes], { type: "application/pdf" });
-
-    saveAs(blob, `signed_${id_dokumen}.pdf`);
-
-  } catch (error) {
-    console.error("Downloading error:", error.message);
-  }
-};
+  };
 
 
 
@@ -535,7 +535,7 @@ function Document() {
                     <p className="signer-font">To: {document.LogSigns.map((log) => log.Signerr?.nama).join(", ")}</p>
                   </td>
                   <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
-                  <td className="text-center">
+                  {/* <td className="text-center">
                     <p>
                       {getStatusById(document.id_dokumen) === "Decline" ? (
                         <Badge pill bg="danger">Decline</Badge>
@@ -548,7 +548,34 @@ function Document() {
                       )}
                     </p>
                     <p className="signer-font" hidden={getStatusById(document.id_dokumen) === "Completed" || getStatusById(document.id_dokumen) === "Decline" || document.LogSigns.every((log) => log.is_submitted === true)}>{getProgress(document)}</p>                      
+                  </td> */}
+                  <td className="text-center">
+                    {(() => {
+                      const status = getStatusById(document.id_dokumen);
+                      const allSubmitted = document.LogSigns.every((log) => log.is_submitted === true);
+
+                      let badge;
+                      if (status === "Decline") {
+                        badge = <Badge pill bg="danger">Decline</Badge>;
+                      } else if (status === "Completed" && allSubmitted) {
+                        badge = <Badge pill bg="success">Completed</Badge>;
+                      } else  {
+                        badge = <Badge pill bg="secondary">Pending</Badge>;
+                      }
+
+                      // if (!allSubmitted)
+
+                      return (
+                        <>
+                          <p>{badge}</p>
+                          {!(status === "Completed" || status === "Decline" || allSubmitted) && (
+                            <p className="signer-font">{getProgress(document)}</p>
+                          )}
+                        </>
+                      );
+                    })()}
                   </td>
+
                   <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
                   <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
                   
