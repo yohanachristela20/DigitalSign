@@ -409,7 +409,7 @@ function Document() {
           let { x_axis, y_axis, width, height, jenis_item, page } = field;
 
           x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
-          y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale + 20 : jenis_item === "Signpad" ? Number(y_axis) / scale + 10 :jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale ;
+          y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale : jenis_item === "Signpad" ? Number(y_axis) / scale :jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale ;
           
           width = Number(height) / scale;
           height = Number(width) / scale - 20;

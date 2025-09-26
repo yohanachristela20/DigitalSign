@@ -2,6 +2,7 @@ import LogSign from "../models/LogSignModel.js";
 import db from "../config/database.js";
 import Karyawan from "../models/KaryawanModel.js";
 import Signers from "../models/SignersModel.js";
+import Item from "../models/ItemModel.js";
 
 export const getLogSign = async(req, res) => {
     try {
@@ -29,7 +30,7 @@ export const getLogSign = async(req, res) => {
 
 export const updateLogsign = async (req, res) => {
   const { id_dokumen, id_item, id_signers: oldIdSigner } = req.params;
-  const { id_signers: newIdSigner } = req.body;
+  const { id_signers: newIdSigner, sign_permission: signPermission } = req.body;
 
   try {
     const logsign = await LogSign.findOne({
@@ -39,9 +40,27 @@ export const updateLogsign = async (req, res) => {
     if (!logsign) {
       return res.status(404).json({ message: "Logsign not found" });
     }
+
     await LogSign.update(
-      { id_signers: newIdSigner },
+      { id_signers: newIdSigner, sign_permission: signPermission, id_item: null },
       {where: {id_dokumen, id_item, id_signers: oldIdSigner}});
+
+    await Item.destroy({
+      where: { id_item }
+    });
+
+    const latestSigner = await Signers.findOne({
+      where: { id_karyawan: oldIdSigner },
+      order: [['id_parent_signers', 'DESC']]  
+    });
+
+    if (latestSigner) {
+      await latestSigner.destroy();
+      console.log(`Destroyed latest signer id=${latestSigner.id} for id_karyawan=${oldIdSigner}`);
+    }
+
+
+
     res.status(200).json({ msg: "Logsign updated successfully." });
 
   } catch (error) {

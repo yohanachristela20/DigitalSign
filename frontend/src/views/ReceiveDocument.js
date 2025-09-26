@@ -2648,13 +2648,18 @@ function ReceiveDocument() {
                     show = true;
                     editable = true;
                 } else if (currentUrutan > 1 && sign_permission === "Needs to sign") {
-                    if (prevStatusCompleted) {
+                    if (prevNeedsSigner) {
+                        if (prevStatusCompleted) {
+                            show = true;
+                            editable = true;
+                        } else {
+                            show = false;
+                            editable = false;
+                        } 
+                    } else {
                         show = true;
                         editable = true;
-                    } else {
-                        show = false;
-                        editable = false;
-                    } 
+                    }
                 }
             }
 
@@ -2863,7 +2868,7 @@ function ReceiveDocument() {
 
                     let { x_axis, y_axis, width, height, jenis_item, page } = field;
                     x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
-                    y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale + 20 : jenis_item === "Signpad" ? Number(y_axis) / scale + 10 :jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale ;
+                    y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale : jenis_item === "Signpad" ? Number(y_axis) / scale :jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale ;
                     //y_axis initialpad +20 atau hanya /scale saja
                     
                     width = Number(height) / scale;

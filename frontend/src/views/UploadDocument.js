@@ -65,8 +65,8 @@ function UploadDocument() {
   let [nextStep3, setNextStep3] = useState(false);
   let [nextStep4, setNextStep4] = useState(false);
 
-  const {signatures, setSignatures} = useSignature([]);
-  const {initials, setInitials} = useInitial([]);
+  const {signatures, setSignatures} = useSignature();
+  const {initials, setInitials} = useInitial();
   const {dateField, setDateField} = useDateField([]);
 
   const [signClicked, setSignClicked] = useState(false);
@@ -381,15 +381,24 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   };
 
 
-  const updateSigner = async(id_dokumen, id_item, newIdSigner, oldIdSigner) => { 
+  const updateSigner = async(id_dokumen, id_item, newIdSigner, oldIdSigner, signPermission) => { 
+    console.log("signPermission:", signPermission);
+    
     try {
     const response = await axios.patch(`http://localhost:5000/logsign/${id_dokumen}/${id_item}/${oldIdSigner}`, {
       id_signers: newIdSigner,
+      sign_permission: signPermission,
+      id_item: null,
     }, {
         headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+
+    localStorage.setItem("deletedSigner", JSON.stringify({ id_karyawan: oldIdSigner, id_item, timestamp: Date.now() }));
+    localStorage.setItem("initialClicked", "false");
+    window.dispatchEvent(new Event("localStorageUpdated"));
+
     console.log("Signer logsign updated: ", response.data);
     toast.success("Signer updated successfully.", {
       position: "top-right", 
@@ -503,7 +512,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       const deletedIdSigner = deletedCard.id_karyawan;
       const dokId = deletedCard.id_dokumen;
 
-      const storedIdItems = JSON.parse(localStorage.getItem("id_items")) || [];
+      const storedIdItems = JSON.parse(localStorage.getItem("id_item")) || "[]";
 
       const cardIndex = documentCards.findIndex(c => c.id === id);
       const itemId = storedIdItems[cardIndex]; 
@@ -552,21 +561,56 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   const oldIdSigner = card.ori_id_signers;
   const newIdSigner = card.id_karyawan;
+
   const dokId = card.id_dokumen;
   const signPermission = card.sign_permission;
 
-  const storedIdItems = JSON.parse(localStorage.getItem("id_items")) || [];
+  console.log("signPermission in handleEditCard:", signPermission);
+
+  const storedIdItems = JSON.parse(localStorage.getItem("id_item")) || "[]";
+  console.log("storedIdItems:", storedIdItems);
 
   const cardIndex = documentCards.findIndex(c => c.id === id);
   const idItem = storedIdItems[cardIndex]; 
 
-  if (!idItem || !dokId) {
-    console.error("Missing idItem or dokId", { idItem, dokId });
+  console.log("iditem:", idItem);
+  console.log("cardIndex:", cardIndex);
+
+  if (!dokId) {
+    console.error("Missing dokId", { dokId });
     return;
   }
 
 
-  await updateSigner(dokId, idItem, newIdSigner, oldIdSigner, signPermission);
+  if (signPermission === "Receive a copy") { 
+    await updateSigner(dokId, idItem, newIdSigner, oldIdSigner, signPermission);
+  } else if (signPermission === "Needs to sign") {
+    const responseSigner = await axios.patch(`http://localhost:5000/signer/${newIdSigner}`, {
+      sign_permission: signPermission
+      }, {
+          headers: {
+          Authorization: `Bearer ${token}`, 
+        },
+      });
+
+      console.log("Signer logsign updated: ", responseSigner.data);
+      toast.success("Signer updated successfully.", {
+        position: "top-right", 
+        autoClose: 5000, 
+        hideProgressBar: true,
+      });
+      setSteps(3);
+
+  }
+
+  if (signPermission === "Receive a copy"){
+    storedIdItems[cardIndex] = null;
+    localStorage.setItem("id_item", JSON.stringify(storedIdItems));
+
+    window.dispatchEvent(new CustomEvent("deleteFieldsForSigner", {
+      detail: {id_karyawan: oldIdSigner}
+    }));
+  }
 
   const updatedCards = documentCards.map(c =>
     c.id === id
@@ -575,6 +619,12 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   );
 
   setDocumentCards(updatedCards);
+  // setSteps(3);
+  
+  // window.location.reload();
+
+
+    
   };
 
 
@@ -1220,7 +1270,7 @@ const getDocument = async() => {
 
   
   useEffect(() => {
-  const storedIdItems = JSON.parse(localStorage.getItem("id_item")) || [];
+  const storedIdItems = JSON.parse(localStorage.getItem("id_item")) || "[]";
 
   console.log("All id items:", storedIdItems);
 }, [id_item]);

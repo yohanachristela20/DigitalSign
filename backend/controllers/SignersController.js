@@ -164,3 +164,27 @@ export const getSignerDetails = async(req, res) => {
         res.status(500).json({message: "Error fetching signer details"});
     }
 };
+
+
+export const updateSigner = async(req, res) => {
+    const { id_karyawan: oldIdSigner } = req.params;
+    const { sign_permission: signPermission } = req.body;
+
+    try {
+        const latestSigner = await Signers.findOne({
+            where: { id_karyawan: oldIdSigner },
+            order: [['id_parent_signers', 'DESC']]
+        });
+
+        if (latestSigner){
+            await Signers.update(
+                { sign_permission: signPermission },
+                { where: {id_karyawan: oldIdSigner, id_parent_signers: latestSigner.id_parent_signers}}
+            );
+        }
+
+    } catch (error) {
+        console.error("Failed to update signer:", error.message);
+        res.status(500).json({ message: error.message });
+    }
+};
