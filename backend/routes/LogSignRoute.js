@@ -3,7 +3,9 @@ import express from "express";
 import {
     getLastLogsignId,
     getLogSign,
+    updateItem,
     updateLogsign,
+    updatePermission,
     // updateReminder, 
 } from "../controllers/LogSignController.js";
 
@@ -13,5 +15,8 @@ router.get('/logsign', getLogSign);
 router.patch('/logsign/:id_dokumen/:id_item/:id_signers', updateLogsign);
 // router.patch('/update-reminder/:id_dokumen', updateReminder);
 router.get('/getLastLogsignId', getLastLogsignId);
+
+router.patch('/update-permission/:id_dokumen/:id_signers', updatePermission);
+router.post('/newItem/:id_dokumen/:id_signers', updateItem);
 
 export default router;

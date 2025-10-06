@@ -24,6 +24,9 @@ import {getDocument,
         autoDeleteDocument,
         getTrash,
         getTrashByCategory,
+        getLogsignByDocId,
+        updateLogsign,
+        // updateItem,
         // deleteSigner
 } from "../controllers/DocumentController.js"; 
 
@@ -65,6 +68,7 @@ router.get('/getLastDocumentId', getLastDocumentId);
 router.post("/document", upload.single("pdf-file"), createDocument);
 router.post('/logsign', createLogSign);
 router.post('/item', createItem);
+// router.patch('/item', updateItem);
 // router.delete('/delete-sign/:id_logsign', deleteSign);
 router.delete('/logsign/:id_dokumen/:id_item/:id_signers', deleteLogsign);
 // router.delete('/delete-signer/:id_signers', deleteSigner);
@@ -77,6 +81,8 @@ router.patch('/initialsign/:id_dokumen/:id_item/:id_signers', updateInitialSign)
 router.patch('/temporary-del/:id_dokumen', temporaryDelete);
 router.patch('/restore-doc/:id_dokumen', restoreDocument);
 router.delete('/auto-delete', autoDeleteDocument);
+router.get('/logsign/document/:id_dokumen', getLogsignByDocId);
+router.patch('/logsign/:id_dokumen/:id_signers', updateLogsign);
 
 // router.get('/document-status', async (req, res) => {
 //     const statusList = await LogSign.findAll({

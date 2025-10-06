@@ -782,8 +782,6 @@ export const deleteLogsign = async(req, res) => {
 //   }
 // }
 
-
-
 export const createItem = async(req, res) => {
     const transaction = await db.transaction();
 
@@ -828,6 +826,47 @@ export const createItem = async(req, res) => {
         res.status(500).json({message: error.message});
     }
 };
+
+// export const updateItem = async (req, res) => {
+//     const transaction = await db.transaction();
+//     try {
+//         const items = req.body;
+
+//         if (!Array.isArray(items) || items.length === 0) {
+//             return res.status(400).json({ message: "No item data provided." });
+//         }
+
+//         for (const item of items) {
+//             if (!item.id_item) {
+//                 await transaction.rollback();
+//                 return res.status(400).json({ message: "id_item is required for update." });
+//             }
+
+//             await Item.update(
+//                 {
+//                     jenis_item: item.jenis_item,
+//                     x_axis: item.x_axis,
+//                     y_axis: item.y_axis,
+//                     width: item.width,
+//                     height: item.height,
+//                     page: item.page,
+//                 },
+//                 {
+//                     where: { id_item: item.id_item },
+//                     transaction,
+//                 }
+//             );
+//         }
+
+//         await transaction.commit();
+//         res.status(200).json({ msg: "Items updated successfully." });
+//     } catch (error) {
+//         await transaction.rollback();
+//         console.error("Error when updating item:", error);
+//         res.status(500).json({ message: error.message });
+//     }
+// };
+
 
 export const updateDocument = async(req, res) => {
     try {
@@ -1033,3 +1072,49 @@ export const getLastDocumentId = async (req, res) => {
         return res.status(500).json({ message: 'Error retrieving last document ID.' });
     }
 }; 
+
+
+export const getLogsignByDocId = async (req,res) => {
+  const { id_dokumen } = req.params;
+  try {
+    const logsigns = await LogSign.findAll({
+      where: { id_dokumen },
+      // order: [["createdAt", "ASC"]], 
+    }); 
+
+    if (!logsigns || logsigns.length === 0) {
+      return res.status(404).json({ message: "No logsigns found for this document." });
+    }
+
+    return res.status(200).json({
+      message: "Logsigns fetched successfully", 
+      data: logsigns,
+    });
+  } catch (error) {
+    console.error("Error fetching logsigns:", error);
+    return res.status(500).json({message: "Failed to fetch logsigns"});
+  }
+};
+
+export const updateLogsign = async(req,res) => {
+  const {id_dokumen, id_signers} = req.params;
+  const {sign_permission, id_item} = req.body;
+
+  try {
+    const result = await LogSign.update({
+      sign_permission, 
+      id_item
+    }, {
+      where: {id_dokumen, id_signers},
+    });
+
+    if (result[0] === 0) {
+      return res.status(404).json({ message: "No log_sign records found to update." });
+    }
+
+    res.status(200).json({msg: "Logsign updated successfully."});
+  } catch (error) {
+      console.error("Failed to update Logsign:", error.message);
+      res.status(500).json({message: error.message});
+  }
+}

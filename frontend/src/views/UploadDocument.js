@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import {FaRegArrowAltCircleLeft, FaRegArrowAltCircleRight, FaPlusCircle} from 'react-icons/fa'; 
+import {FaRegArrowAltCircleLeft, FaRegArrowAltCircleRight, FaPlusCircle, FaWindows} from 'react-icons/fa'; 
 import axios from "axios";
 import { useHistory } from "react-router-dom"; 
 import { toast } from 'react-toastify';
@@ -82,6 +82,8 @@ function UploadDocument() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [sign_permission, setSignPermission] = useState("");
+  const [freeSelection, setFreeSelection] = useState(localStorage.getItem("freeSignerSelection") === "true");
+
 
   const [urutan, setUrutan] = useState("");
   let fileName;
@@ -382,7 +384,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
 
   const updateSigner = async(id_dokumen, id_item, newIdSigner, oldIdSigner, signPermission) => { 
-    console.log("signPermission:", signPermission);
     
     try {
     const response = await axios.patch(`http://localhost:5000/logsign/${id_dokumen}/${id_item}/${oldIdSigner}`, {
@@ -399,8 +400,39 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     localStorage.setItem("initialClicked", "false");
     window.dispatchEvent(new Event("localStorageUpdated"));
 
-    console.log("Signer logsign updated: ", response.data);
     toast.success("Signer updated successfully.", {
+      position: "top-right", 
+      autoClose: 5000, 
+      hideProgressBar: true,
+    });
+    } catch (error) {
+      console.log(error.message);
+    }
+  }; 
+
+  const updateSignPermission = async(id_dokumen, idItem, newIdSigner, oldIdSigner, signPermission, x_axis, y_axis, width , height, page , jenis_item) => {     
+    try {
+    const response = await axios.patch(`http://localhost:5000/update-permission/${id_dokumen}/${newIdSigner}`, {
+      id_signers: newIdSigner,
+      sign_permission: signPermission,
+      id_item: idItem,
+      x_axis,
+      y_axis,
+      width,
+      height, 
+      page,
+      jenis_item,
+    }, {
+        headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    localStorage.setItem("deletedSigner", JSON.stringify({ id_karyawan: oldIdSigner, id_item, timestamp: Date.now() }));
+    localStorage.setItem("initialClicked", "false");
+    window.dispatchEvent(new Event("localStorageUpdated"));
+
+    toast.success("Sign Permission updated successfully.", {
       position: "top-right", 
       autoClose: 5000, 
       hideProgressBar: true,
@@ -428,6 +460,10 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         Authorization: `Bearer ${token}`,
       },
     });
+
+    localStorage.setItem("freeSignerSelection", "false");
+    window.dispatchEvent(new Event("freeSignerSelectionChange"));
+    setFreeSelection(false);
 
     toast.success("Reminder updated successfully.", {
       position: "top-right",
@@ -463,7 +499,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   };
 
   const sendEmailNotification = async(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers, day_after_reminder, deadline) => {
-    console.log("Urutan dari sendemail:", urutan);
     try {
         const response = await axios.get(`http://localhost:5000/logsign-link/${id_dokumen}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -551,7 +586,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   }
   };
 
-
   const handleEditCard = async (id) => {
   const card = documentCards.find(c => c.id === id);
   if (!card) {
@@ -564,52 +598,61 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   const dokId = card.id_dokumen;
   const signPermission = card.sign_permission;
-
-  console.log("signPermission in handleEditCard:", signPermission);
-
-  const storedIdItems = JSON.parse(localStorage.getItem("id_item")) || "[]";
-  console.log("storedIdItems:", storedIdItems);
-
+  const storedIdItems = JSON.parse(localStorage.getItem("id_item")) || [];
   const cardIndex = documentCards.findIndex(c => c.id === id);
-  const idItem = storedIdItems[cardIndex]; 
-
-  console.log("iditem:", idItem);
-  console.log("cardIndex:", cardIndex);
+  let idItem = storedIdItems[cardIndex] || null; 
 
   if (!dokId) {
     console.error("Missing dokId", { dokId });
     return;
   }
 
-
   if (signPermission === "Receive a copy") { 
-    await updateSigner(dokId, idItem, newIdSigner, oldIdSigner, signPermission);
-  } else if (signPermission === "Needs to sign") {
-    const responseSigner = await axios.patch(`http://localhost:5000/signer/${newIdSigner}`, {
-      sign_permission: signPermission
-      }, {
-          headers: {
-          Authorization: `Bearer ${token}`, 
-        },
-      });
+    localStorage.setItem("freeSignerSelection", "false");
+    window.dispatchEvent(new Event("freeSignerSelectionChange"));
 
-      console.log("Signer logsign updated: ", responseSigner.data);
-      toast.success("Signer updated successfully.", {
-        position: "top-right", 
-        autoClose: 5000, 
-        hideProgressBar: true,
-      });
-      setSteps(3);
+    await updateSigner(dokId, null, newIdSigner, oldIdSigner, signPermission);
 
-  }
-
-  if (signPermission === "Receive a copy"){
     storedIdItems[cardIndex] = null;
     localStorage.setItem("id_item", JSON.stringify(storedIdItems));
 
     window.dispatchEvent(new CustomEvent("deleteFieldsForSigner", {
       detail: {id_karyawan: oldIdSigner}
     }));
+
+  } else if (signPermission === "Needs to sign") {
+    try {
+      axios.patch(
+        `http://localhost:5000/signer/${newIdSigner}`,
+        { sign_permission: signPermission },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSteps(3);
+      localStorage.setItem("freeSignerSelection", "true");
+      window.dispatchEvent(new Event("freeSignerSelectionChange"));
+
+      localStorage.setItem("pendingUpdateSigner", JSON.stringify({
+        dokId,
+        idItem,
+        newIdSigner,
+        oldIdSigner, 
+        signPermission
+      }));
+
+      toast.success("Signer updated to Needs to sign.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
+
+    } catch (error) {
+      console.error("Error updating signer:", error);
+      toast.error("Failed to update signer", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
+    }
   }
 
   const updatedCards = documentCards.map(c =>
@@ -619,13 +662,8 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   );
 
   setDocumentCards(updatedCards);
-  // setSteps(3);
-  
-  // window.location.reload();
-
-
-    
   };
+  
 
 
   const saveDocument = async() => {
@@ -675,7 +713,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log("Signer saved: ", response.data);
         toast.success("New signer has been created successfully!", {
           position: "top-right",
           autoClose: 5000,
@@ -689,181 +726,16 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   };
 
 
-  // const saveLogSignandItems = async (e) => {
-  // e.preventDefault();
-  // try {
-  //   if (!nextStep4) {
-  //     let items = [];
-
-  //     const clickedOrder = JSON.parse(localStorage.getItem("clickedFields")) || [];
-  //     console.log("clickedOrder:", clickedOrder);
-
-  //     for (const type of clickedOrder) {
-  //       if (type === "Signpad" && signClicked && Array.isArray(signatures)) {
-  //         items = [
-  //           ...items,
-  //           ...signatures.map(sig => ({
-  //             jenis_item: "Signpad",
-  //             x_axis: sig.x_axis,
-  //             y_axis: sig.y_axis,
-  //             width: sig.width,
-  //             height: sig.height,
-  //             page: sig.page,
-  //             id_karyawan: sig.id_karyawan,
-  //           }))
-  //         ];
-  //       }
-
-  //       if (type === "Initialpad" && initClicked && Array.isArray(initials)) {
-  //         items = [
-  //           ...items,
-  //           ...initials.map(sig => ({
-  //             jenis_item: "Initialpad",
-  //             x_axis: sig.x_axis,
-  //             y_axis: sig.y_axis,
-  //             width: sig.width,
-  //             height: sig.height,
-  //             page: sig.page,
-  //             id_karyawan: sig.id_karyawan,
-  //           }))
-  //         ];
-  //       }
-
-  //       if (type === "Date" && dateClicked && Array.isArray(dateField)) {
-  //         items = [
-  //           ...items,
-  //           ...dateField.map(sig => ({
-  //             jenis_item: "Date",
-  //             x_axis: sig.x_axis,
-  //             y_axis: sig.y_axis,
-  //             width: sig.width,
-  //             height: sig.height,
-  //             page: sig.page,
-  //             id_karyawan: sig.id_karyawan,
-  //           }))
-  //         ];
-  //       }
-  //     }
-
-  //     const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
-  //     const itemKaryawan = items.map(item => item.id_karyawan);
-
-
-  //     const missingItemSigners = allSigners.filter(signer => !itemKaryawan.includes(signer.value));
-
-  //     if (missingItemSigners.length > 0) {
-  //       setError('Signer should have an item.');
-  //       toast.error('Signer should have an item.', {
-  //         position: "top-right",
-  //         autoClose: 5000,
-  //         hideProgressBar: true,
-  //       });
-  //       return;
-  //     }
-
-  //     const itemResponse = await axios.post('http://localhost:5000/item', items, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     });
-
-  //     const createdItems = itemResponse.data.data.items;
-  //     localStorage.setItem("id_item", JSON.stringify(createdItems.map(item => item.id_item)));
-  //     const signerOrderMap = {};
-  //     let urutanCounter = 1;
-
-  //     for (const card of documentCards) {
-  //         if (!signerOrderMap[card.id_karyawan]) {
-  //           signerOrderMap[card.id_karyawan] = urutanCounter++;
-  //         }
-  //     }
-      
-  //     const logsigns = createdItems.map((item, index) => {
-  //     const signerId = items[index].id_karyawan;
-  //     const delegateSignerId = items[index].delegated_signers;
-  //     const cardData = documentCards.find(card => card.id_karyawan === signerId);
-
-  //     console.log("delegateSignerId:", delegateSignerId);
-
-  //         return {
-  //           action: "Created", 
-  //           status: "Pending", 
-  //           id_dokumen,
-  //           id_karyawan,
-  //           id_signers: signerId,
-  //           id_item: item.id_item,
-  //           subject,
-  //           message,
-  //           delegated_signers: delegateSignerId,
-  //           urutan: signerOrderMap[signerId] || Number(cardData?.urutan) || urutanCounter++,
-  //           };
-  //       });
-
-  //     localStorage.setItem("logsigns", JSON.stringify(logsigns));
-  //     localStorage.setItem("urutan", JSON.stringify(urutan));
-
-  //     const signerIds = logsigns.map(log => log.id_signers);
-  //     localStorage.setItem("id_signers", JSON.stringify(signerIds));
-
-  //     const delegateIds = logsigns.map(log => log.delegated_signers);
-  //     localStorage.setItem("delegated_signers:", delegateIds);
-
-  //     const idItemList = logsigns.map(log => log.id_item);
-  //     localStorage.setItem("id_item", JSON.stringify(idItemList));
-
-  //     const senderIds = logsigns.map(log => log.id_karyawan);
-  //     console.log("senderIds:", senderIds);
-  //     localStorage.setItem("id_karyawan", JSON.stringify(senderIds));
-
-  //     await axios.post('http://localhost:5000/logsign', { logsigns }, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     });
-
-  //     setDocumentCards(prevCards =>
-  //       prevCards.map((card) => {
-  //         const matchItem = items.find(item => item.id_karyawan === card.id_karyawan);
-  //         return {
-  //           ...card,
-  //           id_signers: matchItem?.id_karyawan || card.id_signers,
-  //           ori_id_signers: matchItem?.id_karyawan || card.ori_id_signers,
-  //           id_item: matchItem?.id_item || "",
-  //           ori_id_items: matchItem?.id_item || "",
-  //           id_dokumen: id_dokumen, 
-  //           is_deadline: is_deadline,
-  //           day_after_reminder: day_after_reminder,
-  //           repeat_freq: repeat_freq,
-  //           is_download: is_download,
-  //           deadline: deadline, 
-  //           urutan: card.urutan,
-  //         };
-  //       })
-  //     );
-  //     localStorage.removeItem("clickedFields");
-  //     toast.success("Logsigns and items created successfully!", {
-  //       position: "top-right",
-  //       autoClose: 5000,
-  //       hideProgressBar: true,
-  //     });
-  //   }
-
-  //   nextLastStep();
-  // } catch (error) {
-  //   console.error("Failed to save logsigns and items:", error.message);
-  //   toast.error("Failed to save logsigns and items.");
-  // }
-  // };
-
   const saveLogSignandItems = async (e) => {
     e.preventDefault();
-    try {
-      if (!nextStep4) {
-        let items = [];
 
+    try {
         const clickedOrder = JSON.parse(localStorage.getItem("clickedFields")) || [];
-        console.log("clickedOrder:", clickedOrder);
+        let items = [];
 
         for (const type of clickedOrder) {
           if (type === "Signpad" && signClicked && Array.isArray(signatures)) {
-            items = [
-              ...items,
+             items.push(
               ...signatures.map(sig => ({
                 jenis_item: "Signpad",
                 x_axis: sig.x_axis,
@@ -872,13 +744,11 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
                 height: sig.height,
                 page: sig.page,
                 id_karyawan: sig.id_karyawan,
-              }))
-            ];
+              })));
           }
 
           if (type === "Initialpad" && initClicked && Array.isArray(initials)) {
-            items = [
-              ...items,
+           items.push(
               ...initials.map(sig => ({
                 jenis_item: "Initialpad",
                 x_axis: sig.x_axis,
@@ -888,12 +758,11 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
                 page: sig.page,
                 id_karyawan: sig.id_karyawan,
               }))
-            ];
+             );
           }
 
           if (type === "Date" && dateClicked && Array.isArray(dateField)) {
-            items = [
-              ...items,
+            items.push(
               ...dateField.map(sig => ({
                 jenis_item: "Date",
                 x_axis: sig.x_axis,
@@ -903,14 +772,16 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
                 page: sig.page,
                 id_karyawan: sig.id_karyawan,
               }))
-            ];
+             );
           }
         }
 
+        const createdSignatures = JSON.parse(localStorage.getItem("createdItemSignatures")) || [];
+        const itemSignature = it => `${it.jenis_item}|${it.x_axis}|${it.y_axis}|${it.width}|${it.height}|${it.page}`;
+        const newItems = items.filter(it => !createdSignatures.includes(itemSignature(it)));
+        
         const allSigners = JSON.parse(localStorage.getItem("signers")) || [];
         const itemKaryawan = items.map(item => item.id_karyawan);
-
-
         const missingItemSigners = allSigners.filter(
           card => card.sign_permission === "Needs to sign" && 
           !itemKaryawan.includes(card.id_karyawan)
@@ -926,12 +797,37 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
           return;
         }
 
-        const itemResponse = await axios.post('http://localhost:5000/item', items, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        let createdItems = [];
+        if (newItems.length > 0) {
+          const itemResponse = await axios.post('http://localhost:5000/item', newItems, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
 
-        const createdItems = itemResponse.data.data.items;
-        localStorage.setItem("id_item", JSON.stringify(createdItems.map(item => item.id_item)));
+          createdItems = itemResponse.data.data?.items || itemResponse.data.items || [];
+
+          const updatedCreated = [...new Set([...createdSignatures, ...newItems.map(itemSignature)])];
+          localStorage.setItem("createdItemSignatures", JSON.stringify(updatedCreated));
+        }
+
+        let existingLogsigns = [];
+        try {
+          const res = await axios.get(`http://localhost:5000/logsign/document/${id_dokumen}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          existingLogsigns = res.data.data || res.data.logsigns || [];
+        } catch (error) {
+          console.warn("Failed to fetch existing logsigns (continuing):", error.message);
+          existingLogsigns = [];
+        }
+
+        const createdByKaryawan = {};
+        for (const ci of createdItems) {
+          const match = newItems.find(it => it.jenis_item === ci.jenis_item && it.page === ci.page && it.x_axis === ci.x_axis && it.y_axis === ci.y_axis && it.width === ci.width && it.height === ci.height);
+          if (match) createdByKaryawan[match.id_karyawan] = ci;
+        }
+
+        const existingMap = new Map(existingLogsigns.map(ls => [ls.id_signers, { ...ls }]));
+
         const signerOrderMap = {};
         let urutanCounter = 1;
 
@@ -941,125 +837,148 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             }
         }
 
-        // const logsigns = [];
-        // createdItems.forEach((item, index) => {
-        //   const signerId = items[index].id_karyawan;
-        //   const delegateSignerId = items[index].delegated_signers;
-        //   const cardData = documentCards.find(card => card.id_karyawan === signerId);
+        let idItemMap = JSON.parse(localStorage.getItem("id_item_map")) || {};
 
-        //   logsigns.push({
-        //     action: "Created", 
-        //     status: "Pending",
-        //     id_dokumen,
-        //     id_karyawan,
-        //     id_signers: signerId,
-        //     id_item: item.id_item, 
-        //     subject,
-        //     message,
-        //     delegated_signers: delegateSignerId, 
-        //     urutan: signerOrderMap[signerId],
-        //   });
-        // });
+        for(const card of documentCards) {
+          const existing = existingMap.get(card.id_karyawan);
+          const createdItem = createdByKaryawan[card.id_karyawan];
 
-        // documentCards.forEach(card => {
-        //   if (card.sign_permission === "Receive a copy") {
-        //     logsigns.push({
-        //       action: "Created", 
-        //       status: "Pending",
-        //       id_dokumen,
-        //       id_karyawan,
-        //       id_signers: card.id_karyawan,
-        //       id_item: null, 
-        //       subject,
-        //       message,
-        //       delegated_signers: null, 
-        //       urutan: signerOrderMap[card.id_karyawan],
-        //     });
-        //   }
-        // });
+          if (existing && existing.sign_permission !== card.sign_permission && card.sign_permission === "Needs to sign") {
+            const idItemToSet = createdItem?.id_item || existing.id_item || null;
 
-        const logsigns = [];
-        documentCards.forEach((card) => {
-          if (card.sign_permission === "Needs to sign") {
-            const matchItem = createdItems.filter(
-              (item, idx) => items[idx].id_karyawan === card.id_karyawan
-            );
-
-            if (matchItem.length > 0) {
-              matchItem.forEach((item) => {
-                logsigns.push({
-                  action: "Created",
-                  status: "Pending",
-                  id_dokumen,
-                  id_karyawan,
-                  id_signers: card.id_karyawan,
-                  sign_permission: card.sign_permission,
-                  id_item: item?.id_item || null,
-                  subject,
-                  message,
-                  delegated_signers: item?.delegated_signers || null,
-                  urutan: signerOrderMap[card.id_karyawan],
-                });
+            try {
+              await axios.patch(`http://localhost:5000/logsign/${id_dokumen}/${card.id_karyawan}`, {
+                sign_permission: "Needs to sign", 
+                id_item: idItemToSet
+              }, {
+                headers: {Authorization: `Bearer ${token}`}
               });
+
+              existingMap.set(card.id_karyawan, {
+                ...existing,
+                sign_permission: "Needs to sign",
+                id_item: idItemToSet
+              });
+
+              idItemMap[card.id_karyawan] = idItemToSet;
+              localStorage.setItem("id_item_map", JSON.stringify(idItemMap));
+            } catch (err) {
+              console.error(`Failed to update logsign for signer ${card.id_karyawan}:`, err.message);
+              toast.error('Failed to update logsign.');
             }
-          } else if (card.sign_permission === "Receive a copy") {
-            logsigns.push({
-              action: "Created",
-              status: "Pending",
-              id_dokumen,
-              id_karyawan,
-              id_signers: card.id_karyawan,
-              sign_permission: card.sign_permission,
-              id_item: null,
-              subject,
-              message,
-              delegated_signers: null,
-              urutan: signerOrderMap[card.id_karyawan],
-            });
           }
-        });
+        }
+
+        const logsignsToCreate = [];
+        for (const card of documentCards) {
+          const existing = existingMap.get(card.id_karyawan);
+          const createdItem = createdByKaryawan[card.id_karyawan];
+          const urutan = signerOrderMap[card.id_karyawan] || card.urutan || null;
+
+          const correctedPermission = card.sign_permission === "Needs to sign" ? "Needs to sign" : "Receive a copy";
+
+          if (!existing) {
+            const logObj = {
+              action: "Created",
+              status: "Pending", 
+              id_dokumen, 
+              id_karyawan, 
+              id_signers: card.id_karyawan,
+              sign_permission: correctedPermission,
+              id_item: createdItem?.id_item || null,
+              subject, 
+              message, 
+              delegated_signers: createdItem?.delegated_signers || null,
+              urutan, 
+            }; 
+            logsignsToCreate.push(logObj);
+            idItemMap[logObj.id_signers] = logObj.id_item || null;
+          }
+        }
 
 
-        logsigns.sort((a, b) => a.urutan - b.urutan);
+        if (logsignsToCreate.length > 0) {
+          try {
 
-        console.log("logsigns:", logsigns);
+            const finalLogsignsOrdered = documentCards.map(card => {
+              const exist = existingMap.get(card.id_karyawan);
+              if (exist) return exist;
+              const created = logsignsToCreate.find(l => l.id_signers === card.id_karyawan);
+              if (created) return created;
+              return null;
+            }).filter(Boolean);
 
-        localStorage.setItem("logsigns", JSON.stringify(logsigns));
-        localStorage.setItem("urutan", JSON.stringify(urutan));
+            localStorage.setItem("logsigns", JSON.stringify(finalLogsignsOrdered));
 
-        const signerIds = logsigns.map(log => log.id_signers);
-        localStorage.setItem("id_signers", JSON.stringify(signerIds));
+            const signerIds = finalLogsignsOrdered.map(l => l.id_signers);
+            const urutanArr = finalLogsignsOrdered.map(l => l.urutan);
+            const delegatedArr = finalLogsignsOrdered.map(l => l.delegated_signers ?? null);
+            const senderIds = finalLogsignsOrdered.map(l => l.id_karyawan ?? null);
+            const idItemArr = finalLogsignsOrdered.map(l => l.id_item ?? null);
 
-        const delegateIds = logsigns.map(log => log.delegated_signers);
-        localStorage.setItem("delegated_signers:", delegateIds);
+            localStorage.setItem("id_signers", JSON.stringify(signerIds));
+            localStorage.setItem("urutan", JSON.stringify(urutanArr));
+            localStorage.setItem("id_karyawan", JSON.stringify(senderIds));
+            localStorage.setItem("delegated_signers", JSON.stringify(delegatedArr));
+            localStorage.setItem("id_item", JSON.stringify(idItemArr));
 
-        const idItemList = logsigns.map(log => log.id_item);
-        localStorage.setItem("id_item", JSON.stringify(idItemList));
+            localStorage.setItem("id_item_map", JSON.stringify(idItemMap));
 
-        const senderIds = logsigns.map(log => log.id_karyawan);
-        console.log("senderIds:", senderIds);
-        localStorage.setItem("id_karyawan", JSON.stringify(senderIds));
+            await axios.post('http://localhost:5000/logsign', {logsigns: logsignsToCreate}, {
+              headers: {Authorization: `Bearer: ${token}`}
+            });
+          } catch (error) {
+            console.error("Failed to create logsigns:", error.message);
+            toast.error("Failed to create logsigns.");
+            return;
+          }
+        } else {
+          const finalLogsignsOrdered = documentCards.map(card => existingMap.get(card.id_karyawan)).filter(Boolean);
 
-        await axios.post('http://localhost:5000/logsign', { logsigns }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+          localStorage.setItem("logsigns", JSON.stringify(finalLogsignsOrdered));
+          
+          const signerIds = finalLogsignsOrdered.map(l => l.id_signers);
+          const urutanArr = finalLogsignsOrdered.map(l => l.urutan);
+          const delegatedArr = finalLogsignsOrdered.map(l => l.delegated_signers ?? null);
+          const senderIds = finalLogsignsOrdered.map(l => l.id_karyawan ?? null);
+          const idItemArr = finalLogsignsOrdered.map(l => l.id_item ?? null);
+
+          localStorage.setItem("id_signers", JSON.stringify(signerIds));
+          localStorage.setItem("urutan", JSON.stringify(urutanArr));
+          localStorage.setItem("id_karyawan", JSON.stringify(senderIds));
+          localStorage.setItem("delegated_signers", JSON.stringify(delegatedArr));
+          localStorage.setItem("id_item", JSON.stringify(idItemArr));
+          localStorage.setItem("id_item_map", JSON.stringify(idItemMap));
+        }
+
+        try {
+          const res2 = await axios.get(`http://localhost:5000/logsign/document/${id_dokumen}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }); 
+          existingLogsigns = res2.data.data || res2.data.logsigns || existingLogsigns;
+        } catch (error) {
+        }
 
         setDocumentCards(prevCards =>
           prevCards.map((card) => {
             const matchItem = items.find(item => item.id_karyawan === card.id_karyawan);
+            const created = createdByKaryawan[card.id_karyawan] || null;
+            const id_item_from_map = JSON.parse(localStorage.getItem("id_item_map") || "{}")[card.id_karyawan] || null;
+
             return {
               ...card,
               id_signers: matchItem?.id_karyawan || card.id_signers,
               ori_id_signers: matchItem?.id_karyawan || card.ori_id_signers,
-              id_item: matchItem?.id_item || "",
-              ori_id_items: matchItem?.id_item || "",
+              id_item: (created?.id_item) || id_item_from_map || card.id_item || "",
+              ori_id_items: (created?.id_item) || id_item_from_map || card.ori_id_items || "",
               id_dokumen: id_dokumen, 
               is_deadline: is_deadline,
               day_after_reminder: day_after_reminder,
               repeat_freq: repeat_freq,
               is_download: is_download,
               deadline: deadline, 
-              urutan: card.urutan,
+              urutan: signerOrderMap[card.id_karyawan] || card.urutan,
+              x_axis: matchItem?.x_axis || card.x_axis,
             };
           })
         );
@@ -1069,7 +988,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
           autoClose: 5000,
           hideProgressBar: true,
         });
-      }
 
       nextLastStep();
     } catch (error) {
@@ -1077,6 +995,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       toast.error("Failed to save logsigns and items.");
     }
   };
+
 
   useEffect(() => {
   if (selectedDoc?.id_dokumen) {
@@ -1152,7 +1071,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   const handlePrevious = () => {
     if (steps > 1) setSteps(steps - 1);
     setSteps(steps - 1);
-    console.log("Steps from handle previous:", steps - 1);
   };
 
   const handleFileChange = (event) => {
@@ -1270,10 +1188,8 @@ const getDocument = async() => {
 
   
   useEffect(() => {
-  const storedIdItems = JSON.parse(localStorage.getItem("id_item")) || "[]";
-
-  console.log("All id items:", storedIdItems);
-}, [id_item]);
+    const storedIdItems = JSON.parse(localStorage.getItem("id_item")) || "[]";
+  }, [id_item]);
 
 const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handlePermissionChange, handleDeleteCard, employeeName, ...props }) => {
   return (
@@ -1696,3 +1612,4 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
 }
 
 export default UploadDocument;
+

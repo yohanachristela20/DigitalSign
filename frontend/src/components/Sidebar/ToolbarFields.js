@@ -492,7 +492,7 @@ function ToolbarFields ({ color, routes}) {
     localStorage.setItem("currentTool", "Signpad");
     updateClickedFields("Signpad");
     window.dispatchEvent(new Event("localStorageUpdated"));
-    console.log("Signature clicked from toolbar: ", signatureClicked);
+    // console.log("Signature clicked from toolbar: ", signatureClicked);
   };
 
   const handleAddInitials = () => {
@@ -511,7 +511,7 @@ function ToolbarFields ({ color, routes}) {
     localStorage.setItem("currentTool", "Initialpad");
     updateClickedFields("Initialpad");
     window.dispatchEvent(new Event("localStorageUpdated"));
-    console.log("Initial clicked from toolbar: ", initialClicked);
+    // console.log("Initial clicked from toolbar: ", initialClicked);
   };
 
   const handleAddDate = () => {
@@ -530,7 +530,7 @@ function ToolbarFields ({ color, routes}) {
     localStorage.setItem("currentTool", "Date");
     updateClickedFields("Date");
     window.dispatchEvent(new Event("localStorageUpdated"));
-    console.log("Date clicked from toolbar: ", dateFieldClicked);
+    // console.log("Date clicked from toolbar: ", dateFieldClicked);
   };
 
   const toggleMenu = (key) => {
@@ -541,19 +541,20 @@ function ToolbarFields ({ color, routes}) {
   };
 
   const [isOpen, setIsOpen] = useState(false);
+  const [freeSelection, setFreeSelection] = useState(localStorage.getItem("freeSignerSelection") === "true");
 
   const selectedOption = signersDoc.find(opt => opt.value === id_karyawan);
 
   const handleSelect = (value) => {
-  const selectedIndex = signersDoc.findIndex(opt => opt.value === value);
+  // const selectedIndex = signersDoc.findIndex(opt => opt.value === value);
 
-  if (selectedIndex > 0) {
-    const previousSigner = signersDoc[selectedIndex - 1].value;
-    if (!signersWithSignature.includes(previousSigner)) {
-      alert("Signer sebelumnya harus mengisi Signature Field terlebih dahulu.");
-      return; 
-    }
-  }
+  // if (selectedIndex > 0) {
+  //   const previousSigner = signersDoc[selectedIndex - 1].value;
+  //   if (!signersWithSignature.includes(previousSigner)) {
+  //     alert("Signer sebelumnya harus mengisi Signature Field terlebih dahulu.");
+  //     return; 
+  //   }
+  // }
 
   handleSignersChange({ target: { value } });
   setIsOpen(false);
@@ -568,6 +569,25 @@ function ToolbarFields ({ color, routes}) {
     return() => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setFreeSelection(localStorage.getItem("freeSignerSelection") === "true");
+    };
+    window.addEventListener("freeSignerSelectionChange", handleStorageChange);
+    return () => window.removeEventListener("freeSignerSelectionChange", handleStorageChange);
+  }, []);
+
+    const handleSignerClick = (option, index) => {
+    if (!freeSelection && index > 0) {
+      const previousSigner = signersDoc[index - 1].value;
+      if (!signersWithSignature.includes(previousSigner)) {
+        alert("Previous signer should be set first.");
+        return;
+      }
+    }
+
+    handleSelect(option.value);
+  };
 
   const categoryDoc = async() => {
       try {
@@ -627,7 +647,7 @@ function ToolbarFields ({ color, routes}) {
 
   const handleSignersChange = (event) => {
       setIdKaryawan(event.target.value);
-      console.log("setIdKaryawan:", event.target.value);
+      // console.log("setIdKaryawan:", event.target.value);
   }
 
   const folders = [
@@ -728,14 +748,21 @@ function ToolbarFields ({ color, routes}) {
           {isOpen && (
             <div className="custom-options">
               {signersDoc.map((option, index) => {
-                const isDisabled = index > 0 && !signersWithSignature.includes(signersDoc[index - 1].value);
+                // let freeSelection = localStorage.getItem("freeSignerSelection") === "true";
+                let isDisabled = index > 0 && !signersWithSignature.includes(signersDoc[index - 1].value);
+
+                // if (freeSelection) {
+                //   isDisabled = false;
+                // }
+
+                if (freeSelection) isDisabled = false;
 
                 return (
                   <div
                     key={option.value}
                     className={`custom-option ${isDisabled ? 'disabled' : ''}`}
                     onClick={() => {
-                      if (!isDisabled) handleSelect(option.value);
+                      if (!isDisabled) handleSignerClick(option, index);
                     }}
                     style={{ opacity: isDisabled ? 0.5 : 1, pointerEvents: isDisabled ? 'none' : 'auto' }}
                   >
