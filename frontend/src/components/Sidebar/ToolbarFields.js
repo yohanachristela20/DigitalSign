@@ -533,6 +533,56 @@ function ToolbarFields ({ color, routes}) {
     // console.log("Date clicked from toolbar: ", dateFieldClicked);
   };
 
+  const handleCopyFields = () => {
+    const currentTool = localStorage.getItem("currentTool");
+    const currentSigner = localStorage.getItem("currentSigner");
+
+    if (!currentTool || !currentSigner) {
+      toast.error("Please choose signer and field type first.");
+      return;
+    }
+
+    const signatures = JSON.parse(localStorage.getItem("signatures")) || [];
+    const initials = JSON.parse(localStorage.getItem("initials")) || [];
+    const dates = JSON.parse(localStorage.getItem("dateField")) || [];
+
+    let selectedFieldArray = [];
+    if (currentTool === "Signpad") selectedFieldArray = signatures;
+    else if (currentTool === "Initialpad") selectedFieldArray = initials;
+    else if (currentTool === "Date") selectedFieldArray = dates;
+
+    console.log("selectedFieldArray:", selectedFieldArray);
+
+    if (selectedFieldArray.length === 0) {
+      toast.error("No field selected to copy.");
+      return;
+    }
+
+    const selectedField = selectedFieldArray[selectedFieldArray.length - 1];
+    if (!selectedField) return;
+
+    const fieldToCopy = {
+      ...selectedField, 
+      jenis_item: selectedField.jenis_item || currentTool, 
+      id_karyawan: selectedField.id_karyawan || currentSigner, 
+    };
+
+    localStorage.setItem(
+      "copyToAllPagesField",
+      JSON.stringify({
+        x_axis: selectedField.x_axis, 
+        y_axis: selectedField.y_axis, 
+        width: selectedField.width,
+        height: selectedField.height,
+        jenis_item: selectedField.jenis_item, 
+        id_karyawan: selectedField.id_karyawan, 
+        page: selectedField.page,
+      })
+    );
+
+    window.dispatchEvent(new Event("copyToAllPages"));
+  };
+
   const toggleMenu = (key) => {
     setOpenMenus((prev) => ({
       ...prev,
@@ -809,8 +859,18 @@ function ToolbarFields ({ color, routes}) {
             <i class="fa fa-calendar" style={{ marginRight: '8px' }}></i>
               Date Signed
           </Button>
-
         </ul>
+        <br />
+
+        <Button 
+          type="button"
+          className="btn mb-3 bg-transparent mt-2"
+          style={{width:"230px", border:"1px solid #eed4dd"}}
+          onClick={handleCopyFields}
+        >
+          <i class="fa fa-signature" style={{marginRight: '8px'}}></i>
+          Copy to all pages
+        </Button>
       </CDBSidebarContent>
     </div>
   );

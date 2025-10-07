@@ -248,6 +248,7 @@ import { useInitial } from "components/Provider/InitialContext.js";
 import { useSignature } from "components/Provider/SignatureContext.js";
 import { useDateField } from "components/Provider/DateContext.js";
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+import { toast } from "react-toastify";
 
 
 const PDFCanvas = ({pdfUrl, onPagesRendered}) => {
@@ -261,8 +262,8 @@ const PDFCanvas = ({pdfUrl, onPagesRendered}) => {
     const [x_axis, setXAxis] = useState("");
     const [y_axis, setYAxis] = useState("");
     const [page, setPage] = useState("");
-    const [width, setWidth] = useState(200);
-    const [height, setHeight] = useState(250);
+    const [width, setWidth] = useState(100);
+    const [height, setHeight] = useState(150);
     const [jenis_item, setJenisItem] = useState("");
     const [selectedSigId, setSelectedSigId] = useState("");
 
@@ -275,28 +276,65 @@ const PDFCanvas = ({pdfUrl, onPagesRendered}) => {
     const {dateField, setDateField} = useDateField();    
 
     const handleAxisChange = (id, updatedValues) => {
-    setSignatures(prev =>
-        prev.map(sig =>
-        sig.id === id ? { ...sig, ...updatedValues } : sig
-        )
-    );
+      setSignatures(prev => {
+        const updated = prev.map(sig => 
+          sig.id === id ? { ...sig, ...updatedValues } : sig 
+        ); 
+        const updatedSig = updated.find(sig => sig.id === id);
+        if (updatedSig) {
+          setWidth(updatedSig.width || "");
+          setHeight(updatedSig.height || "");
+        }
+        return updated;
+      });
     };
 
     const handleAxisInitial = (id, updatedValues) => {
-    setInitials(prev =>
-        prev.map(sig =>
-        sig.id === id ? { ...sig, ...updatedValues } : sig
-        )
-    );
+      setInitials(prev => {
+        const updated = prev.map(sig => 
+          sig.id === id ? { ...sig, ...updatedValues } : sig 
+        ); 
+        const updatedSig = updated.find(sig => sig.id === id);
+        if (updatedSig) {
+          setWidth(updatedSig.width || "");
+          setHeight(updatedSig.height || "");
+        }
+        return updated;
+      });
     };
 
     const handleAxisDate = (id, updatedValues) => {
-    setDateField(prev =>
-        prev.map(sig =>
-        sig.id === id ? { ...sig, ...updatedValues } : sig
-        )
-    );
+      setDateField(prev => {
+        const updated = prev.map(sig => 
+          sig.id === id ? { ...sig, ...updatedValues } : sig 
+        ); 
+        const updatedSig = updated.find(sig => sig.id === id);
+        if (updatedSig) {
+          setWidth(updatedSig.width || "");
+          setHeight(updatedSig.height || "");
+        }
+        return updated;
+      });
     };
+
+    useEffect(() => {
+      if (Array.isArray(signatures) && signatures.length > 0){
+        const lastSig = signatures[signatures.length - 1];
+        console.log("Latest width signatures:", lastSig.width);
+        console.log("Latest height signatures:", lastSig.height);
+      } else if (Array.isArray(initials) && initials.length > 0){
+        const lastIn = initials[initials.length - 1];
+        console.log("Latest width initials:", lastIn.width);
+        console.log("Latest height initials:", lastIn.height);
+      } else if (Array.isArray(dateField) && dateField.length > 0){
+        const lastDate = dateField[dateField.length - 1];
+        console.log("Latest width date:", lastDate.width);
+        console.log("Latest height date:", lastDate.height);
+      }
+
+      console.log("Current width state:", width);
+      console.log("Current height state:", height);
+    }, [signatures, initials, dateField, width, height]);
 
     
     useEffect(() => {
@@ -346,19 +384,46 @@ const PDFCanvas = ({pdfUrl, onPagesRendered}) => {
       id: generateId(),
       page: pageNum,
       x_axis,
-      y_axis, 
+      y_axis,
+      width, 
+      height, 
       id_karyawan: signer,
       jenis_item: activeTool,
     }
 
+    console.log("fieldData:", fieldData);
+
+    if (activeTool === "Signpad") {
+      const newField = { ...fieldData };
+      setSignatures(prev => {
+        const updated = [...prev, newField];
+        localStorage.setItem("signatures", JSON.stringify(updated));
+        return updated;
+      });
+    } else if (activeTool === "Initialpad") {
+      const newField = { ...fieldData };
+      setInitials(prev => {
+        const updated = [...prev, newField];
+        localStorage.setItem("initials", JSON.stringify(updated));
+        return updated;
+      });
+    } else if (activeTool === "Date") {
+      const newField = { ...fieldData };
+      setDateField(prev => {
+        const updated = [...prev, newField];
+        localStorage.setItem("dateField", JSON.stringify(updated));
+        return updated;
+      });
+    }
+
     
-  if (activeTool === 'Signpad') {
-    setSignatures(prev => [...prev, { ...fieldData, width: 150, height: 200 }]);
-  } else if (activeTool === 'Initialpad') {
-    setInitials(prev => [...prev, { ...fieldData, width: 150, height: 200 }]);
-  } else if (activeTool === 'Date') {
-    setDateField(prev => [...prev, { ...fieldData, width: 170, height: 35 }]);
-  }
+    // if (activeTool === 'Signpad') {
+    //   setSignatures(prev => [...prev, { ...fieldData, width: 150, height: 200 }]);
+    // } else if (activeTool === 'Initialpad') {
+    //   setInitials(prev => [...prev, { ...fieldData, width: 150, height: 200 }]);
+    // } else if (activeTool === 'Date') {
+    //   setDateField(prev => [...prev, { ...fieldData, width: 170, height: 35 }]);
+    // }
   };
 
     
@@ -439,6 +504,56 @@ const PDFCanvas = ({pdfUrl, onPagesRendered}) => {
     useEffect(() => {
       console.log("Signatures setelah save/fetch:", signatures);
     }, [signatures]);
+
+    useEffect(() => {
+      const handleCopyAll = () => {
+        const fieldData = JSON.parse(localStorage.getItem("copyToAllPagesField"));
+        if (!fieldData || canvases.length === 0) return;
+
+        const {x_axis, y_axis, jenis_item, page, id_karyawan} = fieldData;
+        console.log("x_axis, y_axis, jenis_item, page, id_karyawan:", x_axis, y_axis, jenis_item, page, id_karyawan);
+        const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+
+        const newFields = canvases.map((_, idx) => {
+          const currentPage = idx + 1;
+          if (currentPage === page) return null;
+          return {
+            id: generateId(),
+            page: currentPage, 
+            x_axis, 
+            y_axis, 
+            width, 
+            height, 
+            jenis_item, 
+            id_karyawan,
+          }
+        }).filter(Boolean);
+
+        if (jenis_item === "Signpad") {
+          setSignatures(prev => {
+            const updated = [...prev, ...newFields];
+            localStorage.setItem("signatures", JSON.stringify(updated));
+            return updated;
+          });
+        } else if (jenis_item === "Initialpad") {
+          setInitials(prev => {
+            const updated = [...prev, ...newFields];
+            localStorage.setItem("initials", JSON.stringify(updated));
+            return updated;
+          });
+        } else if (jenis_item === "Date") {
+          setDateField(prev => {
+            const updated = [...prev, ...newFields];
+            localStorage.setItem("dateField", JSON.stringify(updated));
+            return updated;
+          });
+        }
+        toast.success(`Copied ${jenis_item} to all ${canvases.length} pages.`);
+      };
+
+      window.addEventListener("copyToAllPages", handleCopyAll);
+      return () => window.removeEventListener("copyToAllPages", handleCopyAll);
+    }, [canvases, signatures, initials, dateField]);
 
     return(
        <div ref={canvasContainerRef}>
