@@ -2,10 +2,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
 import { FaSignature, FaFont } from 'react-icons/fa';
 import "../../assets/scss/lbd/_rnd.scss";
-
-import { useSignature } from "components/Provider/SignatureContext.js";
-import { useInitial } from "components/Provider/InitialContext.js";
-
 import InitialModal from "components/ModalForm/InitialModal.js";
 
 function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, width=50, scale=1, onDelete}) {
@@ -16,8 +12,6 @@ function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, wid
     const [clickCount, setClickCount] = useState(0);
     const timeRef = useRef(null);
 
-    const {signatures, setSignatures} = useSignature();
-    const {initials, setInitials} = useInitial();
     const [signClicked, setSignClicked] = useState(false);
     const [initClicked, setInitClicked] = useState(false);
 
@@ -28,7 +22,6 @@ function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, wid
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: 'rgba(25, 230, 25, 0.5)',
-        // position: "relative"
     };
 
     const handleInitialSuccess = () => {
@@ -44,27 +37,10 @@ function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, wid
         height: "25%",
     }
 
-    const handleClickSign = () => {
-        setClickCount(clickCount + 1);
-        if (clickCount === 1) {
-            timeRef.current = setTimeout(() => {
-                setClickCount(0);
-            }, 300);
-        } else if (clickCount === 2){
-            clearTimeout(timeRef.current);
-            setClickCount(0);
-            setshowAddModal(true);
-        }
-    }
-
     useEffect(() => {
     const handleButtonClicked = () => {
         const signButton = localStorage.getItem("signatureClicked"); 
         const initButton = localStorage.getItem("initialClicked");
-
-        console.log("SignButton clicked from Upload:", signButton);
-        console.log("InitialButton clicked from Upload:", initButton);
-
         setSignClicked(signButton === "true");
         setInitClicked(initButton === "true");
     };
@@ -126,14 +102,11 @@ function ResizableDragableInitial ({onChange, x_axis=0, y_axis=0, height=50, wid
                 setSize({ width: newWidth, height: newHeight });
                 setJenisItem({jenis_item});
             }}
-            // onClick={handleClickSign}
             minWidth={120}
             minHeight={80}
-            // bounds="parent"
         >
              <button
             onClick={(e) => {
-            //   e.stopPropagation();
               if (onDelete) onDelete();
             }}
             style={{

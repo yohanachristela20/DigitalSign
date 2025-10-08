@@ -20,7 +20,6 @@ function Trash() {
     const [documentDeadline, setDocumentDeadline] = useState([]);
 
     const today = new Date();
-    // today.setHours(0, 0, 0, 0);
     const currentYear = today.getFullYear();
     const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
     const todayDate = today.getDate().toString().padStart(2, '0');

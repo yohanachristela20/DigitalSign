@@ -1,8 +1,5 @@
 import { SortableContainer, SortableElement } from "react-sortable-hoc";
-import arrayMove from "array-move-item";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
-import { useEffect, useState } from "react";
-import axios from "axios";
 
 import {
   Card,

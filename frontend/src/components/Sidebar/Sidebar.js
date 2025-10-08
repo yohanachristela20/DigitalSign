@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, NavLink } from "react-router-dom";
-import { Nav } from "react-bootstrap";
 import "../../assets/scss/lbd/_sidebar-and-main-panel.scss";
 import FolderTree from "components/Folders/FolderTree.js";
 import axios from "axios";
 
 import {
-  CDBSidebar,
   CDBSidebarContent,
 } from 'cdbreact';
 
@@ -24,8 +22,6 @@ const Sidebar = ({ color, routes }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [category, setCategory] = useState("");
   const [loading, setLoading] = useState(true);
-  const [detailCategory, setDetailCategory] = useState("");
-  const [kategori, setKategori] = useState("");
   
   const token = localStorage.getItem("token");
 
@@ -43,7 +39,6 @@ const Sidebar = ({ color, routes }) => {
           Authorization: `Bearer ${token}`,
       },
       });
-      // console.log("response.data:", response.data);
       setCategory(response.data);
     } catch (error) {
       console.error("Error fetching data:", error.message); 
@@ -66,8 +61,6 @@ const folders = [
       name: item.kategori})) : [],
   },
 ];
-
-  // console.log("folders: ", folders);
 
   const activeRoute = (routeName) => location.pathname.includes(routeName);
 

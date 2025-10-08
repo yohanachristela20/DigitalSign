@@ -2,7 +2,6 @@ import { Modal, Form, Row, Col, Button } from "react-bootstrap";
 import React, {useRef, useEffect, useState} from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { useLocation } from "react-router-dom";
-import html2canvas from "html2canvas";
 import { toast } from "react-toastify";
 import axios from "axios";
 import "../../assets/scss/lbd/_modal.scss";
@@ -157,8 +156,6 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
             .map((selectedSigner) => (
             <Modal
                 key={selectedSigner.id_item}
-                // className="modal-backdrop"
-                // style={{backgroundColor: "transparent !important"}}
                 show={showSignatureModal}
                 onHide={() => setShowSignatureModal(false)}
             >

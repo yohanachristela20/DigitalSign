@@ -56,15 +56,8 @@ const AddUser = ({showAddModal, setShowAddModal, onSuccess}) => {
     
     };
 
-    // const handleUsernameChange = (value) => {
-    //     const numericValue = value.replace(/\D/g, "");
-    //     setIdUser(numericValue);
-    // };
-
-
     return (
         <>
-            {/* Mini Modal */}
             <Modal
             className=" modal-primary"
             show={showAddModal}

@@ -2,10 +2,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
 import { FaSignature } from 'react-icons/fa';
 import "../../assets/scss/lbd/_rnd.scss";
-
-import { useSignature } from "components/Provider/SignatureContext.js";
-import { useInitial } from "components/Provider/InitialContext.js";
-
 import SignatureModal from 'components/ModalForm/SignatureModal.js';
 
 function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=200, width=150, scale=1, onDelete}) {
@@ -26,7 +22,6 @@ function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=200, width=150
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: 'rgba(25, 230, 25, 0.5)',
-        // position: "relative"
     };
 
     const handleSignatureSuccess = () => {
@@ -42,27 +37,10 @@ function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=200, width=150
         height: "25%",
     }
 
-    const handleClickSign = () => {
-        setClickCount(clickCount + 1);
-        if (clickCount === 1) {
-            timeRef.current = setTimeout(() => {
-                setClickCount(0);
-            }, 300);
-        } else if (clickCount === 2){
-            clearTimeout(timeRef.current);
-            setClickCount(0);
-            setShowSignatureModal(true);
-        }
-    };
-
     useEffect(() => {
     const handleButtonClicked = () => {
         const signButton = localStorage.getItem("signatureClicked"); 
         const initButton = localStorage.getItem("initialClicked");
-
-        console.log("SignButton clicked from Upload:", signButton);
-        console.log("InitialButton clicked from Upload:", initButton);
-
         setSignClicked(signButton === "true");
         setInitClicked(initButton === "true");
     };
@@ -124,31 +102,28 @@ function ResizableDragable ({onChange, x_axis=0, y_axis=0, height=200, width=150
                 setSize({ width: newWidth, height: newHeight });
                 setJenisItem({jenis_item});
             }}
-            // onClick={handleClickSign}
             minWidth={120}
             minHeight={80}
-            // bounds="parent"
         >
-             <button
-            onClick={(e) => {
-            //   e.stopPropagation();
-              if (onDelete) onDelete();
-            }}
-            style={{
-              position: "absolute",
-              top: -8,
-              right: -8,
-              background:'rgba(255, 255, 255, 0.65)',
-              color: "black",
-              border: "none",
-              borderRadius: "50%",
-              cursor: "pointer",
-              fontWeight: "bold",
-              zIndex: 10,
-            }}
-          >
+            <button
+                onClick={(e) => {
+                if (onDelete) onDelete();
+                }}
+                style={{
+                position: "absolute",
+                top: -8,
+                right: -8,
+                background:'rgba(255, 255, 255, 0.65)',
+                color: "black",
+                border: "none",
+                borderRadius: "50%",
+                cursor: "pointer",
+                fontWeight: "bold",
+                zIndex: 10,
+                }}
+            >
             ×
-          </button>
+            </button>
         <FaSignature style={styleIcon}/>
         </Rnd>
         <SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} />

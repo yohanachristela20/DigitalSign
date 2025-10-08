@@ -369,21 +369,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   }
 
- 
-
-  const deleteLogsign = async(deletedSigner, id_dokumen, id_item) => {
-    try {
-      await axios.delete(`http://localhost:5000/logsign/${id_dokumen}/${id_item}/${deletedSigner}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    } catch (error) {
-      console.log("Error deleting signer:", error);
-      throw error;
-    }
-  };
-
 
   const updateSigner = async(id_dokumen, itemId, newIdSigner, oldIdSigner, signPermission) => { 
     
@@ -567,13 +552,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
       const idItemMap = JSON.parse(localStorage.getItem("id_item_map")) || {};
       const itemId = idItemMap[deletedIdSigner] || null;
-
-      console.log("Deleting signer:", deletedIdSigner);
-      console.log("Dokumen ID:", dokId);
-      console.log("Item ID:", itemId);
-
-      console.log("Item ID Map:", idItemMap);
-
       const logsigns = JSON.parse(localStorage.getItem("logsigns")) || [];
 
       const foundLogsign = logsigns.find(
@@ -592,7 +570,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
-          console.log("Deleted logsign successfully.");
         }
       } catch (error) {
         console.warn("Logsign not found or already deleted:", error.message);
@@ -603,7 +580,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
           await axios.delete(`http://localhost:5000/item/${itemId}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          console.log("Deleted item successfully.");
         }
       } catch (error) {
         console.warn("Item not found or already deleted:", error.message);
@@ -898,10 +874,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         let countsByKaryawan = {};
         Object.keys(createdByKaryawan).forEach(id => {
           countsByKaryawan[id] = createdByKaryawan[id].length;
-        });
-
-        console.log("countsByKaryawan:", countsByKaryawan);
-        
+        });        
 
         const existingMap = new Map(existingLogsigns.map(ls => [ls.id_signers, ls]));
 
@@ -925,8 +898,6 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
               created = item
             }
           });
-
-          console.log("createdItemsForKaryawan:", createdItemsForKaryawan);
 
           if (existing && existing.sign_permission !== card.sign_permission && card.sign_permission === "Needs to sign") {
             const idItemToSet = created?.id_item || existing.id_item || null;

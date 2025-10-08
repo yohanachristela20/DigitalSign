@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import { useLocation, Route, Switch } from "react-router-dom";
 
 import AdminNavbar from "components/Navbars/AdminNavbar";
-import Footer from "components/Footer/Footer";
 import Side from "../components/Sidebar/Sidebar.js";
 import ToolbarFields from "../components/Sidebar/ToolbarFields.js";
 import UploadDocument from "views/UploadDocument.js";
@@ -20,24 +19,6 @@ function Admin() {
   const token = localStorage.getItem("token");
   const [stepStepper, setStepStepper] = React.useState(parseInt(localStorage.getItem("steps")) || 1);
   const isUploadDocumentPage = location.pathname === "/admin/upload-document";
-
-  // console.log("TOKEN:", token);
-  console.log("stepStepper from upload doc:", stepStepper);  
-
-  const getRoutes = (routes) => {
-    return routes.map((prop, key) => {
-      if (prop.layout === "/admin") {
-        return (
-          <Route
-            path={prop.layout + prop.path}
-            render={(props) => <prop.component {...props} />}
-            key={key}
-          />
-        );
-      } 
-        return null;
-    });
-  };
 
   React.useEffect(() => {
     if (isUploadDocumentPage) {
@@ -64,25 +45,6 @@ function Admin() {
   }
 }, [location]);
 
-
-  // return (
-  //   <div className="main w-100">
-  //     {isUploadDocumentPage? (
-  //         // <Side color={color} image={hasImage ? image : ""} routes={routes}/>
-  //         <ToolbarFields color={color} image={hasImage ? image : ""} routes={routes}/>  
-  //       ) : (
-  //         <Side color={color} image={hasImage ? image : ""} routes={routes}/>
-  //         // <ToolbarFields color={color} image={hasImage ? image : ""} routes={routes}/>  
-  //       )}
-  //     <div ref={mainPanel} className="w-100">
-  //       <AdminNavbar />
-  //       <div className="content">
-  //         <Switch>{getRoutes(routes)}</Switch>
-  //       </div>
-  //       {/* <Footer /> */}
-  //     </div>
-  //   </div>
-  // );
 
 return (
   <div className="d-flex" style={{height: '100vh'}}>

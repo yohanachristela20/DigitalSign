@@ -78,8 +78,6 @@ const FolderTree = () => {
     });
   };
 
-  // console.log("Selected cat: ", selectedCategory?.id_kategoridok);
-
   return (
     <div className="folder-tree">
       <div className="folder-header d-flex justify-content-between">

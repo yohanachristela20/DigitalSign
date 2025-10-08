@@ -1,4 +1,4 @@
-import { Badge, Button, Navbar, Nav, Container, Row, Col, Card, Table, Alert, Modal, Form } from "react-bootstrap";
+import { Badge, Button, Row, Col, Modal, Form } from "react-bootstrap";
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
@@ -20,14 +20,6 @@ const DownloadModal = ({showDownloadModal, setShowDownloadModal, selectedSigner,
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
 
-    // console.log("TOKEN FROM DECLINE MODAL:", token);
-
-    useEffect(() => {
-        // console.log("DeclineModal receive id_signers:", selectedSigner);
-        // console.log("DeclineModal show DeclineModal:", showDownloadModal);
-        // console.log("DeclineModal receive id_dokumen:", selectedDocument);
-    }, [selectedSigner, showDownloadModal, selectedDocument]);
-
 
     useEffect(() => {
         const fetchData = async () => {
@@ -39,8 +31,6 @@ const DownloadModal = ({showDownloadModal, setShowDownloadModal, selectedSigner,
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
                 setIdSigner(id_signers);
-
-                console.log("Id Signers Decline Modal:", id_signers)
 
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
 
@@ -58,7 +48,6 @@ const DownloadModal = ({showDownloadModal, setShowDownloadModal, selectedSigner,
                     }
                 }
 
-                // console.log("SIGNER DATA:", allSigners);
                 setSignerData(allSigners);
             } catch (error) {
                 console.error("Failed to load PDF:", error.message);
@@ -71,7 +60,6 @@ const DownloadModal = ({showDownloadModal, setShowDownloadModal, selectedSigner,
     useEffect(() => {
         if (!selectedSigner || signerData.length === 0) return;
         const found = signerData.find(s => s.id_signers === selectedSigner);
-        // console.log("FOUND SIGNER:", found);
         if (found) {
             setNama(found.nama);
             setSignerID(found.id_signers)
@@ -82,12 +70,9 @@ const DownloadModal = ({showDownloadModal, setShowDownloadModal, selectedSigner,
     const handleSubmit = async(e, signerID) => {
         e.preventDefault();
         await updateStatus(id_dokumen, signerID);
-        // window.location.reload();
     }
 
     const updateStatus = async(id_dokumen, signerID) => {
-        // console.log("Data update status:", id_dokumen, signerID);
-
         try {
             const response = await axios.patch(`http://localhost:5000/update-status/${id_dokumen}/${signerID}`, {
                 status: "Decline",
@@ -95,7 +80,6 @@ const DownloadModal = ({showDownloadModal, setShowDownloadModal, selectedSigner,
 
             sendEmailDecline(id_dokumen, signerID, reason, token);
 
-            // console.log("Signer status updated:", response.data);
             toast.success("Decline document successful.", {
                 position: "top-right", 
                 autoClose: 5000,
@@ -109,8 +93,6 @@ const DownloadModal = ({showDownloadModal, setShowDownloadModal, selectedSigner,
     };
 
     const sendEmailDecline = async(id_dokumen, signerID, reason) => {
-        // console.log("sendEmailDecline: ", id_dokumen, signerID, reason, token);
-
         try {
             const responseDecline = await axios.post('http://localhost:5000/send-decline-email', {
                 id_dokumen, 
@@ -125,7 +107,6 @@ const DownloadModal = ({showDownloadModal, setShowDownloadModal, selectedSigner,
                 hideProgressBar: true,
             });
 
-            // console.log("Decline sign document successfully.", responseDecline);
         } catch (error) {
             console.error("Failed to send decline email:", error.message);
             toast.error("Failed to send decline email.");

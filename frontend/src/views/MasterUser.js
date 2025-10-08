@@ -11,7 +11,6 @@ import "jspdf-autotable";
 import Pagination from "react-js-pagination";
 import "../assets/scss/lbd/_pagination.scss";
 import "../assets/scss/lbd/_table-header.scss";
-import { useLocation, useHistory } from "react-router-dom";
 import { CDBTable, CDBTableHeader, CDBTableBody, CDBBtn, CDBBtnGrp } from 'cdbreact';
 
 import {Button, Container, Row, Col, Badge} from "react-bootstrap";

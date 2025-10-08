@@ -1,7 +1,4 @@
-import React, {useEffect, useState} from "react";
-import { useHistory } from "react-router-dom";
-import { Form, Button, Container, Row, Col, Card, FormGroup } from "react-bootstrap";
-import Heartbeat from "./Heartbeat.js";
+import { Container, Row, Col } from "react-bootstrap";
 import "../assets/scss/lbd/_docsent.scss";
 
 function DocumentSent() {

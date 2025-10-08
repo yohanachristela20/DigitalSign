@@ -1,8 +1,7 @@
-import { Badge, Button, Navbar, Nav, Container, Row, Col, Card, Table, Modal, Form, Alert } from "react-bootstrap";
+import { Button, Row, Col, Card, Table, Modal, Form } from "react-bootstrap";
 import { useState, useEffect } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import axios from "axios";
-import { toast } from 'react-toastify';
 import { stopInactivityTimer } from "views/Heartbeat";
 import PasswordChecklist from "react-password-checklist";
 

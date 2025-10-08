@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Badge, Button, Modal, Form, Row, Col } from "react-bootstrap";
+import { Badge, Button, Modal} from "react-bootstrap";
 import { FaFileImport,FaFileCsv } from "react-icons/fa";
-import { toast } from 'react-toastify';
 
 const ImportKaryawan = ({showImportModal, setShowImportModal, onSuccess}) => {
   const token = localStorage.getItem("token");
@@ -69,28 +68,28 @@ const ImportKaryawan = ({showImportModal, setShowImportModal, onSuccess}) => {
 
   return (
     <Modal 
-      className="modal-primary"
-      show={showImportModal}
-      onHide={() => setShowImportModal(false)}>
-    <Modal.Header className="text-center pb-1">
-      <h3 className="mt-2 mb-0">Import Karyawan</h3>
-    </Modal.Header>
-    <Modal.Body className="text-left pt-0">
-      <hr />
-      <div>
-      <span className="text-danger required-select">*Gunakan format CSV di bawah ini untuk mengimpor data karyawan.</span>
-      <p>Unduh format CSV disini.</p>
-      <Button
-        className="btn-fill pull-right mb-4"
-        type="button"
-        variant="warning"
-        onClick={() => downloadCSV()}>
-        <FaFileCsv style={{ marginRight: '8px' }} />
-        Format CSV
-      </Button>
-      <p>Pilih file CSV yang akan diimport. </p>
-        <input type="file" accept=".csv" onChange={handleFileChange} />
-        <div className="d-grid d-flex justify-content-end">
+    className="modal-primary"
+    show={showImportModal}
+    onHide={() => setShowImportModal(false)}>
+      <Modal.Header className="text-center pb-1">
+        <h3 className="mt-2 mb-0">Import Karyawan</h3>
+      </Modal.Header>
+      <Modal.Body className="text-left pt-0">
+        <hr />
+        <div>
+          <span className="text-danger required-select">*Gunakan format CSV di bawah ini untuk mengimpor data karyawan.</span>
+          <p>Unduh format CSV disini.</p>
+          <Button
+            className="btn-fill pull-right mb-4"
+            type="button"
+            variant="warning"
+            onClick={() => downloadCSV()}>
+            <FaFileCsv style={{ marginRight: '8px' }} />
+            Format CSV
+          </Button>
+          <p>Pilih file CSV yang akan diimport. </p>
+          <input type="file" accept=".csv" onChange={handleFileChange} />
+          <div className="d-grid d-flex justify-content-end">
           <Button
             className="btn-fill pull-right mt-2 mb-2"
             type="button"
@@ -101,11 +100,10 @@ const ImportKaryawan = ({showImportModal, setShowImportModal, onSuccess}) => {
             <FaFileImport style={{ marginRight: "8px" }} />
             Import Data
           </Button>
+          </div>
         </div>
-      </div>
-    </Modal.Body>
+      </Modal.Body>
     </Modal>
-    
   );
 };
 

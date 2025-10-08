@@ -1,11 +1,10 @@
-import { Badge, Button, Navbar, Nav, Container, Row, Col, Card, Table, Alert, Modal, Form } from "react-bootstrap";
+import { Badge, Button, Row, Col, Card, Table, Alert, Modal, Form } from "react-bootstrap";
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { toast } from 'react-toastify';
 import "../../assets/scss/lbd/_radiobutton.scss";
 import html2canvas from "html2canvas";
-import { SketchPicker } from "react-color";
 
 const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selectedIdItem, selectedSigner, show, editable}) => {
     const [initialName, setInitialName] = useState("");
@@ -196,13 +195,13 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
         }
     };
 
-    useEffect(() => {
-        generateImage().then(img => {
-            if (img) {
-                console.log("Preview base64:", img);
-            }
-        });
-    }, [initialName, selectedValue, fontColor, fontSize]);
+    // useEffect(() => {
+    //     generateImage().then(img => {
+    //         if (img) {
+    //             console.log("Preview base64:", img);
+    //         }
+    //     });
+    // }, [initialName, selectedValue, fontColor, fontSize]);
 
     const handleSubmit = async(e, selectedSigner) => {
         e.preventDefault();
@@ -227,94 +226,94 @@ const InitialModal = ({showInitialModal, setShowInitialModal, onSuccess, selecte
                     show={showInitialModal}
                     onHide={() => handleCloseModal(selectedSigner.id_item)}
                     >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Make Initial - ID Item: {selectedIdItem}</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body className="text-left pt-0 mt-2 my-3">
-                        <Form onSubmit={(e) => handleSubmit(e, selectedSigner)}>
-                            <span className="text-danger required-select">(*) Required.</span>
-                            <Row className="mt-3 mb-2">
+                        <Modal.Header closeButton>
+                            <Modal.Title>Make Initial - ID Item: {selectedIdItem}</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body className="text-left pt-0 mt-2 my-3">
+                            <Form onSubmit={(e) => handleSubmit(e, selectedSigner)}>
+                                <span className="text-danger required-select">(*) Required.</span>
+                                <Row className="mt-3 mb-2">
+                                    <Col md="12">
+                                        <Form.Group>
+                                        <span className="text-danger">*</span>
+                                        <label>Initials</label>
+                                        <Form.Control
+                                            type="text"
+                                            required
+                                            value={selectedSigner.nama}
+                                            onChange={(e) =>
+                                            handleInitialChange(selectedSigner.id_item, e.target.value.toLowerCase())
+                                            }
+                                        />
+                                        </Form.Group>
+                                    </Col>
+                                    <Col md="12">
+                                        <Form.Group>
+                                        <Form.Check 
+                                            type="radio"
+                                            id={1}
+                                            label={selectedSigner.nama}
+                                            className="mt-3 radio-label1"
+                                            value="option1"
+                                            checked={selectedValues[selectedSigner.id_item] === 'option1'}
+                                            onChange={(e) => handleRadioChange(e, selectedSigner.id_item)}
+                                            style={{fontFamily: fontMap["option1"]}}
+                                        />
+                                        <Form.Check 
+                                            type="radio"
+                                            id={2}
+                                            label={selectedSigner.nama}
+                                            className="mt-3 radio-label2"
+                                            value="option2"
+                                            checked={selectedValues[selectedSigner.id_item] === 'option2'}
+                                            onChange={(e) => handleRadioChange(e, selectedSigner.id_item)}
+                                            style={{fontFamily: fontMap["option2"]}}
+                                        />
+                                        <Form.Check 
+                                            type="radio"
+                                            id={3}
+                                            label={selectedSigner.nama}
+                                            className="mt-3 radio-label3"
+                                            value="option3"
+                                            checked={selectedValues[selectedSigner.id_item] === 'option3'}
+                                            onChange={(e) => handleRadioChange(e, selectedSigner.id_item)}
+                                            style={{fontFamily: fontMap["option3"]}}
+                                        />
+                                        <Form.Check 
+                                            type="radio"
+                                            id={4}
+                                            label={selectedSigner.nama}
+                                            className="mt-3 radio-label4"
+                                            value="option4"
+                                            checked={selectedValues[selectedSigner.id_item] === 'option4'}
+                                            onChange={(e) => handleRadioChange(e, selectedSigner.id_item)}
+                                            style={{fontFamily: fontMap["option4"]}}
+                                        />
+                                        <Form.Check 
+                                            type="radio"
+                                            id={5}
+                                            label={selectedSigner.nama}
+                                            className="mt-3 radio-label5"
+                                            value="option5"
+                                            checked={selectedValues[selectedSigner.id_item] === 'option5'}
+                                            onChange={(e) => handleRadioChange(e, selectedSigner.id_item)}
+                                            style={{fontFamily: fontMap["option5"]}}
+                                        />
+                                        </Form.Group>
+                                    </Col>
+                                </Row>
+                                <Row>
                                 <Col md="12">
-                                    <Form.Group>
-                                    <span className="text-danger">*</span>
-                                    <label>Initials</label>
-                                    <Form.Control
-                                        type="text"
-                                        required
-                                        value={selectedSigner.nama}
-                                        onChange={(e) =>
-                                        handleInitialChange(selectedSigner.id_item, e.target.value.toLowerCase())
-                                        }
-                                    />
-                                    </Form.Group>
+                                    <div className="d-flex flex-column">
+                                    <Button className="btn-fill w-100 mt-3" type="submit" variant="primary" disabled={!selectedValues[selectedSigner.id_item]}>
+                                        Submit
+                                    </Button>
+                                    </div>
                                 </Col>
-                                <Col md="12">
-                                    <Form.Group>
-                                    <Form.Check 
-                                        type="radio"
-                                        id={1}
-                                        label={selectedSigner.nama}
-                                        className="mt-3 radio-label1"
-                                        value="option1"
-                                        checked={selectedValues[selectedSigner.id_item] === 'option1'}
-                                        onChange={(e) => handleRadioChange(e, selectedSigner.id_item)}
-                                        style={{fontFamily: fontMap["option1"]}}
-                                    />
-                                    <Form.Check 
-                                        type="radio"
-                                        id={2}
-                                        label={selectedSigner.nama}
-                                        className="mt-3 radio-label2"
-                                        value="option2"
-                                        checked={selectedValues[selectedSigner.id_item] === 'option2'}
-                                        onChange={(e) => handleRadioChange(e, selectedSigner.id_item)}
-                                        style={{fontFamily: fontMap["option2"]}}
-                                    />
-                                    <Form.Check 
-                                        type="radio"
-                                        id={3}
-                                        label={selectedSigner.nama}
-                                        className="mt-3 radio-label3"
-                                        value="option3"
-                                        checked={selectedValues[selectedSigner.id_item] === 'option3'}
-                                        onChange={(e) => handleRadioChange(e, selectedSigner.id_item)}
-                                        style={{fontFamily: fontMap["option3"]}}
-                                    />
-                                    <Form.Check 
-                                        type="radio"
-                                        id={4}
-                                        label={selectedSigner.nama}
-                                        className="mt-3 radio-label4"
-                                        value="option4"
-                                        checked={selectedValues[selectedSigner.id_item] === 'option4'}
-                                        onChange={(e) => handleRadioChange(e, selectedSigner.id_item)}
-                                        style={{fontFamily: fontMap["option4"]}}
-                                    />
-                                    <Form.Check 
-                                        type="radio"
-                                        id={5}
-                                        label={selectedSigner.nama}
-                                        className="mt-3 radio-label5"
-                                        value="option5"
-                                        checked={selectedValues[selectedSigner.id_item] === 'option5'}
-                                        onChange={(e) => handleRadioChange(e, selectedSigner.id_item)}
-                                        style={{fontFamily: fontMap["option5"]}}
-                                    />
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-                            <Row>
-                            <Col md="12">
-                                <div className="d-flex flex-column">
-                                <Button className="btn-fill w-100 mt-3" type="submit" variant="primary" disabled={!selectedValues[selectedSigner.id_item]}>
-                                    Submit
-                                </Button>
-                                </div>
-                            </Col>
-                            </Row>
-                        </Form>
+                                </Row>
+                            </Form>
 
-                    </Modal.Body>
+                        </Modal.Body>
                     </Modal>
                 ))}
         </>

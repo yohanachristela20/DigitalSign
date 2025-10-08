@@ -16,7 +16,6 @@ import ReactLoading from "react-loading";
 import "../assets/scss/lbd/_loading.scss";
 
 
-// react-bootstrap components
 import {Button, Container, Row, Col, Card, Table, Spinner } from "react-bootstrap";
 
 function MasterKaryawan() {
@@ -83,7 +82,6 @@ function MasterKaryawan() {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
-    // console.log("User token: ", token, "User role:", role);
     try {
 
       setLoading(true);
@@ -272,15 +270,6 @@ function MasterKaryawan() {
       <Container fluid>
       <Row>
           <div>
-            {/* <Button
-              className="btn-fill pull-right ml-lg-3 ml-md-4 ml-sm-3 mb-4"
-              type="button"
-              variant="success"
-              onClick={() => setShowAddModal(true)}>
-              <FaPlusCircle style={{ marginRight: '8px' }} />
-              Tambah Data
-            </Button> */}
-
             <AddKaryawan showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
 
             <EditKaryawan
@@ -360,7 +349,6 @@ function MasterKaryawan() {
                          onClick={() => {
                            setShowEditModal(true);
                            setSelectedKaryawan(karyawan);
-                           // console.log("Berhasil");
                          }}
                          style={{
                            width: 103,

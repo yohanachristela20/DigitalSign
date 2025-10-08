@@ -1,12 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
-import { FaSignature, FaFont, FaCalendar } from 'react-icons/fa';
+import { FaCalendar } from 'react-icons/fa';
 import "../../assets/scss/lbd/_rnd.scss";
 
-import { useSignature } from "components/Provider/SignatureContext.js";
-import { useInitial } from "components/Provider/InitialContext.js";
-
-import InitialModal from "components/ModalForm/InitialModal.js";
 
 function ResizableDragableDate ({onChange, x_axis=0, y_axis=0, height=50, width=50, scale=1, onDelete}) {
     const [showAddModal, setshowAddModal] = React.useState(false);
@@ -16,8 +12,6 @@ function ResizableDragableDate ({onChange, x_axis=0, y_axis=0, height=50, width=
     const [clickCount, setClickCount] = useState(0);
     const timeRef = useRef(null);
 
-    const {signatures, setSignatures} = useSignature();
-    const {initials, setInitials} = useInitial();
     const [signClicked, setSignClicked] = useState(false);
     const [initClicked, setInitClicked] = useState(false);
     const [dateClicked, setDateClicked] = useState(false);
@@ -29,44 +23,20 @@ function ResizableDragableDate ({onChange, x_axis=0, y_axis=0, height=50, width=
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: 'rgba(25, 230, 25, 0.5)',
-        // position: "relative"
     };
 
-    const handleInitialSuccess = () => {
-    toast.success("Document has been signed successfully.", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: true,
-    });
-    };
     
     const styleIcon = {
         width: "25%",
         height: "25%",
     }
 
-    const handleClickSign = () => {
-        setClickCount(clickCount + 1);
-        if (clickCount === 1) {
-            timeRef.current = setTimeout(() => {
-                setClickCount(0);
-            }, 300);
-        } else if (clickCount === 2){
-            clearTimeout(timeRef.current);
-            setClickCount(0);
-            setshowAddModal(true);
-        }
-    }
 
     useEffect(() => {
     const handleButtonClicked = () => {
         const signButton = localStorage.getItem("signatureClicked"); 
         const initButton = localStorage.getItem("initialClicked");
         const dateButton = localStorage.getItem("dateFieldClicked");
-
-        console.log("SignButton clicked from rndDate:", signButton);
-        console.log("InitialButton clicked from rndDate:", initButton);
-        console.log("DateButton clicked from rndDate", dateButton);
 
         setSignClicked(signButton === "true");
         setInitClicked(initButton === "true");
@@ -103,7 +73,6 @@ function ResizableDragableDate ({onChange, x_axis=0, y_axis=0, height=50, width=
 
     return(
        <>
-        {/* <InitialModal showAddModal={showAddModal} setshowAddModal={setshowAddModal} onSuccess={handleInitialSuccess} /> */}
         <Rnd
             style={styleRnd}
             size={{ width: size.width, height: size.height }}
@@ -132,14 +101,11 @@ function ResizableDragableDate ({onChange, x_axis=0, y_axis=0, height=50, width=
                 setSize({ width: newWidth, height: newHeight });
                 setJenisItem({jenis_item});
             }}
-            // onClick={handleClickSign}
             minWidth={120}
             minHeight={30}
-            // bounds="parent"
         >
              <button
             onClick={(e) => {
-            //   e.stopPropagation();
               if (onDelete) onDelete();
             }}
             style={{

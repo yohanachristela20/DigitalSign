@@ -1,12 +1,10 @@
-import { Badge, Button, Navbar, Nav, Container, Row, Col, Card, Table, Alert, Modal, Form } from "react-bootstrap";
+import { Row, Col, Modal, Form } from "react-bootstrap";
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { toast } from 'react-toastify';
 import "../../assets/scss/lbd/_radiobutton.scss";
-import html2canvas from "html2canvas";
-import { SketchPicker } from "react-color";
-import { FaCheckCircle, FaCircle, FaCircleNotch, FaEye, FaSignature, FaTimesCircle, FaUpload } from "react-icons/fa";
+import { FaCheckCircle, FaCircle, FaEye, FaSignature, FaUpload } from "react-icons/fa";
 import moment from "moment";
 
 const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedSigner, selectedDocument, selectedKaryawan, signerInfo}) => {
@@ -121,13 +119,6 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
             (s.delegated_signers || s.delegated_signers === selectedSigner)
     );    
     
-    const completedSignersUnique = completedSigners.filter(
-        (v, i, a) =>
-            a.findIndex(t =>
-                t.email_signer === v.email_signer &&
-                t.real_email === v.real_email
-            ) === i
-    );
 
     useEffect(() => {
         if (!selectedSigner || signerData.length === 0) return;
@@ -212,7 +203,6 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
     }, {});
 
     const groupedSignersArray = Object.values(groupedSigners);
-    // console.log("groupedSignersArray:", groupedSignersArray);
 
     return (
         <>

@@ -1,7 +1,6 @@
-import React, { Component, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import { Navbar, Container, Nav, Dropdown, Button, Modal } from "react-bootstrap";
-import {FaDoorClosed, FaDoorOpen, FaKey, FaUser, FaBell, FaCircle, FaCircleInfo, FaInfoCircle} from 'react-icons/fa'; 
 import routes from "routes.js";
 import UbahPassword from "components/ModalForm/UbahPassword.js";
 import "../../assets/scss/lbd/_usernavbar.scss";
@@ -22,8 +21,6 @@ function UserHeader() {
   const [hidden, setHidden] = useState(false); 
 
   const [notifications, setNotifications] = useState([]);
-  const [showNotifDropdown, setShowNotifDropdown] = useState(false); 
-  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -50,16 +47,12 @@ function UserHeader() {
     fetchUserData();
   });
 
-  useEffect(() => {
-    console.log("Is it Admin or not?:", role); 
-  
+  useEffect(() => {  
     if (role !== "Admin") {
-      console.log("Not Admin, skipping socket listener.");
       return; 
     }
   
     const handleNotifAdmin = (data) => {
-      console.log("New pinjaman received:", data); 
       setNotifications((prev) => [...prev, data]);
       setHidden(false); 
     };
@@ -67,24 +60,19 @@ function UserHeader() {
     socket.on("newPinjaman", handleNotifAdmin);
   
     return () => {
-      console.log("Cleaning up socket listener");
       socket.off("newPinjaman", handleNotifAdmin);
     };
   }, [socket, role]);
   
 
-  //pinjaman -> finance
 
   useEffect(() => {
-    console.log("Is it finance or not?:", role); 
   
     if (role !== "Finance") {
-      console.log("Not Finance, skipping socket listener.");
       return; 
     }
   
     const handlePinjaman = (data) => {
-      console.log("Pinjaman received:", data); 
       setNotifications((prev) => [...prev, data]);
       setHidden(false); 
     };
@@ -92,7 +80,6 @@ function UserHeader() {
     socket.on("pinjaman", handlePinjaman);
   
     return () => {
-      console.log("Cleaning up socket listener");
       socket.off("pinjaman", handlePinjaman);
     };
   }, [socket, role]);
@@ -107,15 +94,6 @@ function UserHeader() {
       document.documentElement.classList.toggle("nav-open");
     };
     document.body.appendChild(node);
-  };
-
-  const getBrandText = () => {
-    for (let i = 0; i < routes.length; i++) {
-      if (location.pathname.indexOf(routes[i].layout + routes[i].path) !== -1) {
-        return routes[i].name;
-      }
-    }
-    return "Beranda";
   };
 
   const handleLogout = () => {

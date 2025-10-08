@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Badge, Button, Modal, Form, Row, Col } from "react-bootstrap";
+import { Button, Modal } from "react-bootstrap";
 import { FaFileImport, FaFileCsv } from "react-icons/fa";
-import { toast } from 'react-toastify';
 
 const ImportUser = ({showImportModal, setShowImportModal, onSuccess}) => {
   const token = localStorage.getItem("token");
@@ -72,23 +71,23 @@ const ImportUser = ({showImportModal, setShowImportModal, onSuccess}) => {
       className="modal-primary"
       show={showImportModal}
       onHide={() => setShowImportModal(false)}>
-    <Modal.Header className="text-center pb-1">
-      <h3 className="mt-2 mb-2">Import User</h3>
-    </Modal.Header>
-    <Modal.Body className="text-left pt-0 mt-3">
-      <div>
-      <span className="text-danger required-select">*Use the CSV format below to import user data</span><br/>
-        <Button
-          className="btn-fill pull-right mb-4 mt-2"
-          type="button"
-          variant="warning"
-          onClick={() => downloadCSV()}>
-          <FaFileCsv style={{ marginRight: '8px' }} />
-          Download CSV Format
-        </Button>
-        <p>Select the CSV file to import user</p>
-        <input type="file" accept=".csv" onChange={handleFileChange}/>
-        <div className="d-grid d-flex justify-content-end">
+      <Modal.Header className="text-center pb-1">
+        <h3 className="mt-2 mb-2">Import User</h3>
+      </Modal.Header>
+      <Modal.Body className="text-left pt-0 mt-3">
+        <div>
+          <span className="text-danger required-select">*Use the CSV format below to import user data</span><br/>
+          <Button
+            className="btn-fill pull-right mb-4 mt-2"
+            type="button"
+            variant="warning"
+            onClick={() => downloadCSV()}>
+            <FaFileCsv style={{ marginRight: '8px' }} />
+            Download CSV Format
+          </Button>
+          <p>Select the CSV file to import user</p>
+          <input type="file" accept=".csv" onChange={handleFileChange}/>
+          <div className="d-grid d-flex justify-content-end">
           <Button
             className="btn-fill pull-right mt-2 mb-2"
             type="button"
@@ -99,11 +98,10 @@ const ImportUser = ({showImportModal, setShowImportModal, onSuccess}) => {
             <FaFileImport style={{ marginRight: "8px" }} />
             Import Data
           </Button>
+          </div>
         </div>
-      </div>
-    </Modal.Body>
+      </Modal.Body>
     </Modal>
-    
   );
 };
 

@@ -1,15 +1,12 @@
-import { Badge, Button, Navbar, Nav, Container, Row, Col, Card, Table, Alert, Modal, Form } from "react-bootstrap";
+import { Button, Row, Col, Card, Table, Alert, Modal, Form } from "react-bootstrap";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { toast } from 'react-toastify';
 
 const EditCategory = ({showEditModal, setShowEditModal, category, onSuccess}) => {
-    // const [id_kategoridok, setIdKategori] = useState("");
     const [kategori, setKategori] = useState("");
     const token = localStorage.getItem("token");
 
     useEffect(() => {
-    // if (!category) return null;
         if (category) {
             setKategori(category.kategori);
         }
@@ -56,7 +53,6 @@ const EditCategory = ({showEditModal, setShowEditModal, category, onSuccess}) =>
                 <Form.Group>
                     <label>Category</label>
                     <Form.Control
-                        // placeholder="Kategori"
                         type="text"
                         value={kategori}
                         onChange={(e) => setKategori(e.target.value)}

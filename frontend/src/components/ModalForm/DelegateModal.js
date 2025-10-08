@@ -1,11 +1,9 @@
-import { Badge, Button, Navbar, Nav, Container, Row, Col, Card, Table, Alert, Modal, Form } from "react-bootstrap";
+import { Button, Row, Col, Card, Table, Alert, Modal, Form } from "react-bootstrap";
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { toast } from 'react-toastify';
 import "../../assets/scss/lbd/_radiobutton.scss";
-import html2canvas from "html2canvas";
-import { SketchPicker } from "react-color";
 
 const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner, selectedDocument}) => {
     const [selectedValue, setSelectedValue] = useState('');
@@ -37,7 +35,6 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
                 setIdSigner(id_signers);
-                // console.log("ID SIGNERS:", id_signers);
 
                 const signerArray = Array.isArray(id_signers) ? id_signers : [id_signers];
 
@@ -92,12 +89,9 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                 }
             });
 
-            // console.log("Response employee data:", response.data);
             const uniqueMap = new Map();
 
             response.data.forEach(item => {
-                // if (item.id_karyawan === id_signers) return;
-
                 if (!uniqueMap.has(item.id_karyawan)) {
                     uniqueMap.set(item.id_karyawan, {
                         value: item.id_karyawan,
@@ -109,7 +103,6 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
 
             const uniqueEmployees = Array.from(uniqueMap.values());
 
-            // console.log("UNIQUE EMPLOYEE DATA:", uniqueEmployees);
             setEmployeeName(uniqueEmployees);
         } catch (error) {
             console.error("Error fetching data:", error.message);
@@ -118,8 +111,6 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
 
     const updateDelegate = async(id_dokumen, signerID) => {
         const delegateId = selectedEmployee?.value;
-
-        // console.log("Data update status:", id_dokumen, signerID, delegateId);
 
         try {
             const response = await axios.patch(`http://localhost:5000/delegate-doc/${id_dokumen}/${signerID}`, {
@@ -145,7 +136,6 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
     };
 
     const sendEmailDelegate = async(id_dokumen, delegated_signers) => {
-        // console.log("sendEmailDelegate: ", id_dokumen, delegated_signers, token);
 
         try {
             const responseDecline = await axios.post('http://localhost:5000/send-delegate-email', {
@@ -176,10 +166,6 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
         setSelectedValues({});
     }
 
-    const handleSignerChange = (event) => {
-        setIdSigner(event.target.value);
-    }
-
     useEffect(() => {
         getName();
     }, []);
@@ -188,12 +174,6 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
         if (!selectedEmployee) return;
         setEmail(selectedEmployee.email || "");
     }, [ selectedEmployee]);
-
-    const selectedDelegateSigner = selectedEmployee?.value;
-
-    // console.log("selectedDelegateSigner:", selectedDelegateSigner);
-
-    // console.log("delegated signers:", delegated_signers);
 
 
     return (
@@ -221,7 +201,6 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                                 onChange={(e) => 
                                     {const selected = employeeName.find(emp => emp.value === e.target.value);
                                     setselectedEmployee(selected || null)
-                                    // console.log("Selected employee:", selected.value)
                                     setDelegatedSigners(selected.value)
                                 }
                                 }

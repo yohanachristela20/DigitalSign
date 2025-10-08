@@ -15,7 +15,6 @@ const AddCategory = ({showAddModal, setShowAddModal}) => {
             Authorization: `Bearer ${token}`,
         },
         });
-        console.log("response.data:", response.data);
         setCategory(response.data);
         } catch (error) {
         console.error("Error fetching data:", error.message); 

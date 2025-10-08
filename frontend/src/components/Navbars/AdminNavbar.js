@@ -1,7 +1,7 @@
-import React, { Component, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import { Navbar, Container, Nav, Dropdown, Button, Modal } from "react-bootstrap";
-import {FaDoorClosed, FaDoorOpen, FaKey, FaUser, FaBell, FaCircle, FaCircleInfo, FaInfoCircle} from 'react-icons/fa'; 
+import { FaDoorOpen, FaKey, FaUser} from 'react-icons/fa'; 
 import routes from "routes.js";
 import UbahPassword from "components/ModalForm/UbahPassword.js";
 import "../../assets/scss/lbd/_logout.scss";
@@ -22,7 +22,6 @@ function Header() {
   const [hidden, setHidden] = useState(false); 
 
   const [notifications, setNotifications] = useState([]);
-  const [showNotifDropdown, setShowNotifDropdown] = useState(false); 
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -49,17 +48,12 @@ function Header() {
     fetchUserData();
   });
 
-  //newPinjaman => admin
-  useEffect(() => {
-    console.log("Is it Admin or not?:", role); 
-  
+  useEffect(() => {  
     if (role !== "Admin") {
-      console.log("Not Admin, skipping socket listener.");
       return; 
     }
   
     const handleNotifAdmin = (data) => {
-      console.log("New pinjaman received:", data); 
       setNotifications((prev) => [...prev, data]);
       setHidden(false); 
     };
@@ -67,24 +61,18 @@ function Header() {
     socket.on("newPinjaman", handleNotifAdmin);
   
     return () => {
-      console.log("Cleaning up socket listener");
       socket.off("newPinjaman", handleNotifAdmin);
     };
   }, [socket, role]);
   
 
-  //pinjaman -> finance
-
   useEffect(() => {
-    console.log("Is it finance or not?:", role); 
   
     if (role !== "Finance") {
-      console.log("Not Finance, skipping socket listener.");
       return; 
     }
   
     const handlePinjaman = (data) => {
-      console.log("Pinjaman received:", data); 
       setNotifications((prev) => [...prev, data]);
       setHidden(false); 
     };
@@ -92,7 +80,6 @@ function Header() {
     socket.on("pinjaman", handlePinjaman);
   
     return () => {
-      console.log("Cleaning up socket listener");
       socket.off("pinjaman", handlePinjaman);
     };
   }, [socket, role]);
@@ -150,33 +137,6 @@ function Header() {
         </div>
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ml-auto" navbar style={{marginRight:'40px'}}>
-          {/* <Dropdown as={Nav.Item} show={showNotifDropdown} onToggle={setShowNotifDropdown} hidden={role === "Karyawan" || role === "Super Admin"}>
-            <Dropdown.Toggle as={Nav.Link} className="position-relative">
-              <FaBell style={{ marginTop: '9px' }} size={20} />
-              {notifications.length > 0 && (
-                <span className="badge badge-danger position-absolute">
-                  {notifications.length}
-                </span>
-              )}
-            </Dropdown.Toggle>
-            <Dropdown.Menu style={{ width: '200px'}}>
-              {notifications.length > 0 ? (
-                notifications.map((notif, index) => (
-                  <Dropdown.Item key={index} className="text-wrap">
-                  <FaInfoCircle style={{ marginRight: '8px' }} />
-                    {notif.message}
-                    <div className="divider"></div>
-                  </Dropdown.Item>
-                ))
-              ) : (
-                <Dropdown.Item>
-                  <FaInfoCircle style={{ marginRight: '8px' }} />
-                    No notifications
-                </Dropdown.Item>
-              )}
-            </Dropdown.Menu>
-          </Dropdown> */}
-
             <Dropdown as={Nav.Item}>
               <Dropdown.Toggle
                 aria-expanded={false}

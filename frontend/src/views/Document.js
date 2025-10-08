@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import {FaFileCsv, FaFileImport, FaFilePdf, FaPlusCircle, FaRegEdit, FaTrashAlt, FaTrashRestore, FaUserLock, FaSortUp, FaSortDown, FaMailBulk, FaPaperPlane, FaDownload} from 'react-icons/fa'; 
+import {FaFileCsv, FaFilePdf, FaTrashAlt, FaSortUp, FaSortDown, FaPaperPlane, FaDownload} from 'react-icons/fa'; 
 import SearchBar from "components/Search/SearchBar.js";
 import axios from "axios";
 import AddKaryawan from "components/ModalForm/AddKaryawan.js";
@@ -8,23 +8,21 @@ import AddDocument from "components/ModalForm/AddDocument.js";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import "jspdf-autotable";
 import Pagination from "react-js-pagination";
 import "../assets/scss/lbd/_pagination.scss";
 import "../assets/scss/lbd/_table-header.scss";
 import { useLocation, useHistory } from "react-router-dom";
 import { CDBTable, CDBTableHeader, CDBTableBody, CDBContainer, CDBBtn, CDBBtnGrp } from 'cdbreact';
-import PDFCanvas from "components/Canvas/canvas.js";
 import { PDFDocument } from "pdf-lib";
 import { getProgress } from "../../src/utils/progress.js";
-
 import {Button, Container, Row, Col, Card, Table, Spinner, Badge} from "react-bootstrap";
 import { saveAs } from "file-saver";
+import ReactLoading from "react-loading";
+
 function Document() {
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
-  const [showImportModal, setShowImportModal] = useState(false); 
   const [document, setDocument] = useState([]); 
   const [user_active, setUserActive] = useState();
   const [selectedDocument, setSelectedDocument] = useState(null); 
@@ -43,7 +41,6 @@ function Document() {
   const [showAddDoc, setShowAddDoc] = React.useState(false);
   const selectedCategory = location.state?.selectedCategory;
   const selectedDocuments = location.state?.selectedDocument;
-//   const [documentList, setDocumentList] = useState([]);
 
   const [documentStatus, setDocumentStatus] = useState([]);
   const [documentDeadline, setDocumentDeadline] = useState([]);
@@ -57,8 +54,9 @@ function Document() {
   const [is_delegated, setIsDelegated] = useState("");
   const [delegated_signers, setDelegatedSigners] = useState("");
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const today = new Date();
-  // today.setHours(0, 0, 0, 0);
   const currentYear = today.getFullYear();
   const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
   const todayDate = today.getDate().toString().padStart(2, '0');
@@ -68,6 +66,7 @@ function Document() {
   const canvasRef = useRef(null);
 
   const {progress, status} = getProgress(document);
+  
 
   const getDocument = async (selectedCategory) =>{
     try {
@@ -230,6 +229,8 @@ function Document() {
 
   const sendReminder = async(id_dokumen) =>{
     try {
+      setIsLoading(true);
+
       await axios.post('http://localhost:5000/send-reminder', {id_dokumen}, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -243,6 +244,8 @@ function Document() {
       getDocument(); 
     } catch (error) {
       console.log(error.message); 
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -411,7 +414,7 @@ function Document() {
           x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
           y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale : jenis_item === "Signpad" ? Number(y_axis) / scale :jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale ;
           
-          width = Number(height) / scale;
+          width = Number(height) / scale - 10;
           height = Number(width) / scale - 20;
 
           const targetPageIndex = Number(page) - 1;  
@@ -438,7 +441,6 @@ function Document() {
             });
           } else {
             const date = new Date(sign.tgl_tt);
-            console.log("DATE:", sign.tgl_tt);
             const day = String(date.getDate()).padStart(2, "0");
             const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec"];
             const month = monthNames[date.getMonth()];
@@ -472,183 +474,175 @@ function Document() {
   
   return (
     <>
-      <Container fluid>
-        <Row>
-          <AddKaryawan showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
-          <AddDocument showAddDoc={showAddDoc} setShowAddDoc={setShowAddDoc} onSuccess={handleAddDocSuccess}/>
-          <EditKaryawan
-              showEditModal={showEditModal}
-              setShowEditModal={setShowEditModal}
-              document={selectedDocument}
-              onSuccess={handleEditSuccess}
-          />
+      {isLoading === false ? (
+        <Container fluid>
+          <Row>
+            <AddKaryawan showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
+            <AddDocument showAddDoc={showAddDoc} setShowAddDoc={setShowAddDoc} onSuccess={handleAddDocSuccess}/>
+            <EditKaryawan
+                showEditModal={showEditModal}
+                setShowEditModal={setShowEditModal}
+                document={selectedDocument}
+                onSuccess={handleEditSuccess}
+            />
 
-          <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>
-            <Button
-              type="button"
-              className="btn btn-fill btn-primary mb-3"
-              style={{width:"190px"}}
-              onClick={handleUpload}>
-              <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
-                Upload Document
-            </Button>
-          <Container>
-            <Button
-              className="btn-fill pull-right mb-3 mr-3"
-              type="button"
-              variant="info"
-              onClick={() => downloadCSV(document)}>
-              <FaFileCsv style={{ marginRight: '8px' }} />
-              Export to CSV
-            </Button>
+            <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>
+              <Button
+                type="button"
+                className="btn btn-fill btn-primary mb-3"
+                style={{width:"190px"}}
+                onClick={handleUpload}>
+                <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
+                  Upload Document
+              </Button>
+            <Container>
+              <Button
+                className="btn-fill pull-right mb-3 mr-3"
+                type="button"
+                variant="info"
+                onClick={() => downloadCSV(document)}>
+                <FaFileCsv style={{ marginRight: '8px' }} />
+                Export to CSV
+              </Button>
 
-            <Button
-              className="btn-fill pull-right mb-3"
-              type="button"
-              variant="info"
-              onClick={() => downloadPDF(document)}>
-              <FaFilePdf style={{ marginRight: '8px' }} />
-              Export to PDF
-            </Button>
-          </Container>          
-          <Col md="12">
-          <CDBTable hover  className="mt-4">
-            <CDBTableHeader>
-              <tr>
-                <th onClick={() => handleSort("id_dokumen")}>Document ID {sortBy==="id_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                <th className="border-0" onClick={() => handleSort("nama_dokumen")}>Document Name {sortBy==="nama_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                <th className="border-0" onClick={() => handleSort("id_kategoridok")}>Category {sortBy==="id_kategoridok" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                <th className="border-0">Status</th>
-                <th className="border-0">Deadline</th>
-                <th className="border-0" onClick={() => handleSort("createdAt")}>Uploaded {sortBy==="createdAt" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                <th className="border-0" colSpan={3}>Action</th>
-              </tr>
-            </CDBTableHeader>
-            <CDBTableBody>
-              {currentItems
-              .filter(document => !document.is_deleted)
-              .map((document, index) => (
-                <tr key={document.id_dokumen}>
-                  <td className="text-center">{document.id_dokumen}</td>
-                  <td className="text-center">
-                    <p>{document.nama_dokumen}</p>
-                    <p className="signer-font">To: {document.LogSigns.map((log) => log.Signerr?.nama).join(", ")}</p>
-                  </td>
-                  <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
-                  {/* <td className="text-center">
-                    <p>
-                      {getStatusById(document.id_dokumen) === "Decline" ? (
-                        <Badge pill bg="danger">Decline</Badge>
-                      ) : getStatusById(document.id_dokumen) === "Completed" &&
-                        document.LogSigns.every((log) => log.is_submitted === true) ?
-                      (
-                        <Badge pill bg="success">Completed</Badge>
-                      ) : (
-                        <Badge pill bg="secondary">Pending</Badge>
-                      )}
-                    </p>
-                    <p className="signer-font" hidden={getStatusById(document.id_dokumen) === "Completed" || getStatusById(document.id_dokumen) === "Decline" || document.LogSigns.every((log) => log.is_submitted === true)}>{getProgress(document)}</p>                      
-                  </td> */}
-                  <td className="text-center">
-                    {(() => {
-                      const status = getStatusById(document.id_dokumen);
-                      const allSubmitted = document.LogSigns.every((log) => log.is_submitted === true);
+              <Button
+                className="btn-fill pull-right mb-3"
+                type="button"
+                variant="info"
+                onClick={() => downloadPDF(document)}>
+                <FaFilePdf style={{ marginRight: '8px' }} />
+                Export to PDF
+              </Button>
+            </Container>          
+            <Col md="12">
+            <CDBTable hover  className="mt-4">
+              <CDBTableHeader>
+                <tr>
+                  <th onClick={() => handleSort("id_dokumen")}>Document ID {sortBy==="id_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                  <th className="border-0" onClick={() => handleSort("nama_dokumen")}>Document Name {sortBy==="nama_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                  <th className="border-0" onClick={() => handleSort("id_kategoridok")}>Category {sortBy==="id_kategoridok" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                  <th className="border-0">Status</th>
+                  <th className="border-0">Deadline</th>
+                  <th className="border-0" onClick={() => handleSort("createdAt")}>Uploaded {sortBy==="createdAt" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                  <th className="border-0" colSpan={3}>Action</th>
+                </tr>
+              </CDBTableHeader>
+              <CDBTableBody>
+                {currentItems
+                .filter(document => !document.is_deleted)
+                .map((document, index) => (
+                  <tr key={document.id_dokumen}>
+                    <td className="text-center">{document.id_dokumen}</td>
+                    <td className="text-center">
+                      <p>{document.nama_dokumen}</p>
+                      <p className="signer-font">To: {document.LogSigns.map((log) => log.Signerr?.nama).join(", ")}</p>
+                    </td>
+                    <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
+                    <td className="text-center">
+                      {(() => {
+                        const status = getStatusById(document.id_dokumen);
+                        const allSubmitted = document.LogSigns.every((log) => log.is_submitted === true);
 
-                      let badge;
-                      if (status === "Decline") {
-                        badge = <Badge pill bg="danger">Decline</Badge>;
-                      } else if (status === "Completed" && allSubmitted) {
-                        badge = <Badge pill bg="success">Completed</Badge>;
-                      } else  {
-                        badge = <Badge pill bg="secondary">Pending</Badge>;
-                      }
+                        let badge;
+                        if (status === "Decline") {
+                          badge = <Badge pill bg="danger">Decline</Badge>;
+                        } else if (status === "Completed" && allSubmitted) {
+                          badge = <Badge pill bg="success">Completed</Badge>;
+                        } else  {
+                          badge = <Badge pill bg="secondary">Pending</Badge>;
+                        }
 
-                      // if (!allSubmitted)
+                        return (
+                          <>
+                            <p>{badge}</p>
+                            {!(status === "Completed" || status === "Decline" || allSubmitted) && (
+                              <p className="signer-font">{getProgress(document)}</p>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </td>
 
-                      return (
-                        <>
-                          <p>{badge}</p>
-                          {!(status === "Completed" || status === "Decline" || allSubmitted) && (
-                            <p className="signer-font">{getProgress(document)}</p>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </td>
-
-                  <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
-                  <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
-                  
-                  <td className="text-center px-0">
-                    <button
-                    style={{background:"transparent", border:"none"}} 
-                    disabled={document.user_active === true}
-                    >
-                    <FaPaperPlane 
-                      type="button"
-                      onClick={() => sendReminder(document.id_dokumen)}
-                      className="text-primary btn-action"
-                      hidden={getStatusById(document.id_dokumen) !== "Pending"}
-                      // && formattedDate > getDeadlineById(document.id_dokumen)
-                    />
-                  </button>
-                  </td>
-                  <td className="text-center px-0">
-                    <button
-                      style={{ background: "transparent", border: "none" }}
+                    <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
+                    <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
+                    
+                    <td className="text-center px-0">
+                      <button
+                      style={{background:"transparent", border:"none"}} 
                       disabled={document.user_active === true}
-                    >
-                      <FaDownload
+                      >
+                      <FaPaperPlane 
                         type="button"
-                        onClick={async(e) => {
-                          e.preventDefault();
-                          const ref = getRef(document.id_dokumen); 
-                          const status = getStatusById(document.id_dokumen);
-                          const logSigns = document.LogSigns || [];
-                          const allSubmitted = logSigns.length > 0 && logSigns.every(sign => sign?.is_submitted === true);
-
-                          if (status === "Completed" && allSubmitted) {
-                            await downloadDoc(document.id_dokumen, ref, document.LogSigns);
-                          } else {
-                            await plainDoc(document.id_dokumen);
-                          }
-                        }}
-                        className="text-success btn-action"
+                        onClick={() => sendReminder(document.id_dokumen)}
+                        className="text-primary btn-action"
+                        hidden={getStatusById(document.id_dokumen) !== "Pending"}
                       />
                     </button>
-                  </td>
-                  <td className="text-center px-0">
-                  <button
-                    style={{background:"transparent", border:"none"}} 
-                    disabled={document.user_active === true}
-                    >
-                    <FaTrashAlt 
-                      type="button"
-                      onClick={() => deleteDocument(document.id_dokumen)}
-                      className="text-danger btn-action"
-                    />
-                  </button>
-                  </td>
+                    </td>
+                    <td className="text-center px-0">
+                      <button
+                        style={{ background: "transparent", border: "none" }}
+                        disabled={document.user_active === true}
+                      >
+                        <FaDownload
+                          type="button"
+                          onClick={async(e) => {
+                            e.preventDefault();
+                            const ref = getRef(document.id_dokumen); 
+                            const status = getStatusById(document.id_dokumen);
+                            const logSigns = document.LogSigns || [];
+                            const allSubmitted = logSigns.length > 0 && logSigns.every(sign => sign?.is_submitted === true);
 
-                </tr>
-              ))}
-            </CDBTableBody>
-          </CDBTable>
-            
-            <div className="pagination-container">
-              <Pagination
-                    activePage={currentPage}
-                    itemsCountPerPage={itemsPerPage}
-                    totalItemsCount={filteredDocument.length}
-                    pageRangeDisplayed={5}
-                    onChange={handlePageChange}
-                    itemClass="page-item"
-                    linkClass="page-link"
-              />
+                            if (status === "Completed" && allSubmitted) {
+                              await downloadDoc(document.id_dokumen, ref, document.LogSigns);
+                            } else {
+                              await plainDoc(document.id_dokumen);
+                            }
+                          }}
+                          className="text-success btn-action"
+                        />
+                      </button>
+                    </td>
+                    <td className="text-center px-0">
+                    <button
+                      style={{background:"transparent", border:"none"}} 
+                      disabled={document.user_active === true}
+                      >
+                      <FaTrashAlt 
+                        type="button"
+                        onClick={() => deleteDocument(document.id_dokumen)}
+                        className="text-danger btn-action"
+                      />
+                    </button>
+                    </td>
+
+                  </tr>
+                ))}
+              </CDBTableBody>
+            </CDBTable>
+              
+              <div className="pagination-container">
+                <Pagination
+                      activePage={currentPage}
+                      itemsCountPerPage={itemsPerPage}
+                      totalItemsCount={filteredDocument.length}
+                      pageRangeDisplayed={5}
+                      onChange={handlePageChange}
+                      itemClass="page-item"
+                      linkClass="page-link"
+                />
+              </div>
+            </Col>
+          </Row>
+        </Container>
+      ) : (
+          <>
+            <div className="d-flex flex-column flex-wrap align-items-center justify-content-center" style={{ height: '80vh'}}>
+              <ReactLoading type="cylon" color="#fb8379" height={200} width={200} />
+              <h3 style={{paddingTop:'50px'}}>Please Wait...</h3>
             </div>
-          </Col>
-        </Row>
-      </Container>
+          </>
+      )}
     </>
   );
 }
