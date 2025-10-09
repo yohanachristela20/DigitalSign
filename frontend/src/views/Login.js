@@ -63,7 +63,7 @@ function Login({index}) {
       <Heartbeat/>
     }
     else if (role === "Super Admin") {
-      history.push("/super-admin/master-user"); 
+      history.push("/super-admin/employee-management"); 
       <Heartbeat/>
     }
      else {

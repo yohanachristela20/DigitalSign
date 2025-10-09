@@ -14,13 +14,6 @@ import Trash from "views/Trash.js";
 const dashboardRoutes = [
   // ADMIN
   {
-    path: "/employee-management",
-    name: "Employee Management",
-    icon: "users",
-    component: EmployeeManagement,
-    layout: "/admin"
-  },
-  {
     path: "/all-document",
     name: "All Document",
     icon: "folder",
@@ -75,6 +68,13 @@ const dashboardRoutes = [
 
 
   // SUPER ADMIN
+  {
+    path: "/employee-management",
+    name: "Employee Management",
+    icon: "users",
+    component: EmployeeManagement,
+    layout: "/super-admin"
+  },
   {
     path: "/master-user",
     name: "Master User",

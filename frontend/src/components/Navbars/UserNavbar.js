@@ -124,7 +124,7 @@ function UserHeader() {
             onClick={(e) => e.preventDefault()}
           >
             <img
-              src={require("assets/img/logo2.png")}
+              src={require("../../assets/img/logo2.png")}
               alt="sidebar-logo"
               style={{ width: '30px' }}
               className="img-items mr-2"

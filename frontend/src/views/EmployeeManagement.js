@@ -238,14 +238,14 @@ function EmployeeManagement() {
           />
 
           <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>
-          <Button
+          {/* <Button
               type="button"
               className="btn btn-fill btn-primary mb-3"
               style={{width:"190px"}}
               onClick={handleUpload}>
               <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
                 Upload Document
-            </Button>
+            </Button> */}
           <Container>
             
             <Button

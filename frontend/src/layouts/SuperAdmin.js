@@ -7,6 +7,7 @@ import Sidebar from "../components/Sidebar/Sidebar.js";
 import routes from "routes.js";
 
 import sidebarImage from "assets/img/sidebar-3.jpg";
+import "../assets/scss/lbd/_admin.scss";
 
 function SuperAdmin() {
   const [image, setImage] = React.useState(sidebarImage);
@@ -43,14 +44,13 @@ function SuperAdmin() {
     }
   }, [location]);
   return (
-    <div className="main w-100">
+    <div className="d-flex" style={{height: '100vh'}}>
       <Sidebar color={color} image={hasImage ? image : ""} routes={routes} />
-      <div ref={mainPanel} className="w-100">
+      <div ref={mainPanel} className="content-container flex-grow-1">
         <AdminNavbar />
         <div className="content">
           <Switch>{getRoutes(routes)}</Switch>
         </div>
-        {/* <Footer /> */}
       </div>
     </div>
   );

@@ -44,6 +44,7 @@ const AddUser = ({showAddModal, setShowAddModal, onSuccess}) => {
             });
             setShowAddModal(false);
             onSuccess();
+            window.location.reload();
         } catch (error) {
             const errorMessage = error.response?.data?.message || error.message;
             console.log(error.message);
