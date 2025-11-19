@@ -87,6 +87,8 @@ function UploadDocument() {
 
   const [urutan, setUrutan] = useState("");
   const [countedItem, setCountedItem] = useState(0);
+  const MAX_FILE_SIZE = 10485760; // 10 MB in bytes (10 * 1024 * 1024)
+  const [documentError, setDocumentError] = useState(false);
 
   let fileName;
   
@@ -1122,16 +1124,55 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     setSteps(steps - 1);
   };
 
+  // const handleFileChange = (event) => {
+  //   if (event.target.files && event.target.files.length > 0) {
+  //     const uploadedFile = event.target.files[0];
+  //     fileName = uploadedFile.name;
+      
+  //     setNamaDokumen(fileName);
+  //     setFile(uploadedFile);
+      
+  //   }
+  // };
+
   const handleFileChange = (event) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const uploadedFile = event.target.files[0];
-      fileName = uploadedFile.name;
-      
-      setNamaDokumen(fileName);
-      setFile(uploadedFile);
-      
+    const files = event?.target?.files;
+    if (!files || files.length === 0) return;
+
+    const uploadedFile = files[0];
+    const { name, size } = uploadedFile;
+    const ext = name.split('.').pop().toLowerCase();
+
+    if (ext !== "pdf") {
+      toast.error("Only PDF files are allowed.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+      });
+      return;
     }
+
+    if (size > MAX_FILE_SIZE) {
+      // toast.error("Maximum file size exceeded (10 MB).", {
+      //   position: "top-right",
+      //   autoClose: 5000,
+      //   hideProgressBar: true,
+      // });
+      setDocumentError(true);
+      return;
+    }
+
+    fileName = name;
+    setNamaDokumen(fileName);
+    setFile(uploadedFile);
+
+    // toast.success(`File selected: ${fileName}`, {
+    //   position: "top-right",
+    //   autoClose: 3000,
+    //   hideProgressBar: true,
+    // });
   };
+
 
   const stepTitle = [
     {title: "Upload Document"},
@@ -1332,6 +1373,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                                           <label>Upload Document</label><br />
                                           <input type="file" accept=".pdf" onChange={handleFileChange} />
                                       </Form.Group>
+                                      {documentError && <span className="text-danger required-select">Maximum file size exceeded (10 MB).</span>}
                                   </Col>
                               </Row>
                               

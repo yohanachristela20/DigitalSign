@@ -63,7 +63,7 @@ root.render(
                     onLoginSuccess={() => {
                       const lastRoute = localStorage.getItem("lastRoute"); 
                       localStorage.removeItem("lastRoute");
-                      console.log("Last route: ", lastRoute);
+                      // console.log("Last route: ", lastRoute);
                       props.history.push(lastRoute);
                     }}
                   />

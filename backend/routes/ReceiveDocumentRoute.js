@@ -454,7 +454,7 @@ router.get('/audit-info/:id_dokumen/:id_signers', async(req, res) => {
                 {id_signers}, 
                 delegatedSignerId ? { id_signers : delegatedSignerId } : {}
             ]}, 
-            attributes: ["id_logsign","id_signers", "delegated_signers", "id_dokumen", "createdAt", "id_karyawan", "status", "tgl_tt", "is_submitted"],
+            attributes: ["id_logsign","id_signers", "delegated_signers", "id_dokumen", "createdAt", "id_karyawan", "status", "tgl_tt", "is_submitted", "sign_permission"],
             include: [
                 {
                     model: Karyawan, 

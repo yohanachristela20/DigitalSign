@@ -8,6 +8,7 @@ const EditKaryawan = ({showEditModal, setShowEditModal, employee, onSuccess}) =>
     const [nama, setNama] = useState("");
     const [job_title, setJob] = useState("");
     const [organisasi, setOrganisasi] = useState("");
+		const [jobTitleError, setJobTitleError] = useState("");
 
     const token = localStorage.getItem("token");
 
@@ -99,19 +100,46 @@ const EditKaryawan = ({showEditModal, setShowEditModal, employee, onSuccess}) =>
                 </Form.Group>
                 </Col>
             </Row>
-            <Row className="mt-3 mb-2">
-                <Col md="12">
-                <Form.Group>
-                    <label>Job Title</label>
-                    <Form.Control
-                        type="text"
-                        required
-                        value={job_title}
-                        uppercase
-                        onChange={(e) => handleJobChange(e.target.value.toUpperCase())}
-                    ></Form.Control>
-                    </Form.Group>
-                </Col>
+            <Row>
+							<Col md="12" className="mb-2">
+									<Form.Group>
+									<span className="text-danger">*</span>
+									<label>Job Title</label>
+									<Form.Select 
+									className="form-control"
+									required
+									value={job_title}
+									onChange={(e) => {
+											setJob(e.target.value);
+											setJobTitleError(false);
+									}}
+									>
+											<option className="placeholder-form" key='blankChoice' hidden value>Choose Job Title</option>
+
+											<option value="FINANCE DIRECTOR">FINANCE DIRECTOR</option>
+											<option value="PRODUCTION DIRECTOR">PRODUCTION DIRECTOR</option>
+											<option value="PURCHASING">PURCHASING</option>
+											<option value="FINANCE">FINANCE</option>
+											<option value="LOGISTIC">LOGISTIC</option>
+											<option value="ACCOUNTING">ACCOUNTING</option>
+											<option value="TAX">TAX</option>
+											<option value="FREEZER MANAGEMENT">FREEZER MANAGEMENT</option>
+											<option value="PRODUCT COST">PRODUCT COST</option>
+											<option value="DELIVERY VAN REPAIR">DELIVERY VAN REPAIR</option>
+											<option value="INTERNAL AUDIT">INTERNAL AUDIT</option>
+											<option value="PRODUCTION">PRODUCTION</option>
+											<option value="PPC">PPC</option>
+											<option value="R&D">R&D</option>
+											<option value="QC">QC</option>
+											<option value="QS">QS</option>
+											<option value="MARKETING OPERATIONAL">MARKETING OPERATIONAL</option>
+											<option value="IT SUPPORT">IT SUPPORT</option>
+											<option value="HR & GENERAL AFFAIR">HR & GENERAL AFFAIR</option>
+											<option value="TEKNIK & ADM. MEKANIK">TEKNIK & ADM. MEKANIK</option>
+									</Form.Select>
+									{jobTitleError && <span className="text-danger required-select">Please choose Job Title first</span>}
+									</Form.Group>
+							</Col>
             </Row>
             <Row className="mt-3 mb-2">
                 <Col md="12">

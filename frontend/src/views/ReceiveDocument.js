@@ -122,6 +122,7 @@ function ReceiveDocument() {
     const canvasContainerRef = useRef(null);
     const [canvases, setCanvases] = useState([]);
     const [sign_permission, setSignPermission] = useState("");
+    const [dataDoc, setDataDoc] = useState([]);
 
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -408,6 +409,7 @@ function ReceiveDocument() {
             const deadline = res.data.deadline;
             const sign_permission = res.data.sign_permission;
             const finalSignerId = allSigners || currentSigner || delegated_signers;
+
             setDelegatedSigners(delegated_signers);
             setCurrentSigner(currentSigner);
 
@@ -462,6 +464,7 @@ function ReceiveDocument() {
                             email: dataSignerInfo[0].Signerr.Penerima?.email,
                         };
                         signerData.push(signerInfo);
+                        setDataDoc(signerData);
                     }
 
                 const response = await axios.get(`http://localhost:5000/decline/${id_dokumen}/${signer}`);
@@ -574,6 +577,8 @@ function ReceiveDocument() {
 
         fetchData();
     }, [token]);
+
+    // console.log("dataDoc:", dataDoc);
 
     useEffect(() => {
         if (signerData.length === 0) return;
@@ -915,7 +920,7 @@ function ReceiveDocument() {
 
             const a = document.createElement("a"); 
             a.href = url;
-            a.download = `${id_dokumen}.pdf`;
+            a.download = `${dataDoc[0].doc_name}.pdf`;
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -1033,7 +1038,7 @@ function ReceiveDocument() {
             }
 
             const finalBytes = finalPdf.output("blob");
-            saveAs(finalBytes, `signed_${id_dokumen}.pdf`);
+            saveAs(finalBytes, `${dataDoc[0].doc_name} (signed).pdf`);
 
         } catch (error) {
             console.error("Downloading error:", error.message);
@@ -1240,8 +1245,8 @@ function ReceiveDocument() {
                         </Alert>
                         <Alert variant="warning" style={{marginTop: "-680px"}}
                             hidden={
-                                (token === delegate_token && !is_submitted) ||
-                                (is_delegated === true && is_submitted) ||
+                                // (token === delegate_token && !is_submitted) ||
+                                // (is_delegated === true && is_submitted) ||
                                 (delegatedDoc !== id_dokumen)
                             }
                         >
@@ -1431,9 +1436,9 @@ function ReceiveDocument() {
                                                         if (isCompleted && sig.sign_base64) {
                                                         content = (
                                                             <img
-                                                            src={sig.sign_base64}
-                                                            alt="Initial"
-                                                            style={{ width: "100%", height: "100%" }}
+                                                              src={sig.sign_base64}
+                                                              alt="Initial"
+                                                              style={{ width: "100%", height: "100%" }}
                                                             />
                                                         );
                                                         } else if (!is_delegated && isFirstSigner) {

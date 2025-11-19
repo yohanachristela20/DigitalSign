@@ -74,6 +74,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                                 status: d.status,
                                 id_dokumen: d.id_dokumen,
                                 tgl_tt: d.tgl_tt,
+                                sign_permission: d.sign_permission,
                                 is_submitted: d.is_submitted,
                                 accessed_at: d.LinkAccess?.accessed_at,
                                 real_email: d.LinkAccess?.real_email
@@ -220,7 +221,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
 
                     <Row className="mt-3">
                     <Col md="6"><label>Document name</label></Col>
-                    <Col md="6">{signerData[0]?.doc_name}</Col>
+                    <Col md="6" style={{whiteSpace: 'pre-wrap', overflowWrap: 'break-word'}}><p>{signerData[0]?.doc_name}</p></Col>
                     </Row>
                     <Row className="mt-2">
                     <Col md="6"><label>Document ID</label></Col>
@@ -302,7 +303,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                     .sort((a,b) => new Date(b.tgl_tt) - new Date(a.tgl_tt))
                     .filter((s) => s.status === "Completed")
                     .map((s, idx) => (
-                        <Row key={`signed-${s.id_signers}-${idx}`} className="mt-2">
+                        <Row key={`signed-${s.id_signers}-${idx}`} className="mt-2" hidden={s.sign_permission === "Receive a copy"}>
                         <Col md="6">
                             <FaSignature className="mr-3 mt-1" style={{ width: 40, height: 40 }} />
                             {s.tgl_tt ? moment(s.tgl_tt).format("DD-MM-YYYY HH:mm:ss") : "-"}

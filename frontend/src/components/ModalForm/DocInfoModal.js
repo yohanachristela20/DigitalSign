@@ -149,7 +149,6 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
         setSelectedValues({});
     }
 
-    
 
     return (
        <>
@@ -181,7 +180,7 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
                                     <label>Document name</label>
                                 </Form.Group>
                             </Col>
-                            <Col md="6">
+                            <Col md="6" style={{whiteSpace: 'pre-wrap', overflowWrap: 'break-word'}}>
                                 {selectedSigner.doc_name}
                             </Col>
                         </Row>
@@ -192,8 +191,8 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
                                 </Form.Group>
                             </Col>
                             <Col md="6">
-                                <p className="mb-1">{senderData.nama}</p>
-                                <p>{senderData.email_sender}</p>
+                                <p className="mt-1 mb-0">{senderData.nama}</p>
+                                <p style={{whiteSpace: 'pre-wrap', overflowWrap: 'break-word'}} >{senderData.email_sender}</p>
                             </Col>
                         </Row>
                         <Row className="mt-2">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import {FaFileCsv, FaFilePdf, FaTrashAlt, FaSortUp, FaSortDown, FaPaperPlane, FaDownload} from 'react-icons/fa'; 
+import {FaFileCsv, FaFilePdf, FaTrashAlt, FaSortUp, FaSortDown, FaPaperPlane, FaDownload, FaSignInAlt, FaHourglassStart, FaClipboardCheck, FaSign, FaFileSignature} from 'react-icons/fa'; 
 import SearchBar from "components/Search/SearchBar.js";
 import axios from "axios";
 import AddKaryawan from "components/ModalForm/AddKaryawan.js";
@@ -40,7 +40,9 @@ function Document() {
   const [sortOrderDibayar, setSortOrderDibayar] = useState("asc");
   const [showAddDoc, setShowAddDoc] = React.useState(false);
   const selectedCategory = location.state?.selectedCategory;
-  const selectedDocuments = location.state?.selectedDocument;
+  const [jumlahNeedsToSign, setJumlahNeedsToSign] = useState([]);
+  const [jumlahPending, setJumlahPending] = useState([]);
+  const [jumlahCompleted, setJumlahCompleted] = useState([]);
 
   const [documentStatus, setDocumentStatus] = useState([]);
   const [documentDeadline, setDocumentDeadline] = useState([]);
@@ -49,11 +51,12 @@ function Document() {
 
   const token = localStorage.getItem("token");
 
+  // console.log("selectedCategory:", selectedCategory);
+
   const [show, setShow] = useState("");
   const [editable, setEditable] = useState("");
   const [is_delegated, setIsDelegated] = useState("");
   const [delegated_signers, setDelegatedSigners] = useState("");
-
   const [isLoading, setIsLoading] = useState(false);
 
   const today = new Date();
@@ -61,7 +64,6 @@ function Document() {
   const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
   const todayDate = today.getDate().toString().padStart(2, '0');
   const formattedDate = `${currentYear}-${currentMonth}-${todayDate}`;
-
   const pdfContainerRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -152,7 +154,7 @@ function Document() {
 
   const filteredDocument = document.filter((doc) =>
   {
-     const status = getStatusById(doc.id_dokumen);
+    const status = getStatusById(doc.id_dokumen);
 
    return (
     (doc.id_dokumen && String(doc.id_dokumen).includes(searchQuery)) ||
@@ -165,16 +167,7 @@ function Document() {
    );
   });
 
-  const filteredDocsStatus = selectedDocuments
-    ? documentStatus.filter(doc => doc.id_dokumen === selectedDocuments)
-    : documentStatus;
-
-
-  const filteredDocStatus = documentStatus.filter((documentStatus) =>
-    (documentStatus.id_dokumen && String(documentStatus.id_dokumen).toLowerCase().includes(searchQuery)) ||
-    (documentStatus.status && String(documentStatus.status).toLowerCase().includes(searchQuery))
-  );
-
+  // console.log("filteredDoc:", filteredDocument);
 
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -365,7 +358,7 @@ function Document() {
   
     doc.save("documents.pdf");
   };
-
+  
   const plainDoc = async (id_dokumen) => {
     try {
       const res = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`, {
@@ -378,9 +371,13 @@ function Document() {
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
 
+      const docItem = document.find(d => String(d.id_dokumen) === String(id_dokumen));
+      const rawName = docItem?.nama_dokumen || `document_${id_dokumen}`;
+      const safeName = String(rawName).trim().replace(/[/\\?%*:|"<>]/g, '-');
+
       const a = window.document.createElement("a");
       a.href = url;
-      a.download = `${id_dokumen}.pdf`;
+      a.download = `${safeName}`;
       window.document.body.appendChild(a);
       a.click();
       a.remove();
@@ -389,7 +386,6 @@ function Document() {
       console.error("Downloading error:", error.message);
     }
   };
-
 
   const downloadDoc = async (id_dokumen, ref, logSigns) => { 
     try {
@@ -459,13 +455,102 @@ function Document() {
       const signedBytes = await pdfDoc.save();
       const blob = new Blob([signedBytes], { type: "application/pdf" });
 
-      saveAs(blob, `signed_${id_dokumen}.pdf`);
+      const docItem = document.find(d => String(d.id_dokumen) === String(id_dokumen));
+      const rawName = docItem?.nama_dokumen || `document_${id_dokumen}`;
+      const safeName = String(rawName).trim().replace(/[/\\?%*:|"<>]/g, '-');
+
+      saveAs(blob, `${safeName}`);
 
     } catch (error) {
       console.error("Downloading error:", error.message);
     }
   };
 
+  // useEffect(() => {
+  //   const fetchSummaryData = async() => {
+  //     try {
+  //       const [resJumlahNeedsToSign, resJumlahPending, resJumlahCompleted] = await Promise.all([
+  //         axios.get("http://localhost:5000/count-needsToSign", {
+  //           headers: { Authorization: `Bearer ${token}` },
+  //         }), 
+  //         axios.get("http://localhost:5000/count-pendingDoc", {
+  //           headers: { Authorization: `Bearer ${token}` },
+  //         }),
+  //         axios.get("http://localhost:5000/count-completed", {
+  //           headers: { Authorization: `Bearer ${token}` },
+  //         }),
+  //       ]);
+
+  //       setJumlahNeedsToSign(resJumlahNeedsToSign.data.jumlahNeedsToSign || 0);
+  //       setJumlahPending(resJumlahPending.data.jumlahPending || 0);
+  //       setJumlahCompleted(resJumlahCompleted.data.jumlahCompleted || 0);
+  //     } catch (error) {
+  //       console.error("Error fetching summary data:", error);
+  //     }
+  //   };
+
+  //   fetchSummaryData();
+  // });
+
+  const getJumlahNeedsToSign = async(selectedCategory) => {
+    try {
+      const url = selectedCategory 
+      ? `http://localhost:5000/count-needsToSign/${selectedCategory}`
+      : `http://localhost:5000/count-needsToSign`;
+
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setJumlahNeedsToSign(res.data || []);
+    } catch (error) {
+      console.error("Error fetching data:", error.message); 
+    }
+  };
+
+  const getJumlahPending = async(selectedCategory) => {
+    try {
+      const url = selectedCategory 
+      ? `http://localhost:5000/count-pendingDoc/${selectedCategory}`
+      : `http://localhost:5000/count-pendingDoc`;
+
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setJumlahPending(res.data || []);
+    } catch (error) {
+      console.error("Error fetching data:", error.message); 
+    }
+  };
+
+  const getJumlahCompleted = async(selectedCategory) => {
+    try {
+      const url = selectedCategory 
+      ? `http://localhost:5000/count-completed/${selectedCategory}`
+      : `http://localhost:5000/count-completed`;
+
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setJumlahCompleted(res.data || []);
+    } catch (error) {
+      console.error("Error fetching data:", error.message); 
+    }
+  };
+
+  // console.log("jumlahNeedsToSign:", jumlahNeedsToSign);
+
+  useEffect(() => {
+    getJumlahNeedsToSign(selectedCategory);
+    getJumlahPending(selectedCategory);
+    getJumlahCompleted(selectedCategory);
+
+  }, [selectedCategory]);
 
 
   const handleUpload = () => {
@@ -513,7 +598,96 @@ function Document() {
                 <FaFilePdf style={{ marginRight: '8px' }} />
                 Export to PDF
               </Button>
-            </Container>          
+            </Container>       
+            <Row>
+              <Col lg="4" sm="6">
+                  <Card className="card-stats">
+                  <Card.Body>
+                    <Row>
+                      <Col xs="5">
+                        <div className="icon-big icon-warning">
+                          <FaFileSignature className="text-warning" />
+                        </div>
+                      </Col>
+                      <Col xs="7">
+                        <div className="numbers">
+                          <p className="card-category">Needs to sign</p>
+                        </div>
+                      </Col>
+                      <Col>
+                      <div className="text-right">
+                        <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">{jumlahNeedsToSign?.jumlahNeedsToSign}</h3></Card.Title>
+                      </div>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                  <Card.Footer>
+                    <hr></hr>
+                    <div className="stats">
+                      Needs to sign
+                    </div>
+                  </Card.Footer>
+                </Card>
+              </Col>
+              <Col lg="4" sm="6">
+                <Card className="card-stats">
+                  <Card.Body>
+                    <Row>
+                      <Col xs="5">
+                        <div className="icon-big icon-warning">
+                          <FaHourglassStart className="text-danger" />
+                        </div>
+                      </Col>
+                      <Col xs="7">
+                        <div className="numbers">
+                          <p className="card-category">Pending sign</p>
+                        </div>
+                      </Col>
+                      <Col>
+                        <div className="text-right">
+                          <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">{jumlahPending?.jumlahPending}</h3></Card.Title>
+                        </div>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                  <Card.Footer>
+                    <hr></hr>
+                    <div className="stats">
+                      Pending sign
+                    </div>
+                  </Card.Footer>
+                </Card>
+              </Col>
+              <Col lg="4" sm="6">
+                <Card className="card-stats">
+                  <Card.Body>
+                    <Row>
+                      <Col xs="5">
+                        <div className="icon-big icon-warning">
+                          <FaClipboardCheck className="text-primary"/>
+                        </div>
+                      </Col>
+                      <Col xs="7">
+                        <div className="numbers">
+                          <p className="card-category">Completed</p>
+                        </div>
+                      </Col>
+                      <Col>
+                        <div className="text-right">
+                          <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">{jumlahCompleted?.jumlahCompleted}</h3></Card.Title>
+                        </div>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                  <Card.Footer>
+                    <hr></hr>
+                    <div className="stats">
+                      Completed
+                    </div>
+                  </Card.Footer>
+                </Card>
+              </Col>
+            </Row>  
             <Col md="12">
             <CDBTable hover  className="mt-4">
               <CDBTableHeader>
