@@ -20,7 +20,6 @@ export const getLogSign = async(req, res) => {
             ], 
             raw: false,
         });
-        console.log("Signers: ", response);
         res.status(200).json(response); 
     } catch (error) {
         console.log(error.message); 
@@ -56,7 +55,6 @@ export const updateLogsign = async (req, res) => {
 
     if (latestSigner) {
       await latestSigner.destroy();
-      console.log(`Destroyed latest signer id=${latestSigner.id} for id_karyawan=${oldIdSigner}`);
     }
 
 
@@ -96,8 +94,6 @@ export const updateLogsign = async (req, res) => {
 export const updatePermission = async (req, res) => {
   const { id_dokumen, id_signers } = req.params;
   const { sign_permission, id_item, x_axis, y_axis, width, height, page, jenis_item } = req.body;
-
-  console.log("UPDATE PERMISSION DATA:", id_item, x_axis, y_axis, width, height, page, jenis_item);
 
   try {
     const logsign = await LogSign.findOne({
@@ -148,8 +144,6 @@ export const updateItem = async (req, res) => {
   const { id_dokumen, id_signers } = req.params;
   const { sign_permission, jenis_item } = req.body;
   const transaction = await db.transaction();
-
-  console.log("ID DOKUMEN:", id_dokumen, "ID SIGNERS:", id_signers);
 
   try {
     const items = req.body;

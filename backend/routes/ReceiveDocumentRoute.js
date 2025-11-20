@@ -134,7 +134,6 @@ router.post('/link-access-log', async (req, res) => {
     const delegatedArray = Array.isArray(delegated_signers) ? delegated_signers : [delegated_signers];
 
     const isAuthorizedSigner = signerArray.includes(currentSigner) || delegatedArray.includes(currentSigner);
-    console.log("isAuthorizedSigner: ", isAuthorizedSigner);
 
     if (!isAuthorizedSigner) {
         return res.status(403).json({ message: 'Unauthorized signer access' });
@@ -148,7 +147,6 @@ router.post('/link-access-log', async (req, res) => {
                 {delegated_signers: currentSigner}
             ]},
     });
-    console.log("logsign:", logsign);
 
     if (!logsign) {
       return res.status(404).json({ message: `LogSign not found for signer: ${currentSigner}` });
@@ -319,7 +317,7 @@ router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async (req, res) => {
 
         const response = await LogSign.findAll({
             where: { id_dokumen, id_signers: mainSignerId, id_item },
-            attributes: ["id_item", "id_signers", "status", "urutan", "is_submitted", "is_delegated", "main_token", "delegate_token", "sign_permission" ],
+            attributes: ["id_item", "id_signers", "status", "urutan", "is_submitted", "is_delegated", "main_token", "delegate_token", "sign_permission", "tgl_tt" ],
             include: [
                 {
                     model: Item,
@@ -339,7 +337,6 @@ router.get('/axis-field/:id_dokumen/:id_signers/:id_item', async (req, res) => {
         // console.log("PAGES:", pages);
 
         res.status(200).json(response);
-        console.log("response:", response);
         // res.status(200).json({ pages });
     } catch (error) {
         console.log("error:", error.message);
@@ -356,7 +353,7 @@ router.get('/decline/:id_dokumen/:finalSignerId', async(req, res) => {
                 {id_signers: finalSignerId},
                 {delegated_signers: finalSignerId}
             ]},  
-            attributes: ["id_signers", "delegated_signers", "id_dokumen", "createdAt"],
+            attributes: ["id_signers", "delegated_signers", "id_dokumen", "createdAt", "tgl_tt"],
             include: [
                 {
                     model: Karyawan, 
@@ -554,7 +551,6 @@ router.patch('/update-submitted/:id_dokumen/:currentSigner', async(req, res) => 
     const {id_dokumen, currentSigner} = req.params;
     const {is_submitted, status, tgl_tt} = req.body;
 
-    console.log("currentSigner submitted:", currentSigner);
 
     try {
         const submitted = await LogSign.update(
@@ -857,7 +853,6 @@ const sendEmailDelegateInternal = async(delegateLink, documentName, receiverName
         };
 
         await transporter.sendMail(mailOptions);
-        console.log(`Delegate email sent to ${receiverName}`);
 
     } catch (error) {
         console.error("Failed to send delegate email:", error.message);

@@ -382,11 +382,6 @@ export const createLogSign = async (req, res) => {
 
 
 const sendEmailNotificationInternal = async (validLogsigns, signLink, subjectt, messagee, documentName) => {
-    console.log("Logsigns:", validLogsigns);
-    console.log("Signlink:", signLink);
-    console.log("Subjectt:", subjectt);
-    console.log("Messagee:", messagee);
-    console.log("Document name:", documentName);
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -455,8 +450,6 @@ export const sendEmailNotification = async (req, res) => {
     const {subjectt, messagee, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers, day_after_reminder, deadline, sign_permission} = req.body;
     const jwtSecret = process.env.JWT_SECRET_KEY;
 
-    console.log("day after reminder:", day_after_reminder);
-
     const signerList = [...new Set(Array.isArray(id_signers) ? id_signers : [id_signers])];
     const urutanList = [...new Set(Array.isArray(urutan) ? urutan : [urutan])];
     const itemList = [...new Set(Array.isArray(id_item) ? id_item : [id_item])];
@@ -485,10 +478,6 @@ export const sendEmailNotification = async (req, res) => {
           }],
         }]
       });
-
-      console.log(`Valid logsigns for ${signer}:`, validLogsigns.map(log => log.toJSON()));
-      console.log("Deadline:", deadline);
-
 
       if (validLogsigns.length === 0) {
         emailResults.push({ signer, message: 'No valid logsigns to notify.' });
@@ -530,8 +519,6 @@ export const sendEmailNotification = async (req, res) => {
         jwtSecret, {expiresIn}
       );
 
-      console.log("Expires in:", expiresIn);
-
       const signLink = `http://localhost:3000/user/envelope?token=${token}`;
 
       await LogSign.update(
@@ -550,7 +537,6 @@ export const sendEmailNotification = async (req, res) => {
       });
 
       const documentName = docName?.DocName?.nama_dokumen;
-      console.log("DOC NAME:", documentName);
 
       await sendEmailNotificationInternal(validLogsigns, signLink, subjectt, messagee, documentName);
 
@@ -646,9 +632,6 @@ export const updateInitialSign = async(req, res) => {
     if (!jenis_item || !currentUrutan) {
       return res.status(400).json({message: "Missing jenis item or urutan"});
     }
-
-    console.log("Jenis item:", jenis_item);
-    console.log("Current urutan:", currentUrutan);
 
     let finalSignBase64 = sign_base64;
     const prevUrutan = currentUrutan - 1;
@@ -944,7 +927,6 @@ export const deleteDocument = async (req, res) => {
       const filePath = path.resolve(document.filepath_dokumen);
       try {
         await fs.promises.unlink(filePath);
-        console.log("File deleted:", filePath);
       } catch (err) {
         console.error("Failed to delete file:", err.message);
       }
@@ -993,7 +975,6 @@ export const autoDeleteDocument = async(req, res) => {
         const filePath = path.resolve(filepath_dokumen);
         try {
           await fs.promises.unlink(filePath);
-          console.log("File deleted:", filePath);
         } catch (error) {
           console.error("Failed to delete file", err.message);
         }

@@ -29,7 +29,6 @@ const sendReminderEmail = async () => {
     const day = today.getDate().toString().padStart(2, '0');
     const formattedDate = `${year}-${month}-${day}`;
 
-    console.log("Today's date:", formattedDate);
 
     const logs = await LogSign.findAll({
       where: {
@@ -83,11 +82,8 @@ const sendReminderEmail = async () => {
             { reminder_date: reminderDate },
             { where: { id_logsign: log.id_logsign } }
           );
-          console.log(`Set initial reminder_date for logsign ID ${log.id_logsign}:`, reminderDate);
         }
       }
-
-      console.log("Reminder date:", reminderDate);
 
       if (repeat === "none" || status === "Decline") {
         if (
@@ -113,7 +109,6 @@ const sendReminderEmail = async () => {
             {status: "Expired"},
             {where: {id_logsign: log.id_logsign}}
           );
-          console.log(`Logsign ${log.id_logsign} expired because deadline ${deadline.toISOString().split("T")[0]} < today ${today.toISOString().split("T")[0]}`);
         }
 
         if (reminderDate && today.getTime() === reminderDate.setHours(0, 0, 0, 0) && !log.reminder_sent) {
@@ -157,7 +152,6 @@ const sendReminderEmail = async () => {
           updateFields,
           { where: { id_dokumen: log.id_dokumen, id_signers: log.id_signers } }
         );
-        console.log(`Reminder sent & marked for document: ${log.id_dokumen} and signer ${log.id_signers}`);
       } catch (error) {
         console.error(`Failed to send email for logsign ID ${log.id_logsign}:`, error.message);
       }

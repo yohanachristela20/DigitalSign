@@ -43,7 +43,10 @@ body{
 }
 
 .content{
-  padding: 30px;
+  // padding: 10px;
+  padding-top: 40px;
+  padding-right: 0px;
+  padding-left: 0px;
 }
 
 .sidebar:has(.toggle-button input:checked){

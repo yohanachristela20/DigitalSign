@@ -136,7 +136,6 @@ export const getKaryawanDetails = async (req, res) => {
         ],
         });
 
-        console.log("Karyawan details:", response);
         res.status(200).json(response);
 
     } catch (error) {
@@ -165,7 +164,6 @@ export const getKaryawanPermission = async (req, res) => {
             return res.status(404).json({ message: "Signer not found" });
         }
 
-        console.log("Signer details: ", response);
         res.status(200).json(response);
     } catch (error) {
         console.error(error);

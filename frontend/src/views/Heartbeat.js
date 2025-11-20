@@ -19,9 +19,9 @@ const sendHeartbeat = () => {
         headers: { Authorization: `Bearer ${token}` },
       }
     )
-    .then((response) => {
-      console.log(response.data.message);
-    })
+    // .then((response) => {
+    //   console.log(response.data.message);
+    // })
     .catch((error) => {
       console.error("Error sending heartbeat:", error);
       if (error.response?.status === 401) {

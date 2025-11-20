@@ -27,7 +27,6 @@ export const getUserById = async(req, res) => {
 
 export const createUser = async(req, res) => {
     try {
-        console.log(req.body);
         await User.create(req.body);
         res.status(201).json({msg: "New user has been created!"}); 
     } catch (error) {

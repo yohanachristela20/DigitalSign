@@ -322,7 +322,6 @@ router.get('/document-status', async (req, res) => {
     const results = Object.values(docStatusMap).map((doc) => {
       const statuses = doc.statuses;
       const submissions = doc.submissions;
-      console.log("SUBMISSION:", doc.id_dokumen, submissions);
 
       const anyDecline = statuses.includes('Decline');
       const allCompleted = statuses.every((s) => s === 'Completed');
@@ -354,17 +353,6 @@ router.get('/document-status', async (req, res) => {
     res.status(500).json({ message: "Error fetching document status." });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
 
 router.get('/document-deadline', async (req, res) => {
     const deadlineList = await LogSign.findAll({

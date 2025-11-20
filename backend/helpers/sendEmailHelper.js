@@ -91,9 +91,6 @@ const sendEmailToSigner = async (log, subject = [], message = [], token = null) 
     };
 
     await transporter.sendMail(mailOptions);
-    console.log("Now:", now);
-
-    console.log(`Email sent to ${receiverEmail} for signer ${log.is_delegated? log.delegated_signers : log.id_signers}`);
 }
 
 export default sendEmailToSigner;

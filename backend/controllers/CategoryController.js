@@ -30,7 +30,7 @@ export const getCategoryById = async(req, res) => {
 
 export const createCategory = async(req, res) => {
     try {
-        console.log(req.body);
+        // console.log(req.body);
         await KategoriDokModel.create(req.body);
         res.status(201).json({msg: "New Category has been created!"}); 
     } catch (error) {

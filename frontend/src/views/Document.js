@@ -12,6 +12,7 @@ import "jspdf-autotable";
 import Pagination from "react-js-pagination";
 import "../assets/scss/lbd/_pagination.scss";
 import "../assets/scss/lbd/_table-header.scss";
+import "../assets/scss/lbd/_receivedoc.scss";
 import { useLocation, useHistory } from "react-router-dom";
 import { CDBTable, CDBTableHeader, CDBTableBody, CDBContainer, CDBBtn, CDBBtnGrp } from 'cdbreact';
 import { PDFDocument } from "pdf-lib";
@@ -68,6 +69,8 @@ function Document() {
   const canvasRef = useRef(null);
 
   const {progress, status} = getProgress(document);
+  const [signerData, setSignerData] = useState([]);
+  const [errorMsg, setErrorMsg] = useState("");
   
 
   const getDocument = async (selectedCategory) =>{
@@ -387,6 +390,211 @@ function Document() {
     }
   };
 
+    // useEffect(() => {
+    // const fetchData = async () => {
+    //     if (!token) return;
+  
+    //     try {
+    //         const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+    //         const id_dokumen = res.data.id_dokumen;
+    //         const allSigners = res.data.id_signers;
+    //         const urutan = res.data.urutan;
+    //         const currentSigner = res.data.currentSigner;
+    //         const allItems = res.data.id_item;
+    //         const idKaryawan = res.data.id_karyawan;
+    //         const delegated_signers = res.data.delegated_signers || null;
+    //         const is_delegated = res.data.is_delegated;
+    //         const main_token = res.data.main_token;
+    //         const delegate_token = res.data.delegate_token;
+    //         const deadline = res.data.deadline;
+    //         const sign_permission = res.data.sign_permission;
+    //         const finalSignerId = allSigners || currentSigner || delegated_signers;
+  
+    //         setDelegatedSigners(delegated_signers);
+    //         setCurrentSigner(currentSigner);
+  
+    //         if (!id_dokumen || !allSigners || !urutan || !allItems || !idKaryawan) {
+    //             throw new Error("Missing id_dokumen, id_signers, id_item, id_karyawan or urutan from token.");
+    //         }
+  
+    //         setIdDokumen(id_dokumen);
+    //         setIdSigner(currentSigner);
+    //         setAllSigners(allSigners);
+    //         setAllItems(allItems);
+    //         setIdKaryawan(idKaryawan);
+    //         setFinalSignerId(finalSignerId);
+    //         setIsDelegated(is_delegated);
+    //         setMainToken(main_token);
+    //         setDelegateToken(delegate_token);
+    //         // setDeadline(deadline)
+  
+    //         const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
+    //         if (!fileRes.ok) {
+    //             throw new Error("Failed to get PDF Document.");
+    //         }
+  
+    //         const blob = await fileRes.blob();
+    //         const url = URL.createObjectURL(blob);
+    //         setPdfUrl(url);
+  
+    //         const localSignatureFields = [];
+    //         const localInitialFields = [];
+    //         const localDateFields = [];
+    //         const allStatus = [];
+    //         const allSigner = [];
+    //         const allPermission = [];
+  
+    //         const signerArray = Array.isArray(finalSignerId) ? finalSignerId : [finalSignerId];
+    //         const itemArray = Array.isArray(allItems) ? allItems : [allItems];
+    //         const karyawanArray = Array.isArray(idKaryawan) ? idKaryawan : [idKaryawan];
+  
+    //         const urutanMapping = {};
+    //         const submittedMapping = {};
+    //         const delegateMapping = {};
+  
+    //         for (const signer of signerArray) {
+    //             const resSignerInfo = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
+    //                 const dataSignerInfo = resSignerInfo.data;
+    //                 if (dataSignerInfo.length > 0 && dataSignerInfo[0]?.Signerr && dataSignerInfo[0]?.DocName) {
+    //                     const signerInfo = {
+    //                         id_signers: dataSignerInfo[0].id_signers,
+    //                         nama: dataSignerInfo[0].Signerr.nama,
+    //                         organisasi: dataSignerInfo[0].Signerr.organisasi,
+    //                         doc_name: dataSignerInfo[0].DocName.nama_dokumen,
+    //                         email: dataSignerInfo[0].Signerr.Penerima?.email,
+    //                         tgl_tt: dataSignerInfo[0].tgl_tt,
+    //                     };
+    //                     signerData.push(signerInfo);
+    //                     setDataDoc(signerData);
+    //                 }
+  
+    //             const response = await axios.get(`http://localhost:5000/decline/${id_dokumen}/${signer}`);
+    //             const data = response.data;
+  
+    //             if (data.length > 0 && data[0].Signerr){
+    //                 allSigner.push({
+    //                     id_signers: data[0].id_signers, 
+    //                     nama: data[0].Signerr.nama,
+    //                     tgl_tt: data[0].tgl_tt,
+    //                 });
+    //             }
+  
+    //             setSignerData(allSigner);
+    //             // const tglTT = allSigner.map(t => t.tgl_tt);
+    //             // console.log("tgltt:", tglTT);
+    //             // setTglTT(tglTT);
+  
+    //             // const foundForTgl = allSigner.find(s => String(s.id_signers) === String(currentSigner));
+    //             // console.log("foundForTgl:", foundForTgl);
+    //             // if (foundForTgl && foundForTgl.tgl_tt){
+    //             // 	setTglTT(foundForTgl.tgl_tt);
+    //             // }  
+  
+    //             let mainSigner = allSigners;
+    //             if (is_delegated) {
+    //                 mainSigner = res.data.id_signers;
+    //             }
+  
+    //             setMainSigner(mainSigner);
+  
+    //             let querySigner = signer;
+    //             setActualSigner(querySigner);
+                
+    //             for (const itemID of itemArray) {
+    //                 const fieldRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${querySigner}/${itemID}`);
+  
+    //                 const validFields = fieldRes.data.filter(item => item.ItemField);
+  
+    //                 for (let idx = 0; idx < validFields.length; idx++) {
+    //                     const item = validFields[idx];
+    //                     const{
+    //                         x_axis, 
+    //                         y_axis, 
+    //                         width, 
+    //                         height, 
+    //                         jenis_item, 
+    //                         page,
+    //                         id_item: fieldItemId,
+    //                     } = item.ItemField;
+  
+    //                     const status = item.status || "Pending";
+    //                     const sign_permission = item.sign_permission || null;
+    //                     const urutan = item.urutan;
+    //                     const is_submitted = item.is_submitted;
+    //                     const tgl_tt = item.tgl_tt;
+  
+    //                     // console.log("TGL TT:", tgl_tt);
+    //                     // setTglTT(tgl_tt);
+  
+  
+    //                     if (!urutanMapping[fieldItemId]) {
+    //                         urutanMapping[fieldItemId] = urutan;
+    //                     }
+  
+    //                     if (!submittedMapping[signer]) {
+    //                         submittedMapping[signer] = is_submitted;
+    //                     }
+  
+    //                     const fieldObj = {
+    //                         id: `field-${querySigner}-${idx}`,
+    //                         x_axis,
+    //                         y_axis,
+    //                         width,
+    //                         height, 
+    //                         jenis_item,
+    //                         page,
+    //                         pageScale: 1,
+    //                         enableResizing: false,
+    //                         disableDragging: true,
+    //                         id_item: fieldItemId, 
+    //                         status,
+    //                         urutan, 
+    //                         is_submitted, 
+    //                         show,
+    //                         editable,
+    //                         id_signers: querySigner, 
+    //                         is_delegated,
+    //                         delegated_signers,
+    //                         sign_permission,
+    //                         tgl_tt,
+    //                     }; 
+  
+    //                     allStatus.push({id_item: fieldItemId, status});
+    //                     allPermission.push({id_item: fieldItemId, sign_permission});
+  
+    //                     if (jenis_item === "Signpad") {
+    //                         localSignatureFields.push(fieldObj);
+    //                     } else if (jenis_item === "Initialpad") {
+    //                         localInitialFields.push(fieldObj);
+    //                     } else if (jenis_item === "Date") {
+    //                         localDateFields.push(fieldObj);
+    //                     }
+    //                 }
+    //             }
+    //         }
+  
+    //         setSignatures(localSignatureFields);
+    //         setInitials(localInitialFields);
+    //         setDateField(localDateFields);
+    //         setSignStatus(allStatus);
+    //         setUrutanMap(urutanMapping);
+    //         setSubmittedMap(submittedMapping);
+    //         // setDelegatedMap(delegateMapping);
+    //         // setSignPermission(allPermission);
+  
+  
+    //     } catch (error) {
+    //         console.error("Failed to load PDF:", error.message);
+    //         setErrorMsg(error.message);
+    //         toast.error("Load document error or Expired token.");
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+  
+    //     fetchData();
+    // }, [token]);
+
   const downloadDoc = async (id_dokumen, ref, logSigns) => { 
     try {
       const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
@@ -397,6 +605,11 @@ function Document() {
       const scale = 1;
     
       for (const sign of logSigns) {
+        // console.log("STATUS:", sign.status, "SIGNER:", sign.Signerr?.nama);
+        // const Signer = sign.Signerr?.nama;
+
+        // console.log("Signer:", Signer);
+
         if (sign.status === "Completed" && sign.is_submitted) {
           const axisRes = await fetch(
             `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
@@ -424,17 +637,31 @@ function Document() {
           const yPos = pageHeight - y_axis - height + 10;
 
           if (jenis_item === "Initialpad" || jenis_item === "Signpad") {
-            let base64Url = sign.sign_base64;
-            if (!base64Url.startsWith("data:image")) {
-              base64Url = `data:image/png;base64,${base64Url}`;
-            }
-            const pngImage = await pdfDoc.embedPng(base64Url);
-            pdfPage.drawImage(pngImage, {
-              x: x_axis,
-              y: yPos,
-              width,
-              height,
-            });
+          let base64Url = sign.sign_base64;
+          let signer = sign.Signerr?.nama;
+          let tgl_tt = sign.tgl_tt;
+
+          console.log("tgl_tt:", tgl_tt);
+
+          if (!base64Url.startsWith("data:image")) {
+            base64Url = `data:image/png;base64,${base64Url}`;
+          }
+          const pngImage = await pdfDoc.embedPng(base64Url);
+          pdfPage.drawImage(pngImage, {
+            x: x_axis,
+            y: yPos,
+            width,
+            height,
+          });
+
+          const watermark = `Signed by ${signer} Date: ${tgl_tt}`;
+
+          pdfPage.drawText(watermark, {
+          x: x_axis,
+          y: yPos,
+          size: 8,
+          })
+
           } else {
             const date = new Date(sign.tgl_tt);
             const day = String(date.getDate()).padStart(2, "0");
@@ -560,7 +787,7 @@ function Document() {
   return (
     <>
       {isLoading === false ? (
-        <Container fluid>
+        <Container>
           <Row>
             <AddKaryawan showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
             <AddDocument showAddDoc={showAddDoc} setShowAddDoc={setShowAddDoc} onSuccess={handleAddDocSuccess}/>

@@ -67,7 +67,6 @@ export const getSignerById = async(req, res) => {
 
 export const createSigner = async(req, res) => {
     const {id_karyawan, sign_permission} = req.body;
-    console.log("sign permission:", sign_permission);
 
     if (!Array.isArray(id_karyawan) || id_karyawan.length === 0) {
         return res.status(400).json({message: "id_karyawan must be a non-empty array"});
@@ -114,7 +113,6 @@ export const getSigner = async(req, res) => {
 
         const latestIdSigners = latestSigner.id_signers;
         const latestSignersPermission = latestSigner.sign_permission;
-        console.log("latestSignersPermission:", latestSignersPermission);
 
         const excludedPermission = ['Receive a copy'];
 
@@ -136,7 +134,6 @@ export const getSigner = async(req, res) => {
             order: [['id_parent_signers', 'ASC']],
         });
 
-        console.log("Signer details: ", response);
         res.status(200).json(response);
     } catch (error) {
         console.error(error);
@@ -157,7 +154,6 @@ export const getSignerDetails = async(req, res) => {
             ],
         });
 
-        console.log("Signer details: ", response);
         res.status(200).json(response);
     } catch (error) {
         console.error(error);

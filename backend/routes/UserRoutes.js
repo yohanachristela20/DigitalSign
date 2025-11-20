@@ -222,8 +222,6 @@ router.post('/user/import-csv', upload.single("csvfile"), async (req,res) => {
 router.post('/user-login', async (req, res) => {
     const { email, password, role, user_active} = req.body;
 
-    console.log("Received sign in request with:", { email, role, user_active});
-
     if (!email || !password || !role) {
         return res.status(400).json({ message: "Please fill all those fields!" });
     }
@@ -234,12 +232,10 @@ router.post('/user-login', async (req, res) => {
         }); 
 
         if (user.user_active === true) {
-          console.log("User is already sign in!");
           return res.status(400).json({message: "User is already sign in. Please sign out first!"}); 
         }
 
         if (!user) {
-          console.log("User not found for email:", email, "and role:", role);
           return res.status(400).json({message: "User not found!."}); 
         }
 
@@ -259,7 +255,6 @@ router.post('/user-login', async (req, res) => {
             jwtSecret, 
         );
 
-        console.log("Token created:", token);
 
         await User.update(
           {user_active: true},
@@ -269,7 +264,6 @@ router.post('/user-login', async (req, res) => {
         );
     
         res.status(200).json({ token, role, email, user_active});
-        console.log("User sign: ", token, role);
  
     } catch (error) {
         console.error("Error sign in:", error);
@@ -281,8 +275,6 @@ router.put('/user/:id_user', async (req, res) => {
   const { id_user } = req.params;
   const defaultPassword = process.env.DEFAULT_PASS; 
   let { password } = req.body;
-
-  console.log("Data received in server:", req.body); 
 
   try {
 
@@ -304,7 +296,7 @@ router.put('/user/:id_user', async (req, res) => {
   }
 });
 
-router.post('/heartbeat', (req, res) => {
+router.post('/heartbeat', async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1]; 
 
   if (!token) {
@@ -316,9 +308,17 @@ router.post('/heartbeat', (req, res) => {
   try {
     const decoded = jwt.verify(token, jwtSecret); 
     const userId = decoded?.id_user;
+    // console.log("userId:", userId);
 
     const currentTime = new Date();
     activeUsers[userId] = currentTime;
+
+    // await User.update(
+    //   {user_active: false},
+    //   { 
+    //     where: {userId},
+    //   }
+    // );
 
     // console.log(`Aktivitas terbaru pengguna ${userId}: ${currentTime}`); 
     res.status(200).json({ message: 'Received Heartbeat' }); 
@@ -339,7 +339,6 @@ router.post('/logout', async (req, res) => {
   const userId = decoded?.id;
   // const idUser = decoded?.id;
 
-  console.log("userId: ", userId);
 
   await User.update(
     {user_active: false}, 
