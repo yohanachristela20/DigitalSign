@@ -166,12 +166,11 @@ function SignatureModal ({showSignatureModal, setShowSignatureModal, onSuccess, 
                 <Form onSubmit={(e) => handleSubmit(e, selectedSigner)}>
                     <Row>
                         <Col md="12">
-                            <div className="d-flex flex-column"> 
+                            <div className="d-flex flex-column" style={{height: "150px"}}> 
                                 <SignatureCanvas 
                                 ref={signatureRef}
                                 penColor="black"
-                                className="w-100"
-                                canvasProps={{style: {width: '100%', height: '100%', border: '1px solid black'}}}
+                                canvasProps={{style: {width: '100%', minHeight: '150px', border: '1px solid black'}}}
                             />
                             </div>
                         </Col>

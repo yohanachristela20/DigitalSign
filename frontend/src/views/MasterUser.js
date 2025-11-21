@@ -266,7 +266,7 @@ function MasterUser() {
   
   return (
     <>
-      <Container fluid>
+      <Container>
         <Row>
           <AddUser showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
 

@@ -47,12 +47,12 @@ const dashboardRoutes = [
     component: DocumentSent,
     layout: "/admin",
   },
-  {
-    path: "/envelope",
-    name: "Receive Document",
-    component: ReceiveDocument,
-    layout: "/admin"
-  },
+  // {
+  //   path: "/envelope",
+  //   name: "Receive Document",
+  //   component: ReceiveDocument,
+  //   layout: "/admin"
+  // },
 
 
   //User

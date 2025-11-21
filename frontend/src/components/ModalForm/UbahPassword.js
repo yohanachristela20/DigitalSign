@@ -158,6 +158,7 @@ function UbahPassword({ show, onHide }) {
                                 type="submit"
                                 className="btn-fill w-100 mb-4 mt-2"
                                 variant="primary"
+                                 disabled={newPassword !== newRePassword || !newPassword || !oldPassword}
                             >
                                 Change Password
                             </Button>

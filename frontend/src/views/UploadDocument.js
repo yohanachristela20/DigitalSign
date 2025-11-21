@@ -87,7 +87,7 @@ function UploadDocument() {
 
   const [urutan, setUrutan] = useState("");
   const [countedItem, setCountedItem] = useState(0);
-  const MAX_FILE_SIZE = 10485760; // 10 MB in bytes (10 * 1024 * 1024)
+  const MAX_FILE_SIZE = 31457280; // 30 MB in bytes (30 * 1024 * 1024)
   const [documentError, setDocumentError] = useState(false);
 
   let fileName;

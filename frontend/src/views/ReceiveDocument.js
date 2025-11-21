@@ -605,6 +605,7 @@ function ReceiveDocument() {
 							setLoading(false);
 					}
 			};
+			
 
 			fetchData();
 	}, [token]);
@@ -718,6 +719,10 @@ function ReceiveDocument() {
 							const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
 							const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
 
+							// const isDELEGATED = axisRes.data.filter(field => field.is_delegated);
+							console.log("IS DELEGATED:", currentDelegated);
+
+
 							for (const field of signerFields) {
 									const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
 									const base64 = matchInitial?.sign_base64;
@@ -742,7 +747,7 @@ function ReceiveDocument() {
 											id_dokumen, 
 											is_submitted: currentSubmitted,
 											rawField: field,
-											is_delegated,
+											is_delegated: field.is_delegated || "",
 											nowSigner: finalSignerId,
 											delegated_signers: delegatedForThisSigner,
 											token,
@@ -754,7 +759,7 @@ function ReceiveDocument() {
 			}
 
 			const allFields = fieldBuffer.map(field => {
-					const {urutan: currentUrutan, id_item, id_signers, current_signer, delegated_signers, sign_permission, tgl_tt} = field;
+					const {urutan: currentUrutan, id_item, id_signers, current_signer, delegated_signers, sign_permission, tgl_tt, is_delegated} = field;
 					
 					let normalizedDelegated = null;
 					if (delegated_signers && !Array.isArray(delegated_signers)) {
@@ -764,6 +769,7 @@ function ReceiveDocument() {
 					}
 
 					setSignPermission(sign_permission);
+
 
 					setNormalizedDelegated(normalizedDelegated);
 
@@ -993,115 +999,6 @@ function ReceiveDocument() {
 			return pdfRefs.current[id];
 	}
 
-	// const downloadPDF = async (id_dokumen, ref, LOGSIGN) => {
-	//     try {
-	//         const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
-	//         const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
-	//         const pdfDoc = await PDFDocument.load(existingPdfBytes);
-
-	//         const pages = pdfDoc.getPages();
-	//         const scale = 1;
-
-	//         for (const sign of LOGSIGN) {
-	//             if (sign.status === "Completed" && sign.is_submitted) {
-	//                 const axisRes = await fetch(
-	//                     `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
-	//                 ).then(res => res.json());
-
-	//                 const field = axisRes[0]?.ItemField;
-	//                 if (!field) continue;
-
-	//                 let { x_axis, y_axis, width, height, jenis_item, page } = field;
-	//                 x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
-	//                 y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale : jenis_item === "Signpad" ? Number(y_axis) / scale :jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale ;
-	//                 //y_axis initialpad +20 atau hanya /scale saja
-									
-	//                 width = Number(height) / scale - 10;
-	//                 height = Number(width) / scale - 20;
-
-	//                 const targetPageIndex = Number(page) - 1;
-	//                 if (targetPageIndex < 0 || targetPageIndex >= pages.length) {
-	//                     console.warn("Invalid page number:", page);
-	//                     continue;
-	//                 }
-
-	//                 const pdfPage = pages[targetPageIndex];
-	//                 const pageHeight = pdfPage.getHeight();
-	//                 const yPos = pageHeight - y_axis - height + 10;
-
-	//                 if (jenis_item === "Initialpad" || jenis_item === "Signpad") {
-	//                     let base64Url = sign.sign_base64;
-	//                     if (!base64Url.startsWith("data:image")) {
-	//                         base64Url = `data:image/png;base64,${base64Url}`;
-	//                     }
-
-	//                     const pngImage = await pdfDoc.embedPng(base64Url);
-
-	//                     pdfPage.drawImage(pngImage, {
-	//                         x: x_axis,
-	//                         y: yPos,
-	//                         width,
-	//                         height,
-	//                     });
-	//                 } else{
-	//                     let date = new Date(sign.tgl_tt);
-	//                     const day = String(date.getDate()).padStart(2, '0');
-	//                     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"] 
-	//                     const month = monthNames[date.getMonth()];
-	//                     const year = date.getFullYear();
-	//                     const currentDate = `${day} ${month} ${year}`;
-
-	//                     pdfPage.drawText(currentDate, {
-	//                         x: x_axis,
-	//                         y: yPos,
-	//                         size: 9,
-	//                         textAlign: 'center',
-	//                     });
-	//                 }
-	//             }
-	//         }
-
-	//         const signedBytes = await pdfDoc.save();
-	//         const loadingTask = pdfjsLib.getDocument({ data: signedBytes, disableStream: true, disableAutoFetch: true });
-	//         const pdf = await loadingTask.promise;
-
-	//         let finalPdf;
-	//         for (let i = 1; i <= pdf.numPages; i++) {
-	//             const page = await pdf.getPage(i);
-	//             const viewport = page.getViewport({ scale: 1 });
-	//             const canvas = document.createElement("canvas");
-	//             const ctx = canvas.getContext("2d");
-	//             canvas.width = viewport.width;
-	//             canvas.height = viewport.height;
-
-	//             await page.render({ canvasContext: ctx, viewport }).promise;
-
-	//             const imgData = canvas.toDataURL("image/jpeg", 1.0);
-	//             const orientation = canvas.width > canvas.height ? "landscape" : "portrait";
-
-	//             if (i === 1) {
-	//                 finalPdf = new jsPDF({
-	//                     orientation,
-	//                     unit: "px",
-	//                     format: [canvas.width, canvas.height],
-	//                     compress: true,
-	//                 });
-	//             } else {
-	//                 finalPdf.addPage([canvas.width, canvas.height], orientation);
-	//             }
-
-	//             finalPdf.addImage(imgData, "JPEG", 0, 0, canvas.width, canvas.height);
-	//         }
-
-	//         const finalBytes = finalPdf.output("blob");
-	//         saveAs(finalBytes, `${dataDoc[0].doc_name} (signed).pdf`);
-
-	//     } catch (error) {
-	//         console.error("Downloading error:", error.message);
-	//     }
-	// };
-	
-	
 	const downloadPDF = async () => {
 			const element = contentRef.current;
 			if (!element) return;
@@ -1128,7 +1025,7 @@ function ReceiveDocument() {
 				heightLeft -= pageHeight;
 			}
 
-			pdf.save(`${dataDoc[0].doc_name}.pdf`); 
+			pdf.save(`${dataDoc[0].doc_name}`); 
 	};
 
 	const pendingFields = signedInitials.filter(sig => {
@@ -1448,8 +1345,11 @@ function ReceiveDocument() {
 																											const delegated_signers = sig.delegated_signers;
 																											const tgl_tt = sig.tgl_tt;
 
-																											const isSignerOwner = sig.id_signers === id_signers;
-																											const isSignerDelegated = delegated_signers === id_signers;
+																											console.log("is_delegated:", is_delegated);
+
+																											// const isSignerOwner = sig.id_signers === id_signers;
+																											// const isSignerDelegated = delegated_signers === id_signers;
+																											
 
 																											const isFirstSigner = urutan === 1;
 																											const page = Number(sig.page);
@@ -1466,25 +1366,44 @@ function ReceiveDocument() {
 																											let bgFirst = is_delegated === true || !currentItem ?  "rgba(86, 90, 90, 0.3)" : isSubmitted ? "transparent" : "rgba(25, 230, 25, 0.5)";
 																											let bgOthers = is_delegated === true || !currentItem ? "rgba(86, 90, 90, 0.3)" : isSubmitted ? "transparent": "rgba(25, 230, 25, 0.5)";
 
-
 																											if (isCompleted === true) {
 																													bgFirst = "transparent";
 																													bgOthers = "transparent";
 																											}
 
-																											const bgStyle = 
-																											isSubmitted || isCompleted
+																											// const isDelegatedFlag = is_delegated === true || is_delegated === "true";
+																											const isSignerOwner = String(sig.id_signers) === String(id_signers);
+																											console.log("Signer owner:", isSignerOwner);
+																											const isSignerDelegated = delegatedArray.includes(String(id_signers)) || normalizedArray.includes(String(id_signers));
+																											console.log("isSignerDelegated:", isSignerDelegated);
+
+																											const bgStyle = (isSubmitted || isCompleted)
 																											? "transparent"
-																											: !isSignerDelegated && !isSignerOwner
+																											: (isSignerOwner && !isSignerDelegated && is_delegated)
 																											? "rgba(86, 90, 90, 0.4)"
-																											: !isSignerOwner && !isSignerDelegated
-																											? "rgba(86, 90, 90, 0.4)"
-																											: !isSubmitted || isCompleted
+																											: (isSignerOwner && !isSignerDelegated && !is_delegated)
+																											? "rgba(25, 230, 25, 0.4)"
+																											: (!isSignerOwner && isSignerDelegated && is_delegated)
 																											? "rgba(25, 230, 25, 0.4)"
 																											: "transparent";
 
-																											let firstBorderStyle = (isSubmitted) ? "transparent" : is_delegated || !currentItem ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
-																											let otherBorderStyle = (isSubmitted) ? "transparent" : is_delegated || !currentItem ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
+																											// const bgStyle = 
+																											// isSubmitted || isCompleted
+																											// ? "transparent"
+																											// : !is_delegated === true && !currentItem
+																											// ? "rgba(86, 90, 90, 0.4)"
+																											// : is_delegated === true && !currentItem
+																											// ? "rgba(25, 230, 25, 0.4)"
+																											// : !isSubmitted || isCompleted && !is_delegated === true
+																											// ? "rgba(25, 230, 25, 0.4)"
+																											// : "transparent";
+
+																											// let firstBorderStyle = (isSubmitted) ? "transparent" : is_delegated || !currentItem ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
+																											// let otherBorderStyle = (isSubmitted) ? "transparent" : is_delegated || !currentItem ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
+
+																											let firstBorderStyle = (isSubmitted && isCompleted) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
+																											let otherBorderStyle = (isSubmitted && isCompleted) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
+
 
 																											const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
 
@@ -1499,6 +1418,8 @@ function ReceiveDocument() {
 																													const currentSignerStr = String(id_signers);
 
 																													const relatedSigners = new Set();
+																												
+
 
 																													fields.forEach(f => {
 																															//cek id_signers yg punya delegated_signers ke current signer
@@ -1562,14 +1483,15 @@ function ReceiveDocument() {
 
 																													</>
 																											);
+																											} else if (isInitialpad) {
+																											content = <FaFont style={{ width: "100%", height: "100%"}} />;
+																											} else if (isSignpad) {
+																											content = <FaSignature style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}} />;
+
 																											} else if (!is_delegated && isFirstSigner) {
 																											content = message;
 																											} else if (!is_delegated && !isFirstSigner) {
 																											content = message;
-																											} else if (is_delegated && isInitialpad) {
-																											content = <FaFont style={{ width: "100%", height: "100%"}} />;
-																											} else if (isSignpad) {
-																											content = <FaSignature style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}} />;
 																											} else {
 																											content = <></>;
 																											}

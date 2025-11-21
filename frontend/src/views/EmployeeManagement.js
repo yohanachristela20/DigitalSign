@@ -226,7 +226,7 @@ function EmployeeManagement() {
   
   return (
     <>
-      <Container fluid>
+      <Container>
         <Row>
           <AddKaryawan showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
           <AddDocument showAddDoc={showAddDoc} setShowAddDoc={setShowAddDoc} onSuccess={handleAddDocSuccess}/>

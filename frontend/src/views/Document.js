@@ -390,211 +390,6 @@ function Document() {
     }
   };
 
-    // useEffect(() => {
-    // const fetchData = async () => {
-    //     if (!token) return;
-  
-    //     try {
-    //         const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
-    //         const id_dokumen = res.data.id_dokumen;
-    //         const allSigners = res.data.id_signers;
-    //         const urutan = res.data.urutan;
-    //         const currentSigner = res.data.currentSigner;
-    //         const allItems = res.data.id_item;
-    //         const idKaryawan = res.data.id_karyawan;
-    //         const delegated_signers = res.data.delegated_signers || null;
-    //         const is_delegated = res.data.is_delegated;
-    //         const main_token = res.data.main_token;
-    //         const delegate_token = res.data.delegate_token;
-    //         const deadline = res.data.deadline;
-    //         const sign_permission = res.data.sign_permission;
-    //         const finalSignerId = allSigners || currentSigner || delegated_signers;
-  
-    //         setDelegatedSigners(delegated_signers);
-    //         setCurrentSigner(currentSigner);
-  
-    //         if (!id_dokumen || !allSigners || !urutan || !allItems || !idKaryawan) {
-    //             throw new Error("Missing id_dokumen, id_signers, id_item, id_karyawan or urutan from token.");
-    //         }
-  
-    //         setIdDokumen(id_dokumen);
-    //         setIdSigner(currentSigner);
-    //         setAllSigners(allSigners);
-    //         setAllItems(allItems);
-    //         setIdKaryawan(idKaryawan);
-    //         setFinalSignerId(finalSignerId);
-    //         setIsDelegated(is_delegated);
-    //         setMainToken(main_token);
-    //         setDelegateToken(delegate_token);
-    //         // setDeadline(deadline)
-  
-    //         const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
-    //         if (!fileRes.ok) {
-    //             throw new Error("Failed to get PDF Document.");
-    //         }
-  
-    //         const blob = await fileRes.blob();
-    //         const url = URL.createObjectURL(blob);
-    //         setPdfUrl(url);
-  
-    //         const localSignatureFields = [];
-    //         const localInitialFields = [];
-    //         const localDateFields = [];
-    //         const allStatus = [];
-    //         const allSigner = [];
-    //         const allPermission = [];
-  
-    //         const signerArray = Array.isArray(finalSignerId) ? finalSignerId : [finalSignerId];
-    //         const itemArray = Array.isArray(allItems) ? allItems : [allItems];
-    //         const karyawanArray = Array.isArray(idKaryawan) ? idKaryawan : [idKaryawan];
-  
-    //         const urutanMapping = {};
-    //         const submittedMapping = {};
-    //         const delegateMapping = {};
-  
-    //         for (const signer of signerArray) {
-    //             const resSignerInfo = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
-    //                 const dataSignerInfo = resSignerInfo.data;
-    //                 if (dataSignerInfo.length > 0 && dataSignerInfo[0]?.Signerr && dataSignerInfo[0]?.DocName) {
-    //                     const signerInfo = {
-    //                         id_signers: dataSignerInfo[0].id_signers,
-    //                         nama: dataSignerInfo[0].Signerr.nama,
-    //                         organisasi: dataSignerInfo[0].Signerr.organisasi,
-    //                         doc_name: dataSignerInfo[0].DocName.nama_dokumen,
-    //                         email: dataSignerInfo[0].Signerr.Penerima?.email,
-    //                         tgl_tt: dataSignerInfo[0].tgl_tt,
-    //                     };
-    //                     signerData.push(signerInfo);
-    //                     setDataDoc(signerData);
-    //                 }
-  
-    //             const response = await axios.get(`http://localhost:5000/decline/${id_dokumen}/${signer}`);
-    //             const data = response.data;
-  
-    //             if (data.length > 0 && data[0].Signerr){
-    //                 allSigner.push({
-    //                     id_signers: data[0].id_signers, 
-    //                     nama: data[0].Signerr.nama,
-    //                     tgl_tt: data[0].tgl_tt,
-    //                 });
-    //             }
-  
-    //             setSignerData(allSigner);
-    //             // const tglTT = allSigner.map(t => t.tgl_tt);
-    //             // console.log("tgltt:", tglTT);
-    //             // setTglTT(tglTT);
-  
-    //             // const foundForTgl = allSigner.find(s => String(s.id_signers) === String(currentSigner));
-    //             // console.log("foundForTgl:", foundForTgl);
-    //             // if (foundForTgl && foundForTgl.tgl_tt){
-    //             // 	setTglTT(foundForTgl.tgl_tt);
-    //             // }  
-  
-    //             let mainSigner = allSigners;
-    //             if (is_delegated) {
-    //                 mainSigner = res.data.id_signers;
-    //             }
-  
-    //             setMainSigner(mainSigner);
-  
-    //             let querySigner = signer;
-    //             setActualSigner(querySigner);
-                
-    //             for (const itemID of itemArray) {
-    //                 const fieldRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${querySigner}/${itemID}`);
-  
-    //                 const validFields = fieldRes.data.filter(item => item.ItemField);
-  
-    //                 for (let idx = 0; idx < validFields.length; idx++) {
-    //                     const item = validFields[idx];
-    //                     const{
-    //                         x_axis, 
-    //                         y_axis, 
-    //                         width, 
-    //                         height, 
-    //                         jenis_item, 
-    //                         page,
-    //                         id_item: fieldItemId,
-    //                     } = item.ItemField;
-  
-    //                     const status = item.status || "Pending";
-    //                     const sign_permission = item.sign_permission || null;
-    //                     const urutan = item.urutan;
-    //                     const is_submitted = item.is_submitted;
-    //                     const tgl_tt = item.tgl_tt;
-  
-    //                     // console.log("TGL TT:", tgl_tt);
-    //                     // setTglTT(tgl_tt);
-  
-  
-    //                     if (!urutanMapping[fieldItemId]) {
-    //                         urutanMapping[fieldItemId] = urutan;
-    //                     }
-  
-    //                     if (!submittedMapping[signer]) {
-    //                         submittedMapping[signer] = is_submitted;
-    //                     }
-  
-    //                     const fieldObj = {
-    //                         id: `field-${querySigner}-${idx}`,
-    //                         x_axis,
-    //                         y_axis,
-    //                         width,
-    //                         height, 
-    //                         jenis_item,
-    //                         page,
-    //                         pageScale: 1,
-    //                         enableResizing: false,
-    //                         disableDragging: true,
-    //                         id_item: fieldItemId, 
-    //                         status,
-    //                         urutan, 
-    //                         is_submitted, 
-    //                         show,
-    //                         editable,
-    //                         id_signers: querySigner, 
-    //                         is_delegated,
-    //                         delegated_signers,
-    //                         sign_permission,
-    //                         tgl_tt,
-    //                     }; 
-  
-    //                     allStatus.push({id_item: fieldItemId, status});
-    //                     allPermission.push({id_item: fieldItemId, sign_permission});
-  
-    //                     if (jenis_item === "Signpad") {
-    //                         localSignatureFields.push(fieldObj);
-    //                     } else if (jenis_item === "Initialpad") {
-    //                         localInitialFields.push(fieldObj);
-    //                     } else if (jenis_item === "Date") {
-    //                         localDateFields.push(fieldObj);
-    //                     }
-    //                 }
-    //             }
-    //         }
-  
-    //         setSignatures(localSignatureFields);
-    //         setInitials(localInitialFields);
-    //         setDateField(localDateFields);
-    //         setSignStatus(allStatus);
-    //         setUrutanMap(urutanMapping);
-    //         setSubmittedMap(submittedMapping);
-    //         // setDelegatedMap(delegateMapping);
-    //         // setSignPermission(allPermission);
-  
-  
-    //     } catch (error) {
-    //         console.error("Failed to load PDF:", error.message);
-    //         setErrorMsg(error.message);
-    //         toast.error("Load document error or Expired token.");
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-  
-    //     fetchData();
-    // }, [token]);
-
   const downloadDoc = async (id_dokumen, ref, logSigns) => { 
     try {
       const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
@@ -605,11 +400,6 @@ function Document() {
       const scale = 1;
     
       for (const sign of logSigns) {
-        // console.log("STATUS:", sign.status, "SIGNER:", sign.Signerr?.nama);
-        // const Signer = sign.Signerr?.nama;
-
-        // console.log("Signer:", Signer);
-
         if (sign.status === "Completed" && sign.is_submitted) {
           const axisRes = await fetch(
             `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
@@ -640,8 +430,18 @@ function Document() {
           let base64Url = sign.sign_base64;
           let signer = sign.Signerr?.nama;
           let tgl_tt = sign.tgl_tt;
+          let arraytgltt = 
+          Array.isArray(currentItems) 
+          ? currentItems.filter(d => d.is_deleted !== true).length
+          : (sign.tgl_tt ?? "");
 
-          console.log("tgl_tt:", tgl_tt);
+          const docItem = document.find(d => String(d.id_dokumen) === String(id_dokumen));
+          console.log("docItem:", docItem);
+          const rawDate = sign.tgl_tt ?? docItem?.LogSigns?.tgl_tt;
+          const parsedDate = new Date(rawDate);
+          const safeDate = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+          const timestamp = safeDate.toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '');
+
 
           if (!base64Url.startsWith("data:image")) {
             base64Url = `data:image/png;base64,${base64Url}`;
@@ -654,12 +454,18 @@ function Document() {
             height,
           });
 
-          const watermark = `Signed by ${signer} Date: ${tgl_tt}`;
+          // const timestamp2 = new Date(tgl_tt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '');
+          const watermark = `Signed by ${signer} Date: ${timestamp}`;
+
+          const marginBottom = 65;
+          const marginRight = 90;
 
           pdfPage.drawText(watermark, {
-          x: x_axis,
-          y: yPos,
+          x: x_axis + marginRight,
+          y: yPos + marginBottom,
           size: 8,
+          maxWidth: 50,
+          lineHeight: 12,
           })
 
           } else {
@@ -843,7 +649,19 @@ function Document() {
                       </Col>
                       <Col>
                       <div className="text-right">
-                        <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">{jumlahNeedsToSign?.jumlahNeedsToSign}</h3></Card.Title>
+                        {/* <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">
+                          {jumlahNeedsToSign?.jumlahNeedsToSign}
+                          </h3>
+                        </Card.Title> */}
+                        <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">
+                          {/* {jumlahNeedsToSign?.jumlahNeedsToSign} */}
+                          
+                          {Array.isArray(currentItems) 
+                            ? currentItems.filter(d => d.is_deleted !== true).length
+                            : (jumlahNeedsToSign?.jumlahNeedsToSign ?? 0)
+                          }
+                          </h3>
+                        </Card.Title>
                       </div>
                       </Col>
                     </Row>
@@ -862,7 +680,7 @@ function Document() {
                     <Row>
                       <Col xs="5">
                         <div className="icon-big icon-warning">
-                          <FaHourglassStart className="text-danger" />
+                          <FaHourglassStart className="text-secondary" />
                         </div>
                       </Col>
                       <Col xs="7">
@@ -872,7 +690,15 @@ function Document() {
                       </Col>
                       <Col>
                         <div className="text-right">
-                          <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">{jumlahPending?.jumlahPending}</h3></Card.Title>
+                          <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">
+                            {/* {jumlahPending?.jumlahPending} */}
+                            
+                            {Array.isArray(currentItems) 
+                              ? currentItems.filter(d => !d.is_deleted && getStatusById(d.id_dokumen) === "Pending").length
+                              : (jumlahPending?.jumlahPending ?? 0)
+                            }
+                            </h3>
+                            </Card.Title>
                         </div>
                       </Col>
                     </Row>
@@ -891,7 +717,7 @@ function Document() {
                     <Row>
                       <Col xs="5">
                         <div className="icon-big icon-warning">
-                          <FaClipboardCheck className="text-primary"/>
+                          <FaClipboardCheck className="text-success"/>
                         </div>
                       </Col>
                       <Col xs="7">
@@ -901,7 +727,16 @@ function Document() {
                       </Col>
                       <Col>
                         <div className="text-right">
-                          <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">{jumlahCompleted?.jumlahCompleted}</h3></Card.Title>
+                          <Card.Title className="card-plafond">
+                            <h3 style={{fontWeight: 600}} className="mt-0">
+                              {/* {jumlahCompleted?.jumlahCompleted} */}
+
+                               {Array.isArray(currentItems) 
+                                  ? currentItems.filter(d => !d.is_deleted && getStatusById(d.id_dokumen) === "Completed").length
+                                  : (jumlahCompleted?.jumlahCompleted ?? 0)
+                                }
+                            </h3>
+                            </Card.Title>
                         </div>
                       </Col>
                     </Row>
@@ -984,6 +819,8 @@ function Document() {
                       <button
                         style={{ background: "transparent", border: "none" }}
                         disabled={document.user_active === true}
+                        hidden={getStatusById(document.id_dokumen) === "Decline"}
+
                       >
                         <FaDownload
                           type="button"
@@ -999,6 +836,8 @@ function Document() {
                             } else {
                               await plainDoc(document.id_dokumen);
                             }
+
+
                           }}
                           className="text-success btn-action"
                         />
