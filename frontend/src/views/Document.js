@@ -654,12 +654,12 @@ function Document() {
                           </h3>
                         </Card.Title> */}
                         <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">
-                          {/* {jumlahNeedsToSign?.jumlahNeedsToSign} */}
+                          {jumlahNeedsToSign?.jumlahNeedsToSign}
                           
-                          {Array.isArray(currentItems) 
+                          {/* {Array.isArray(currentItems) 
                             ? currentItems.filter(d => d.is_deleted !== true).length
                             : (jumlahNeedsToSign?.jumlahNeedsToSign ?? 0)
-                          }
+                          } */}
                           </h3>
                         </Card.Title>
                       </div>
@@ -691,12 +691,12 @@ function Document() {
                       <Col>
                         <div className="text-right">
                           <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">
-                            {/* {jumlahPending?.jumlahPending} */}
+                            {jumlahPending?.jumlahPending}
                             
-                            {Array.isArray(currentItems) 
+                            {/* {Array.isArray(currentItems) 
                               ? currentItems.filter(d => !d.is_deleted && getStatusById(d.id_dokumen) === "Pending").length
                               : (jumlahPending?.jumlahPending ?? 0)
-                            }
+                            } */}
                             </h3>
                             </Card.Title>
                         </div>
@@ -729,12 +729,12 @@ function Document() {
                         <div className="text-right">
                           <Card.Title className="card-plafond">
                             <h3 style={{fontWeight: 600}} className="mt-0">
-                              {/* {jumlahCompleted?.jumlahCompleted} */}
+                              {jumlahCompleted?.jumlahCompleted}
 
-                               {Array.isArray(currentItems) 
+                               {/* {Array.isArray(currentItems) 
                                   ? currentItems.filter(d => !d.is_deleted && getStatusById(d.id_dokumen) === "Completed").length
                                   : (jumlahCompleted?.jumlahCompleted ?? 0)
-                                }
+                                } */}
                             </h3>
                             </Card.Title>
                         </div>

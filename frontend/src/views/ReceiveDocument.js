@@ -33,6 +33,8 @@ import { saveAs } from "file-saver";
 function ReceiveDocument() {
 	const contentRef = useRef(null);
 
+	const [canvasDimensions, setCanvasDimensions] = useState({width: 0, height: 0});
+
 	const [pdfUrl, setPdfUrl] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [errorMsg, setErrorMsg] = useState("");
@@ -224,7 +226,15 @@ function ReceiveDocument() {
 									context.textAlign = 'right'; 
 									// context.fillText(`Page ${pageNum} of ${pdf.numPages}`, canvas.width - 20, canvas.height - 10);
 
-									renderedCanvases.push({pageNum, imgSrc: canvas.toDataURL()});
+									// renderedCanvases.push({pageNum, imgSrc: canvas.toDataURL()});
+
+									renderedCanvases.push({
+										pageNum,
+										imgSrc: canvas.toDataURL(),
+										width: canvas.width, 
+										height: canvas.height,
+										viewportScale: scale,
+									});
 
 							}
 							
@@ -761,6 +771,9 @@ function ReceiveDocument() {
 			const allFields = fieldBuffer.map(field => {
 					const {urutan: currentUrutan, id_item, id_signers, current_signer, delegated_signers, sign_permission, tgl_tt, is_delegated} = field;
 					
+					// console.log("Urutan:", currentUrutan);
+
+
 					let normalizedDelegated = null;
 					if (delegated_signers && !Array.isArray(delegated_signers)) {
 							normalizedDelegated = [String(delegated_signers)];
@@ -999,6 +1012,98 @@ function ReceiveDocument() {
 			return pdfRefs.current[id];
 	}
 
+	// const downloadPDF = async () => {
+	// 		const element = contentRef.current;
+	// 		if (!element) return;
+
+	// 		// setDownloadClicked(true);
+
+	// 		const canvas = await html2canvas(element, { scale: 1.0 }); // Scale for better quality
+	// 		const imgData = canvas.toDataURL('image/png');
+
+	// 		const pdf = new jsPDF('p', 'mm', 'a4'); // Portrait, millimeters, A4 size
+	// 		const imgWidth = 210; // A4 width in mm
+	// 		const pageHeight = 297; // A4 height in mm
+	// 		const imgHeight = (canvas.height * imgWidth) / canvas.width;
+	// 		let heightLeft = imgHeight;
+	// 		let position = 0;
+
+	// 		pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+	// 		heightLeft -= pageHeight;
+
+	// 		while (heightLeft >= 0) {
+	// 			position = heightLeft - imgHeight;
+	// 			pdf.addPage();
+	// 			pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+	// 			heightLeft -= pageHeight;
+	// 		}
+
+	// 		pdf.save(`${dataDoc[0].doc_name}`); 
+	// };
+
+	//Versi 2
+	// const downloadPDF = async () => {
+	// 		const element = contentRef.current;
+	// 		if (!element) return;
+
+	// 		// setDownloadClicked(true);
+
+	// 		const canvas = await html2canvas(element, { scale: 1.0 }); // Scale for better quality
+	// 		const imgData = canvas.toDataURL('image/png');
+
+	// 		const canvasWidth = canvas.width;
+	// 		const canvasHeight = canvas.height;
+			
+
+	// 		console.log("canvasHeight:", canvasHeight, "canvasWidth:", canvasWidth);
+
+	// 		const orientation = canvasWidth > canvasHeight ? 'l' : 'p';
+	// 		console.log("orientation:", orientation);
+
+	// 		const pdf = new jsPDF(orientation, 'mm', 'a4'); // Portrait, millimeters, A4 size
+	// 		const imgWidth = orientation === "p" ? 210 : 297; // A4 width in mm
+	// 		const pageHeight = 297; // A4 height in mm
+	// 		const marginBottom = 110;
+
+	// 		const pHeight = (canvas.height * imgWidth) / canvas.width - marginBottom; // portait height
+	// 		const lHeight = (canvas.height * imgWidth) / canvas.width; // landscape height
+
+	// 		// const imgHeight = (canvas.height * imgWidth) / canvas.width - marginBottom;
+	// 		const imgHeight = orientation === "p" ? pHeight : lHeight;
+	// 		let heightLeft = imgHeight;
+	// 		let position = 0;
+
+	// 		pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+	// 		heightLeft -= pageHeight;
+
+	// 		while (heightLeft >= 0) {
+	// 			position = heightLeft - imgHeight;
+	// 			pdf.addPage();
+	// 			pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+	// 			heightLeft -= pageHeight;
+	// 		}
+
+	// 		pdf.save(`${dataDoc[0].doc_name}`); 
+	// };
+
+	
+	//Versi 3
+	useEffect(() => {
+			if (canvases && canvases.length > 0) {
+					const pageIndex = 0;
+					const pageMeta = canvases[pageIndex];
+					if (pageMeta && pageMeta.width && pageMeta.height) {
+							setCanvasDimensions({
+									width: pageMeta.width,
+									height: pageMeta.height,
+							});
+					}
+			}
+	}, [canvases]);
+
+	console.log("canvasDimensions:", canvasDimensions);
+
+
 	const downloadPDF = async () => {
 			const element = contentRef.current;
 			if (!element) return;
@@ -1008,10 +1113,25 @@ function ReceiveDocument() {
 			const canvas = await html2canvas(element, { scale: 1.0 }); // Scale for better quality
 			const imgData = canvas.toDataURL('image/png');
 
-			const pdf = new jsPDF('p', 'mm', 'a4'); // Portrait, millimeters, A4 size
-			const imgWidth = 210; // A4 width in mm
+			const canvasWidth = canvasDimensions.width;
+			const canvasHeight = canvasDimensions.height;
+			
+
+			console.log("canvasHeight:", canvasHeight, "canvasWidth:", canvasWidth);
+
+			const orientation = canvasWidth > canvasHeight ? 'l' : 'p';
+			console.log("orientation:", orientation);
+
+			const pdf = new jsPDF(orientation, 'mm', 'a4'); // Portrait, millimeters, A4 size
+			const imgWidth = orientation === "p" ? 210 : 297; // A4 width in mm
 			const pageHeight = 297; // A4 height in mm
-			const imgHeight = (canvas.height * imgWidth) / canvas.width;
+			const marginBottom = 80;
+
+			const pHeight = (canvas.height * imgWidth) / canvas.width - marginBottom; // portait height
+			const lHeight = (canvas.height * imgWidth) / canvas.width + 85; // landscape height
+
+			// const imgHeight = (canvas.height * imgWidth) / canvas.width - marginBottom;
+			const imgHeight = orientation === "p" ? pHeight : lHeight;
 			let heightLeft = imgHeight;
 			let position = 0;
 
@@ -1027,6 +1147,7 @@ function ReceiveDocument() {
 
 			pdf.save(`${dataDoc[0].doc_name}`); 
 	};
+
 
 	const pendingFields = signedInitials.filter(sig => {
 			if (!sig || !sig.id_item || sig.show !== true) return false;
@@ -1149,7 +1270,7 @@ function ReceiveDocument() {
 													return (
 															<>
 																	<div className="divider"></div>
-																	<Dropdown.Item
+																	{/* <Dropdown.Item
 																			href="#"
 																			onClick={async (e) => {
 																			e.preventDefault();
@@ -1162,6 +1283,27 @@ function ReceiveDocument() {
 
 
 																			if (hasSubmitted) {
+																					await downloadPDF(id_dokumen, ref, LOGSIGN);
+																			} else {
+																					await plainPDF(id_dokumen);
+																			}
+																			}}
+																	>
+																			Download
+																	</Dropdown.Item> */}
+
+																		<Dropdown.Item
+																			href="#"
+																			onClick={async (e) => {
+																			e.preventDefault();
+																			setDownloadClicked(true);
+
+																			const ref = getRef(id_dokumen);
+																			const LOGSIGN = JSON.parse(JSON.stringify(currentDoc.LogSigns || []));
+																			// const hasSubmitted = LOGSIGN.some((log) => log.is_submitted);
+																			const allSubmitted = LOGSIGN.length > 0 && LOGSIGN.every(sign => sign?.is_submitted === true);
+
+																			if (allSubmitted) {
 																					await downloadPDF(id_dokumen, ref, LOGSIGN);
 																			} else {
 																					await plainPDF(id_dokumen);
@@ -1300,12 +1442,12 @@ function ReceiveDocument() {
 																							const pageNumber = index + 1;
 																							// setPageNum(pageNumber);
 																							return (
-																								<div key={pageNumber} className="pdf-page-container" style={{ position: "relative", marginBottom: "1rem" }} data-pagenumber={pageNumber}>
+																								<div key={pageNumber} className="pdf-page-container" style={{ position: "relative", marginBottom: "1.5rem" }} data-pagenumber={pageNumber}>
 																									<img
 																										src={canvas.imgSrc}
 																										alt={`Page ${canvas.pageNum}`}
 																										style={{
-																											marginBottom: "1rem",
+																											// marginBottom: "1rem",
 																											// border: "1px solid #ccc",
 																											boxShadow: "4px 4px 15px rgba(151, 151, 151, 0.5)",
 																										}}
@@ -1340,18 +1482,20 @@ function ReceiveDocument() {
 																											const isPrevField = sig.prevFieldDisplay === true;
 																											const completedNext = sig.is_submitted === true;
 																											const urutan = sig.urutan;
+																											const isFirstSigner = urutan === 1;
 																											const currentItem = sig.id_item === currentItemId;
 																											const is_delegated = sig.is_delegated;
 																											const delegated_signers = sig.delegated_signers;
 																											const tgl_tt = sig.tgl_tt;
 
-																											console.log("is_delegated:", is_delegated);
+																											// console.log("is_delegated:", is_delegated);
+
+																											// console.log("isFirstSigner:",  isFirstSigner);
 
 																											// const isSignerOwner = sig.id_signers === id_signers;
 																											// const isSignerDelegated = delegated_signers === id_signers;
 																											
 
-																											const isFirstSigner = urutan === 1;
 																											const page = Number(sig.page);
 																												if (page !== pageNumber) return null;
 
@@ -1373,37 +1517,28 @@ function ReceiveDocument() {
 
 																											// const isDelegatedFlag = is_delegated === true || is_delegated === "true";
 																											const isSignerOwner = String(sig.id_signers) === String(id_signers);
-																											console.log("Signer owner:", isSignerOwner);
+																											// console.log("Signer owner:", isSignerOwner);
 																											const isSignerDelegated = delegatedArray.includes(String(id_signers)) || normalizedArray.includes(String(id_signers));
-																											console.log("isSignerDelegated:", isSignerDelegated);
+																											// console.log("isSignerDelegated:", isSignerDelegated);
 
+																											// console.log("isFirstSigner:", isFirstSigner);
+																											
+																											const isCurrentItem = currentItemId.includes(sig.id_item);
+																											console.log("isCurrentItem:", isCurrentItem);
+
+																											// Fix u/ 1 signer 1 item & delegate
 																											const bgStyle = (isSubmitted || isCompleted)
 																											? "transparent"
-																											: (isSignerOwner && !isSignerDelegated && is_delegated)
+																											: (isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem)
 																											? "rgba(86, 90, 90, 0.4)"
-																											: (isSignerOwner && !isSignerDelegated && !is_delegated)
+																											: (isSignerOwner && !isSignerDelegated && !is_delegated && isCurrentItem)
 																											? "rgba(25, 230, 25, 0.4)"
-																											: (!isSignerOwner && isSignerDelegated && is_delegated)
+																											: (!isSignerOwner && isSignerDelegated && is_delegated && isCurrentItem)
 																											? "rgba(25, 230, 25, 0.4)"
 																											: "transparent";
 
-																											// const bgStyle = 
-																											// isSubmitted || isCompleted
-																											// ? "transparent"
-																											// : !is_delegated === true && !currentItem
-																											// ? "rgba(86, 90, 90, 0.4)"
-																											// : is_delegated === true && !currentItem
-																											// ? "rgba(25, 230, 25, 0.4)"
-																											// : !isSubmitted || isCompleted && !is_delegated === true
-																											// ? "rgba(25, 230, 25, 0.4)"
-																											// : "transparent";
-
-																											// let firstBorderStyle = (isSubmitted) ? "transparent" : is_delegated || !currentItem ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
-																											// let otherBorderStyle = (isSubmitted) ? "transparent" : is_delegated || !currentItem ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
-
-																											let firstBorderStyle = (isSubmitted && isCompleted) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
-																											let otherBorderStyle = (isSubmitted && isCompleted) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated ? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
-
+																											let firstBorderStyle = (isSubmitted && isCompleted) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
+																											let otherBorderStyle = (isSubmitted && isCompleted) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
 
 																											const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
 
@@ -1458,7 +1593,7 @@ function ReceiveDocument() {
 																											const message = getMessageForUrutan(sig.urutan);
 
 																											const currentSignerStr = String(current_signer);
-																											const isCurrentItem = currentItemId.includes(sig.id_item);
+
 
 																											let content;
 
@@ -1483,9 +1618,9 @@ function ReceiveDocument() {
 
 																													</>
 																											);
-																											} else if (isInitialpad) {
+																											} else if (isInitialpad && isCurrentItem) {
 																											content = <FaFont style={{ width: "100%", height: "100%"}} />;
-																											} else if (isSignpad) {
+																											} else if (isSignpad && isCurrentItem) {
 																											content = <FaSignature style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}} />;
 
 																											} else if (!is_delegated && isFirstSigner) {
@@ -1497,7 +1632,7 @@ function ReceiveDocument() {
 																											}
 
 																											const canClick = !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
-
+																											console.log("canClick:", canClick);
 																											if (page !== pageNumber) return null;
 
 																											return (

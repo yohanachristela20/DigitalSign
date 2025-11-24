@@ -250,9 +250,10 @@ router.get('/access-status', async(req, res) => {
                 console.error("Access denied, token expired:", error.message);
                 return res.status(403).json({message: "Invalid or expired token", is_accessed: false});
             }
-        } else if (logsign.status === "Completed"){
-            console.log("Access status bypass expired (Completed)");
         }
+        // } else if (logsign.status === "Completed"){
+        //     console.log("Access status bypass expired (Completed)");
+        // }
 
         const accessLogs = await LinkAccessLog.findOne({
             where: {id_logsign: logsign.id_logsign, id_karyawan: signerId}, 
