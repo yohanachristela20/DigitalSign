@@ -29,6 +29,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
 import { saveAs } from "file-saver";
+import { isDate } from "moment";
 
 function ReceiveDocument() {
 	const contentRef = useRef(null);
@@ -206,7 +207,7 @@ function ReceiveDocument() {
 
 							for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
 									const page = await pdf.getPage(pageNum);
-									const scale = 1.0;
+									const scale = 1.5;
 									const viewport = page.getViewport({scale});
 
 									const canvas = document.createElement('canvas');
@@ -730,7 +731,7 @@ function ReceiveDocument() {
 							const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
 
 							// const isDELEGATED = axisRes.data.filter(field => field.is_delegated);
-							console.log("IS DELEGATED:", currentDelegated);
+							// console.log("IS DELEGATED:", currentDelegated);
 
 
 							for (const field of signerFields) {
@@ -1101,7 +1102,7 @@ function ReceiveDocument() {
 			}
 	}, [canvases]);
 
-	console.log("canvasDimensions:", canvasDimensions);
+	// console.log("canvasDimensions:", canvasDimensions);
 
 
 	const downloadPDF = async () => {
@@ -1117,18 +1118,19 @@ function ReceiveDocument() {
 			const canvasHeight = canvasDimensions.height;
 			
 
-			console.log("canvasHeight:", canvasHeight, "canvasWidth:", canvasWidth);
+			// console.log("canvasHeight:", canvasHeight, "canvasWidth:", canvasWidth);
 
 			const orientation = canvasWidth > canvasHeight ? 'l' : 'p';
-			console.log("orientation:", orientation);
+			// console.log("orientation:", orientation);
 
 			const pdf = new jsPDF(orientation, 'mm', 'a4'); // Portrait, millimeters, A4 size
 			const imgWidth = orientation === "p" ? 210 : 297; // A4 width in mm
 			const pageHeight = 297; // A4 height in mm
+			
 			const marginBottom = 80;
 
 			const pHeight = (canvas.height * imgWidth) / canvas.width - marginBottom; // portait height
-			const lHeight = (canvas.height * imgWidth) / canvas.width + 85; // landscape height
+			const lHeight = (canvas.height * imgWidth) / canvas.width + 5; // landscape height
 
 			// const imgHeight = (canvas.height * imgWidth) / canvas.width - marginBottom;
 			const imgHeight = orientation === "p" ? pHeight : lHeight;
@@ -1468,7 +1470,7 @@ function ReceiveDocument() {
 																										>
 																											{`Page ${pageNumber} of ${canvases.length}`}
 																										</div>
-																	 */}
+																	 									*/}
 
 																									{signedInitials.map((sig) => {
 																											if (!sig || sig.show !== true) return null;
@@ -1495,6 +1497,7 @@ function ReceiveDocument() {
 																											// const isSignerOwner = sig.id_signers === id_signers;
 																											// const isSignerDelegated = delegated_signers === id_signers;
 																											
+																											
 
 																											const page = Number(sig.page);
 																												if (page !== pageNumber) return null;
@@ -1515,30 +1518,33 @@ function ReceiveDocument() {
 																													bgOthers = "transparent";
 																											}
 
-																											// const isDelegatedFlag = is_delegated === true || is_delegated === "true";
+																											const isCurrentItem = currentItemId.includes(sig.id_item);
 																											const isSignerOwner = String(sig.id_signers) === String(id_signers);
-																											// console.log("Signer owner:", isSignerOwner);
 																											const isSignerDelegated = delegatedArray.includes(String(id_signers)) || normalizedArray.includes(String(id_signers));
+
+																											const canClick = is_delegated && isSignerDelegated ? (isSignerOwner || !isSignerOwner) && isCurrentItem : !is_delegated && !is_submitted;
+
+
+																											// const isDelegatedFlag = is_delegated === true || is_delegated === "true";
+																											// console.log("Signer owner:", isSignerOwner);
 																											// console.log("isSignerDelegated:", isSignerDelegated);
 
 																											// console.log("isFirstSigner:", isFirstSigner);
 																											
-																											const isCurrentItem = currentItemId.includes(sig.id_item);
-																											console.log("isCurrentItem:", isCurrentItem);
+																											// console.log("isCurrentItem:", isCurrentItem);-
 
-																											// Fix u/ 1 signer 1 item & delegate
-																											const bgStyle = (isSubmitted || isCompleted)
+																											const bgStyle = isSubmitted || isCompleted || (!isCurrentItem && isDatefield)
 																											? "transparent"
-																											: (isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem)
+																											: (isSignerOwner && !isSignerDelegated && is_delegated || (!isCurrentItem))
 																											? "rgba(86, 90, 90, 0.4)"
-																											: (isSignerOwner && !isSignerDelegated && !is_delegated && isCurrentItem)
+																											: (isSignerOwner && !isSignerDelegated && !is_delegated) 
 																											? "rgba(25, 230, 25, 0.4)"
-																											: (!isSignerOwner && isSignerDelegated && is_delegated && isCurrentItem)
+																											: (!isSignerOwner && isSignerDelegated && is_delegated)
 																											? "rgba(25, 230, 25, 0.4)"
 																											: "transparent";
 
-																											let firstBorderStyle = (isSubmitted && isCompleted) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
-																											let otherBorderStyle = (isSubmitted && isCompleted) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
+																											let firstBorderStyle = (isSubmitted && isCompleted) || (!isCurrentItem && isDatefield) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)" ;
+																											let otherBorderStyle = (isSubmitted && isCompleted) || (!isCurrentItem && isDatefield) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
 
 																											const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
 
@@ -1553,9 +1559,6 @@ function ReceiveDocument() {
 																													const currentSignerStr = String(id_signers);
 
 																													const relatedSigners = new Set();
-																												
-
-
 																													fields.forEach(f => {
 																															//cek id_signers yg punya delegated_signers ke current signer
 																															if (Array.isArray(f.delegated_signers) 
@@ -1584,8 +1587,8 @@ function ReceiveDocument() {
 																															.filter(f => relatedSigners.has(String(f.id_signers)))
 																															.every(f => f.status === "Completed");
 
-																													if (relatedCompleted && !isSubmitted) {
-																															return <p className="text-center pending-text">Another sign didn't complete</p>;
+																													if (relatedCompleted && !isSubmitted && (!isCurrentItem && !isDatefield)) {
+																														return <p className="text-center pending-text">Another sign didn't complete</p>;
 																													}
 
 																											};
@@ -1596,6 +1599,17 @@ function ReceiveDocument() {
 
 
 																											let content;
+
+																											// const canClick = !is_delegated && !is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated|| is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
+																											// const canClick = (isSignerOwner || !isSignerOwner) && isSignerDelegated && is_delegated && isCurrentItem;
+
+																											// const canClick = is_delegated && isSignerDelegated ? (isSignerOwner || !isSignerOwner) && isCurrentItem : !is_delegated && !is_submitted ? (isSignerOwner || !isSignerOwner) && isCurrentItem : !is_delegated && !is_submitted;
+																											
+																											
+
+																											// console.log("isFirstSigner:", isFirstSigner, "isSignerOwner:", isSignerOwner, "isSignerDelegated:", isSignerDelegated, "is_delegated:", is_delegated, "isCurrentItem:", isCurrentItem);
+																											// console.log("canClick:", canClick);
+																											if (page !== pageNumber) return null;
 
 																											if (isCompleted && sig.sign_base64) {
 																											content = (
@@ -1618,22 +1632,22 @@ function ReceiveDocument() {
 
 																													</>
 																											);
-																											} else if (isInitialpad && isCurrentItem) {
-																											content = <FaFont style={{ width: "100%", height: "100%"}} />;
+																											} else if (isInitialpad && isCurrentItem ) {
+																											content = <FaFont style={{ width: "25%", height: "25%"}} />;
 																											} else if (isSignpad && isCurrentItem) {
 																											content = <FaSignature style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}} />;
-
-																											} else if (!is_delegated && isFirstSigner) {
+																											} else if (isDatefield && isCurrentItem ) {
+																											content = <FaCalendar style={{ width: "50%", height: "50%"}} />;
+																											} else if (!is_delegated && isFirstSigner || !canClick) {
 																											content = message;
-																											} else if (!is_delegated && !isFirstSigner) {
+																											} else if (!is_delegated && !isFirstSigner || !canClick) {
 																											content = message;
 																											} else {
 																											content = <></>;
 																											}
 
-																											const canClick = !is_delegated === true && !is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated === true || is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
-																											console.log("canClick:", canClick);
-																											if (page !== pageNumber) return null;
+																											
+
 
 																											return (
 																													<>
@@ -1652,8 +1666,7 @@ function ReceiveDocument() {
 																																			backgroundColor: bgStyle,
 																																			border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
 																																			zIndex: zIndexStyle,     
-																																			cursor: !is_submitted && isCurrentItem ? canClick && showDelegateAlert ? "default" : "pointer" : "default",
-
+																																			cursor: canClick && !isSubmitted && (is_delegated === true && !isSubmitted) && (delegatedDoc !== id_dokumen) || (isCurrentItem && !isDatefield) ? "pointer" : "default",
 
 																																	}}
 																																	hidden={isDecline}
@@ -1664,9 +1677,9 @@ function ReceiveDocument() {
 																																			delegatedArray.includes(currentSignerStr) ||
 																																			normalizedArray.includes(currentSignerStr);
 																																			if (!is_submitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
-																																					if (isInitialpad && isCurrentItem){
+																																					if (isInitialpad && isCurrentItem && canClick){
 																																							handleInitialClick(sig.id_item, sig.show, sig.editable);
-																																					} else if (isSignpad && isCurrentItem){
+																																					} else if (isSignpad && isCurrentItem && canClick){
 																																							handleSignatureClick(sig.id_item, sig.editable, sig.show);
 																																					}
 																																			}
@@ -1674,10 +1687,10 @@ function ReceiveDocument() {
 																																	disabled ={isSubmitted === true}
 
 																															>
-																																	{!isSubmitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) ? (
+																																	{!isSubmitted && canClick && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) && !isDatefield ? (
 																																			<OverlayTrigger
 																																					placement="bottom"
-																																					overlay={<Tooltip id="initialCompleteTooltip" hidden={!isCurrentItem}>Click to change your sign.</Tooltip>}
+																																					overlay={<Tooltip id="initialCompleteTooltip" hidden={!isCurrentItem || isDatefield}>Click to change your sign.</Tooltip>}
 																																			>
 																																					{({ ref, ...triggerHandler }) => (
 																																					<>
@@ -1697,7 +1710,6 @@ function ReceiveDocument() {
 																																													{/* <FaFont style={{ width: "100%", height: "100%"}}/> */}
 																																													{isInitialpad ? <FaFont style={{ width: "100%", height: "100%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}}/> : isSignpad ? <FaSignature style={{ width: "100%", height: "100%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}} /> : ""}
 																																													
-
 																																											</div>
 																																									) : message && (isInitialpad && !isCompleted) ? (
 																																											<div
@@ -1732,7 +1744,8 @@ function ReceiveDocument() {
 																																							{isCompleted && isDatefield ? (
 																																									currentDate 
 																																							) : (
-																																									isDatefield ? <FaCalendar style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)" }} /> : <></>
+																																									// (isCurrentItem && isDatefield) ? <FaCalendar style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)" }} /> : <></> 
+																																									<></>
 																																							)}
 																																					</>
 																																					)}
@@ -1744,7 +1757,8 @@ function ReceiveDocument() {
 																																					{isCompleted && isDatefield ? (
 																																							currentDate 
 																																					) : (
-																																							isDatefield ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
+																																							// (isCurrentItem && isDatefield) ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
+																																							<></>
 																																					)}
 																																			</>
 																																	)}

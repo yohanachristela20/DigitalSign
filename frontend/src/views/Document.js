@@ -397,7 +397,7 @@ function Document() {
       const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
       const pages = pdfDoc.getPages();
-      const scale = 1;
+      const scale = 1.5;
     
       for (const sign of logSigns) {
         if (sign.status === "Completed" && sign.is_submitted) {
