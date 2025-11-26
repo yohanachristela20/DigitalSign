@@ -62,7 +62,14 @@ router.get('/receive-document', async(req, res) => {
                 id_signers, 
                 id_item
             }, 
-            attributes: ['id_logsign', 'main_token', 'delegate_token']
+            attributes: ['id_logsign', 'main_token', 'delegate_token'], 
+            include: [
+              {
+								model: Dokumen,
+								as:'DocName',
+								attributes: ['nama_dokumen'],
+							}
+            ]
         });
 
         // console.log("LOGSIGN RECORDDD:", logsignRecord);
@@ -71,7 +78,7 @@ router.get('/receive-document', async(req, res) => {
         // const main_token = logsignRecord ? logsignRecord.main_token : null;
         // const delegate_token = logsignRecord ? logsignRecord.delegate_token : null;
 
-        const { id_logsign, main_token, delegate_token, status, sign_permission } = logsignRecord;
+        const { id_logsign, main_token, delegate_token, status, sign_permission, nama_dokumen } = logsignRecord;
 
         if (status === 'Pending'){
             try {
@@ -99,6 +106,7 @@ router.get('/receive-document', async(req, res) => {
             delegate_token,
             deadline,
             sign_permission,
+						nama_dokumen: logsignRecord?.DocName?.nama_dokumen || null,
         });
         
     } catch (error) {

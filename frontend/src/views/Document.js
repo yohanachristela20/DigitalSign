@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import {FaFileCsv, FaFilePdf, FaTrashAlt, FaSortUp, FaSortDown, FaPaperPlane, FaDownload, FaSignInAlt, FaHourglassStart, FaClipboardCheck, FaSign, FaFileSignature} from 'react-icons/fa'; 
+import {FaFileCsv, FaFilePdf, FaTrashAlt, FaSortUp, FaSortDown, FaPaperPlane, FaDownload, FaSignInAlt, FaHourglassStart, FaClipboardCheck, FaSign, FaFileSignature, FaExclamationTriangle} from 'react-icons/fa'; 
 import SearchBar from "components/Search/SearchBar.js";
 import axios from "axios";
 import AddKaryawan from "components/ModalForm/AddKaryawan.js";
@@ -17,7 +17,7 @@ import { useLocation, useHistory } from "react-router-dom";
 import { CDBTable, CDBTableHeader, CDBTableBody, CDBContainer, CDBBtn, CDBBtnGrp } from 'cdbreact';
 import { PDFDocument } from "pdf-lib";
 import { getProgress } from "../../src/utils/progress.js";
-import {Button, Container, Row, Col, Card, Table, Spinner, Badge} from "react-bootstrap";
+import {Button, Container, Row, Col, Card, Table, Spinner, Badge, Modal} from "react-bootstrap";
 import { saveAs } from "file-saver";
 import ReactLoading from "react-loading";
 
@@ -71,6 +71,8 @@ function Document() {
   const {progress, status} = getProgress(document);
   const [signerData, setSignerData] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
+  const [deletedIDDokumen, setDeletedIDDokumen] = useState(null);
+  const [showModal, setShowModal] = useState(false); 
   
 
   const getDocument = async (selectedCategory) =>{
@@ -203,9 +205,9 @@ function Document() {
     setCurrentPage(pageNumber); 
   }
 
-  const deleteDocument = async(id_dokumen) =>{
+  const deleteDocument = async() =>{
     try {
-      await axios.patch(`http://localhost:5000/temporary-del/${id_dokumen}`,
+      await axios.patch(`http://localhost:5000/temporary-del/${deletedIDDokumen}`,
       {is_deleted: true},
       {
         headers: {Authorization: `Bearer ${token}`}
@@ -397,7 +399,7 @@ function Document() {
       const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
       const pages = pdfDoc.getPages();
-      const scale = 1.5;
+      const scale = 1;
     
       for (const sign of logSigns) {
         if (sign.status === "Completed" && sign.is_submitted) {
@@ -436,7 +438,7 @@ function Document() {
           : (sign.tgl_tt ?? "");
 
           const docItem = document.find(d => String(d.id_dokumen) === String(id_dokumen));
-          console.log("docItem:", docItem);
+          // console.log("docItem:", docItem);
           const rawDate = sign.tgl_tt ?? docItem?.LogSigns?.tgl_tt;
           const parsedDate = new Date(rawDate);
           const safeDate = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
@@ -466,7 +468,7 @@ function Document() {
           size: 8,
           maxWidth: 50,
           lineHeight: 12,
-          })
+          });
 
           } else {
             const date = new Date(sign.tgl_tt);
@@ -589,292 +591,337 @@ function Document() {
   const handleUpload = () => {
     history.push("/admin/upload-document");
   }
+
+  const handleDeleteDocument = (id_dokumen) => {
+    setDeletedIDDokumen(id_dokumen);
+    setShowModal(true);
+  };
   
   return (
     <>
       {isLoading === false ? (
-        <Container>
-          <Row>
-            <AddKaryawan showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
-            <AddDocument showAddDoc={showAddDoc} setShowAddDoc={setShowAddDoc} onSuccess={handleAddDocSuccess}/>
-            <EditKaryawan
-                showEditModal={showEditModal}
-                setShowEditModal={setShowEditModal}
-                document={selectedDocument}
-                onSuccess={handleEditSuccess}
-            />
-
-            <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>
-              <Button
-                type="button"
-                className="btn btn-fill btn-primary mb-3"
-                style={{width:"190px"}}
-                onClick={handleUpload}>
-                <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
-                  Upload Document
-              </Button>
-            <Container>
-              <Button
-                className="btn-fill pull-right mb-3 mr-3"
-                type="button"
-                variant="info"
-                onClick={() => downloadCSV(document)}>
-                <FaFileCsv style={{ marginRight: '8px' }} />
-                Export to CSV
-              </Button>
-
-              <Button
-                className="btn-fill pull-right mb-3"
-                type="button"
-                variant="info"
-                onClick={() => downloadPDF(document)}>
-                <FaFilePdf style={{ marginRight: '8px' }} />
-                Export to PDF
-              </Button>
-            </Container>       
+        <>
+          <Container>
             <Row>
-              <Col lg="4" sm="6">
-                  <Card className="card-stats">
-                  <Card.Body>
-                    <Row>
-                      <Col xs="5">
-                        <div className="icon-big icon-warning">
-                          <FaFileSignature className="text-warning" />
-                        </div>
-                      </Col>
-                      <Col xs="7">
-                        <div className="numbers">
-                          <p className="card-category">Needs to sign</p>
-                        </div>
-                      </Col>
-                      <Col>
-                      <div className="text-right">
-                        {/* <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">
-                          {jumlahNeedsToSign?.jumlahNeedsToSign}
-                          </h3>
-                        </Card.Title> */}
-                        <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">
-                          {jumlahNeedsToSign?.jumlahNeedsToSign}
-                          
-                          {/* {Array.isArray(currentItems) 
-                            ? currentItems.filter(d => d.is_deleted !== true).length
-                            : (jumlahNeedsToSign?.jumlahNeedsToSign ?? 0)
-                          } */}
-                          </h3>
-                        </Card.Title>
-                      </div>
-                      </Col>
-                    </Row>
-                  </Card.Body>
-                  <Card.Footer>
-                    <hr></hr>
-                    <div className="stats">
-                      Needs to sign
-                    </div>
-                  </Card.Footer>
-                </Card>
-              </Col>
-              <Col lg="4" sm="6">
-                <Card className="card-stats">
-                  <Card.Body>
-                    <Row>
-                      <Col xs="5">
-                        <div className="icon-big icon-warning">
-                          <FaHourglassStart className="text-secondary" />
-                        </div>
-                      </Col>
-                      <Col xs="7">
-                        <div className="numbers">
-                          <p className="card-category">Pending sign</p>
-                        </div>
-                      </Col>
-                      <Col>
+              <AddKaryawan showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
+              <AddDocument showAddDoc={showAddDoc} setShowAddDoc={setShowAddDoc} onSuccess={handleAddDocSuccess}/>
+              <EditKaryawan
+                  showEditModal={showEditModal}
+                  setShowEditModal={setShowEditModal}
+                  document={selectedDocument}
+                  onSuccess={handleEditSuccess}
+              />
+
+              <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>
+                <Button
+                  type="button"
+                  className="btn btn-fill btn-primary mb-3"
+                  style={{width:"190px"}}
+                  onClick={handleUpload}>
+                  <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
+                    Upload Document
+                </Button>
+              <Container>
+                <Button
+                  className="btn-fill pull-right mb-3 mr-3"
+                  type="button"
+                  variant="info"
+                  onClick={() => downloadCSV(document)}>
+                  <FaFileCsv style={{ marginRight: '8px' }} />
+                  Export to CSV
+                </Button>
+
+                <Button
+                  className="btn-fill pull-right mb-3"
+                  type="button"
+                  variant="info"
+                  onClick={() => downloadPDF(document)}>
+                  <FaFilePdf style={{ marginRight: '8px' }} />
+                  Export to PDF
+                </Button>
+              </Container>       
+              <Row>
+                <Col lg="4" sm="6">
+                    <Card className="card-stats">
+                    <Card.Body>
+                      <Row>
+                        <Col xs="5">
+                          <div className="icon-big icon-warning">
+                            <FaFileSignature className="text-warning" />
+                          </div>
+                        </Col>
+                        <Col xs="7">
+                          <div className="numbers">
+                            <p className="card-category">Needs to sign</p>
+                          </div>
+                        </Col>
+                        <Col>
                         <div className="text-right">
+                          {/* <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">
+                            {jumlahNeedsToSign?.jumlahNeedsToSign}
+                            </h3>
+                          </Card.Title> */}
                           <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">
-                            {jumlahPending?.jumlahPending}
+                            {jumlahNeedsToSign?.jumlahNeedsToSign}
                             
                             {/* {Array.isArray(currentItems) 
-                              ? currentItems.filter(d => !d.is_deleted && getStatusById(d.id_dokumen) === "Pending").length
-                              : (jumlahPending?.jumlahPending ?? 0)
+                              ? currentItems.filter(d => d.is_deleted !== true).length
+                              : (jumlahNeedsToSign?.jumlahNeedsToSign ?? 0)
                             } */}
                             </h3>
-                            </Card.Title>
+                          </Card.Title>
                         </div>
-                      </Col>
-                    </Row>
-                  </Card.Body>
-                  <Card.Footer>
-                    <hr></hr>
-                    <div className="stats">
-                      Pending sign
-                    </div>
-                  </Card.Footer>
-                </Card>
-              </Col>
-              <Col lg="4" sm="6">
-                <Card className="card-stats">
-                  <Card.Body>
-                    <Row>
-                      <Col xs="5">
-                        <div className="icon-big icon-warning">
-                          <FaClipboardCheck className="text-success"/>
-                        </div>
-                      </Col>
-                      <Col xs="7">
-                        <div className="numbers">
-                          <p className="card-category">Completed</p>
-                        </div>
-                      </Col>
-                      <Col>
-                        <div className="text-right">
-                          <Card.Title className="card-plafond">
-                            <h3 style={{fontWeight: 600}} className="mt-0">
-                              {jumlahCompleted?.jumlahCompleted}
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                    <Card.Footer>
+                      <hr></hr>
+                      <div className="stats">
+                        Needs to sign
+                      </div>
+                    </Card.Footer>
+                  </Card>
+                </Col>
+                <Col lg="4" sm="6">
+                  <Card className="card-stats">
+                    <Card.Body>
+                      <Row>
+                        <Col xs="5">
+                          <div className="icon-big icon-warning">
+                            <FaHourglassStart className="text-secondary" />
+                          </div>
+                        </Col>
+                        <Col xs="7">
+                          <div className="numbers">
+                            <p className="card-category">Pending sign</p>
+                          </div>
+                        </Col>
+                        <Col>
+                          <div className="text-right">
+                            <Card.Title className="card-plafond"><h3 style={{fontWeight: 600}} className="mt-0">
+                              {jumlahPending?.jumlahPending}
+                              
+                              {/* {Array.isArray(currentItems) 
+                                ? currentItems.filter(d => !d.is_deleted && getStatusById(d.id_dokumen) === "Pending").length
+                                : (jumlahPending?.jumlahPending ?? 0)
+                              } */}
+                              </h3>
+                              </Card.Title>
+                          </div>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                    <Card.Footer>
+                      <hr></hr>
+                      <div className="stats">
+                        Pending sign
+                      </div>
+                    </Card.Footer>
+                  </Card>
+                </Col>
+                <Col lg="4" sm="6">
+                  <Card className="card-stats">
+                    <Card.Body>
+                      <Row>
+                        <Col xs="5">
+                          <div className="icon-big icon-warning">
+                            <FaClipboardCheck className="text-success"/>
+                          </div>
+                        </Col>
+                        <Col xs="7">
+                          <div className="numbers">
+                            <p className="card-category">Completed</p>
+                          </div>
+                        </Col>
+                        <Col>
+                          <div className="text-right">
+                            <Card.Title className="card-plafond">
+                              <h3 style={{fontWeight: 600}} className="mt-0">
+                                {jumlahCompleted?.jumlahCompleted}
 
-                               {/* {Array.isArray(currentItems) 
-                                  ? currentItems.filter(d => !d.is_deleted && getStatusById(d.id_dokumen) === "Completed").length
-                                  : (jumlahCompleted?.jumlahCompleted ?? 0)
-                                } */}
-                            </h3>
-                            </Card.Title>
-                        </div>
-                      </Col>
-                    </Row>
-                  </Card.Body>
-                  <Card.Footer>
-                    <hr></hr>
-                    <div className="stats">
-                      Completed
-                    </div>
-                  </Card.Footer>
-                </Card>
-              </Col>
-            </Row>  
-            <Col md="12">
-            <CDBTable hover  className="mt-4">
-              <CDBTableHeader>
-                <tr>
-                  <th onClick={() => handleSort("id_dokumen")}>Document ID {sortBy==="id_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                  <th className="border-0" onClick={() => handleSort("nama_dokumen")}>Document Name {sortBy==="nama_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                  <th className="border-0" onClick={() => handleSort("id_kategoridok")}>Category {sortBy==="id_kategoridok" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                  <th className="border-0">Status</th>
-                  <th className="border-0">Deadline</th>
-                  <th className="border-0" onClick={() => handleSort("createdAt")}>Uploaded {sortBy==="createdAt" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                  <th className="border-0" colSpan={3}>Action</th>
-                </tr>
-              </CDBTableHeader>
-              <CDBTableBody>
-                {currentItems
-                .filter(document => !document.is_deleted)
-                .map((document, index) => (
-                  <tr key={document.id_dokumen}>
-                    <td className="text-center">{document.id_dokumen}</td>
-                    <td className="text-center">
-                      <p>{document.nama_dokumen}</p>
-                      <p className="signer-font">To: {document.LogSigns.map((log) => log.Signerr?.nama).join(", ")}</p>
-                    </td>
-                    <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
-                    <td className="text-center">
-                      {(() => {
-                        const status = getStatusById(document.id_dokumen);
-                        const allSubmitted = document.LogSigns.every((log) => log.is_submitted === true);
+                                {/* {Array.isArray(currentItems) 
+                                    ? currentItems.filter(d => !d.is_deleted && getStatusById(d.id_dokumen) === "Completed").length
+                                    : (jumlahCompleted?.jumlahCompleted ?? 0)
+                                  } */}
+                              </h3>
+                              </Card.Title>
+                          </div>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                    <Card.Footer>
+                      <hr></hr>
+                      <div className="stats">
+                        Completed
+                      </div>
+                    </Card.Footer>
+                  </Card>
+                </Col>
+              </Row>  
+              <Col md="12">
+              <CDBTable hover  className="mt-4">
+                <CDBTableHeader>
+                  <tr>
+                    <th onClick={() => handleSort("id_dokumen")}>Document ID {sortBy==="id_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                    <th className="border-0" onClick={() => handleSort("nama_dokumen")}>Document Name {sortBy==="nama_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                    <th className="border-0" onClick={() => handleSort("id_kategoridok")}>Category {sortBy==="id_kategoridok" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                    <th className="border-0">Status</th>
+                    <th className="border-0">Deadline</th>
+                    <th className="border-0" onClick={() => handleSort("createdAt")}>Uploaded {sortBy==="createdAt" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                    <th className="border-0" colSpan={3}>Action</th>
+                  </tr>
+                </CDBTableHeader>
+                <CDBTableBody>
+                  {currentItems
+                  .filter(document => !document.is_deleted)
+                  .map((document, index) => (
+                    <tr key={document.id_dokumen}>
+                      <td className="text-center">{document.id_dokumen}</td>
+                      <td className="text-center">
+                        <p>{document.nama_dokumen}</p>
+                        <p className="signer-font">To: {document.LogSigns.map((log) => log.Signerr?.nama).join(", ")}</p>
+                      </td>
+                      <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
+                      <td className="text-center">
+                        {(() => {
+                          const status = getStatusById(document.id_dokumen);
+                          const allSubmitted = document.LogSigns.every((log) => log.is_submitted === true);
 
-                        let badge;
-                        if (status === "Decline") {
-                          badge = <Badge pill bg="danger">Decline</Badge>;
-                        } else if (status === "Completed" && allSubmitted) {
-                          badge = <Badge pill bg="success">Completed</Badge>;
-                        } else  {
-                          badge = <Badge pill bg="secondary">Pending</Badge>;
-                        }
+                          let badge;
+                          if (status === "Decline") {
+                            badge = <Badge pill bg="danger">Decline</Badge>;
+                          } else if (status === "Completed" && allSubmitted) {
+                            badge = <Badge pill bg="success">Completed</Badge>;
+                          } else  {
+                            badge = <Badge pill bg="secondary">Pending</Badge>;
+                          }
 
-                        return (
-                          <>
-                            <p>{badge}</p>
-                            {!(status === "Completed" || status === "Decline" || allSubmitted) && (
-                              <p className="signer-font">{getProgress(document)}</p>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </td>
+                          return (
+                            <>
+                              <p>{badge}</p>
+                              {!(status === "Completed" || status === "Decline" || allSubmitted) && (
+                                <p className="signer-font">{getProgress(document)}</p>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </td>
 
-                    <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
-                    <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
-                    
-                    <td className="text-center px-0">
-                      <button
-                      style={{background:"transparent", border:"none"}} 
-                      disabled={document.user_active === true}
-                      >
-                      <FaPaperPlane 
-                        type="button"
-                        onClick={() => sendReminder(document.id_dokumen)}
-                        className="text-primary btn-action"
-                        hidden={getStatusById(document.id_dokumen) !== "Pending"}
-                      />
-                    </button>
-                    </td>
-                    <td className="text-center px-0">
-                      <button
-                        style={{ background: "transparent", border: "none" }}
+                      <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
+                      <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
+                      
+                      <td className="text-center px-0">
+                        <button
+                        style={{background:"transparent", border:"none"}} 
                         disabled={document.user_active === true}
-                        hidden={getStatusById(document.id_dokumen) === "Decline"}
-
-                      >
-                        <FaDownload
+                        >
+                        <FaPaperPlane 
                           type="button"
-                          onClick={async(e) => {
-                            e.preventDefault();
-                            const ref = getRef(document.id_dokumen); 
-                            const status = getStatusById(document.id_dokumen);
-                            const logSigns = document.LogSigns || [];
-                            const allSubmitted = logSigns.length > 0 && logSigns.every(sign => sign?.is_submitted === true);
-
-                            if (status === "Completed" && allSubmitted) {
-                              await downloadDoc(document.id_dokumen, ref, document.LogSigns);
-                            } else {
-                              await plainDoc(document.id_dokumen);
-                            }
-
-
-                          }}
-                          className="text-success btn-action"
+                          onClick={() => sendReminder(document.id_dokumen)}
+                          className="text-primary btn-action"
+                          hidden={getStatusById(document.id_dokumen) !== "Pending"}
                         />
                       </button>
-                    </td>
-                    <td className="text-center px-0">
-                    <button
-                      style={{background:"transparent", border:"none"}} 
-                      disabled={document.user_active === true}
-                      >
-                      <FaTrashAlt 
-                        type="button"
-                        onClick={() => deleteDocument(document.id_dokumen)}
-                        className="text-danger btn-action"
-                      />
-                    </button>
-                    </td>
+                      </td>
+                      <td className="text-center px-0">
+                        <button
+                          style={{ background: "transparent", border: "none" }}
+                          disabled={document.user_active === true}
+                          hidden={getStatusById(document.id_dokumen) === "Decline"}
 
-                  </tr>
-                ))}
-              </CDBTableBody>
-            </CDBTable>
-              
-              <div className="pagination-container">
-                <Pagination
-                      activePage={currentPage}
-                      itemsCountPerPage={itemsPerPage}
-                      totalItemsCount={filteredDocument.length}
-                      pageRangeDisplayed={5}
-                      onChange={handlePageChange}
-                      itemClass="page-item"
-                      linkClass="page-link"
-                />
-              </div>
-            </Col>
-          </Row>
-        </Container>
+                        >
+                          <FaDownload
+                            type="button"
+                            onClick={async(e) => {
+                              e.preventDefault();
+                              const ref = getRef(document.id_dokumen); 
+                              const status = getStatusById(document.id_dokumen);
+                              const logSigns = document.LogSigns || [];
+                              const allSubmitted = logSigns.length > 0 && logSigns.every(sign => sign?.is_submitted === true);
+
+                              if (status === "Completed" && allSubmitted) {
+                                await downloadDoc(document.id_dokumen, ref, document.LogSigns);
+                              } else {
+                                await plainDoc(document.id_dokumen);
+                              }
+
+
+                            }}
+                            className="text-success btn-action"
+                          />
+                        </button>
+                      </td>
+                      <td className="text-center px-0">
+                      {/* <button
+                        style={{background:"transparent", border:"none"}} 
+                        disabled={document.user_active === true}
+                        >
+                        <FaTrashAlt 
+                          type="button"
+                          onClick={() => deleteDocument(document.id_dokumen)}
+                          className="text-danger btn-action"
+                        />
+                      </button> */}
+
+                      <button style={{background:"transparent", border:"none"}} disabled={document.user_active === true}>
+                        <FaTrashAlt 
+                          type="button"
+                          onClick={() => handleDeleteDocument(document.id_dokumen)}
+                          className="text-danger btn-action"
+                        />
+                      </button>
+                      </td>
+
+                    </tr>
+                  ))}
+                </CDBTableBody>
+              </CDBTable>
+                
+                <div className="pagination-container">
+                  <Pagination
+                        activePage={currentPage}
+                        itemsCountPerPage={itemsPerPage}
+                        totalItemsCount={filteredDocument.length}
+                        pageRangeDisplayed={5}
+                        onChange={handlePageChange}
+                        itemClass="page-item"
+                        linkClass="page-link"
+                  />
+                </div>
+              </Col>
+            </Row>
+          </Container>
+
+          <Modal show={showModal} onHide={() => setShowModal(false)} dialogClassName="modal-warning">
+            <Modal.Header style={{borderBottom: "none"}}>
+              <FaExclamationTriangle style={{ width:"100%", height:"60px", position: "relative", textAlign:"center", marginTop:"20px"}} color="#ffca57ff"/>
+                <button
+                  type="button"
+                  className="close"
+                  aria-label="Close"
+                  onClick={() => setShowModal(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "1.5rem",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                  }}
+                >
+                  &times; {/* Simbol 'x' */}
+                </button>
+            </Modal.Header>
+            <Modal.Body style={{ width:"100%", height:"60px", position: "relative", textAlign:"center"}} >Are you sure you want to delete this document?</Modal.Body>
+            <Modal.Footer className="mb-2" textAlign="center" style={{ justifyContent: "center", borderTop: "none" }}>
+              <Button variant="secondary" onClick={() => setShowModal(false)} className="mx-3">
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={() => deleteDocument(document.id_dokumen)} className="mx-3">
+                Delete
+              </Button> 
+            </Modal.Footer>
+          </Modal>
+        </>
       ) : (
           <>
             <div className="d-flex flex-column flex-wrap align-items-center justify-content-center" style={{ height: '80vh'}}>

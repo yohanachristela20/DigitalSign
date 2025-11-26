@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import SearchBar from "components/Search/SearchBar.js";
 import { CDBTable, CDBTableHeader, CDBTableBody } from 'cdbreact';
-import {Alert, Container, Row, Col, Badge} from "react-bootstrap";
-import {FaInfoCircle, FaTrashAlt, FaSortUp, FaSortDown, FaUpload} from 'react-icons/fa'; 
+import {Alert, Container, Row, Col, Badge, Modal, Button} from "react-bootstrap";
+import {FaInfoCircle, FaTrashAlt, FaSortUp, FaSortDown, FaUpload, FaExclamationTriangle} from 'react-icons/fa'; 
 import Pagination from "react-js-pagination";
 import { toast } from "react-toastify";
 
@@ -18,12 +18,15 @@ function Trash() {
     const [loading, setLoading] = useState(true);
     const [documentStatus, setDocumentStatus] = useState([]);
     const [documentDeadline, setDocumentDeadline] = useState([]);
+    const [deletedIDDokumen, setDeletedIDDokumen] = useState(null);
+    const [showModal, setShowModal] = useState(false); 
 
     const today = new Date();
     const currentYear = today.getFullYear();
     const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
     const todayDate = today.getDate().toString().padStart(2, '0');
     const formattedDate = `${currentYear}-${currentMonth}-${todayDate}`;
+    
 
     const token = localStorage.getItem("token");
     
@@ -152,9 +155,9 @@ function Trash() {
         getDocumentDeadline();
     }, [selectedCategory]);
 
-    const deleteDocument = async(id_dokumen) =>{
+    const deleteDocument = async() =>{
         try {
-        await axios.delete(`http://localhost:5000/document/${id_dokumen}`,
+        await axios.delete(`http://localhost:5000/document/${deletedIDDokumen}`,
         {
             headers: {Authorization: `Bearer ${token}`}
         }
@@ -191,6 +194,11 @@ function Trash() {
       } catch (error) {
         console.log(error.message); 
       }
+    };
+
+    const handleDeleteDocument = (id_dokumen) => {
+      setDeletedIDDokumen(id_dokumen);
+      setShowModal(true);
     };
 
      return (
@@ -254,7 +262,7 @@ function Trash() {
                         >
                         <FaTrashAlt 
                           type="button"
-                          onClick={() => deleteDocument(document.id_dokumen)}
+                          onClick={() => handleDeleteDocument(document.id_dokumen)}
                           className="text-danger btn-action"
                         />
                       </button>
@@ -281,6 +289,36 @@ function Trash() {
               </Col>
             </Row>
           </Container>
+
+          <Modal show={showModal} onHide={() => setShowModal(false)} dialogClassName="modal-warning">
+            <Modal.Header style={{borderBottom: "none"}}>
+              <FaExclamationTriangle style={{ width:"100%", height:"60px", position: "relative", textAlign:"center", marginTop:"20px"}} color="#ffca57ff"/>
+                <button
+                  type="button"
+                  className="close"
+                  aria-label="Close"
+                  onClick={() => setShowModal(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "1.5rem",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                  }}
+                >
+                  &times; {/* Simbol 'x' */}
+                </button>
+            </Modal.Header>
+            <Modal.Body style={{ width:"100%", height:"60px", position: "relative", textAlign:"center"}} >Are you sure you want to permanently delete this document?</Modal.Body>
+            <Modal.Footer className="mb-2" textAlign="center" style={{ justifyContent: "center", borderTop: "none" }}>
+              <Button variant="secondary" onClick={() => setShowModal(false)} className="mx-3">
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={() => deleteDocument(document.id_dokumen)} className="mx-3">
+                Delete
+              </Button> 
+            </Modal.Footer>
+          </Modal>
         </>
       );
 }

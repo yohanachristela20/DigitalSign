@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaFileCsv, FaFileImport, FaFilePdf, FaPlusCircle, FaRegEdit, FaTrashAlt, FaSortUp, FaSortDown} from 'react-icons/fa'; 
+import { FaFileCsv, FaFileImport, FaFilePdf, FaPlusCircle, FaRegEdit, FaTrashAlt, FaSortUp, FaSortDown, FaExclamationTriangle} from 'react-icons/fa'; 
 import SearchBar from "components/Search/SearchBar.js";
 import axios from "axios";
 import AddKaryawan from "components/ModalForm/AddKaryawan.js";
@@ -16,7 +16,7 @@ import ReactLoading from "react-loading";
 import "../assets/scss/lbd/_loading.scss";
 
 
-import {Button, Container, Row, Col, Card, Table, Spinner } from "react-bootstrap";
+import {Button, Container, Row, Col, Card, Table, Spinner, Modal } from "react-bootstrap";
 
 function MasterKaryawan() {
   const [showAddModal, setShowAddModal] = React.useState(false);
@@ -33,6 +33,8 @@ function MasterKaryawan() {
   const [sortBy, setSortBy] = useState("id_karyawan");
   const [sortOrder, setSortOrder] = useState("asc");
   const [sortOrderDibayar, setSortOrderDibayar] = useState("asc");
+  const [deletedIDKaryawan, setDeletedIDKaryawan] = useState(null);
+  const [showModal, setShowModal] = useState(false); 
 
   const filteredKaryawan = karyawan.filter((karyawan) =>
     (karyawan.id_karyawan && String(karyawan.id_karyawan).toLowerCase().includes(searchQuery)) ||
@@ -99,19 +101,20 @@ function MasterKaryawan() {
     }
   };
 
-  const deleteKaryawan = async(id_karyawan) =>{
+  const deleteKaryawan = async() =>{
     try {
-      await axios.delete(`http://localhost:5000/karyawan/${id_karyawan}` , {
+      await axios.delete(`http://localhost:5000/employee/${deletedIDKaryawan}` , {
         headers: {
           Authorization: `Bearer ${token}`,
       },
       }); 
-      toast.success("Data karyawan berhasil dihapus.", {
+      toast.success("Employee was deleted successfully.", {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: true,
     });
-      getKaryawan(); 
+    getKaryawan(); 
+    window.location.reload();
      
     } catch (error) {
       console.log(error.message); 
@@ -263,6 +266,11 @@ function MasterKaryawan() {
     setTimeout(() => setLoading(false), 1000)
   }, []); 
 
+  const handleDeleteKaryawan = (id_karyawan) => {
+    setDeletedIDKaryawan(id_karyawan);
+    setShowModal(true);
+  };
+
   return (
     <>
     {loading === false ? 
@@ -357,7 +365,7 @@ function MasterKaryawan() {
                          <FaRegEdit style={{ marginRight: '8px' }} />
                          Ubah
                        </Button>
-                       <Button
+                       {/* <Button
                          className="btn-fill pull-right ml-2"
                          type="button"
                          variant="danger"
@@ -368,7 +376,15 @@ function MasterKaryawan() {
                          }}>
                          <FaTrashAlt style={{ marginRight: '8px' }} />
                          Hapus
-                       </Button>
+                       </Button> */}
+                        <button style={{background:"transparent", border:"none"}}>
+                          <FaTrashAlt 
+                            type="button"
+                            onClick={() => handleDeleteKaryawan(karyawan.id_karyawan)}
+                            className="text-danger btn-action"
+                          />Hapus
+                        </button>
+                                              
                        
                        </td>
                      </tr>
@@ -393,8 +409,37 @@ function MasterKaryawan() {
             </div>
           </Col>
         </Row>
-        
       </Container>
+
+      <Modal show={showModal} onHide={() => setShowModal(false)} dialogClassName="modal-warning">
+        <Modal.Header style={{borderBottom: "none"}}>
+          <FaExclamationTriangle style={{ width:"100%", height:"60px", position: "relative", textAlign:"center", marginTop:"20px"}} color="#ffca57ff"/>
+            <button
+              type="button"
+              className="close"
+              aria-label="Close"
+              onClick={() => setShowModal(false)}
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+                cursor: "pointer",
+              }}
+            >
+              &times; {/* Simbol 'x' */}
+            </button>
+        </Modal.Header>
+        <Modal.Body style={{ width:"100%", height:"60px", position: "relative", textAlign:"center"}} >Are you sure you want to delete this Employee data?</Modal.Body>
+        <Modal.Footer className="mb-2" textAlign="center" style={{ justifyContent: "center", borderTop: "none" }}>
+          <Button variant="secondary" onClick={() => setShowModal(false)} className="mx-3">
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={() => deleteKaryawan(karyawan.id_karyawan)} className="mx-3">
+            Delete
+          </Button> 
+        </Modal.Footer>
+      </Modal>
       </div>
       ):
       ( <>

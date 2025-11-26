@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {FaFileCsv, FaFilePdf, FaRegEdit, FaTrashAlt, FaUserLock, FaSortUp, FaSortDown} from 'react-icons/fa'; 
+import {FaFileCsv, FaFilePdf, FaRegEdit, FaTrashAlt, FaUserLock, FaSortUp, FaSortDown, FaExclamationTriangle} from 'react-icons/fa'; 
 import SearchBar from "components/Search/SearchBar.js";
 import axios from "axios";
 import AddUser from "components/ModalForm/AddUser.js";
@@ -13,7 +13,7 @@ import "../assets/scss/lbd/_pagination.scss";
 import "../assets/scss/lbd/_table-header.scss";
 import { CDBTable, CDBTableHeader, CDBTableBody, CDBBtn, CDBBtnGrp } from 'cdbreact';
 
-import {Button, Container, Row, Col, Badge} from "react-bootstrap";
+import {Button, Container, Row, Col, Badge, Modal} from "react-bootstrap";
 
 function MasterUser() {
   const [showAddModal, setShowAddModal] = React.useState(false);
@@ -26,6 +26,9 @@ function MasterUser() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [loading, setLoading] = useState(true);
+  const [deletedUser, setDeletedUser] = useState(null);
+  const [showModal, setShowModal] = useState(false); 
+    
 
   const [sortBy, setSortBy] = useState("id_user");
   const [sortOrder, setSortOrder] = useState("asc");
@@ -93,19 +96,20 @@ function MasterUser() {
   };
   
 
-  const deleteUser = async(id_user) =>{
+  const deleteUser = async() =>{
     try {
-      await axios.delete(`http://localhost:5000/user/${id_user}` , {
+      await axios.delete(`http://localhost:5000/user/${deletedUser}` , {
         headers: {
           Authorization: `Bearer ${token}`,
       },
       }); 
-      toast.success("User successfully deleted!", {
+      toast.success("User was deleted successfully.", {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: true,
       });
       getUser(); 
+      window.location.reload();
     } catch (error) {
       console.log(error.message); 
     }
@@ -262,6 +266,11 @@ function MasterUser() {
 
   };
 
+  const handleDeleteUser = (id_user) => {
+    setDeletedUser(id_user);
+    setShowModal(true);
+  };
+
   
   
   return (
@@ -356,7 +365,7 @@ function MasterUser() {
                     >
                     <FaTrashAlt 
                       type="button"
-                      onClick={() => deleteUser(user.id_user)}
+                      onClick={() => handleDeleteUser(user.id_user)}
                       className="btn-del"
                     />
                   </button>
@@ -380,6 +389,36 @@ function MasterUser() {
           </Col>
         </Row>
       </Container>
+
+      <Modal show={showModal} onHide={() => setShowModal(false)} dialogClassName="modal-warning">
+        <Modal.Header style={{borderBottom: "none"}}>
+          <FaExclamationTriangle style={{ width:"100%", height:"60px", position: "relative", textAlign:"center", marginTop:"20px"}} color="#ffca57ff"/>
+            <button
+              type="button"
+              className="close"
+              aria-label="Close"
+              onClick={() => setShowModal(false)}
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+                cursor: "pointer",
+              }}
+            >
+              &times; {/* Simbol 'x' */}
+            </button>
+        </Modal.Header>
+        <Modal.Body style={{ width:"100%", height:"60px", position: "relative", textAlign:"center"}} >Are you sure you want to delete this user?</Modal.Body>
+        <Modal.Footer className="mb-2" textAlign="center" style={{ justifyContent: "center", borderTop: "none" }}>
+          <Button variant="secondary" onClick={() => setShowModal(false)} className="mx-3">
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={() => deleteUser(user.id_user)} className="mx-3">
+            Delete
+          </Button> 
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }

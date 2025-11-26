@@ -40,6 +40,7 @@ function ReceiveDocument() {
 	const [loading, setLoading] = useState(false);
 	const [errorMsg, setErrorMsg] = useState("");
 	const [id_dokumen, setIdDokumen] = useState("");
+	const [nama_dokumen, setNamaDokumen] = useState("");
 	const [id_signers, setIdSigner] = useState("");
 	const [delegated_signers, setDelegatedSigners] = useState("");
 	const [id_karyawan, setIdKaryawan] = useState("");
@@ -172,6 +173,31 @@ function ReceiveDocument() {
 
 	const selectedCategory = location.state?.selectedCategory;
 
+	const wrapText = (ctx, text, maxWidth, lineHeight) => {
+  const words = text.split(" ");
+  const lines = [];
+  let currentLine = "";
+
+  for (let word of words) {
+    const testLine = currentLine + (currentLine ? " " : "") + word;
+    const metrics = ctx.measureText(testLine);
+    
+    if (metrics.width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  return lines;
+};
+
+
 	const getDocument = async (selectedCategory) =>{
 			try {
 			const url = selectedCategory 
@@ -207,7 +233,7 @@ function ReceiveDocument() {
 
 							for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
 									const page = await pdf.getPage(pageNum);
-									const scale = 1.5;
+									const scale = 1;
 									const viewport = page.getViewport({scale});
 
 									const canvas = document.createElement('canvas');
@@ -358,10 +384,11 @@ function ReceiveDocument() {
 
 					try {
 							const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
-							const { id_dokumen, id_signers } = docRes.data;
+							const { id_dokumen, id_signers, nama_dokumen } = docRes.data;
 
 							setIdDokumen(id_dokumen);
 							setIdSigner(id_signers);
+							setNamaDokumen(nama_dokumen);
 
 							const logsignRes = await axios.get(`http://localhost:5000/access-status?token=${token}`);
 							const accessed = logsignRes.data.is_accessed;
@@ -386,6 +413,8 @@ function ReceiveDocument() {
 			};
 			checkAccessStatus();
 	}, [token]);
+
+	// console.log("Nama Dokumen:", nama_dokumen);
 
 	const handleEmailVerify = async (e) => { 
 			e.preventDefault();
@@ -1089,65 +1118,228 @@ function ReceiveDocument() {
 
 	
 	//Versi 3
-	useEffect(() => {
-			if (canvases && canvases.length > 0) {
-					const pageIndex = 0;
-					const pageMeta = canvases[pageIndex];
-					if (pageMeta && pageMeta.width && pageMeta.height) {
-							setCanvasDimensions({
-									width: pageMeta.width,
-									height: pageMeta.height,
-							});
-					}
-			}
-	}, [canvases]);
+	// useEffect(() => {
+	// 		if (canvases && canvases.length > 0) {
+	// 				const pageIndex = 0;
+	// 				const pageMeta = canvases[pageIndex];
+	// 				if (pageMeta && pageMeta.width && pageMeta.height) {
+	// 						setCanvasDimensions({
+	// 								width: pageMeta.width,
+	// 								height: pageMeta.height,
+	// 						});
+	// 				}
+	// 		}
+	// }, [canvases]);
 
 	// console.log("canvasDimensions:", canvasDimensions);
 
 
-	const downloadPDF = async () => {
-			const element = contentRef.current;
-			if (!element) return;
+	//LASTT
+	// const downloadPDF = async () => {
+	// 		const element = contentRef.current;
+	// 		if (!element) return;
 
-			// setDownloadClicked(true);
+	// 		// setDownloadClicked(true);
 
-			const canvas = await html2canvas(element, { scale: 1.0 }); // Scale for better quality
-			const imgData = canvas.toDataURL('image/png');
+	// 		const canvas = await html2canvas(element, { scale: 1.0 }); // Scale for better quality
+	// 		const imgData = canvas.toDataURL('image/png');
 
-			const canvasWidth = canvasDimensions.width;
-			const canvasHeight = canvasDimensions.height;
+	// 		const canvasWidth = canvasDimensions.width;
+	// 		const canvasHeight = canvasDimensions.height;
 			
 
-			// console.log("canvasHeight:", canvasHeight, "canvasWidth:", canvasWidth);
+	// 		// console.log("canvasHeight:", canvasHeight, "canvasWidth:", canvasWidth);
 
-			const orientation = canvasWidth > canvasHeight ? 'l' : 'p';
-			// console.log("orientation:", orientation);
+	// 		const orientation = canvasWidth > canvasHeight ? 'l' : 'p';
+	// 		// console.log("orientation:", orientation);
 
-			const pdf = new jsPDF(orientation, 'mm', 'a4'); // Portrait, millimeters, A4 size
-			const imgWidth = orientation === "p" ? 210 : 297; // A4 width in mm
-			const pageHeight = 297; // A4 height in mm
+	// 		const pdf = new jsPDF(orientation, 'mm', 'a4'); // Portrait, millimeters, A4 size
+	// 		const imgWidth = orientation === "p" ? 210 : 297; // A4 width in mm
+	// 		const pageHeight = 297; // A4 height in mm
 			
-			const marginBottom = 80;
+	// 		const marginBottom = 80;
 
-			const pHeight = (canvas.height * imgWidth) / canvas.width - marginBottom; // portait height
-			const lHeight = (canvas.height * imgWidth) / canvas.width + 5; // landscape height
+	// 		const pHeight = (canvas.height * imgWidth) / canvas.width - marginBottom; // portait height
+	// 		const lHeight = (canvas.height * imgWidth) / canvas.width + 5; // landscape height
 
-			// const imgHeight = (canvas.height * imgWidth) / canvas.width - marginBottom;
-			const imgHeight = orientation === "p" ? pHeight : lHeight;
-			let heightLeft = imgHeight;
-			let position = 0;
+	// 		// const imgHeight = (canvas.height * imgWidth) / canvas.width - marginBottom;
+	// 		const imgHeight = orientation === "p" ? pHeight : lHeight;
+	// 		let heightLeft = imgHeight;
+	// 		let position = 0;
 
-			pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-			heightLeft -= pageHeight;
+	// 		pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+	// 		heightLeft -= pageHeight;
 
-			while (heightLeft >= 0) {
-				position = heightLeft - imgHeight;
-				pdf.addPage();
-				pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-				heightLeft -= pageHeight;
+	// 		while (heightLeft >= 0) {
+	// 			position = heightLeft - imgHeight;
+	// 			pdf.addPage();
+	// 			pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+	// 			heightLeft -= pageHeight;
+	// 		}
+
+	// 		pdf.save(`${dataDoc[0].doc_name}`); 
+	// };
+
+
+	const downloadPDF = async (id_dokumen, ref, LOGSIGN) => { 
+		try {
+			const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
+			const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+			const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
+			const pages = pdfDoc.getPages();
+			const scale = 1;
+		
+			for (const sign of LOGSIGN) {
+				if (sign.status === "Completed" && sign.is_submitted) {
+					const axisRes = await fetch(
+						`http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
+					).then(res => res.json());
+
+					const field = axisRes[0]?.ItemField;
+					if (!field) continue;
+
+					let { x_axis, y_axis, width, height, jenis_item, page } = field;
+
+					x_axis = jenis_item === "Date" ? Number(x_axis) / scale + 40 : Number(x_axis) / scale;
+					y_axis = jenis_item === "Initialpad" ? Number(y_axis) / scale + 5 : jenis_item === "Signpad" ? Number(y_axis) / scale + 5 :jenis_item === "Date" ? Number(y_axis) / scale - 60 : Number(y_axis) / scale ;
+					
+					width = Number(height) / scale - 10;
+					height = Number(width) / scale - 20;
+
+					const targetPageIndex = Number(page) - 1;  
+					if (targetPageIndex < 0 || targetPageIndex >= pages.length) {
+						console.warn("Invalid page number:", page);
+						continue;
+					}
+
+					const pdfPage = pages[targetPageIndex];
+					const pageHeight = pdfPage.getHeight();
+					const yPos = pageHeight - y_axis - height + 10;
+
+					if (jenis_item === "Initialpad" || jenis_item === "Signpad") {
+					let base64Url = sign.sign_base64;
+					let signer = sign.Signerr?.nama;
+					let tgl_tt = sign.tgl_tt;
+					// let arraytgltt = 
+					// Array.isArray(currentItems) 
+					// ? currentItems.filter(d => d.is_deleted !== true).length
+					// : (sign.tgl_tt ?? "");
+
+					const docItem = LOGSIGN.find(d => String(d.id_dokumen) === String(id_dokumen));
+					// console.log("docItem:", docItem);
+					const rawDate = sign.tgl_tt ?? docItem?.LOGSIGN?.tgl_tt;
+					const parsedDate = new Date(rawDate);
+					const safeDate = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+					const timestamp = safeDate.toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '');
+
+
+					if (!base64Url.startsWith("data:image")) {
+						base64Url = `data:image/png;base64,${base64Url}`;
+					}
+					const pngImage = await pdfDoc.embedPng(base64Url);
+					pdfPage.drawImage(pngImage, {
+						x: x_axis,
+						y: yPos,
+						width,
+						height,
+					});
+
+					// const timestamp2 = new Date(tgl_tt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '');
+					const watermark = `Signed by ${signer} Date: ${timestamp}`;
+
+					// pdfPage.drawText(watermark, {
+					// x: x_axis + marginRight,
+					// y: yPos + marginBottom,
+					// size: 8,
+					// maxWidth: 50,
+					// lineHeight: 12,
+					// });
+
+					try {
+						const fontSize = 8;
+						const maxWidth = 50;
+						const lineHeight = 12;
+						const marginBottom = 15;
+						const marginRight = 90;
+
+						const canvas = document.createElement("canvas");
+						const ctx2 = canvas.getContext("2d");
+						ctx2.font = `${fontSize}px`;
+
+						const wrappedLines = wrapText(ctx2, watermark, maxWidth, lineHeight);
+						// console.log("wrappedLines:", wrappedLines);
+
+						const textWidth = Math.max(...wrappedLines.map(line => ctx2.measureText(line).width));
+						const textHeight = wrappedLines.length * lineHeight;
+
+						canvas.width = textWidth + 10;
+						canvas.height = textHeight + 5 ;
+
+						ctx2.fillStyle = "transparent";
+						ctx2.fillRect(0, 0, canvas.width, canvas.height);
+						ctx2.fillStyle = "black";
+						ctx2.font = `${fontSize}px`;
+						ctx2.textBaseline = "top";
+
+						wrappedLines.forEach((line, index) => {
+							ctx2.fillText(line, 5, 5 + index * lineHeight);
+						});
+
+						const pngDataUrl = canvas.toDataURL("image/png");
+						const pngImage = await pdfDoc.embedPng(pngDataUrl);
+						const pngDims = pngImage.scale(1);
+
+						pdfPage.drawImage(pngImage, {
+							x: x_axis + marginRight,
+							y: yPos + marginBottom,
+							width: pngDims.width,
+							height: pngDims.height,
+						});
+					} catch (err) {
+						console.warn("Failed to create watermark image:", err);
+						try {
+							pdfPage.drawText(watermark, {
+								x: x_axis + marginRight,
+								y: yPos + marginBottom,
+								size: 8,
+							});
+						} catch (e) {
+							console.warn("Failed to add watermark as text:", e);
+						}
+					}
+
+					} else {
+						const date = new Date(sign.tgl_tt);
+						const day = String(date.getDate()).padStart(2, "0");
+						const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec"];
+						const month = monthNames[date.getMonth()];
+						const year = date.getFullYear();
+						const currentDate = `${day} ${month} ${year}`;
+
+						pdfPage.drawText(currentDate, {
+							x: x_axis,
+							y: yPos,
+							size: 9,
+						});
+					}
+				}
 			}
 
-			pdf.save(`${dataDoc[0].doc_name}`); 
+			const signedBytes = await pdfDoc.save();
+			const blob = new Blob([signedBytes], { type: "application/pdf" });
+
+			// console.log("LOGSIGN for filename:", LOGSIGN);
+
+			const docItem = LOGSIGN.find(d =>(d.id_dokumen) === String(id_dokumen));
+			const rawName = nama_dokumen || `document_${id_dokumen}`;
+			const safeName = String(rawName).trim().replace(/[/\\?%*:|"<>]/g, '-');
+
+			saveAs(blob, `${safeName}`);
+
+		} catch (error) {
+			console.error("Downloading error:", error.message);
+		}
 	};
 
 
