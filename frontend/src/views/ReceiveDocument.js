@@ -1464,28 +1464,6 @@ function ReceiveDocument() {
 													return (
 															<>
 																	<div className="divider"></div>
-																	{/* <Dropdown.Item
-																			href="#"
-																			onClick={async (e) => {
-																			e.preventDefault();
-																			setDownloadClicked(true);
-
-																			const ref = getRef(id_dokumen);
-																			const LOGSIGN = JSON.parse(JSON.stringify(currentDoc.LogSigns || []));
-
-																			const hasSubmitted = LOGSIGN.some((log) => log.is_submitted);
-
-
-																			if (hasSubmitted) {
-																					await downloadPDF(id_dokumen, ref, LOGSIGN);
-																			} else {
-																					await plainPDF(id_dokumen);
-																			}
-																			}}
-																	>
-																			Download
-																	</Dropdown.Item> */}
-
 																		<Dropdown.Item
 																			href="#"
 																			onClick={async (e) => {

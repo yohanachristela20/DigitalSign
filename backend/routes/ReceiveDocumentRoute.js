@@ -64,11 +64,11 @@ router.get('/receive-document', async(req, res) => {
             }, 
             attributes: ['id_logsign', 'main_token', 'delegate_token'], 
             include: [
-              {
-								model: Dokumen,
-								as:'DocName',
-								attributes: ['nama_dokumen'],
-							}
+            {
+							model: Dokumen,
+							as:'DocName',
+							attributes: ['nama_dokumen'],
+            }
             ]
         });
 

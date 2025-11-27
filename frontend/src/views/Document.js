@@ -144,6 +144,7 @@ function Document() {
 
   const getStatusById = (id) => {
     const statusObj = documentStatus.find(ds => ds.id_dokumen === id);
+    console.log("statusObj:", statusObj);
     return statusObj ? statusObj.status : "-";
   };
 
@@ -785,13 +786,17 @@ function Document() {
                       <td className="text-center">
                         {(() => {
                           const status = getStatusById(document.id_dokumen);
+                          console.log("status:", status);
                           const allSubmitted = document.LogSigns.every((log) => log.is_submitted === true);
 
                           let badge;
                           if (status === "Decline") {
                             badge = <Badge pill bg="danger">Decline</Badge>;
+                          } else if (status === "Expired") {
+                            badge = <Badge pill bg="danger">Expired</Badge>;
                           } else if (status === "Completed" && allSubmitted) {
                             badge = <Badge pill bg="success">Completed</Badge>;
+                         
                           } else  {
                             badge = <Badge pill bg="secondary">Pending</Badge>;
                           }

@@ -324,12 +324,15 @@ router.get('/document-status', async (req, res) => {
       const submissions = doc.submissions;
 
       const anyDecline = statuses.includes('Decline');
+      const anyExpired = statuses.includes('Expired');
       const allCompleted = statuses.every((s) => s === 'Completed');
       const allSubmitted = submissions.every((s) => s === true);
 
       let finalStatus;
       if (anyDecline) {
         finalStatus = 'Decline';
+      } else if (anyExpired) {
+        finalStatus = 'Expired';
       } else if (allCompleted) {
         finalStatus = 'Completed';
       } else if (allCompleted && !allSubmitted) {
