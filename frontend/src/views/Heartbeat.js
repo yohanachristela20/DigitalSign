@@ -13,7 +13,7 @@ const sendHeartbeat = () => {
 
   axios
     .post(
-      "http://localhost:5000/heartbeat",
+      "http://10.70.10.20:5000/heartbeat",
       { lastActivityTime: new Date().toISOString() },
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -59,7 +59,7 @@ export const handleSessionExpiry = () => {
   localStorage.setItem("lastRoute", window.location.pathname);
   stopInactivityTimer();
 
-  axios.post("http://localhost:5000/logout", {}, {
+  axios.post("http://10.70.10.20:5000/logout", {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       })
       .then(() => {

@@ -182,7 +182,7 @@ function ToolbarFields ({ color, routes}) {
 
   const categoryDoc = async() => {
       try {
-          const response = await axios.get('http://localhost:5000/category', {
+          const response = await axios.get('http://10.70.10.20:5000/category', {
               headers: {
                   Authorization: `Bearer ${token}`,
               }
@@ -199,7 +199,7 @@ function ToolbarFields ({ color, routes}) {
 
   const getSignersDoc = async() => {
     try {
-        const response = await axios.get('http://localhost:5000/signer', {
+        const response = await axios.get('http://10.70.10.20:5000/signer', {
           headers: {
             Authorization: `Bearer ${token}`,
           }

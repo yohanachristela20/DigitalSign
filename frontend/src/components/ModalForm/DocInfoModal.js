@@ -28,7 +28,7 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
             if (!token ) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+                const res = await axios.get(`http://10.70.10.20:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
@@ -43,7 +43,7 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
 
                 for (const signer of signerArray) {
                     for (const sender of karyawanArray) {
-                        const response = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
+                        const response = await axios.get(`http://10.70.10.20:5000/doc-info/${id_dokumen}/${signer}`);
                         const data = response.data;
 
                         if (data.length > 0 && data[0]?.Signerr && data[0]?.DocName) {
@@ -58,7 +58,7 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
                             signerData.push(signerInfo);
                         }
 
-                        const resSender = await axios.get(`http://localhost:5000/email-sender/${sender}`);
+                        const resSender = await axios.get(`http://10.70.10.20:5000/email-sender/${sender}`);
                         const resSenderData = resSender.data;
 
                         if (resSenderData.length > 0 && resSenderData[0]?.Pemohon && resSenderData[0]?.Pemohon?.Penerima) {
@@ -102,7 +102,7 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
     const updateStatus = async(id_dokumen, signerID) => {
 
         try {
-            const response = await axios.patch(`http://localhost:5000/update-status/${id_dokumen}/${signerID}`, {
+            const response = await axios.patch(`http://10.70.10.20:5000/update-status/${id_dokumen}/${signerID}`, {
                 status: "Decline",
             }); 
 
@@ -123,7 +123,7 @@ const DocInfoModal = ({showDocInfoModal, setShowDocInfoModal, selectedSigner, se
     const sendEmailDecline = async(id_dokumen, signerID, reason) => {
 
         try {
-            const responseDecline = await axios.post('http://localhost:5000/send-decline-email', {
+            const responseDecline = await axios.post('http://10.70.10.20:5000/send-decline-email', {
                 id_dokumen, 
                 signerID, 
                 reason: [reason],

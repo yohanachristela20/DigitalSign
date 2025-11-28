@@ -34,7 +34,7 @@ const Sidebar = ({ color, routes }) => {
 
   const getCategory = async () =>{
     try {
-      const response = await axios.get("http://localhost:5000/category", {
+      const response = await axios.get("http://10.70.10.20:5000/category", {
         headers: {
           Authorization: `Bearer ${token}`,
       },

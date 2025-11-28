@@ -78,8 +78,8 @@ function Document() {
   const getDocument = async (selectedCategory) =>{
     try {
       const url = selectedCategory 
-      ? `http://localhost:5000/document/category/${selectedCategory}`
-      : `http://localhost:5000/document`;
+      ? `http://10.70.10.20:5000/document/category/${selectedCategory}`
+      : `http://10.70.10.20:5000/document`;
 
       const response = await axios.get(url, {
         headers: {
@@ -103,7 +103,7 @@ function Document() {
 
   const getDocumentStatus = async () =>{
     try {
-      const url = `http://localhost:5000/document-status`;
+      const url = `http://10.70.10.20:5000/document-status`;
 
       const response = await axios.get(url, {
         headers: {
@@ -120,7 +120,7 @@ function Document() {
 
   const getDocumentDeadline = async () =>{
     try {
-      const url = `http://localhost:5000/document-deadline`;
+      const url = `http://10.70.10.20:5000/document-deadline`;
 
       const response = await axios.get(url, {
         headers: {
@@ -208,7 +208,7 @@ function Document() {
 
   const deleteDocument = async() =>{
     try {
-      await axios.patch(`http://localhost:5000/temporary-del/${deletedIDDokumen}`,
+      await axios.patch(`http://10.70.10.20:5000/temporary-del/${deletedIDDokumen}`,
       {is_deleted: true},
       {
         headers: {Authorization: `Bearer ${token}`}
@@ -230,7 +230,7 @@ function Document() {
     try {
       setIsLoading(true);
 
-      await axios.post('http://localhost:5000/send-reminder', {id_dokumen}, {
+      await axios.post('http://10.70.10.20:5000/send-reminder', {id_dokumen}, {
         headers: {
           Authorization: `Bearer ${token}`,
       },
@@ -367,7 +367,7 @@ function Document() {
   
   const plainDoc = async (id_dokumen) => {
     try {
-      const res = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`, {
+      const res = await fetch(`http://10.70.10.20:5000/pdf-document/${id_dokumen}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -395,7 +395,7 @@ function Document() {
 
   const downloadDoc = async (id_dokumen, ref, logSigns) => { 
     try {
-      const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
+      const pdfUrl = `http://10.70.10.20:5000/pdf-document/${id_dokumen}`;
       const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
       const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
@@ -405,7 +405,7 @@ function Document() {
       for (const sign of logSigns) {
         if (sign.status === "Completed" && sign.is_submitted) {
           const axisRes = await fetch(
-            `http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
+            `http://10.70.10.20:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
           ).then(res => res.json());
 
           const field = axisRes[0]?.ItemField;
@@ -506,13 +506,13 @@ function Document() {
   //   const fetchSummaryData = async() => {
   //     try {
   //       const [resJumlahNeedsToSign, resJumlahPending, resJumlahCompleted] = await Promise.all([
-  //         axios.get("http://localhost:5000/count-needsToSign", {
+  //         axios.get("http://10.70.10.20:5000/count-needsToSign", {
   //           headers: { Authorization: `Bearer ${token}` },
   //         }), 
-  //         axios.get("http://localhost:5000/count-pendingDoc", {
+  //         axios.get("http://10.70.10.20:5000/count-pendingDoc", {
   //           headers: { Authorization: `Bearer ${token}` },
   //         }),
-  //         axios.get("http://localhost:5000/count-completed", {
+  //         axios.get("http://10.70.10.20:5000/count-completed", {
   //           headers: { Authorization: `Bearer ${token}` },
   //         }),
   //       ]);
@@ -531,8 +531,8 @@ function Document() {
   const getJumlahNeedsToSign = async(selectedCategory) => {
     try {
       const url = selectedCategory 
-      ? `http://localhost:5000/count-needsToSign/${selectedCategory}`
-      : `http://localhost:5000/count-needsToSign`;
+      ? `http://10.70.10.20:5000/count-needsToSign/${selectedCategory}`
+      : `http://10.70.10.20:5000/count-needsToSign`;
 
       const res = await axios.get(url, {
         headers: {
@@ -548,8 +548,8 @@ function Document() {
   const getJumlahPending = async(selectedCategory) => {
     try {
       const url = selectedCategory 
-      ? `http://localhost:5000/count-pendingDoc/${selectedCategory}`
-      : `http://localhost:5000/count-pendingDoc`;
+      ? `http://10.70.10.20:5000/count-pendingDoc/${selectedCategory}`
+      : `http://10.70.10.20:5000/count-pendingDoc`;
 
       const res = await axios.get(url, {
         headers: {
@@ -565,8 +565,8 @@ function Document() {
   const getJumlahCompleted = async(selectedCategory) => {
     try {
       const url = selectedCategory 
-      ? `http://localhost:5000/count-completed/${selectedCategory}`
-      : `http://localhost:5000/count-completed`;
+      ? `http://10.70.10.20:5000/count-completed/${selectedCategory}`
+      : `http://10.70.10.20:5000/count-completed`;
 
       const res = await axios.get(url, {
         headers: {

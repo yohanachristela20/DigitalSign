@@ -201,8 +201,8 @@ function ReceiveDocument() {
 	const getDocument = async (selectedCategory) =>{
 			try {
 			const url = selectedCategory 
-			? `http://localhost:5000/document/category/${selectedCategory}`
-			: `http://localhost:5000/document`;
+			? `http://10.70.10.20:5000/document/category/${selectedCategory}`
+			: `http://10.70.10.20:5000/document`;
 
 			const response = await axios.get(url, {
 					headers: {
@@ -383,19 +383,19 @@ function ReceiveDocument() {
 					if (!token) return;
 
 					try {
-							const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+							const docRes = await axios.get(`http://10.70.10.20:5000/receive-document?token=${token}`);
 							const { id_dokumen, id_signers, nama_dokumen } = docRes.data;
 
 							setIdDokumen(id_dokumen);
 							setIdSigner(id_signers);
 							setNamaDokumen(nama_dokumen);
 
-							const logsignRes = await axios.get(`http://localhost:5000/access-status?token=${token}`);
+							const logsignRes = await axios.get(`http://10.70.10.20:5000/access-status?token=${token}`);
 							const accessed = logsignRes.data.is_accessed;
 							setIsAccessed(accessed);
 
 							if (accessed === true) {
-									setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
+									setPdfUrl(`http://10.70.10.20:5000/pdf-document/${id_dokumen}`);
 									setEmailVerified(true);
 									setVerified(true);
 							} else {
@@ -421,10 +421,10 @@ function ReceiveDocument() {
 			setErrorMsg("");
 
 			try {
-					const docRes = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+					const docRes = await axios.get(`http://10.70.10.20:5000/receive-document?token=${token}`);
 					const { id_dokumen, id_signers, currentSigner} = docRes.data;
-					await axios.post("http://localhost:5000/link-access-log", { token, real_email: inputEmail, password: inputPassword, is_accessed: true, currentSigner });
-					setPdfUrl(`http://localhost:5000/pdf-document/${id_dokumen}`);
+					await axios.post("http://10.70.10.20:5000/link-access-log", { token, real_email: inputEmail, password: inputPassword, is_accessed: true, currentSigner });
+					setPdfUrl(`http://10.70.10.20:5000/pdf-document/${id_dokumen}`);
 					setEmailVerified(true);
 					setVerified(true);
 					setIsAccessed(true);
@@ -449,7 +449,7 @@ function ReceiveDocument() {
 			if (!token) return;
 
 			try {
-					const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+					const res = await axios.get(`http://10.70.10.20:5000/receive-document?token=${token}`);
 					const id_dokumen = res.data.id_dokumen;
 					const allSigners = res.data.id_signers;
 					const urutan = res.data.urutan;
@@ -482,7 +482,7 @@ function ReceiveDocument() {
 					setDelegateToken(delegate_token);
 					setDeadline(deadline)
 
-					const fileRes = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
+					const fileRes = await fetch(`http://10.70.10.20:5000/pdf-document/${id_dokumen}`);
 					if (!fileRes.ok) {
 							throw new Error("Failed to get PDF Document.");
 					}
@@ -507,7 +507,7 @@ function ReceiveDocument() {
 					const delegateMapping = {};
 
 					for (const signer of signerArray) {
-							const resSignerInfo = await axios.get(`http://localhost:5000/doc-info/${id_dokumen}/${signer}`);
+							const resSignerInfo = await axios.get(`http://10.70.10.20:5000/doc-info/${id_dokumen}/${signer}`);
 									const dataSignerInfo = resSignerInfo.data;
 									if (dataSignerInfo.length > 0 && dataSignerInfo[0]?.Signerr && dataSignerInfo[0]?.DocName) {
 											const signerInfo = {
@@ -522,7 +522,7 @@ function ReceiveDocument() {
 											setDataDoc(signerData);
 									}
 
-							const response = await axios.get(`http://localhost:5000/decline/${id_dokumen}/${signer}`);
+							const response = await axios.get(`http://10.70.10.20:5000/decline/${id_dokumen}/${signer}`);
 							const data = response.data;
 
 							if (data.length > 0 && data[0].Signerr){
@@ -555,7 +555,7 @@ function ReceiveDocument() {
 							setActualSigner(querySigner);
 							
 							for (const itemID of itemArray) {
-									const fieldRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${querySigner}/${itemID}`);
+									const fieldRes = await axios.get(`http://10.70.10.20:5000/axis-field/${id_dokumen}/${querySigner}/${itemID}`);
 
 									const validFields = fieldRes.data.filter(item => item.ItemField);
 
@@ -688,7 +688,7 @@ function ReceiveDocument() {
 
 	const updateSubmitted = async(id_dokumen, current_signer) => {
 			try {
-					const response = await axios.patch(`http://localhost:5000/update-submitted/${id_dokumen}/${current_signer}`, {
+					const response = await axios.patch(`http://10.70.10.20:5000/update-submitted/${id_dokumen}/${current_signer}`, {
 							is_submitted: true,
 							status: "Completed",
 							tgl_tt: date,
@@ -718,7 +718,7 @@ function ReceiveDocument() {
 	const sendSignedDelegate = async(id_dokumen, delegated_signers, token) => {
 
 			try {
-					const signedDelegate = await axios.post('http://localhost:5000/signed-delegate-email', {
+					const signedDelegate = await axios.post('http://10.70.10.20:5000/signed-delegate-email', {
 							id_dokumen, 
 							delegated_signers,
 							token
@@ -745,7 +745,7 @@ function ReceiveDocument() {
 			const itemArray = Array.isArray(allItems) ? allItems : [allItems];
 			const signerParam = signerArray.join(",");
 
-			const initialsRes = await axios.get(`http://localhost:5000/initials/${id_dokumen}/${signerParam}`);
+			const initialsRes = await axios.get(`http://10.70.10.20:5000/initials/${id_dokumen}/${signerParam}`);
 			const initialsData = initialsRes.data;
 			const fieldBuffer = [];
 
@@ -755,7 +755,7 @@ function ReceiveDocument() {
 							const currentSubmitted = submittedMap[signer];
 							const currentDelegated = delegatedMap[signer] || false;
 
-							const axisRes = await axios.get(`http://localhost:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
+							const axisRes = await axios.get(`http://10.70.10.20:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
 							const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
 							const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
 
@@ -1017,7 +1017,7 @@ function ReceiveDocument() {
 
 	const plainPDF = async (id_dokumen) => {
 			try {
-					const res = await fetch(`http://localhost:5000/pdf-document/${id_dokumen}`);
+					const res = await fetch(`http://10.70.10.20:5000/pdf-document/${id_dokumen}`);
 					if (!res.ok) throw new Error("Failed to fetch PDF for download.");
 
 					const blob = await res.blob();
@@ -1183,7 +1183,7 @@ function ReceiveDocument() {
 
 	const downloadPDF = async (id_dokumen, ref, LOGSIGN) => { 
 		try {
-			const pdfUrl = `http://localhost:5000/pdf-document/${id_dokumen}`;
+			const pdfUrl = `http://10.70.10.20:5000/pdf-document/${id_dokumen}`;
 			const existingPdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
 			const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
@@ -1193,7 +1193,7 @@ function ReceiveDocument() {
 			for (const sign of LOGSIGN) {
 				if (sign.status === "Completed" && sign.is_submitted) {
 					const axisRes = await fetch(
-						`http://localhost:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
+						`http://10.70.10.20:5000/axis-field/${id_dokumen}/${sign.id_signers}/${sign.id_item}`
 					).then(res => res.json());
 
 					const field = axisRes[0]?.ItemField;

@@ -188,7 +188,7 @@ function UploadDocument() {
       if(!token || !email) return;
 
       try {
-        const response = await axios.get(`http://localhost:5000/user-details/${email}`, {
+        const response = await axios.get(`http://10.70.10.20:5000/user-details/${email}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -269,7 +269,7 @@ function UploadDocument() {
       if (!userData.id_karyawan) return;
 
       try {
-        const responseKaryawan = await axios.get(`http://localhost:5000/employee/${userData.id_karyawan}`, {
+        const responseKaryawan = await axios.get(`http://10.70.10.20:5000/employee/${userData.id_karyawan}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -375,7 +375,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   const updateSigner = async(id_dokumen, itemId, newIdSigner, oldIdSigner, signPermission) => { 
     
     try {
-      const res = await axios.get(`http://localhost:5000/logsign/document/${id_dokumen}`, {
+      const res = await axios.get(`http://10.70.10.20:5000/logsign/document/${id_dokumen}`, {
         headers: { Authorization: `Bearer ${token}`},
       });
 
@@ -389,7 +389,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
       for (const log of targetLogs) {
         await axios.patch(
-          `http://localhost:5000/logsign/${id_dokumen}/${log.id_item}/${oldIdSigner}`,
+          `http://10.70.10.20:5000/logsign/${id_dokumen}/${log.id_item}/${oldIdSigner}`,
           {
             id_signers: newIdSigner,
             sign_permission: signPermission,
@@ -419,7 +419,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   const updateSignPermission = async(id_dokumen, idItem, newIdSigner, oldIdSigner, signPermission, x_axis, y_axis, width , height, page , jenis_item) => {     
     try {
-    const response = await axios.patch(`http://localhost:5000/update-permission/${id_dokumen}/${newIdSigner}`, {
+    const response = await axios.patch(`http://10.70.10.20:5000/update-permission/${id_dokumen}/${newIdSigner}`, {
       id_signers: newIdSigner,
       sign_permission: signPermission,
       id_item: idItem,
@@ -453,7 +453,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     try {
       setIsLoading(true);
 
-      const response = await axios.patch(`http://localhost:5000/update-reminder/${id_dokumen}`, {
+      const response = await axios.patch(`http://10.70.10.20:5000/update-reminder/${id_dokumen}`, {
       is_deadline,
       is_download,
       day_after_reminder,
@@ -507,11 +507,11 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
   const sendEmailNotification = async(logsigns, subject, message, id_dokumen, id_signers, urutan, id_item, id_karyawan, delegated_signers, day_after_reminder, deadline) => {
     try {
-        const response = await axios.get(`http://localhost:5000/logsign-link/${id_dokumen}`, {
+        const response = await axios.get(`http://10.70.10.20:5000/logsign-link/${id_dokumen}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      await axios.post('http://localhost:5000/send-email', {
+      await axios.post('http://10.70.10.20:5000/send-email', {
         logsigns,
         id_dokumen,
         id_signers: logsigns.map(log => log.id_signers),
@@ -567,7 +567,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       try {
         if (itemId && deletedIdSigner && dokId) {
           await axios.delete(
-            `http://localhost:5000/logsign/${dokId}/${itemId}/${deletedIdSigner}`, 
+            `http://10.70.10.20:5000/logsign/${dokId}/${itemId}/${deletedIdSigner}`, 
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -579,7 +579,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
       try {
         if (itemId) {
-          await axios.delete(`http://localhost:5000/item/${itemId}`, {
+          await axios.delete(`http://10.70.10.20:5000/item/${itemId}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
         }
@@ -665,7 +665,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
   } else if (signPermission === "Needs to sign") {
     try {
       axios.patch(
-        `http://localhost:5000/signer/${newIdSigner}`,
+        `http://10.70.10.20:5000/signer/${newIdSigner}`,
         { sign_permission: signPermission },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -722,7 +722,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     formData.append("action", action);
     formData.append("id_karyawan", id_karyawan);
   try {
-    const response = await axios.post('http://localhost:5000/document', formData,
+    const response = await axios.post('http://10.70.10.20:5000/document', formData,
         {
         headers: {
             Authorization: `Bearer ${token}`,
@@ -746,7 +746,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
       if (nextStep3 !== true) {
         const karyawanIds = documentCards.map(card => card.id_karyawan);
         const signPermission = documentCards.map(card => card.sign_permission);
-        const response = await axios.post('http://localhost:5000/signer', {
+        const response = await axios.post('http://10.70.10.20:5000/signer', {
           id_signers,
           id_karyawan: karyawanIds,
           sign_permission: signPermission,
@@ -840,7 +840,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
         let createdItems = [];
         if (newItems.length > 0) {
-          const itemResponse = await axios.post('http://localhost:5000/item', newItems, {
+          const itemResponse = await axios.post('http://10.70.10.20:5000/item', newItems, {
             headers: { Authorization: `Bearer ${token}` }
           });
 
@@ -852,7 +852,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
         let existingLogsigns = [];
         try {
-          const res = await axios.get(`http://localhost:5000/logsign/document/${id_dokumen}`, {
+          const res = await axios.get(`http://10.70.10.20:5000/logsign/document/${id_dokumen}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           existingLogsigns = res.data.data || res.data.logsigns || [];
@@ -905,7 +905,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
             const idItemToSet = created?.id_item || existing.id_item || null;
 
             try {
-              await axios.patch(`http://localhost:5000/logsign/${id_dokumen}/${card.id_karyawan}`, {
+              await axios.patch(`http://10.70.10.20:5000/logsign/${id_dokumen}/${card.id_karyawan}`, {
                 sign_permission: "Needs to sign", 
                 id_item: idItemToSet
               }, {
@@ -980,7 +980,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         if (logsignsToCreate.length > 0) {
           try {
 
-            await axios.post('http://localhost:5000/logsign', {logsigns: logsignsToCreate}, {
+            await axios.post('http://10.70.10.20:5000/logsign', {logsigns: logsignsToCreate}, {
               headers: {Authorization: `Bearer: ${token}`}
             });
 
@@ -1012,7 +1012,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
         }
 
         try {
-          const res2 = await axios.get(`http://localhost:5000/logsign/document/${id_dokumen}`, {
+          const res2 = await axios.get(`http://10.70.10.20:5000/logsign/document/${id_dokumen}`, {
             headers: { Authorization: `Bearer ${token}` }
           }); 
           existingLogsigns = res2.data.data || res2.data.logsigns || existingLogsigns;
@@ -1183,7 +1183,7 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
 
 
 const lastIdDokumen = async(e) => {
-    const response = await axios.get('http://localhost:5000/getLastDocumentId', {
+    const response = await axios.get('http://10.70.10.20:5000/getLastDocumentId', {
         headers: {
             Authorization: `Bearer ${token}`,
         }
@@ -1200,7 +1200,7 @@ const lastIdDokumen = async(e) => {
 
 
 const lastIdItem = async(e) => {
-    const response = await axios.get('http://localhost:5000/getLastItemId', {
+    const response = await axios.get('http://10.70.10.20:5000/getLastItemId', {
         headers: {
             Authorization: `Bearer ${token}`,
         }
@@ -1217,7 +1217,7 @@ const lastIdItem = async(e) => {
 
 const categoryDoc = async() => {
     try {
-        const response = await axios.get('http://localhost:5000/category', {
+        const response = await axios.get('http://10.70.10.20:5000/category', {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -1234,7 +1234,7 @@ const categoryDoc = async() => {
 
 const getName = async() => {
     try {
-        const response = await axios.get('http://localhost:5000/employee', {
+        const response = await axios.get('http://10.70.10.20:5000/employee', {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -1258,7 +1258,7 @@ const handleCategoryChange = (event) => {
 
 const getDocument = async() => {
   try {
-    const response = await axios.get("http://localhost:5000/document", {
+    const response = await axios.get("http://10.70.10.20:5000/document", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

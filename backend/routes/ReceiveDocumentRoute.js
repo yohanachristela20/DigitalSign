@@ -634,7 +634,7 @@ router.post('/send-decline-email', async(req, res) => {
 
         let emailResults = [];
 
-        const declineLink = `http://localhost:3000/user/envelope?token=${token}`;
+        const declineLink = `http://10.70.10.20:3000/user/envelope?token=${token}`;
 
         const docName = await LogSign.findOne({
             where: {id_dokumen: id_dokumen}, 
@@ -804,7 +804,7 @@ router.post('/send-delegate-email', async (req, res) => {
         jwtSecret
       );
 
-      const delegateLink = `http://localhost:3000/user/envelope?token=${newToken}`;
+      const delegateLink = `http://10.70.10.20:3000/user/envelope?token=${newToken}`;
 
       await sendEmailDelegateInternal(
         delegateLink,
@@ -876,7 +876,7 @@ router.post('/signed-delegate-email', async(req, res) => {
 
         let emailResults = [];
 
-        const signedDelegateLink = `http://localhost:3000/user/envelope?token=${token}`;
+        const signedDelegateLink = `http://10.70.10.20:3000/user/envelope?token=${token}`;
 
         const mainSigner = await LogSign.findOne({
             where: {id_dokumen, delegated_signers: delegated_signers}

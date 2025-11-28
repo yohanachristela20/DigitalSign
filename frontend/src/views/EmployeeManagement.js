@@ -88,7 +88,7 @@ function EmployeeManagement() {
   
   const getEmployee = async () =>{
     try {
-      const response = await axios.get("http://localhost:5000/employee-details", {
+      const response = await axios.get("http://10.70.10.20:5000/employee-details", {
         headers: {
           Authorization: `Bearer ${token}`,
       },
@@ -103,7 +103,7 @@ function EmployeeManagement() {
 
   const deleteEmployee = async(id_karyawan) =>{
     try {
-      await axios.delete(`http://localhost:5000/employee/${id_karyawan}` , {
+      await axios.delete(`http://10.70.10.20:5000/employee/${id_karyawan}` , {
         headers: {
           Authorization: `Bearer ${token}`,
       },

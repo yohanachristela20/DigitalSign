@@ -66,7 +66,7 @@ const sendEmailToSigner = async (log, subject = [], message = [], token = null) 
     const jwtSecret = process.env.JWT_SECRET_KEY;
     // token = token;
 
-    const signLink = `http://localhost:3000/user/envelope?token=${token}`;
+    const signLink = `http://10.70.10.20:3000/user/envelope?token=${token}`;
 
     // const senderName = await Karyawan.findOne({where: {id_karyawan: log.id_karyawan}});
   

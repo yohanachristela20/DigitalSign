@@ -88,7 +88,7 @@ function MasterKaryawan() {
 
       setLoading(true);
       
-      const response = await axios.get("http://localhost:5000/karyawan", {
+      const response = await axios.get("http://10.70.10.20:5000/karyawan", {
         headers: {
           Authorization: `Bearer ${token}`,
       },
@@ -103,7 +103,7 @@ function MasterKaryawan() {
 
   const deleteKaryawan = async() =>{
     try {
-      await axios.delete(`http://localhost:5000/employee/${deletedIDKaryawan}` , {
+      await axios.delete(`http://10.70.10.20:5000/employee/${deletedIDKaryawan}` , {
         headers: {
           Authorization: `Bearer ${token}`,
       },

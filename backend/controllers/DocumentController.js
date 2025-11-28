@@ -519,7 +519,7 @@ export const sendEmailNotification = async (req, res) => {
         jwtSecret, {expiresIn}
       );
 
-      const signLink = `http://localhost:3000/user/envelope?token=${token}`;
+      const signLink = `http://10.70.10.20:3000/user/envelope?token=${token}`;
 
       await LogSign.update(
         {main_token: token},
@@ -572,7 +572,7 @@ export const getSignLink = async (req, res) => {
     const jwtSecret = process.env.JWT_SECRET_KEY;
     const token = jwt.sign({ dokumenLogsign: [id_dokumen] }, jwtSecret);
 
-    const signLink = `http://localhost:3000/user/envelope?token=${token}`;
+    const signLink = `http://10.70.10.20:3000/user/envelope?token=${token}`;
     res.status(200).json({ signLink });
   } catch (error) {
     console.error("Failed to generate signLink:", error.message);

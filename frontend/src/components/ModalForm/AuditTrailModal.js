@@ -39,7 +39,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
             if (!token ) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+                const res = await axios.get(`http://10.70.10.20:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
                 const id_signers = res.data.id_signers;
                 const delegated_signers = res.data.delegated_signers;     
@@ -58,7 +58,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                 const signerData = [];
 
                 for (const signer of signerArray) {
-                    const response = await axios.get(`http://localhost:5000/audit-info/${id_dokumen}/${signer}`);
+                    const response = await axios.get(`http://10.70.10.20:5000/audit-info/${id_dokumen}/${signer}`);
                     const data = response.data;
 
                     if (data.length > 0) {
@@ -84,7 +84,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
                 }
 
                 for (const sender of karyawanArray) {
-                    const resSender = await axios.get(`http://localhost:5000/email-sender/${sender}`);
+                    const resSender = await axios.get(`http://10.70.10.20:5000/email-sender/${sender}`);
                         const resSenderData = resSender.data;
                         if (resSenderData.length > 0 && resSenderData[0]?.Pemohon && resSenderData[0]?.Pemohon?.Penerima) {
                             const senderInfo = {
@@ -143,7 +143,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
 
     const updateStatus = async(id_dokumen, signerID) => {
         try {
-            const response = await axios.patch(`http://localhost:5000/update-status/${id_dokumen}/${signerID}`, {
+            const response = await axios.patch(`http://10.70.10.20:5000/update-status/${id_dokumen}/${signerID}`, {
                 status: "Decline",
             }); 
 
@@ -162,7 +162,7 @@ const AuditTrailModal = ({showAuditTrailModal, setShowAuditTrailModal, selectedS
 
     const sendEmailDecline = async(id_dokumen, signerID, reason) => {
         try {
-            const responseDecline = await axios.post('http://localhost:5000/send-decline-email', {
+            const responseDecline = await axios.post('http://10.70.10.20:5000/send-decline-email', {
                 id_dokumen, 
                 signerID, 
                 reason: [reason],

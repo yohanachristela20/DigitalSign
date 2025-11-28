@@ -30,7 +30,7 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
             if (!token ) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/receive-document?token=${token}`);
+                const res = await axios.get(`http://10.70.10.20:5000/receive-document?token=${token}`);
                 const id_dokumen = res.data.id_dokumen;
                 setIdDokumen(id_dokumen);
                 const id_signers = res.data.id_signers;
@@ -41,7 +41,7 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
                 const allSigners = [];
 
                 for (const signer of signerArray) {
-                    const response = await axios.get(`http://localhost:5000/decline/${id_dokumen}/${signer}`);
+                    const response = await axios.get(`http://10.70.10.20:5000/decline/${id_dokumen}/${signer}`);
                     const data = response.data;
 
                     if (data.length > 0 && data[0].Signerr) {
@@ -83,7 +83,7 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
 
     const getName = async() => {
         try {
-            const response = await axios.get('http://localhost:5000/detailKaryawan', {
+            const response = await axios.get('http://10.70.10.20:5000/detailKaryawan', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -113,7 +113,7 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
         const delegateId = selectedEmployee?.value;
 
         try {
-            const response = await axios.patch(`http://localhost:5000/delegate-doc/${id_dokumen}/${signerID}`, {
+            const response = await axios.patch(`http://10.70.10.20:5000/delegate-doc/${id_dokumen}/${signerID}`, {
                 is_delegated: true,
                 delegated_signers: delegateId,
             }); 
@@ -138,7 +138,7 @@ const DelegateModal = ({showDelegateModal, setShowDelegateModal, selectedSigner,
     const sendEmailDelegate = async(id_dokumen, delegated_signers) => {
 
         try {
-            const responseDecline = await axios.post('http://localhost:5000/send-delegate-email', {
+            const responseDecline = await axios.post('http://10.70.10.20:5000/send-delegate-email', {
                 id_dokumen, 
                 delegated_signers, 
                 token

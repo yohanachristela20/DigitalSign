@@ -9,7 +9,7 @@ import axios from "axios";
 import { stopInactivityTimer } from "views/Heartbeat";
 import io from "socket.io-client";
 
-const socket = io("http://localhost:5000");
+const socket = io("http://10.70.10.20:5000");
 
 function Header() {
   const location = useLocation();
@@ -29,7 +29,7 @@ function Header() {
       if (!token || !email) return;
 
       try {
-        const response = await axios.get(`http://localhost:5000/user-details/${email}`, {
+        const response = await axios.get(`http://10.70.10.20:5000/user-details/${email}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -107,7 +107,7 @@ function Header() {
 
   const handleLogout = () => {
     stopInactivityTimer();
-    axios.post("http://localhost:5000/logout", {}, {
+    axios.post("http://10.70.10.20:5000/logout", {}, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     }).finally(() => {
       localStorage.removeItem("token");

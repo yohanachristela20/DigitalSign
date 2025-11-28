@@ -13,7 +13,7 @@ const AddKaryawan = ({showAddModal, setShowAddModal, onSuccess}) => {
     const token = localStorage.getItem("token");
 
     const idKaryawan = async(e) => {
-        const response = await axios.get('http://localhost:5000/getLastKaryawanId', {
+        const response = await axios.get('http://10.70.10.20:5000/getLastKaryawanId', {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -30,7 +30,7 @@ const AddKaryawan = ({showAddModal, setShowAddModal, onSuccess}) => {
     const saveKaryawan = async(e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/employee', {
+            await axios.post('http://10.70.10.20:5000/employee', {
                 id_karyawan,
                 nama, 
                 job_title,

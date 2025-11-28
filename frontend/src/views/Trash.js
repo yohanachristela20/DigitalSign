@@ -91,8 +91,8 @@ function Trash() {
     const getDocument = async (selectedCategory) =>{
     try {
         const url = selectedCategory 
-        ? `http://localhost:5000/trash/category/${selectedCategory}`
-        : `http://localhost:5000/get-trash`;
+        ? `http://10.70.10.20:5000/trash/category/${selectedCategory}`
+        : `http://10.70.10.20:5000/get-trash`;
 
         const response = await axios.get(url, {
         headers: {
@@ -109,7 +109,7 @@ function Trash() {
 
     const getDocumentStatus = async () =>{
     try {
-        const url = `http://localhost:5000/document-status`;
+        const url = `http://10.70.10.20:5000/document-status`;
 
         const response = await axios.get(url, {
         headers: {
@@ -126,7 +126,7 @@ function Trash() {
 
     const getDocumentDeadline = async () =>{
     try {
-        const url = `http://localhost:5000/document-deadline`;
+        const url = `http://10.70.10.20:5000/document-deadline`;
 
         const response = await axios.get(url, {
         headers: {
@@ -157,7 +157,7 @@ function Trash() {
 
     const deleteDocument = async() =>{
         try {
-        await axios.delete(`http://localhost:5000/document/${deletedIDDokumen}`,
+        await axios.delete(`http://10.70.10.20:5000/document/${deletedIDDokumen}`,
         {
             headers: {Authorization: `Bearer ${token}`}
         }
@@ -177,7 +177,7 @@ function Trash() {
 
     const restoreDocument = async(id_dokumen) =>{
       try {
-        await axios.patch(`http://localhost:5000/restore-doc/${id_dokumen}`,
+        await axios.patch(`http://10.70.10.20:5000/restore-doc/${id_dokumen}`,
         {is_deleted: false},
         {
           headers: {Authorization: `Bearer ${token}`}

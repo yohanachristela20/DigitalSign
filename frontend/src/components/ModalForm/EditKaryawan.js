@@ -24,7 +24,7 @@ const EditKaryawan = ({showEditModal, setShowEditModal, employee, onSuccess}) =>
     const updateKaryawan = async(e) => {
         e.preventDefault();
         try {
-            await axios.patch(`http://localhost:5000/employee/${employee.id_karyawan}`, {
+            await axios.patch(`http://10.70.10.20:5000/employee/${employee.id_karyawan}`, {
                 id_karyawan,
                 nama, 
                 job_title, 

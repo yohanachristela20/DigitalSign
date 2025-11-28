@@ -23,7 +23,7 @@ function Login({index}) {
     }
   
     try {
-      const response = await axios.post('http://localhost:5000/user-login', {
+      const response = await axios.post('http://10.70.10.20:5000/user-login', {
           email: email,
           password: password,
           role: role,

@@ -20,7 +20,7 @@ const EditCategory = ({showEditModal, setShowEditModal, category, onSuccess}) =>
         }
 
         await axios.patch(
-            `http://localhost:5000/category/${category.id_kategoridok}`,
+            `http://10.70.10.20:5000/category/${category.id_kategoridok}`,
             { kategori },
             {
             headers: {

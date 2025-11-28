@@ -10,7 +10,7 @@ const AddCategory = ({showAddModal, setShowAddModal}) => {
 
     const getCategory = async () => {
         try {
-        const response = await axios.get("http://localhost:5000/category", {
+        const response = await axios.get("http://10.70.10.20:5000/category", {
             headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -37,7 +37,7 @@ const AddCategory = ({showAddModal, setShowAddModal}) => {
     const saveKategori = async(e) => {
         e.preventDefault();
         try {
-            const response = await axios.get('http://localhost:5000/getLastCategoryId', {
+            const response = await axios.get('http://10.70.10.20:5000/getLastCategoryId', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -50,7 +50,7 @@ const AddCategory = ({showAddModal, setShowAddModal}) => {
                 newId = `KD${incrementedIdNumber}`;
             }
 
-            await axios.post('http://localhost:5000/category', {
+            await axios.post('http://10.70.10.20:5000/category', {
                 id_kategoridok: newId,
                 kategori
             }, {
