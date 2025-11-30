@@ -109,7 +109,7 @@ function UploadDocument() {
 
 
   const [selectedDoc, setSelectedDoc] = useState(
-      location?.state?.selectedDoc || null
+    location?.state?.selectedDoc || null
   );
   const [steps, setSteps] = useState(1);
   const [subject, setSubject] = useState("");
@@ -157,27 +157,27 @@ function UploadDocument() {
   ]);
 
   useEffect(() => {
-      setDocumentCards([
-        {
-          id: Date.now(),
-          id_karyawan: "",
-          email: "",
-          id_signers: "",
-          status: "Pending",
-          action: "Created",
-          jenis_item: "",
-          id_dokumen: "",
-          id_item: "",
-          ori_id_items: "", 
-          is_deadline: "",
-          day_after_reminder: "",
-          repeat_freq: "",
-          is_download: "",
-          deadline: "",
-          urutan: "",
-          sign_permission: "Needs to sign",
-        }
-      ]);
+    setDocumentCards([
+      {
+        id: Date.now(),
+        id_karyawan: "",
+        email: "",
+        id_signers: "",
+        status: "Pending",
+        action: "Created",
+        jenis_item: "",
+        id_dokumen: "",
+        id_item: "",
+        ori_id_items: "", 
+        is_deadline: "",
+        day_after_reminder: "",
+        repeat_freq: "",
+        is_download: "",
+        deadline: "",
+        urutan: "",
+        sign_permission: "Needs to sign",
+      }
+    ]);
   }, []);
 
   useEffect(() => {
@@ -767,11 +767,24 @@ const onSortEnd = ({ oldIndex, newIndex }) => {
     }
   };
 
+  const [clickedOrderState, setClickedOrderState] = useState(() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem("clickedFields"));
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const clickedOrder = JSON.parse(localStorage.getItem("clickedFields")) || [];
+  const isClickedOrderEmpty = !Array.isArray(clickedOrder) || clickedOrder.length === 0;
+  const isAnyFieldClicked = signClicked || initClicked || dateClicked;
+  const isStep3NextDisabled = isClickedOrderEmpty || !isAnyFieldClicked;
+
   const saveLogSignandItems = async (e) => {
     e.preventDefault();
 
     try {
-        const clickedOrder = JSON.parse(localStorage.getItem("clickedFields")) || [];
         let items = [];
 
         for (const type of clickedOrder) {
@@ -1655,7 +1668,7 @@ const SortableList = SortableContainer(({ items, handleCardEmployeeChange, handl
                 </Button>
               </div>
               <div className="col-12 col-md-auto my-2">
-                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveLogSignandItems} >
+                <Button variant="primary" type="submit" className="btn-fill w-100" onClick={saveLogSignandItems} disabled={steps === 3 ? isStep3NextDisabled : false}>
                 <FaRegArrowAltCircleRight style={{ marginRight: '8px' }} />
                   Next
                 </Button>

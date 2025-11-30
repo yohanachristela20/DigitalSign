@@ -5,7 +5,7 @@ import mysql from "mysql2";
 dotenv.config();
 
 const db = new Sequelize("digital_sign", "root", "", {
-    host: "localhost", 
+    host: "10.70.10.20", 
     dialect: 'mysql',
     timezone: "+07:00", //Indonesian timezone
     dialectOptions: {

@@ -28,8 +28,6 @@ function MasterUser() {
   const [loading, setLoading] = useState(true);
   const [deletedUser, setDeletedUser] = useState(null);
   const [showModal, setShowModal] = useState(false); 
-    
-
   const [sortBy, setSortBy] = useState("id_user");
   const [sortOrder, setSortOrder] = useState("asc");
   const [sortOrderDibayar, setSortOrderDibayar] = useState("asc");
@@ -270,8 +268,6 @@ function MasterUser() {
     setDeletedUser(id_user);
     setShowModal(true);
   };
-
-  
   
   return (
     <>

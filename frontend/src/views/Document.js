@@ -760,128 +760,128 @@ function Document() {
                 </Col>
               </Row>  
               <Col md="12">
-              <CDBTable hover  className="mt-4">
-                <CDBTableHeader>
-                  <tr>
-                    <th onClick={() => handleSort("id_dokumen")}>Document ID {sortBy==="id_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                    <th className="border-0" onClick={() => handleSort("nama_dokumen")}>Document Name {sortBy==="nama_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                    <th className="border-0" onClick={() => handleSort("id_kategoridok")}>Category {sortBy==="id_kategoridok" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                    <th className="border-0">Status</th>
-                    <th className="border-0">Deadline</th>
-                    <th className="border-0" onClick={() => handleSort("createdAt")}>Uploaded {sortBy==="createdAt" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                    <th className="border-0" colSpan={3}>Action</th>
-                  </tr>
-                </CDBTableHeader>
-                <CDBTableBody>
-                  {currentItems
-                  .filter(document => !document.is_deleted)
-                  .map((document, index) => (
-                    <tr key={document.id_dokumen}>
-                      <td className="text-center">{document.id_dokumen}</td>
-                      <td className="text-center">
-                        <p>{document.nama_dokumen}</p>
-                        <p className="signer-font">To: {document.LogSigns.map((log) => log.Signerr?.nama).join(", ")}</p>
-                      </td>
-                      <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
-                      <td className="text-center">
-                        {(() => {
-                          const status = getStatusById(document.id_dokumen);
-                          console.log("status:", status);
-                          const allSubmitted = document.LogSigns.every((log) => log.is_submitted === true);
+                <CDBTable hover  className="mt-4">
+                  <CDBTableHeader>
+                    <tr>
+                      <th onClick={() => handleSort("id_dokumen")}>Document ID {sortBy==="id_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                      <th className="border-0" onClick={() => handleSort("nama_dokumen")}>Document Name {sortBy==="nama_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                      <th className="border-0" onClick={() => handleSort("id_kategoridok")}>Category {sortBy==="id_kategoridok" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                      <th className="border-0">Status</th>
+                      <th className="border-0">Deadline</th>
+                      <th className="border-0" onClick={() => handleSort("createdAt")}>Uploaded {sortBy==="createdAt" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                      <th className="border-0" colSpan={3}>Action</th>
+                    </tr>
+                  </CDBTableHeader>
+                  <CDBTableBody>
+                    {currentItems
+                    .filter(document => !document.is_deleted)
+                    .map((document, index) => (
+                      <tr key={document.id_dokumen}>
+                        <td className="text-center">{document.id_dokumen}</td>
+                        <td className="text-center">
+                          <p>{document.nama_dokumen}</p>
+                          <p className="signer-font">To: {document.LogSigns.map((log) => log.Signerr?.nama).join(", ")}</p>
+                        </td>
+                        <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
+                        <td className="text-center">
+                          {(() => {
+                            const status = getStatusById(document.id_dokumen);
+                            console.log("status:", status);
+                            const allSubmitted = document.LogSigns.every((log) => log.is_submitted === true);
 
-                          let badge;
-                          if (status === "Decline") {
-                            badge = <Badge pill bg="danger">Decline</Badge>;
-                          } else if (status === "Expired") {
-                            badge = <Badge pill bg="danger">Expired</Badge>;
-                          } else if (status === "Completed" && allSubmitted) {
-                            badge = <Badge pill bg="success">Completed</Badge>;
-                         
-                          } else  {
-                            badge = <Badge pill bg="secondary">Pending</Badge>;
-                          }
+                            let badge;
+                            if (status === "Decline") {
+                              badge = <Badge pill bg="danger">Decline</Badge>;
+                            } else if (status === "Expired") {
+                              badge = <Badge pill bg="danger">Expired</Badge>;
+                            } else if (status === "Completed" && allSubmitted) {
+                              badge = <Badge pill bg="success">Completed</Badge>;
+                          
+                            } else  {
+                              badge = <Badge pill bg="secondary">Pending</Badge>;
+                            }
 
-                          return (
-                            <>
-                              <p>{badge}</p>
-                              {!(status === "Completed" || status === "Decline" || allSubmitted) && (
-                                <p className="signer-font">{getProgress(document)}</p>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </td>
+                            return (
+                              <>
+                                <p>{badge}</p>
+                                {!(status === "Completed" || status === "Decline" || allSubmitted) && (
+                                  <p className="signer-font">{getProgress(document)}</p>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </td>
 
-                      <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
-                      <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
-                      
-                      <td className="text-center px-0">
-                        <button
-                        style={{background:"transparent", border:"none"}} 
-                        disabled={document.user_active === true}
-                        >
-                        <FaPaperPlane 
-                          type="button"
-                          onClick={() => sendReminder(document.id_dokumen)}
-                          className="text-primary btn-action"
-                          hidden={getStatusById(document.id_dokumen) !== "Pending"}
-                        />
-                      </button>
-                      </td>
-                      <td className="text-center px-0">
-                        <button
-                          style={{ background: "transparent", border: "none" }}
+                        <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
+                        <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
+                        
+                        <td className="text-center px-0">
+                          <button
+                          style={{background:"transparent", border:"none"}} 
                           disabled={document.user_active === true}
-                          hidden={getStatusById(document.id_dokumen) === "Decline"}
-
-                        >
-                          <FaDownload
+                          >
+                          <FaPaperPlane 
                             type="button"
-                            onClick={async(e) => {
-                              e.preventDefault();
-                              const ref = getRef(document.id_dokumen); 
-                              const status = getStatusById(document.id_dokumen);
-                              const logSigns = document.LogSigns || [];
-                              const allSubmitted = logSigns.length > 0 && logSigns.every(sign => sign?.is_submitted === true);
-
-                              if (status === "Completed" && allSubmitted) {
-                                await downloadDoc(document.id_dokumen, ref, document.LogSigns);
-                              } else {
-                                await plainDoc(document.id_dokumen);
-                              }
-
-
-                            }}
-                            className="text-success btn-action"
+                            onClick={() => sendReminder(document.id_dokumen)}
+                            className="text-primary btn-action"
+                            hidden={getStatusById(document.id_dokumen) !== "Pending"}
                           />
                         </button>
-                      </td>
-                      <td className="text-center px-0">
-                      {/* <button
-                        style={{background:"transparent", border:"none"}} 
-                        disabled={document.user_active === true}
-                        >
-                        <FaTrashAlt 
-                          type="button"
-                          onClick={() => deleteDocument(document.id_dokumen)}
-                          className="text-danger btn-action"
-                        />
-                      </button> */}
+                        </td>
+                        <td className="text-center px-0">
+                          <button
+                            style={{ background: "transparent", border: "none" }}
+                            disabled={document.user_active === true}
+                            hidden={getStatusById(document.id_dokumen) === "Decline"}
 
-                      <button style={{background:"transparent", border:"none"}} disabled={document.user_active === true}>
-                        <FaTrashAlt 
-                          type="button"
-                          onClick={() => handleDeleteDocument(document.id_dokumen)}
-                          className="text-danger btn-action"
-                        />
-                      </button>
-                      </td>
+                          >
+                            <FaDownload
+                              type="button"
+                              onClick={async(e) => {
+                                e.preventDefault();
+                                const ref = getRef(document.id_dokumen); 
+                                const status = getStatusById(document.id_dokumen);
+                                const logSigns = document.LogSigns || [];
+                                const allSubmitted = logSigns.length > 0 && logSigns.every(sign => sign?.is_submitted === true);
 
-                    </tr>
-                  ))}
-                </CDBTableBody>
-              </CDBTable>
-                
+                                if (status === "Completed" && allSubmitted) {
+                                  await downloadDoc(document.id_dokumen, ref, document.LogSigns);
+                                } else {
+                                  await plainDoc(document.id_dokumen);
+                                }
+
+
+                              }}
+                              className="text-success btn-action"
+                            />
+                          </button>
+                        </td>
+                        <td className="text-center px-0">
+                        {/* <button
+                          style={{background:"transparent", border:"none"}} 
+                          disabled={document.user_active === true}
+                          >
+                          <FaTrashAlt 
+                            type="button"
+                            onClick={() => deleteDocument(document.id_dokumen)}
+                            className="text-danger btn-action"
+                          />
+                        </button> */}
+
+                        <button style={{background:"transparent", border:"none"}} disabled={document.user_active === true}>
+                          <FaTrashAlt 
+                            type="button"
+                            onClick={() => handleDeleteDocument(document.id_dokumen)}
+                            className="text-danger btn-action"
+                          />
+                        </button>
+                        </td>
+
+                      </tr>
+                    ))}
+                  </CDBTableBody>
+                </CDBTable>
+                  
                 <div className="pagination-container">
                   <Pagination
                         activePage={currentPage}

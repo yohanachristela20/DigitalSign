@@ -201,126 +201,123 @@ function Trash() {
       setShowModal(true);
     };
 
-     return (
-        <>
-          <Container fluid>
-            <Row>
-              <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>      
-              <Col md="12">
-              <Alert className="my-4" variant="info"><FaInfoCircle className="mr-2"/>Documents that have been in this folder more than 7 days will be automatically deleted.</Alert>
+    return (
+      <>
+        <Container fluid>
+          <Row>
+            <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>      
+            <Col md="12">
+            <Alert className="my-4" variant="info"><FaInfoCircle className="mr-2"/>Documents that have been in this folder more than 7 days will be automatically deleted.</Alert>
 
-              <CDBTable hover  className="mt-4">
-                <CDBTableHeader>
-                  <tr>
-                    <th onClick={() => handleSort("id_dokumen")}>Document ID {sortBy==="id_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                    <th className="border-0" onClick={() => handleSort("nama_dokumen")}>Document Name {sortBy==="nama_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                    <th className="border-0" onClick={() => handleSort("id_kategoridok")}>Category {sortBy==="id_kategoridok" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                    <th className="border-0">Status</th>
-                    <th className="border-0">Deadline</th>
-                    <th className="border-0" onClick={() => handleSort("createdAt")}>Uploaded {sortBy==="createdAt" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
-                    <th className="border-0" colSpan={3}>Action</th>
+            <CDBTable hover  className="mt-4">
+              <CDBTableHeader>
+                <tr>
+                  <th onClick={() => handleSort("id_dokumen")}>Document ID {sortBy==="id_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                  <th className="border-0" onClick={() => handleSort("nama_dokumen")}>Document Name {sortBy==="nama_dokumen" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                  <th className="border-0" onClick={() => handleSort("id_kategoridok")}>Category {sortBy==="id_kategoridok" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                  <th className="border-0">Status</th>
+                  <th className="border-0">Deadline</th>
+                  <th className="border-0" onClick={() => handleSort("createdAt")}>Uploaded {sortBy==="createdAt" && (sortOrder === "asc" ? <FaSortUp/> : <FaSortDown/>)}</th>
+                  <th className="border-0" colSpan={3}>Action</th>
+                </tr>
+              </CDBTableHeader>
+              <CDBTableBody>
+                {currentItems
+                .filter(document => document.is_deleted)
+                .map((document, index) => (
+                  <tr key={document.id_dokumen}>
+                    <td className="text-center">{document.id_dokumen}</td>
+                    <td className="text-center">{document.nama_dokumen}</td>
+                    <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
+                    <td className="text-center">
+                        {getStatusById(document.id_dokumen) === "Decline" ? (
+                          <Badge pill bg="danger">Decline</Badge>
+                        ) : getStatusById(document.id_dokumen) === "Completed" &&
+                          document.LogSigns.every((log) => log.is_submitted === true) ?
+                        (
+                          <Badge pill bg="success">Completed</Badge>
+                        ) : (
+                          <Badge pill bg="secondary">Pending</Badge>
+                        )}
+                    </td>
+                    <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
+                    <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
+                    
+                    <td className="text-center px-0">
+                    <button
+                      style={{background:"transparent", border:"none"}} 
+                      disabled={document.user_active === true}
+                      >
+                      <FaUpload 
+                        type="button"
+                        onClick={() => restoreDocument(document.id_dokumen)}
+                        className="text-primary btn-action"
+                      />
+                    </button>
+                    </td>
+                    <td className="text-center px-0">
+                    <button
+                      style={{background:"transparent", border:"none"}} 
+                      disabled={document.user_active === true}
+                      >
+                      <FaTrashAlt 
+                        type="button"
+                        onClick={() => handleDeleteDocument(document.id_dokumen)}
+                        className="text-danger btn-action"
+                      />
+                    </button>
+                    </td>
                   </tr>
-                </CDBTableHeader>
-                <CDBTableBody>
-                  {currentItems
-                  .filter(document => document.is_deleted)
-                  .map((document, index) => (
-                    <tr key={document.id_dokumen}>
-                      <td className="text-center">{document.id_dokumen}</td>
-                      <td className="text-center">{document.nama_dokumen}</td>
-                      <td className="text-center">{document?.Kategori?.kategori || 'N/A'}</td>
-                      <td className="text-center">
-                         {getStatusById(document.id_dokumen) === "Decline" ? (
-                            <Badge pill bg="danger">Decline</Badge>
-                          ) : getStatusById(document.id_dokumen) === "Completed" &&
-                            document.LogSigns.every((log) => log.is_submitted === true) ?
-                          (
-                            <Badge pill bg="success">Completed</Badge>
-                          ) : (
-                            <Badge pill bg="secondary">Pending</Badge>
-                          )}
-                      </td>
-                      <td className="text-center">{getDeadlineById(document.id_dokumen) !== '0000-00-00' ? getDeadlineById(document.id_dokumen) : '-'}</td>
-                      <td className="text-center">{new Date(document.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</td>
-                      
-                      <td className="text-center px-0">
-                      <button
-                        style={{background:"transparent", border:"none"}} 
-                        disabled={document.user_active === true}
-                        >
-                        <FaUpload 
-                          type="button"
-                          onClick={() => restoreDocument(document.id_dokumen)}
-                          className="text-primary btn-action"
-                        />
-                      </button>
-                      </td>
-                      <td className="text-center px-0">
-                      <button
-                        style={{background:"transparent", border:"none"}} 
-                        disabled={document.user_active === true}
-                        >
-                        <FaTrashAlt 
-                          type="button"
-                          onClick={() => handleDeleteDocument(document.id_dokumen)}
-                          className="text-danger btn-action"
-                        />
-                      </button>
-                      </td>
-                     
-                     
-    
-                    </tr>
-                  ))}
-                </CDBTableBody>
-              </CDBTable>
-                
-                <div className="pagination-container">
-                  <Pagination
-                        activePage={currentPage}
-                        itemsCountPerPage={itemsPerPage}
-                        totalItemsCount={filteredDocument.length}
-                        pageRangeDisplayed={5}
-                        onChange={handlePageChange}
-                        itemClass="page-item"
-                        linkClass="page-link"
-                  />
-                </div>
-              </Col>
-            </Row>
-          </Container>
+                ))}
+              </CDBTableBody>
+            </CDBTable>
+              
+            <div className="pagination-container">
+              <Pagination
+                activePage={currentPage}
+                itemsCountPerPage={itemsPerPage}
+                totalItemsCount={filteredDocument.length}
+                pageRangeDisplayed={5}
+                onChange={handlePageChange}
+                itemClass="page-item"
+                linkClass="page-link"
+              />
+            </div>
+            </Col>
+          </Row>
+        </Container>
 
-          <Modal show={showModal} onHide={() => setShowModal(false)} dialogClassName="modal-warning">
-            <Modal.Header style={{borderBottom: "none"}}>
-              <FaExclamationTriangle style={{ width:"100%", height:"60px", position: "relative", textAlign:"center", marginTop:"20px"}} color="#ffca57ff"/>
-                <button
-                  type="button"
-                  className="close"
-                  aria-label="Close"
-                  onClick={() => setShowModal(false)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    fontSize: "1.5rem",
-                    fontWeight: "bold",
-                    cursor: "pointer",
-                  }}
-                >
-                  &times; {/* Simbol 'x' */}
-                </button>
-            </Modal.Header>
-            <Modal.Body style={{ width:"100%", height:"60px", position: "relative", textAlign:"center"}} >Are you sure you want to permanently delete this document?</Modal.Body>
-            <Modal.Footer className="mb-2" textAlign="center" style={{ justifyContent: "center", borderTop: "none" }}>
-              <Button variant="secondary" onClick={() => setShowModal(false)} className="mx-3">
-                Cancel
-              </Button>
-              <Button variant="danger" onClick={() => deleteDocument(document.id_dokumen)} className="mx-3">
-                Delete
-              </Button> 
-            </Modal.Footer>
-          </Modal>
-        </>
-      );
+        <Modal show={showModal} onHide={() => setShowModal(false)} dialogClassName="modal-warning">
+          <Modal.Header style={{borderBottom: "none"}}>
+            <FaExclamationTriangle style={{ width:"100%", height:"60px", position: "relative", textAlign:"center", marginTop:"20px"}} color="#ffca57ff"/>
+              <button
+                type="button"
+                className="close"
+                aria-label="Close"
+                onClick={() => setShowModal(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "1.5rem",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                }}
+              >
+                &times; {/* Simbol 'x' */}
+              </button>
+          </Modal.Header>
+          <Modal.Body style={{ width:"100%", height:"60px", position: "relative", textAlign:"center"}} >Are you sure you want to permanently delete this document?</Modal.Body>
+          <Modal.Footer className="mb-2" textAlign="center" style={{ justifyContent: "center", borderTop: "none" }}>
+            <Button variant="secondary" onClick={() => setShowModal(false)} className="mx-3">
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={() => deleteDocument(document.id_dokumen)} className="mx-3">
+              Delete
+            </Button> 
+          </Modal.Footer>
+        </Modal>
+      </>
+    );
 }
 
 export default Trash;

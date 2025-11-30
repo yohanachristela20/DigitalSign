@@ -80,73 +80,72 @@ function Login({index}) {
   return (
     <div className="sign-in__wrapper body-bg">
       <Container fluid className="d-flex align-items-center justify-content-center">
-      <Row className="login-row element">
-        <Card className="login-card shadow mb-0">
-          <div className="d-flex justify-content-center">
-            <img src={require("assets/img/login2.png")} alt="login-img" className="login-illustration" />
-          </div>
-          <Card.Body > 
-            <h4 className="text-center font-form mt-3 mb-0">Campina Sign</h4>
-            <Form onSubmit={handleLogin}>
-              <Form.Group className="mb-2" controlId="email">
-              <span class="input-group-text bg-transparent border-0" id="basic-addon1">
-              <FaUser style={{ marginRight: '8px' }} />
-              <Form.Control
-                  type="text"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}
-                />
-            </span>
-              
-              </Form.Group>
-              <Form.Group className="mb-2" controlId="password">
-              <span class="input-group-text bg-transparent  border-0" id="basic-addon1">
-              <FaKey style={{ marginRight: '8px' }} />
+        <Row className="login-row element">
+          <Card className="login-card shadow mb-0">
+            <div className="d-flex justify-content-center">
+              <img src={require("assets/img/login2.png")} alt="login-img" className="login-illustration" />
+            </div>
+            <Card.Body> 
+              <h4 className="text-center font-form mt-3 mb-0">Campina Sign</h4>
+              <Form onSubmit={handleLogin}>
+                <Form.Group className="mb-2" controlId="email">
+                <span class="input-group-text bg-transparent border-0" id="basic-addon1">
+                <FaUser style={{ marginRight: '8px' }} />
                 <Form.Control
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}
-                />
+                    type="text"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}
+                  />
                 </span>
-              </Form.Group>
-              <Form.Group className="mb-2" controlId="role">
-              <span class="input-group-text bg-transparent  border-0" id="basic-addon1">
-              <FaBriefcase style={{ marginRight: '8px' }} />
-                <Form.Select
-                  className="form-control"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  required
-                  style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}
-                >
-                  <option value="" hidden>
-                    Role
-                  </option>
-                  <option value="Admin">Admin</option>
-                  <option value="Super Admin">Super Admin</option>
-                </Form.Select>
-                </span>
-              </Form.Group>
+                </Form.Group>
+                <Form.Group className="mb-2" controlId="password">
+                <span class="input-group-text bg-transparent  border-0" id="basic-addon1">
+                <FaKey style={{ marginRight: '8px' }} />
+                  <Form.Control
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}
+                  />
+                  </span>
+                </Form.Group>
+                <Form.Group className="mb-2" controlId="role">
+                <span class="input-group-text bg-transparent  border-0" id="basic-addon1">
+                <FaBriefcase style={{ marginRight: '8px' }} />
+                  <Form.Select
+                    className="form-control"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    required
+                    style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}
+                  >
+                    <option value="" hidden>
+                      Role
+                    </option>
+                    <option value="Admin">Admin</option>
+                    <option value="Super Admin">Super Admin</option>
+                  </Form.Select>
+                  </span>
+                </Form.Group>
 
-              <Button
-                // variant="primary"
-                type="submit"
-                className="w-100 mt-2"
-                style={{ backgroundColor: "#4c4ef9", border: "none", color: "white", marginBottom:'15px'}}
-              >
-                Sign In
-              </Button>
-              <p className="text-center font-footer" style={{fontSize:15}}>Forget Password? Please contact Super Admin.</p>
-            </Form>
-          </Card.Body>
-        </Card>
-      </Row>
+                <Button
+                  // variant="primary"
+                  type="submit"
+                  className="w-100 mt-2"
+                  style={{ backgroundColor: "#4c4ef9", border: "none", color: "white", marginBottom:'15px'}}
+                >
+                  Sign In
+                </Button>
+                <p className="text-center font-footer" style={{fontSize:15}}>Forget Password? Please contact Super Admin.</p>
+              </Form>
+            </Card.Body>
+          </Card>
+        </Row>
       </Container>
     </div>
     

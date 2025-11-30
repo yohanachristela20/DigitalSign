@@ -4,15 +4,12 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import axios from "axios";
 import { FaCalendar, FaExclamationTriangle, FaFont, FaInfo, FaInfoCircle, FaKey, FaSignature, FaUser } from 'react-icons/fa';
-
 import { Rnd } from 'react-rnd';
 import { pdfjs } from "react-pdf";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
 import { Container, Spinner, Alert, Row, Col, Card, Navbar, Nav, Dropdown, Button, Modal, OverlayTrigger, Tooltip, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { PDFDocument } from "pdf-lib";
-
 import SignatureModal from 'components/ModalForm/SignatureModal.js';
 import InitialModal from "components/ModalForm/InitialModal.js";
 import DeclineModal from "components/ModalForm/DeclineModal.js";
@@ -33,9 +30,7 @@ import { isDate } from "moment";
 
 function ReceiveDocument() {
 	const contentRef = useRef(null);
-
 	const [canvasDimensions, setCanvasDimensions] = useState({width: 0, height: 0});
-
 	const [pdfUrl, setPdfUrl] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [errorMsg, setErrorMsg] = useState("");
@@ -45,7 +40,6 @@ function ReceiveDocument() {
 	const [delegated_signers, setDelegatedSigners] = useState("");
 	const [id_karyawan, setIdKaryawan] = useState("");
 	const [signStatus, setSignStatus] = useState([]);
-
 	const [mainSigner, setMainSigner] = useState("");
 	const [showSignatureModal, setShowSignatureModal] = React.useState(false);
 	const [showInitialModal, setShowInitialModal] = useState(false);
@@ -55,15 +49,12 @@ function ReceiveDocument() {
 	const [showDelegateModal, setShowDelegateModal] = useState(false);
 	const [showDownloadModal, setShowDownloadModal] = useState(false);
 	const [selectedIdItem, setSelectedIdItem] = useState([]);
-	
 	const [initials, setInitials] = useState([]);
 	const [signedInitials, setSignedInitials] = useState([]);
 	const [initial, setInitial] = useState([]);
-
 	const [signatures, setSignatures] = useState([]);
 	const [signedSignatures, setSignedSignatures] = useState([]);
 	const [signature, setSignature] = useState([]);
-
 	const [page, setPage] = useState([]);
 	const [pages, setPages] = useState([]);
 
@@ -555,75 +546,75 @@ function ReceiveDocument() {
 							setActualSigner(querySigner);
 							
 							for (const itemID of itemArray) {
-									const fieldRes = await axios.get(`http://10.70.10.20:5000/axis-field/${id_dokumen}/${querySigner}/${itemID}`);
+								const fieldRes = await axios.get(`http://10.70.10.20:5000/axis-field/${id_dokumen}/${querySigner}/${itemID}`);
 
-									const validFields = fieldRes.data.filter(item => item.ItemField);
+								const validFields = fieldRes.data.filter(item => item.ItemField);
 
-									for (let idx = 0; idx < validFields.length; idx++) {
-											const item = validFields[idx];
-											const{
-													x_axis, 
-													y_axis, 
-													width, 
-													height, 
-													jenis_item, 
-													page,
-													id_item: fieldItemId,
-											} = item.ItemField;
+								for (let idx = 0; idx < validFields.length; idx++) {
+										const item = validFields[idx];
+										const{
+												x_axis, 
+												y_axis, 
+												width, 
+												height, 
+												jenis_item, 
+												page,
+												id_item: fieldItemId,
+										} = item.ItemField;
 
-											const status = item.status || "Pending";
-											const sign_permission = item.sign_permission || null;
-											const urutan = item.urutan;
-											const is_submitted = item.is_submitted;
-											const tgl_tt = item.tgl_tt;
+										const status = item.status || "Pending";
+										const sign_permission = item.sign_permission || null;
+										const urutan = item.urutan;
+										const is_submitted = item.is_submitted;
+										const tgl_tt = item.tgl_tt;
 
-											// console.log("TGL TT:", tgl_tt);
-											// setTglTT(tgl_tt);
+										// console.log("TGL TT:", tgl_tt);
+										// setTglTT(tgl_tt);
 
 
-											if (!urutanMapping[fieldItemId]) {
-													urutanMapping[fieldItemId] = urutan;
-											}
+										if (!urutanMapping[fieldItemId]) {
+												urutanMapping[fieldItemId] = urutan;
+										}
 
-											if (!submittedMapping[signer]) {
-													submittedMapping[signer] = is_submitted;
-											}
+										if (!submittedMapping[signer]) {
+												submittedMapping[signer] = is_submitted;
+										}
 
-											const fieldObj = {
-													id: `field-${querySigner}-${idx}`,
-													x_axis,
-													y_axis,
-													width,
-													height, 
-													jenis_item,
-													page,
-													pageScale: 1,
-													enableResizing: false,
-													disableDragging: true,
-													id_item: fieldItemId, 
-													status,
-													urutan, 
-													is_submitted, 
-													show,
-													editable,
-													id_signers: querySigner, 
-													is_delegated,
-													delegated_signers,
-													sign_permission,
-													tgl_tt,
-											}; 
+										const fieldObj = {
+												id: `field-${querySigner}-${idx}`,
+												x_axis,
+												y_axis,
+												width,
+												height, 
+												jenis_item,
+												page,
+												pageScale: 1,
+												enableResizing: false,
+												disableDragging: true,
+												id_item: fieldItemId, 
+												status,
+												urutan, 
+												is_submitted, 
+												show,
+												editable,
+												id_signers: querySigner, 
+												is_delegated,
+												delegated_signers,
+												sign_permission,
+												tgl_tt,
+										}; 
 
-											allStatus.push({id_item: fieldItemId, status});
-											allPermission.push({id_item: fieldItemId, sign_permission});
+										allStatus.push({id_item: fieldItemId, status});
+										allPermission.push({id_item: fieldItemId, sign_permission});
 
-											if (jenis_item === "Signpad") {
-													localSignatureFields.push(fieldObj);
-											} else if (jenis_item === "Initialpad") {
-													localInitialFields.push(fieldObj);
-											} else if (jenis_item === "Date") {
-													localDateFields.push(fieldObj);
-											}
-									}
+										if (jenis_item === "Signpad") {
+												localSignatureFields.push(fieldObj);
+										} else if (jenis_item === "Initialpad") {
+												localInitialFields.push(fieldObj);
+										} else if (jenis_item === "Date") {
+												localDateFields.push(fieldObj);
+										}
+								}
 							}
 					}
 
@@ -638,12 +629,12 @@ function ReceiveDocument() {
 
 
 			} catch (error) {
-					console.error("Failed to load PDF:", error.message);
-					setErrorMsg(error.message);
-					toast.error("Load document error or Expired token.");
-					} finally {
-							setLoading(false);
-					}
+				console.error("Failed to load PDF:", error.message);
+				setErrorMsg(error.message);
+				toast.error("Load document error or Expired token.");
+				} finally {
+						setLoading(false);
+				}
 			};
 			
 
@@ -687,53 +678,51 @@ function ReceiveDocument() {
 	// console.log("tgl tt:", tgl_tt);
 
 	const updateSubmitted = async(id_dokumen, current_signer) => {
-			try {
-					const response = await axios.patch(`http://10.70.10.20:5000/update-submitted/${id_dokumen}/${current_signer}`, {
-							is_submitted: true,
-							status: "Completed",
-							tgl_tt: date,
-					});
+		try {
+			const response = await axios.patch(`http://10.70.10.20:5000/update-submitted/${id_dokumen}/${current_signer}`, {
+					is_submitted: true,
+					status: "Completed",
+					tgl_tt: date,
+			});
 
-					toast.success("Document signed successfully.", {
-							position: "top-right", 
-							autoClose: 5000, 
-							hideProgressBar: true,
-					});
+			toast.success("Document signed successfully.", {
+					position: "top-right", 
+					autoClose: 5000, 
+					hideProgressBar: true,
+			});
 
-					if (is_delegated && id_signers === delegated_signers && !delegateEmailSent) {
-							await sendSignedDelegate(id_dokumen, delegated_signers, token);
-							setDelegateEmailSent(true);
-					}
-
-					window.location.reload();
-			} catch (error) {
-					toast.error("Failed to save signed document.", {
-							position: "top-right",
-							autoClose: 5000,
-							hideProgressBar: true,
-					});
+			if (is_delegated && id_signers === delegated_signers && !delegateEmailSent) {
+					await sendSignedDelegate(id_dokumen, delegated_signers, token);
+					setDelegateEmailSent(true);
 			}
+
+			window.location.reload();
+		} catch (error) {
+			toast.error("Failed to save signed document.", {
+					position: "top-right",
+					autoClose: 5000,
+					hideProgressBar: true,
+			});
+		}
 	};
 
 	const sendSignedDelegate = async(id_dokumen, delegated_signers, token) => {
+		try {
+			const signedDelegate = await axios.post('http://10.70.10.20:5000/signed-delegate-email', {
+					id_dokumen, 
+					delegated_signers,
+					token
+			});
 
-			try {
-					const signedDelegate = await axios.post('http://10.70.10.20:5000/signed-delegate-email', {
-							id_dokumen, 
-							delegated_signers,
-							token
-					});
-
-					toast.success("Signed delegate email sent!", {
-							position: "top-right",
-							autoClose: 5000,
-							hideProgressBar: true,
-					});
-
-			} catch (error) {
-					console.error("Failed to send signed delegate email:", error.message);
-					toast.error("Failed to send signed delegate email.");
-			}
+			toast.success("Signed delegate email sent!", {
+					position: "top-right",
+					autoClose: 5000,
+					hideProgressBar: true,
+			});
+		} catch (error) {
+			console.error("Failed to send signed delegate email:", error.message);
+			toast.error("Failed to send signed delegate email.");
+		}
 	}
 
 	useEffect(() => {
@@ -750,60 +739,57 @@ function ReceiveDocument() {
 			const fieldBuffer = [];
 
 			for (const signer of signerArray) {
-					for (const itemId of itemArray) {
-							const currentUrutan = Number(urutanMap[itemId]);
-							const currentSubmitted = submittedMap[signer];
-							const currentDelegated = delegatedMap[signer] || false;
+				for (const itemId of itemArray) {
+						const currentUrutan = Number(urutanMap[itemId]);
+						const currentSubmitted = submittedMap[signer];
+						const currentDelegated = delegatedMap[signer] || false;
 
-							const axisRes = await axios.get(`http://10.70.10.20:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
-							const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
-							const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
+						const axisRes = await axios.get(`http://10.70.10.20:5000/axis-field/${id_dokumen}/${signer}/${itemId}`);
+						const signerFields = axisRes.data.filter(field => field.ItemField?.jenis_item);
+						const signerInitials = initialsData.filter(init => init.id_signers === signer && init.id_item === itemId);
 
-							// const isDELEGATED = axisRes.data.filter(field => field.is_delegated);
-							// console.log("IS DELEGATED:", currentDelegated);
+						// const isDELEGATED = axisRes.data.filter(field => field.is_delegated);
+						// console.log("IS DELEGATED:", currentDelegated);
 
 
-							for (const field of signerFields) {
-									const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
-									const base64 = matchInitial?.sign_base64;
-									const formattedBase64 = base64?.startsWith("data:image")? base64 : base64 ? `data:image/png;base64,${base64}` : null;
+						for (const field of signerFields) {
+								const matchInitial = signerInitials.find(init => init.id_item === field.id_item);
+								const base64 = matchInitial?.sign_base64;
+								const formattedBase64 = base64?.startsWith("data:image")? base64 : base64 ? `data:image/png;base64,${base64}` : null;
 
-									const delegatedForThisSigner = matchInitial?.delegated_signers || null;
-									fieldBuffer.push({
-											id_item: field.id_item,
-											id_signers: signer,
-											sign_base64: formattedBase64,
-											status: matchInitial?.status || "Pending", 
-											nama: matchInitial?.Signerr?.nama || "-", 
-											x_axis: field.ItemField?.x_axis || 0,
-											y_axis: field.ItemField?.y_axis || 0,
-											width: field.ItemField?.width || 0,
-											height: field.ItemField?.height || 0,
-											page: field.ItemField?.page || 0,
-											enableResizing: false,
-											disableDragging: true,
-											jenis_item: field.ItemField?.jenis_item || "", 
-											urutan: currentUrutan, 
-											id_dokumen, 
-											is_submitted: currentSubmitted,
-											rawField: field,
-											is_delegated: field.is_delegated || "",
-											nowSigner: finalSignerId,
-											delegated_signers: delegatedForThisSigner,
-											token,
-											sign_permission: matchInitial?.sign_permission || "Needs to sign",
-											tgl_tt: matchInitial?.tgl_tt || "-",
-									});
-							}
-					}
+								const delegatedForThisSigner = matchInitial?.delegated_signers || null;
+								fieldBuffer.push({
+										id_item: field.id_item,
+										id_signers: signer,
+										sign_base64: formattedBase64,
+										status: matchInitial?.status || "Pending", 
+										nama: matchInitial?.Signerr?.nama || "-", 
+										x_axis: field.ItemField?.x_axis || 0,
+										y_axis: field.ItemField?.y_axis || 0,
+										width: field.ItemField?.width || 0,
+										height: field.ItemField?.height || 0,
+										page: field.ItemField?.page || 0,
+										enableResizing: false,
+										disableDragging: true,
+										jenis_item: field.ItemField?.jenis_item || "", 
+										urutan: currentUrutan, 
+										id_dokumen, 
+										is_submitted: currentSubmitted,
+										rawField: field,
+										is_delegated: field.is_delegated || "",
+										nowSigner: finalSignerId,
+										delegated_signers: delegatedForThisSigner,
+										token,
+										sign_permission: matchInitial?.sign_permission || "Needs to sign",
+										tgl_tt: matchInitial?.tgl_tt || "-",
+								});
+						}
+				}
 			}
 
 			const allFields = fieldBuffer.map(field => {
-					const {urutan: currentUrutan, id_item, id_signers, current_signer, delegated_signers, sign_permission, tgl_tt, is_delegated} = field;
-					
+				const {urutan: currentUrutan, id_item, id_signers, current_signer, delegated_signers, sign_permission, tgl_tt, is_delegated} = field;
 					// console.log("Urutan:", currentUrutan);
-
-
 					let normalizedDelegated = null;
 					if (delegated_signers && !Array.isArray(delegated_signers)) {
 							normalizedDelegated = [String(delegated_signers)];
@@ -1221,13 +1207,7 @@ function ReceiveDocument() {
 					let base64Url = sign.sign_base64;
 					let signer = sign.Signerr?.nama;
 					let tgl_tt = sign.tgl_tt;
-					// let arraytgltt = 
-					// Array.isArray(currentItems) 
-					// ? currentItems.filter(d => d.is_deleted !== true).length
-					// : (sign.tgl_tt ?? "");
-
 					const docItem = LOGSIGN.find(d => String(d.id_dokumen) === String(id_dokumen));
-					// console.log("docItem:", docItem);
 					const rawDate = sign.tgl_tt ?? docItem?.LOGSIGN?.tgl_tt;
 					const parsedDate = new Date(rawDate);
 					const safeDate = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
@@ -1244,17 +1224,7 @@ function ReceiveDocument() {
 						width,
 						height,
 					});
-
-					// const timestamp2 = new Date(tgl_tt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '');
 					const watermark = `Signed by ${signer} Date: ${timestamp}`;
-
-					// pdfPage.drawText(watermark, {
-					// x: x_axis + marginRight,
-					// y: yPos + marginBottom,
-					// size: 8,
-					// maxWidth: 50,
-					// lineHeight: 12,
-					// });
 
 					try {
 						const fontSize = 8;
@@ -1382,621 +1352,618 @@ function ReceiveDocument() {
 	const TglVal = signerData.map(item => item.tgl_tt);
 
 	return (
-			<>
-					<Navbar className="bg-navbar nav-padding w-100" style={{position:'fixed', top:'0'}} expand="lg" hidden={isAccessed !== true}>
-							<Container fluid>
-							<div className="d-flex justify-content-center align-items-center ml-2 ml-lg-0">
-									<Button
-									variant="dark"
-									className="d-lg-none btn-fill d-flex justify-content-center align-items-center rounded-circle p-2"
-									onClick={mobileSidebarToggle}
-									>
-									<i className="fas fa-ellipsis-v"></i>
-									</Button>
-									<Navbar.Brand
-									onClick={(e) => e.preventDefault()}
-									>
-									<img
-											src={require("assets/img/logo2.png")}
-											alt="sidebar-logo"
-											style={{ width: '30px' }}
-											className="img-items mr-2"
-									/>
-									<span className="fs-5">Campina Sign</span>
-									</Navbar.Brand>
-							</div>
-							<Navbar.Collapse id="basic-navbar-nav">
-									<Nav className="ml-auto" style={{marginRight:'50px'}}>
-									<Dropdown as={Nav.Item}>
-											<Dropdown.Toggle
-											aria-expanded={false}
-											as={Nav.Link}
-											id="navbarDropdownMenuLink"
-											variant="default"
-											className="mr-5 mt-2"
-											hidden={
-													(token !== delegate_token) &&
-													(!is_delegated ) &&
-													(delegatedDoc === id_dokumen) ||
-													initial_status.every(status => status === "Decline")
+		<>
+			<Navbar className="bg-navbar nav-padding w-100" style={{position:'fixed', top:'0'}} expand="lg" hidden={isAccessed !== true}>
+				<Container fluid>
+				<div className="d-flex justify-content-center align-items-center ml-2 ml-lg-0">
+					<Button
+						variant="dark"
+						className="d-lg-none btn-fill d-flex justify-content-center align-items-center rounded-circle p-2"
+						onClick={mobileSidebarToggle}
+					>
+					<i className="fas fa-ellipsis-v"></i>
+					</Button>
+					<Navbar.Brand
+					onClick={(e) => e.preventDefault()}
+					>
+					<img
+							src={require("assets/img/logo2.png")}
+							alt="sidebar-logo"
+							style={{ width: '30px' }}
+							className="img-items mr-2"
+					/>
+					<span className="fs-5">Campina Sign</span>
+					</Navbar.Brand>
+				</div>
+				<Navbar.Collapse id="basic-navbar-nav">
+					<Nav className="ml-auto" style={{marginRight:'50px'}}>
+					<Dropdown as={Nav.Item}>
+							<Dropdown.Toggle
+							aria-expanded={false}
+							as={Nav.Link}
+							id="navbarDropdownMenuLink"
+							variant="default"
+							className="mr-5 mt-2"
+							hidden={
+									(token !== delegate_token) &&
+									(!is_delegated ) &&
+									(delegatedDoc === id_dokumen) ||
+									initial_status.every(status => status === "Decline")
+							}
+
+							>
+							<span className="fs-6">Actions</span>
+							</Dropdown.Toggle>
+							<Dropdown.Menu aria-labelledby="navbarDropdownMenuLink" style={{ width: '200px' }}>
+							<Dropdown.Item
+									onClick={() => handleDeclineClick(id_dokumen, id_signers)}
+									hidden={initial_status.every(status => status === "Decline" || status === "Completed")}
+							>
+									Decline
+							</Dropdown.Item>
+							<div className="divider" hidden={initial_status.every(status => status === "Decline" || status === "Completed")}></div>
+							<Dropdown.Item
+									href="#"
+									onClick={() => handleDelegateClick(id_dokumen, id_signers)}
+									hidden={initial_status.every(status => status === "Decline" || status === "Completed") || delegated_signers}
+							>
+									Delegate
+							</Dropdown.Item>
+							<div className="divider" hidden={initial_status.every(status => status === "Decline" || status === "Completed") || delegated_signers}></div>
+							<Dropdown.Item
+									href="#"
+									onClick={() => handleDocInfoClick(id_dokumen, id_signers, id_karyawan)}
+							>
+									Document Info
+							</Dropdown.Item>
+							<div className="divider"></div>
+							
+							<Dropdown.Item
+									href="#"
+									onClick={() => handleAuditTrail(id_dokumen, id_signers)}
+							>   Audit Trail
+							</Dropdown.Item>
+							{(() => {
+								const currentDoc = documents.find(doc => doc.id_dokumen === id_dokumen);
+								if (!currentDoc) return null;
+
+								const hasDownload = currentDoc.LogSigns?.some(log => log.is_download === true);
+
+								if (!hasDownload) return null; 
+
+								return (
+									<>
+										<div className="divider"></div>
+										<Dropdown.Item
+											href="#"
+											onClick={async (e) => {
+											e.preventDefault();
+											setDownloadClicked(true);
+
+											const ref = getRef(id_dokumen);
+											const LOGSIGN = JSON.parse(JSON.stringify(currentDoc.LogSigns || []));
+											// const hasSubmitted = LOGSIGN.some((log) => log.is_submitted);
+											const allSubmitted = LOGSIGN.length > 0 && LOGSIGN.every(sign => sign?.is_submitted === true);
+
+											if (allSubmitted) {
+													await downloadPDF(id_dokumen, ref, LOGSIGN);
+											} else {
+													await plainPDF(id_dokumen);
 											}
-
-											>
-											<span className="fs-6">Actions</span>
-											</Dropdown.Toggle>
-											<Dropdown.Menu aria-labelledby="navbarDropdownMenuLink" style={{ width: '200px' }}>
-											<Dropdown.Item
-													onClick={() => handleDeclineClick(id_dokumen, id_signers)}
-													hidden={initial_status.every(status => status === "Decline" || status === "Completed")}
-											>
-													Decline
-											</Dropdown.Item>
-											<div className="divider" hidden={initial_status.every(status => status === "Decline" || status === "Completed")}></div>
-											<Dropdown.Item
-													href="#"
-													onClick={() => handleDelegateClick(id_dokumen, id_signers)}
-													hidden={initial_status.every(status => status === "Decline" || status === "Completed") || delegated_signers}
-											>
-													Delegate
-											</Dropdown.Item>
-											<div className="divider" hidden={initial_status.every(status => status === "Decline" || status === "Completed") || delegated_signers}></div>
-											<Dropdown.Item
-													href="#"
-													onClick={() => handleDocInfoClick(id_dokumen, id_signers, id_karyawan)}
-											>
-													Document Info
-											</Dropdown.Item>
-											<div className="divider"></div>
-											
-											<Dropdown.Item
-													href="#"
-													onClick={() => handleAuditTrail(id_dokumen, id_signers)}
-											>   Audit Trail
-											</Dropdown.Item>
-											{(() => {
-													const currentDoc = documents.find(doc => doc.id_dokumen === id_dokumen);
-													if (!currentDoc) return null;
-
-													const hasDownload = currentDoc.LogSigns?.some(log => log.is_download === true);
-
-													if (!hasDownload) return null; 
-
-													return (
-															<>
-																	<div className="divider"></div>
-																		<Dropdown.Item
-																			href="#"
-																			onClick={async (e) => {
-																			e.preventDefault();
-																			setDownloadClicked(true);
-
-																			const ref = getRef(id_dokumen);
-																			const LOGSIGN = JSON.parse(JSON.stringify(currentDoc.LogSigns || []));
-																			// const hasSubmitted = LOGSIGN.some((log) => log.is_submitted);
-																			const allSubmitted = LOGSIGN.length > 0 && LOGSIGN.every(sign => sign?.is_submitted === true);
-
-																			if (allSubmitted) {
-																					await downloadPDF(id_dokumen, ref, LOGSIGN);
-																			} else {
-																					await plainPDF(id_dokumen);
-																			}
-																			}}
-																	>
-																			Download
-																	</Dropdown.Item>
-															</>
-													);
-											})()}
-
-
-											</Dropdown.Menu>
-									</Dropdown>
-
-									<Button
-											className="submit-btn w-100 mt-3 fs-6"
-											type="submit"
-											onClick={() => updateSubmitted(id_dokumen, current_signer)}
-											disabled={isFinishDisabled}
-											hidden={is_delegated !== true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) || initial_status.every(status => status === "Decline") : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
-									>
-											Finish
-									</Button>
-									</Nav>
-
-									<Button
-											className="navigate-btn mt-3 fs-6"
-											type="button"
-											onClick={handleJumpTo}
-
-											hidden={
-													pendingCount == 0 ||
-													(token !== delegate_token) &&
-													(!is_delegated ) &&
-													(delegatedDoc === id_dokumen) ||
-													initial_status.every(status => status === "Decline")
-											}
-
-
-									>
-											Jump to ({pendingCount})
-									</Button>
-							</Navbar.Collapse>
-							</Container>
-					</Navbar>
-
-					<div>
-							<Container fluid className="px-0 center-object">
-											{loading && <Spinner animation="border" variant="primary" />}
-											<div className="sign-in__user d-flex align-items-center justify-content-center">
-											
-											{isAccessed === false ? 
-													(
-													<Alert variant="danger" style={{marginTop: "-680px"}} hidden={initial_status.every(status => status !== "Expired")}>
-															<FaExclamationTriangle className="mb-1 mr-2"/> Access denied, token expired.
-													</Alert>
-													) : (
-															<>
-															</>    
-													)
-											}
-
-											<Alert variant="danger" style={{marginTop: "-680px"}} hidden={initial_status.every(status => status !== "Decline")}>
-													<FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
-											</Alert>
-											<Alert variant="warning" style={{marginTop: "-680px"}}
-													hidden={
-															// (token === delegate_token && !is_submitted) ||
-															// (is_delegated === true && is_submitted) ||
-															(delegatedDoc !== id_dokumen)
-													}
-											>
-													<FaExclamationTriangle className="mb-1 mr-2"/> {nama} has delegate this document to other signer.
-											</Alert>
-
-											
-											{isAccessed !== true && (
-									
-											<Row className="login-user user-element" style={{marginTop: "-2px"}}>
-													<Card className="login-card shadow mb-0">
-															<>{errorMsg && <Alert variant="danger" className="m-4">{errorMsg}</Alert>}</>
-															<div className="d-flex justify-content-center">
-																	<img src={require("assets/img/login2.png")} alt="login-img" className="login-illustration" />
-															</div>
-															<Card.Body>
-																	<h4 className="text-center font-form mt-3 mb-2">Campina Sign</h4>
-																	<Alert variant="info" className="mb-0"><FaInfoCircle className="mr-2"/>Please verify your email</Alert>
-																	<Form onSubmit={handleEmailVerify}>
-																			<Form.Group> 
-																					<span class="input-group-text bg-transparent border-0" id="basic-addon1">
-																							<FaUser style={{ marginRight: '8px' }} />
-																							<Form.Control
-																									type="email"
-																									placeholder="Email"
-																									value={inputEmail}
-																									onChange={(e) => setInputEmail(e.target.value)}
-																									required
-																									style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}
-																									className="m-0"
-																							/>
-																					</span>
-																			</Form.Group>
-																			<Form.Group className="mb-3">
-																					<span class="input-group-text bg-transparent  border-0" id="basic-addon1">
-																							<FaKey style={{ marginRight: '8px' }} />
-																							<Form.Control
-																									type="password"
-																									placeholder="Password"
-																									value={inputPassword}
-																									onChange={(e) => setInputPassword(e.target.value)}
-																									required 
-																									style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}   
-																							/>
-																					</span> 
-																			</Form.Group>
-																			<Button type="submit" className="w-100 mt-2" disabled={loading} 
-																					style={{ backgroundColor: "#4c4ef9", border: "none", color: "white", marginBottom:'15px'}}
-																					>
-																					{loading ? "Verifying..." : "Verify Email"}
-																			</Button>
-																			<p className="text-center font-footer" style={{fontSize:15}}>Forget Password? Please contact Super Admin.</p>
-																	</Form>
-															</Card.Body>
-													</Card>
-											</Row>
-											)}
-											</div>
-											{isAccessed === true && pdfUrl && (
-													<div>
-															<div className="vertical-center mt-5" >
-																	<div ref={contentRef}>
-																					{canvases.length === 0 && <p>Loading PDF...</p>}
-																						{canvases.map((canvas, index) => {
-																							const pageNumber = index + 1;
-																							// setPageNum(pageNumber);
-																							return (
-																								<div key={pageNumber} className="pdf-page-container" style={{ position: "relative", marginBottom: "1.5rem" }} data-pagenumber={pageNumber}>
-																									<img
-																										src={canvas.imgSrc}
-																										alt={`Page ${canvas.pageNum}`}
-																										style={{
-																											// marginBottom: "1rem",
-																											// border: "1px solid #ccc",
-																											boxShadow: "4px 4px 15px rgba(151, 151, 151, 0.5)",
-																										}}
-																									/>
-																										{/* <div
-																											className="pdf-page-label"
-																											style={{
-																												position: "absolute",
-																												right: "2px",
-																												// bottom: "-40px",
-																												bottom: "-20px",
-																												background: "rgba(0,0,0,0.6)", 
-																												color: "#fff", 
-																												padding: "4px 8px", 
-																												borderRadius: "4px", 
-																												fontSize: "12px", 
-																											}}
-																										>
-																											{`Page ${pageNumber} of ${canvases.length}`}
-																										</div>
-																	 									*/}
-
-																									{signedInitials.map((sig) => {
-																											if (!sig || sig.show !== true) return null;
-
-																											const isCompleted = sig.status === "Completed";
-																											const isSubmitted = sig.is_submitted === true;
-																											const isDatefield = sig.jenis_item === "Date";
-																											const isInitialpad = sig.jenis_item === "Initialpad";
-																											const isSignpad = sig.jenis_item === "Signpad";
-																											const isDecline = sig.status === "Decline";
-																											const isPrevField = sig.prevFieldDisplay === true;
-																											const completedNext = sig.is_submitted === true;
-																											const urutan = sig.urutan;
-																											const isFirstSigner = urutan === 1;
-																											const currentItem = sig.id_item === currentItemId;
-																											const is_delegated = sig.is_delegated;
-																											const delegated_signers = sig.delegated_signers;
-																											const tgl_tt = sig.tgl_tt;
-
-																											// console.log("is_delegated:", is_delegated);
-
-																											// console.log("isFirstSigner:",  isFirstSigner);
-
-																											// const isSignerOwner = sig.id_signers === id_signers;
-																											// const isSignerDelegated = delegated_signers === id_signers;
-																											
-																											
-
-																											const page = Number(sig.page);
-																												if (page !== pageNumber) return null;
-
-																											const delegatedArray = Array.isArray(delegated_signers)
-																											? delegated_signers.map(String)
-																											: delegated_signers ? [String(delegated_signers)] : [];
-
-																											const normalizedArray = Array.isArray(normalizedDelegated)
-																											? normalizedDelegated.map(String)
-																											: normalizedDelegated ? [String(normalizedDelegated)] : [];
-
-																											let bgFirst = is_delegated === true || !currentItem ?  "rgba(86, 90, 90, 0.3)" : isSubmitted ? "transparent" : "rgba(25, 230, 25, 0.5)";
-																											let bgOthers = is_delegated === true || !currentItem ? "rgba(86, 90, 90, 0.3)" : isSubmitted ? "transparent": "rgba(25, 230, 25, 0.5)";
-
-																											if (isCompleted === true) {
-																													bgFirst = "transparent";
-																													bgOthers = "transparent";
-																											}
-
-																											const isCurrentItem = currentItemId.includes(sig.id_item);
-																											const isSignerOwner = String(sig.id_signers) === String(id_signers);
-																											const isSignerDelegated = delegatedArray.includes(String(id_signers)) || normalizedArray.includes(String(id_signers));
-
-																											const canClick = is_delegated && isSignerDelegated ? (isSignerOwner || !isSignerOwner) && isCurrentItem : !is_delegated && !is_submitted;
-
-
-																											// const isDelegatedFlag = is_delegated === true || is_delegated === "true";
-																											// console.log("Signer owner:", isSignerOwner);
-																											// console.log("isSignerDelegated:", isSignerDelegated);
-
-																											// console.log("isFirstSigner:", isFirstSigner);
-																											
-																											// console.log("isCurrentItem:", isCurrentItem);-
-
-																											const bgStyle = isSubmitted || isCompleted || (!isCurrentItem && isDatefield)
-																											? "transparent"
-																											: (isSignerOwner && !isSignerDelegated && is_delegated || (!isCurrentItem))
-																											? "rgba(86, 90, 90, 0.4)"
-																											: (isSignerOwner && !isSignerDelegated && !is_delegated) 
-																											? "rgba(25, 230, 25, 0.4)"
-																											: (!isSignerOwner && isSignerDelegated && is_delegated)
-																											? "rgba(25, 230, 25, 0.4)"
-																											: "transparent";
-
-																											let firstBorderStyle = (isSubmitted && isCompleted) || (!isCurrentItem && isDatefield) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)" ;
-																											let otherBorderStyle = (isSubmitted && isCompleted) || (!isCurrentItem && isDatefield) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
-
-																											const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
-
-																											const groupByUrutan = signedInitials.reduce((acc, field) => {
-																													if (!acc[field.urutan]) acc[field.urutan] = [];
-																													acc[field.urutan].push(field);
-																													return acc;
-																											}, {});
-
-																											const getMessageForUrutan = (urutan) => {
-																													const fields = groupByUrutan[urutan] || [];
-																													const currentSignerStr = String(id_signers);
-
-																													const relatedSigners = new Set();
-																													fields.forEach(f => {
-																															//cek id_signers yg punya delegated_signers ke current signer
-																															if (Array.isArray(f.delegated_signers) 
-																															? f.delegated_signers.map(String).includes(currentSignerStr)
-																															: String(f.delegated_signers) === currentSignerStr) {
-																																	relatedSigners.add(String(f.id_signers));
-																															}
-
-																															// cek id_signers yg ada di normalizedDelegated ke current signer
-																															if (Array.isArray(f.normalizedDelegated) 
-																															? f.normalizedDelegated.map(String).includes(currentSignerStr)
-																															: String(f.normalizedDelegated) === currentSignerStr) {
-																																	relatedSigners.add(String(f.id_signers));
-																															}
-
-																															if (String(f.id_signers) === currentSignerStr) {
-																																	relatedSigners.add(currentSignerStr);
-																															}
-																													});
-
-																													const isOtherSignerGroup = fields.some(f => !relatedSigners.has(String(f.id_signers)));
-
-																													if (!isOtherSignerGroup) return "";
-
-																													const relatedCompleted = fields
-																															.filter(f => relatedSigners.has(String(f.id_signers)))
-																															.every(f => f.status === "Completed");
-
-																													if (relatedCompleted && !isSubmitted && (!isCurrentItem && !isDatefield)) {
-																														return <p className="text-center pending-text">Another sign didn't complete</p>;
-																													}
-
-																											};
-
-																											const message = getMessageForUrutan(sig.urutan);
-
-																											const currentSignerStr = String(current_signer);
-
-
-																											let content;
-
-																											// const canClick = !is_delegated && !is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated|| is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
-																											// const canClick = (isSignerOwner || !isSignerOwner) && isSignerDelegated && is_delegated && isCurrentItem;
-
-																											// const canClick = is_delegated && isSignerDelegated ? (isSignerOwner || !isSignerOwner) && isCurrentItem : !is_delegated && !is_submitted ? (isSignerOwner || !isSignerOwner) && isCurrentItem : !is_delegated && !is_submitted;
-																											
-																											
-
-																											// console.log("isFirstSigner:", isFirstSigner, "isSignerOwner:", isSignerOwner, "isSignerDelegated:", isSignerDelegated, "is_delegated:", is_delegated, "isCurrentItem:", isCurrentItem);
-																											// console.log("canClick:", canClick);
-																											if (page !== pageNumber) return null;
-
-																											if (isCompleted && sig.sign_base64) {
-																											content = (
-																													<>
-																														<img
-																														src={sig.sign_base64}
-																														alt="Initial"
-																														style={{ width: "100%", height: "100%" }}
-																														className="relative"
-																													/>
-																													{/* <p hidden={sign_permission !== "Needs to sign"} className="watermark">Signed by: {sig.nama} 
-																														Date: {signerData.map((t) => (
-																														<div key={t.id_signers}>
-																															{t.tgl_tt}
-																														</div>
-																													))}</p> */}
-
-																													<p hidden={sign_permission !== "Needs to sign" || isSubmitted !== true} className="watermark">Signed by: {sig.nama} Date:	{new Date(signerData.find(s => String(s.id_signers) === String(sig.id_signers) || s.nama === sig.nama).tgl_tt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</p>
-
-
-																													</>
-																											);
-																											} else if (isInitialpad && isCurrentItem ) {
-																											content = <FaFont style={{ width: "25%", height: "25%"}} />;
-																											} else if (isSignpad && isCurrentItem) {
-																											content = <FaSignature style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}} />;
-																											} else if (isDatefield && isCurrentItem ) {
-																											content = <FaCalendar style={{ width: "50%", height: "50%"}} />;
-																											} else if (!is_delegated && isFirstSigner || !canClick) {
-																											content = message;
-																											} else if (!is_delegated && !isFirstSigner || !canClick) {
-																											content = message;
-																											} else {
-																											content = <></>;
-																											}
-
-																											
-
-
-																											return (
-																													<>
-																															<Rnd
-																																	id={`field-${sig.id_item}-${sig.id_signers}`} 
-																																	key={`${sig.id_signers}-${sig.id_item}`}
-																																	position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
-																																	size={{ width: Number(sig.height), height: Number(sig.width) }}
-																																	page={page}
-																																	enableResizing={sig.enableResizing}
-																																	disableDragging={sig.disableDragging}
-																																	style={{
-																																			display: "flex",
-																																			alignItems: "center",
-																																			justifyContent: "center",
-																																			backgroundColor: bgStyle,
-																																			border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
-																																			zIndex: zIndexStyle,     
-																																			cursor: canClick && !isSubmitted && (is_delegated === true && !isSubmitted) && (delegatedDoc !== id_dokumen) || (isCurrentItem && !isDatefield) ? "pointer" : "default",
-
-																																	}}
-																																	hidden={isDecline}
-																																	onClick={() => {
-																																			const currentSignerStr = String(current_signer);
-																																			const isCurrentSigner = 
-																																			String(sig.id_signers) === currentSignerStr ||
-																																			delegatedArray.includes(currentSignerStr) ||
-																																			normalizedArray.includes(currentSignerStr);
-																																			if (!is_submitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
-																																					if (isInitialpad && isCurrentItem && canClick){
-																																							handleInitialClick(sig.id_item, sig.show, sig.editable);
-																																					} else if (isSignpad && isCurrentItem && canClick){
-																																							handleSignatureClick(sig.id_item, sig.editable, sig.show);
-																																					}
-																																			}
-																																	}}
-																																	disabled ={isSubmitted === true}
-
-																															>
-																																	{!isSubmitted && canClick && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) && !isDatefield ? (
-																																			<OverlayTrigger
-																																					placement="bottom"
-																																					overlay={<Tooltip id="initialCompleteTooltip" hidden={!isCurrentItem || isDatefield}>Click to change your sign.</Tooltip>}
-																																			>
-																																					{({ ref, ...triggerHandler }) => (
-																																					<>
-																																							<div {...triggerHandler} ref={ref} style={{width: "100%", height: "100%" }}>
-																																									{!message && !isCompleted ? (
-																																											<div
-																																													style={{
-																																															width: "25%",
-																																															height: "25%",
-																																															top: "50%",
-																																															left: "50%",
-																																															position: "absolute",
-																																															transform: "translate(-50%, -50%)",
-																																													}}
-																																											>
-																																													{/* {content} */}
-																																													{/* <FaFont style={{ width: "100%", height: "100%"}}/> */}
-																																													{isInitialpad ? <FaFont style={{ width: "100%", height: "100%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}}/> : isSignpad ? <FaSignature style={{ width: "100%", height: "100%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}} /> : ""}
-																																													
-																																											</div>
-																																									) : message && (isInitialpad && !isCompleted) ? (
-																																											<div
-																																													style={{
-																																															width: "25%",
-																																															height: "25%",
-																																															top: "50%",
-																																															left: "50%",
-																																															position: "absolute",
-																																															transform: "translate(-50%, -50%)",
-																																													}}
-																																											>
-																																													{/* {content} */}
-																																													<FaFont style={{ width: "100%", height: "100%"}}/>
-																																											</div>
-																																									) : (
-																																											<div
-																																													style={{
-																																															width: "100%",
-																																															height: "100%",
-																																															top: "50%",
-																																															left: "50%",
-																																															position: "absolute",
-																																															transform: "translate(-50%, -50%)",
-																																													}}
-																																											>
-																																													{content}
-																																											</div>
-																																									)}
-																																							</div>
-
-																																							{isCompleted && isDatefield ? (
-																																									currentDate 
-																																							) : (
-																																									// (isCurrentItem && isDatefield) ? <FaCalendar style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)" }} /> : <></> 
-																																									<></>
-																																							)}
-																																					</>
-																																					)}
-																																			</OverlayTrigger>
-																																			) : (
-																																			<>
-																																					{content}
-
-																																					{isCompleted && isDatefield ? (
-																																							currentDate 
-																																					) : (
-																																							// (isCurrentItem && isDatefield) ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
-																																							<></>
-																																					)}
-																																			</>
-																																	)}
-																															</Rnd>
-																													</>
-																											);
-																									})}
-
-																									{/* initial.map */}
-
-																									<SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} selectedIdItem={selectedIdItem} selectedSigner={selectedSigner} />
-
-																									<InitialModal
-																											showInitialModal={showInitialModal}
-																											setShowInitialModal={setShowInitialModal}
-																											onSuccess={handleSignatureSuccess}
-																											backdropClassName="transparent-backdrop"
-																											contentClassName="initial-modal-content"
-																											selectedIdItem={selectedIdItem}
-																											selectedSigner={selectedSigner}
-																									/>
-
-																									<DeclineModal
-																											showDeclineModal={showDeclineModal}
-																											setShowDeclineModal={setShowDeclineModal}
-																											onSuccess={handleSignatureSuccess}
-																											selectedSigner={selectedSigner}
-																											selectedDocument={selectedDocument}
-																									/>
-
-																									<DelegateModal 
-																											showDelegateModal={showDelegateModal}
-																											setShowDelegateModal={setShowDelegateModal}
-																											onSuccess={handleSignatureSuccess}
-																											selectedSigner={selectedSigner}
-																											selectedDocument={selectedDocument}
-																									/>
-
-																									<DocInfoModal
-																											showDocInfoModal={showDocInfoModal}
-																											setShowDocInfoModal={setShowDocInfoModal}
-																											onSuccess={handleSignatureSuccess}
-																											selectedSigner={selectedSigner}
-																											selectedDocument={selectedDocument}
-																											signerInfo ={getSelectedSignerInfo()}
-																									/>
-
-																									<AuditTrailModal
-																											showAuditTrailModal={showAuditTrailModal}
-																											setShowAuditTrailModal={setShowAuditTrailModal}
-																											onSuccess={handleSignatureSuccess}
-																											selectedSigner={selectedSigner}
-																											selectedDocument={selectedDocument}
-																											signerInfo ={getSelectedSignerInfo()}
-																									/>
-																								</div>
-																							);
-																					})}
-																				
-																	</div>
-																	
-															</div>
-													</div>  
-											)}
-
-							</Container>   
+											}}
+										>
+											Download
+										</Dropdown.Item>
+									</>
+								);
+							})()}
+
+
+							</Dropdown.Menu>
+					</Dropdown>
+
+					<Button
+							className="submit-btn w-100 mt-3 fs-6"
+							type="submit"
+							onClick={() => updateSubmitted(id_dokumen, current_signer)}
+							disabled={isFinishDisabled}
+							hidden={is_delegated !== true && !is_submitted ? (token === delegate_token && !is_submitted) || (delegatedDoc === id_dokumen) || initial_status.every(status => status === "Decline") : is_submitted || !is_delegated === true && (delegatedDoc !== id_dokumen)}
+					>
+							Finish
+					</Button>
+					</Nav>
+
+					<Button
+						className="navigate-btn mt-3 fs-6"
+						type="button"
+						onClick={handleJumpTo}
+
+						hidden={
+								pendingCount == 0 ||
+								(token !== delegate_token) &&
+								(!is_delegated ) &&
+								(delegatedDoc === id_dokumen) ||
+								initial_status.every(status => status === "Decline")
+						}
+					>
+							Jump to ({pendingCount})
+					</Button>
+				</Navbar.Collapse>
+				</Container>
+			</Navbar>
+
+			<div>
+				<Container fluid className="px-0 center-object">
+					{loading && <Spinner animation="border" variant="primary" />}
+					<div className="sign-in__user d-flex align-items-center justify-content-center">
+					
+					{isAccessed === false ? 
+						(
+						<Alert variant="danger" style={{marginTop: "-680px"}} hidden={initial_status.every(status => status !== "Expired")}>
+								<FaExclamationTriangle className="mb-1 mr-2"/> Access denied, token expired.
+						</Alert>
+						) : (
+						<>
+						</>    
+						)
+					}
+
+					<Alert variant="danger" style={{marginTop: "-680px"}} hidden={initial_status.every(status => status !== "Decline")}>
+							<FaExclamationTriangle className="mb-1 mr-2"/> {nama} has declined to sign this document.
+					</Alert>
+					<Alert variant="warning" style={{marginTop: "-680px"}}
+							hidden={
+									// (token === delegate_token && !is_submitted) ||
+									// (is_delegated === true && is_submitted) ||
+									(delegatedDoc !== id_dokumen)
+							}
+					>
+							<FaExclamationTriangle className="mb-1 mr-2"/> {nama} has delegate this document to other signer.
+					</Alert>
+
+					
+					{isAccessed !== true && (
+			
+					<Row className="login-user user-element" style={{marginTop: "-2px"}}>
+							<Card className="login-card shadow mb-0">
+									<>{errorMsg && <Alert variant="danger" className="m-4">{errorMsg}</Alert>}</>
+									<div className="d-flex justify-content-center">
+											<img src={require("assets/img/login2.png")} alt="login-img" className="login-illustration" />
+									</div>
+									<Card.Body>
+											<h4 className="text-center font-form mt-3 mb-2">Campina Sign</h4>
+											<Alert variant="info" className="mb-0"><FaInfoCircle className="mr-2"/>Please verify your email</Alert>
+											<Form onSubmit={handleEmailVerify}>
+													<Form.Group> 
+															<span class="input-group-text bg-transparent border-0" id="basic-addon1">
+																	<FaUser style={{ marginRight: '8px' }} />
+																	<Form.Control
+																			type="email"
+																			placeholder="Email"
+																			value={inputEmail}
+																			onChange={(e) => setInputEmail(e.target.value)}
+																			required
+																			style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}
+																			className="m-0"
+																	/>
+															</span>
+													</Form.Group>
+													<Form.Group className="mb-3">
+															<span class="input-group-text bg-transparent  border-0" id="basic-addon1">
+																	<FaKey style={{ marginRight: '8px' }} />
+																	<Form.Control
+																			type="password"
+																			placeholder="Password"
+																			value={inputPassword}
+																			onChange={(e) => setInputPassword(e.target.value)}
+																			required 
+																			style={{borderStyle: 'none', borderBottom:'solid', borderBottomWidth:1, borderRadius:0, borderColor:'#E3E3E3'}}   
+																	/>
+															</span> 
+													</Form.Group>
+													<Button type="submit" className="w-100 mt-2" disabled={loading} 
+															style={{ backgroundColor: "#4c4ef9", border: "none", color: "white", marginBottom:'15px'}}
+															>
+															{loading ? "Verifying..." : "Verify Email"}
+													</Button>
+													<p className="text-center font-footer" style={{fontSize:15}}>Forget Password? Please contact Super Admin.</p>
+											</Form>
+									</Card.Body>
+							</Card>
+					</Row>
+					)}
 					</div>
-			</>
+					{isAccessed === true && pdfUrl && (
+							<div>
+									<div className="vertical-center mt-5" >
+											<div ref={contentRef}>
+															{canvases.length === 0 && <p>Loading PDF...</p>}
+																{canvases.map((canvas, index) => {
+																	const pageNumber = index + 1;
+																	// setPageNum(pageNumber);
+																	return (
+																		<div key={pageNumber} className="pdf-page-container" style={{ position: "relative", marginBottom: "1.5rem" }} data-pagenumber={pageNumber}>
+																			<img
+																				src={canvas.imgSrc}
+																				alt={`Page ${canvas.pageNum}`}
+																				style={{
+																					// marginBottom: "1rem",
+																					// border: "1px solid #ccc",
+																					boxShadow: "4px 4px 15px rgba(151, 151, 151, 0.5)",
+																				}}
+																			/>
+																				{/* <div
+																					className="pdf-page-label"
+																					style={{
+																						position: "absolute",
+																						right: "2px",
+																						// bottom: "-40px",
+																						bottom: "-20px",
+																						background: "rgba(0,0,0,0.6)", 
+																						color: "#fff", 
+																						padding: "4px 8px", 
+																						borderRadius: "4px", 
+																						fontSize: "12px", 
+																					}}
+																				>
+																					{`Page ${pageNumber} of ${canvases.length}`}
+																				</div>
+																				*/}
+
+																			{signedInitials.map((sig) => {
+																					if (!sig || sig.show !== true) return null;
+
+																					const isCompleted = sig.status === "Completed";
+																					const isSubmitted = sig.is_submitted === true;
+																					const isDatefield = sig.jenis_item === "Date";
+																					const isInitialpad = sig.jenis_item === "Initialpad";
+																					const isSignpad = sig.jenis_item === "Signpad";
+																					const isDecline = sig.status === "Decline";
+																					const isPrevField = sig.prevFieldDisplay === true;
+																					const completedNext = sig.is_submitted === true;
+																					const urutan = sig.urutan;
+																					const isFirstSigner = urutan === 1;
+																					const currentItem = sig.id_item === currentItemId;
+																					const is_delegated = sig.is_delegated;
+																					const delegated_signers = sig.delegated_signers;
+																					const tgl_tt = sig.tgl_tt;
+
+																					// console.log("is_delegated:", is_delegated);
+
+																					// console.log("isFirstSigner:",  isFirstSigner);
+
+																					// const isSignerOwner = sig.id_signers === id_signers;
+																					// const isSignerDelegated = delegated_signers === id_signers;
+																					
+																					
+
+																					const page = Number(sig.page);
+																						if (page !== pageNumber) return null;
+
+																					const delegatedArray = Array.isArray(delegated_signers)
+																					? delegated_signers.map(String)
+																					: delegated_signers ? [String(delegated_signers)] : [];
+
+																					const normalizedArray = Array.isArray(normalizedDelegated)
+																					? normalizedDelegated.map(String)
+																					: normalizedDelegated ? [String(normalizedDelegated)] : [];
+
+																					let bgFirst = is_delegated === true || !currentItem ?  "rgba(86, 90, 90, 0.3)" : isSubmitted ? "transparent" : "rgba(25, 230, 25, 0.5)";
+																					let bgOthers = is_delegated === true || !currentItem ? "rgba(86, 90, 90, 0.3)" : isSubmitted ? "transparent": "rgba(25, 230, 25, 0.5)";
+
+																					if (isCompleted === true) {
+																							bgFirst = "transparent";
+																							bgOthers = "transparent";
+																					}
+
+																					const isCurrentItem = currentItemId.includes(sig.id_item);
+																					const isSignerOwner = String(sig.id_signers) === String(id_signers);
+																					const isSignerDelegated = delegatedArray.includes(String(id_signers)) || normalizedArray.includes(String(id_signers));
+
+																					const canClick = is_delegated && isSignerDelegated ? (isSignerOwner || !isSignerOwner) && isCurrentItem : !is_delegated && !is_submitted;
+
+
+																					// const isDelegatedFlag = is_delegated === true || is_delegated === "true";
+																					// console.log("Signer owner:", isSignerOwner);
+																					// console.log("isSignerDelegated:", isSignerDelegated);
+
+																					// console.log("isFirstSigner:", isFirstSigner);
+																					
+																					// console.log("isCurrentItem:", isCurrentItem);-
+
+																					const bgStyle = isSubmitted || isCompleted || (!isCurrentItem && isDatefield)
+																					? "transparent"
+																					: (isSignerOwner && !isSignerDelegated && is_delegated || (!isCurrentItem))
+																					? "rgba(86, 90, 90, 0.4)"
+																					: (isSignerOwner && !isSignerDelegated && !is_delegated) 
+																					? "rgba(25, 230, 25, 0.4)"
+																					: (!isSignerOwner && isSignerDelegated && is_delegated)
+																					? "rgba(25, 230, 25, 0.4)"
+																					: "transparent";
+
+																					let firstBorderStyle = (isSubmitted && isCompleted) || (!isCurrentItem && isDatefield) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)" ;
+																					let otherBorderStyle = (isSubmitted && isCompleted) || (!isCurrentItem && isDatefield) ? "transparent" : isSignerOwner && !isSignerDelegated && is_delegated || !isCurrentItem? "solid 5px rgba(86, 90, 90, 0.3)" : "solid 5px rgba(25, 230, 25, 0.5)";
+
+																					const zIndexStyle = isPrevField && !isFirstSigner ? 1 : 2;
+
+																					const groupByUrutan = signedInitials.reduce((acc, field) => {
+																							if (!acc[field.urutan]) acc[field.urutan] = [];
+																							acc[field.urutan].push(field);
+																							return acc;
+																					}, {});
+
+																					const getMessageForUrutan = (urutan) => {
+																							const fields = groupByUrutan[urutan] || [];
+																							const currentSignerStr = String(id_signers);
+
+																							const relatedSigners = new Set();
+																							fields.forEach(f => {
+																									//cek id_signers yg punya delegated_signers ke current signer
+																									if (Array.isArray(f.delegated_signers) 
+																									? f.delegated_signers.map(String).includes(currentSignerStr)
+																									: String(f.delegated_signers) === currentSignerStr) {
+																											relatedSigners.add(String(f.id_signers));
+																									}
+
+																									// cek id_signers yg ada di normalizedDelegated ke current signer
+																									if (Array.isArray(f.normalizedDelegated) 
+																									? f.normalizedDelegated.map(String).includes(currentSignerStr)
+																									: String(f.normalizedDelegated) === currentSignerStr) {
+																											relatedSigners.add(String(f.id_signers));
+																									}
+
+																									if (String(f.id_signers) === currentSignerStr) {
+																											relatedSigners.add(currentSignerStr);
+																									}
+																							});
+
+																							const isOtherSignerGroup = fields.some(f => !relatedSigners.has(String(f.id_signers)));
+
+																							if (!isOtherSignerGroup) return "";
+
+																							const relatedCompleted = fields
+																									.filter(f => relatedSigners.has(String(f.id_signers)))
+																									.every(f => f.status === "Completed");
+
+																							if (relatedCompleted && !isSubmitted && (!isCurrentItem && !isDatefield)) {
+																								return <p className="text-center pending-text">Another sign didn't complete</p>;
+																							}
+
+																					};
+
+																					const message = getMessageForUrutan(sig.urutan);
+
+																					const currentSignerStr = String(current_signer);
+
+
+																					let content;
+
+																					// const canClick = !is_delegated && !is_submitted ? (token === delegate_token && !is_submitted) || (isCurrentItem && delegatedDoc === id_dokumen) : !is_delegated|| is_submitted && (isCurrentItem && delegatedDoc !== id_dokumen);
+																					// const canClick = (isSignerOwner || !isSignerOwner) && isSignerDelegated && is_delegated && isCurrentItem;
+
+																					// const canClick = is_delegated && isSignerDelegated ? (isSignerOwner || !isSignerOwner) && isCurrentItem : !is_delegated && !is_submitted ? (isSignerOwner || !isSignerOwner) && isCurrentItem : !is_delegated && !is_submitted;
+																					
+																					
+
+																					// console.log("isFirstSigner:", isFirstSigner, "isSignerOwner:", isSignerOwner, "isSignerDelegated:", isSignerDelegated, "is_delegated:", is_delegated, "isCurrentItem:", isCurrentItem);
+																					// console.log("canClick:", canClick);
+																					if (page !== pageNumber) return null;
+
+																					if (isCompleted && sig.sign_base64) {
+																					content = (
+																							<>
+																								<img
+																								src={sig.sign_base64}
+																								alt="Initial"
+																								style={{ width: "100%", height: "100%" }}
+																								className="relative"
+																							/>
+																							{/* <p hidden={sign_permission !== "Needs to sign"} className="watermark">Signed by: {sig.nama} 
+																								Date: {signerData.map((t) => (
+																								<div key={t.id_signers}>
+																									{t.tgl_tt}
+																								</div>
+																							))}</p> */}
+
+																							<p hidden={sign_permission !== "Needs to sign" || isSubmitted !== true} className="watermark">Signed by: {sig.nama} Date:	{new Date(signerData.find(s => String(s.id_signers) === String(sig.id_signers) || s.nama === sig.nama).tgl_tt).toLocaleString("en-GB", { timeZone: "Asia/Jakarta" }).replace(/\//g, '-').replace(',', '')}</p>
+
+
+																							</>
+																					);
+																					} else if (isInitialpad && isCurrentItem ) {
+																					content = <FaFont style={{ width: "25%", height: "25%"}} />;
+																					} else if (isSignpad && isCurrentItem) {
+																					content = <FaSignature style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}} />;
+																					} else if (isDatefield && isCurrentItem ) {
+																					content = <FaCalendar style={{ width: "50%", height: "50%"}} />;
+																					} else if (!is_delegated && isFirstSigner || !canClick) {
+																					content = message;
+																					} else if (!is_delegated && !isFirstSigner || !canClick) {
+																					content = message;
+																					} else {
+																					content = <></>;
+																					}
+
+																					
+
+
+																					return (
+																							<>
+																									<Rnd
+																											id={`field-${sig.id_item}-${sig.id_signers}`} 
+																											key={`${sig.id_signers}-${sig.id_item}`}
+																											position={{ x: Number(sig.x_axis), y: Number(sig.y_axis) }}
+																											size={{ width: Number(sig.height), height: Number(sig.width) }}
+																											page={page}
+																											enableResizing={sig.enableResizing}
+																											disableDragging={sig.disableDragging}
+																											style={{
+																													display: "flex",
+																													alignItems: "center",
+																													justifyContent: "center",
+																													backgroundColor: bgStyle,
+																													border: isFirstSigner ? firstBorderStyle : otherBorderStyle,
+																													zIndex: zIndexStyle,     
+																													cursor: canClick && !isSubmitted && (is_delegated === true && !isSubmitted) && (delegatedDoc !== id_dokumen) || (isCurrentItem && !isDatefield) ? "pointer" : "default",
+
+																											}}
+																											hidden={isDecline}
+																											onClick={() => {
+																													const currentSignerStr = String(current_signer);
+																													const isCurrentSigner = 
+																													String(sig.id_signers) === currentSignerStr ||
+																													delegatedArray.includes(currentSignerStr) ||
+																													normalizedArray.includes(currentSignerStr);
+																													if (!is_submitted && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen)) {
+																															if (isInitialpad && isCurrentItem && canClick){
+																																	handleInitialClick(sig.id_item, sig.show, sig.editable);
+																															} else if (isSignpad && isCurrentItem && canClick){
+																																	handleSignatureClick(sig.id_item, sig.editable, sig.show);
+																															}
+																													}
+																											}}
+																											disabled ={isSubmitted === true}
+
+																									>
+																											{!isSubmitted && canClick && (is_delegated === true && !isSubmitted) || isCurrentItem  && (delegatedDoc !== id_dokumen) && !isDatefield ? (
+																													<OverlayTrigger
+																															placement="bottom"
+																															overlay={<Tooltip id="initialCompleteTooltip" hidden={!isCurrentItem || isDatefield}>Click to change your sign.</Tooltip>}
+																													>
+																															{({ ref, ...triggerHandler }) => (
+																															<>
+																																	<div {...triggerHandler} ref={ref} style={{width: "100%", height: "100%" }}>
+																																			{!message && !isCompleted ? (
+																																					<div
+																																							style={{
+																																									width: "25%",
+																																									height: "25%",
+																																									top: "50%",
+																																									left: "50%",
+																																									position: "absolute",
+																																									transform: "translate(-50%, -50%)",
+																																							}}
+																																					>
+																																							{/* {content} */}
+																																							{/* <FaFont style={{ width: "100%", height: "100%"}}/> */}
+																																							{isInitialpad ? <FaFont style={{ width: "100%", height: "100%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}}/> : isSignpad ? <FaSignature style={{ width: "100%", height: "100%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)"}} /> : ""}
+																																							
+																																					</div>
+																																			) : message && (isInitialpad && !isCompleted) ? (
+																																					<div
+																																							style={{
+																																									width: "25%",
+																																									height: "25%",
+																																									top: "50%",
+																																									left: "50%",
+																																									position: "absolute",
+																																									transform: "translate(-50%, -50%)",
+																																							}}
+																																					>
+																																							{/* {content} */}
+																																							<FaFont style={{ width: "100%", height: "100%"}}/>
+																																					</div>
+																																			) : (
+																																					<div
+																																							style={{
+																																									width: "100%",
+																																									height: "100%",
+																																									top: "50%",
+																																									left: "50%",
+																																									position: "absolute",
+																																									transform: "translate(-50%, -50%)",
+																																							}}
+																																					>
+																																							{content}
+																																					</div>
+																																			)}
+																																	</div>
+
+																																	{isCompleted && isDatefield ? (
+																																			currentDate 
+																																	) : (
+																																			// (isCurrentItem && isDatefield) ? <FaCalendar style={{ width: "25%", height: "25%", top: "50%", left: "50%", position: "absolute", transform: "translate(-50%, -50%)" }} /> : <></> 
+																																			<></>
+																																	)}
+																															</>
+																															)}
+																													</OverlayTrigger>
+																													) : (
+																													<>
+																															{content}
+
+																															{isCompleted && isDatefield ? (
+																																	currentDate 
+																															) : (
+																																	// (isCurrentItem && isDatefield) ? <FaCalendar style={{ width: "25%", height: "25%" }} /> : <></>
+																																	<></>
+																															)}
+																													</>
+																											)}
+																									</Rnd>
+																							</>
+																					);
+																			})}
+
+																			{/* initial.map */}
+
+																			<SignatureModal showSignatureModal={showSignatureModal} setShowSignatureModal={setShowSignatureModal} onSuccess={handleSignatureSuccess} selectedIdItem={selectedIdItem} selectedSigner={selectedSigner} />
+
+																			<InitialModal
+																					showInitialModal={showInitialModal}
+																					setShowInitialModal={setShowInitialModal}
+																					onSuccess={handleSignatureSuccess}
+																					backdropClassName="transparent-backdrop"
+																					contentClassName="initial-modal-content"
+																					selectedIdItem={selectedIdItem}
+																					selectedSigner={selectedSigner}
+																			/>
+
+																			<DeclineModal
+																					showDeclineModal={showDeclineModal}
+																					setShowDeclineModal={setShowDeclineModal}
+																					onSuccess={handleSignatureSuccess}
+																					selectedSigner={selectedSigner}
+																					selectedDocument={selectedDocument}
+																			/>
+
+																			<DelegateModal 
+																					showDelegateModal={showDelegateModal}
+																					setShowDelegateModal={setShowDelegateModal}
+																					onSuccess={handleSignatureSuccess}
+																					selectedSigner={selectedSigner}
+																					selectedDocument={selectedDocument}
+																			/>
+
+																			<DocInfoModal
+																					showDocInfoModal={showDocInfoModal}
+																					setShowDocInfoModal={setShowDocInfoModal}
+																					onSuccess={handleSignatureSuccess}
+																					selectedSigner={selectedSigner}
+																					selectedDocument={selectedDocument}
+																					signerInfo ={getSelectedSignerInfo()}
+																			/>
+
+																			<AuditTrailModal
+																					showAuditTrailModal={showAuditTrailModal}
+																					setShowAuditTrailModal={setShowAuditTrailModal}
+																					onSuccess={handleSignatureSuccess}
+																					selectedSigner={selectedSigner}
+																					selectedDocument={selectedDocument}
+																					signerInfo ={getSelectedSignerInfo()}
+																			/>
+																		</div>
+																	);
+															})}
+														
+											</div>
+											
+									</div>
+							</div>  
+					)}
+				</Container>   
+			</div>
+		</>
 	);
 }
 

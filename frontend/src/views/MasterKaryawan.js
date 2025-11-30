@@ -25,11 +25,9 @@ function MasterKaryawan() {
   const [karyawan, setKaryawan] = useState([]); 
   const [selectedKaryawan, setSelectedKaryawan] = useState(null); 
   const [searchQuery, setSearchQuery] = useState("");
-
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [loading, setLoading] = useState(true);
-
   const [sortBy, setSortBy] = useState("id_karyawan");
   const [sortOrder, setSortOrder] = useState("asc");
   const [sortOrderDibayar, setSortOrderDibayar] = useState("asc");
@@ -281,10 +279,10 @@ function MasterKaryawan() {
             <AddKaryawan showAddModal={showAddModal} setShowAddModal={setShowAddModal} onSuccess={handleAddSuccess} />
 
             <EditKaryawan
-                        showEditModal={showEditModal}
-                        setShowEditModal={setShowEditModal}
-                        karyawan={selectedKaryawan}
-                        onSuccess={handleEditSuccess}
+              showEditModal={showEditModal}
+              setShowEditModal={setShowEditModal}
+              karyawan={selectedKaryawan}
+              onSuccess={handleEditSuccess}
             />
           </div>
 
@@ -384,13 +382,11 @@ function MasterKaryawan() {
                             className="text-danger btn-action"
                           />Hapus
                         </button>
-                                              
-                       
                        </td>
                      </tr>
                      ))}
                    </tbody>
-                     </table>
+                  </table>
                   </div>
                  </Table>
                 )}
@@ -398,13 +394,13 @@ function MasterKaryawan() {
             </Card>
             <div className="pagination-container">
             <Pagination
-                  activePage={currentPage}
-                  itemsCountPerPage={itemsPerPage}
-                  totalItemsCount={filteredKaryawan.length}
-                  pageRangeDisplayed={5}
-                  onChange={handlePageChange}
-                  itemClass="page-item"
-                  linkClass="page-link"
+              activePage={currentPage}
+              itemsCountPerPage={itemsPerPage}
+              totalItemsCount={filteredKaryawan.length}
+              pageRangeDisplayed={5}
+              onChange={handlePageChange}
+              itemClass="page-item"
+              linkClass="page-link"
             />
             </div>
           </Col>

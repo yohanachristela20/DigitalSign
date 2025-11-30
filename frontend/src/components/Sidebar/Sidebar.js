@@ -137,7 +137,7 @@ const folders = [
       </CDBSidebarContent>
       <hr />
       {!isSidebarCollapsed && role === "Admin" && <FolderTree folders={folders} />}     
-      <p className="copyright text-center" style={{position: "absolute", bottom: 0, textOverflow:"ellipsis", width: "225px", fontSize:"12px"}}>
+      <p className="copyright text-center sidebar-footer">
         ©2025 Accounting Dev - PT Campina Ice Cream Industry, Tbk.         
       </p>
     </div>

@@ -35,7 +35,6 @@ function EmployeeManagement() {
   const [sortBy, setSortBy] = useState("id_karyawan");
   const [sortOrder, setSortOrder] = useState("asc");
   const [sortOrderDibayar, setSortOrderDibayar] = useState("asc");
-
   const [showAddDoc, setShowAddDoc] = React.useState(false);
 
   const filteredEmployee = employee.filter((employee) =>
@@ -47,7 +46,6 @@ function EmployeeManagement() {
     (employee.createdAt && String(employee.createdAt).toLowerCase().includes(searchQuery)) ||
     (employee.updatedAt && String(employee.updatedAt).toLowerCase().includes(searchQuery))
   );
-
   
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -222,8 +220,6 @@ function EmployeeManagement() {
     doc.save("master_karyawan.pdf");
   };
 
-
-  
   return (
     <>
       <Container>
@@ -236,18 +232,8 @@ function EmployeeManagement() {
               employee={selectedEmployee}
               onSuccess={handleEditSuccess}
           />
-
           <SearchBar searchQuery={searchQuery} handleSearchChange={handleSearchChange}/>
-          {/* <Button
-              type="button"
-              className="btn btn-fill btn-primary mb-3"
-              style={{width:"190px"}}
-              onClick={handleUpload}>
-              <i class="fa fa-upload" style={{ marginRight: '8px' }}></i>
-                Upload Document
-            </Button> */}
-          <Container>
-            
+          <Container>  
             <Button
               type="button"
               className="btn btn-fill btn-success pull-right mb-3 mr-3"
@@ -320,7 +306,6 @@ function EmployeeManagement() {
               ))}
             </CDBTableBody>
           </CDBTable>
-            
             <div className="pagination-container">
               <Pagination
                     activePage={currentPage}
